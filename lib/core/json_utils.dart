@@ -59,6 +59,7 @@ class JsonUtils{
       return str;
     } catch(e) {
       print(e);
+      return "";
     }
   }
 }
