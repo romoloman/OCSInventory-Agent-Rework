@@ -21,28 +21,28 @@ class Config{
   }
 
   String getInventoryConfigs(){
-    return jsonUtils.getContent(inventory).toString();
+    return jsonUtils.getContentFromFile(inventory).toString();
   }
 
   String getInventoryConfig(String key){
-    return jsonUtils.getContentByKey(inventory, key);
+    return jsonUtils.getContentFromFileByKey(inventory, key);
   }
 
   void updateInventoryConfig(String _index, String _value){
-    String str = jsonUtils.setContent(inventory, _index, _value);
+    String str = jsonUtils.setContentFromFile(inventory, _index, _value);
     filesUtils.rewriteFile(inventory, str);
   }
 
   String getCoreConfigs(){
-    return jsonUtils.getContent(core).toString();
+    return jsonUtils.getContentFromFile(core).toString();
   }
 
   String getCoreConfig(String key){
-    return jsonUtils.getContentByKey(core, key);
+    return jsonUtils.getContentFromFileByKey(core, key);
   }
 
   void updateCoreConfig(String _index, String _value){
-    String str = jsonUtils.setContent(core, _index, _value);
+    String str = jsonUtils.setContentFromFile(core, _index, _value);
     filesUtils.rewriteFile(core, str);
   }
 

@@ -5,7 +5,7 @@ import 'dart:convert';
 class JsonUtils{
 
   /// Return all Json data.
-  Map<String, dynamic> getContent(File file){
+  Map<String, dynamic> getContentFromFile(File file){
     try {
       var jsonContent = file.readAsStringSync();
       Map<String, dynamic> json = jsonDecode(jsonContent);
@@ -17,7 +17,7 @@ class JsonUtils{
   }
 
   /// Return specific value from Json key.
-  dynamic getContentByKey(File file, String key){
+  dynamic getContentFromFileByKey(File file, String key){
     try {
       var jsonContent = file.readAsStringSync();
       Map<String, dynamic> json = jsonDecode(jsonContent);
@@ -28,8 +28,19 @@ class JsonUtils{
     }
   }
 
+  /// Return specific value from Json key.
+  dynamic getContentFromStringByKey(String str, String key){
+    try {
+      Map<String, dynamic> json = jsonDecode(str);
+      return json[key];
+    } catch (e) {
+      print(e);
+      return null;
+    }
+  }
+
   /// Set new value from key in Json file.
-  String setContent(File file, String _index, String _value){
+  String setContentFromFile(File file, String _index, String _value){
       var jsonContent = file.readAsStringSync();
       Map<String, dynamic> json = jsonDecode(jsonContent);
       json.forEach((key, value) {
