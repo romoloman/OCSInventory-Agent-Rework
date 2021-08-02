@@ -3,5 +3,7 @@
 	"token":"Token",
 	"data_dir":"null",
 	"prolog_freq":"1",
-	"log_level":"0"
+	"log_level":"0",
+	"username":"username",
+	"password":"password"
 }
