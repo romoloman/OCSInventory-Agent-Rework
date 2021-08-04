@@ -99,24 +99,3 @@ class Api{
     }
   }
 }
-
-
-void main(List<String> args) async{
-  Api api = new Api();
-  
-  api.apiCheck();
-  Map<String, String> body = {
-    "name":"PC-0001",
-    "description":"Une super description",
-    "serial":"24 Ans !",
-    "osname":"Windows",
-    "osversion":"Something something",
-    "uuid":"40890b0b-8166-4907-8f0d-4d41520413f3",
-    "srcip":"172.18.15.152",
-    "srcmac":"33-FC-AA-6E-96-C6",
-    "domain":"blablabla"
-  };
-
-  //api.sendInventory(body);
-  api.getTemplate(1);
-}
