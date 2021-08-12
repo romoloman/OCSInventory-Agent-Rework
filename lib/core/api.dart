@@ -5,6 +5,8 @@ import 'dart:io' show Platform;
 import 'package:ocs_agent/core/config.dart';
 import 'package:ocs_agent/core/inventory/linux/commands.dart';
 import 'package:ocs_agent/core/inventory/linux/format.dart';
+import 'package:ocs_agent/core/inventory/macos/commands.dart';
+import 'package:ocs_agent/core/inventory/macos/format.dart';
 import 'package:ocs_agent/core/inventory/windows/commands.dart';
 import 'package:ocs_agent/core/inventory/windows/format.dart';
 import 'package:ocs_agent/core/json_utils.dart';
@@ -20,6 +22,9 @@ class Api{
   
   WindowsFormat windowsFormat;
   WindowsCommand windowsCommand;
+  
+  MacOSFormat macosFormat;
+  MacOSCommand macosCommand;
 
   var url;
 
@@ -30,6 +35,8 @@ class Api{
     this.linuxCommand = new LinuxCommand();
     this.windowsFormat = new WindowsFormat();
     this.windowsCommand = new WindowsCommand();
+    this.macosFormat = new MacOSFormat();
+    this.macosCommand = new MacOSCommand();
     this.url = config.getInventoryConfig("url");
   }
 
@@ -135,7 +142,7 @@ class Api{
     } else if (template["os"] == "WIN" && Platform.isWindows) {
       format = this.windowsFormat;
     } else if (template["os"] == "MAC" && Platform.isMacOS) {
-      print("macos");
+      format = this.macosFormat;
     } else {
       print("error");
     }
