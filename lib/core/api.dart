@@ -1,20 +1,27 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:io' show Platform;
 
 import 'package:ocs_agent/core/config.dart';
 
 import 'package:http/http.dart' as http;
+import 'package:ocs_agent/core/inventory/linux/commands.dart';
+import 'package:ocs_agent/core/inventory/linux/format.dart';
 import 'package:ocs_agent/core/json_utils.dart';
 
 class Api{
   Config config;
   JsonUtils jsonUtils;
+  LinuxFormat linuxFormat;
+  LinuxCommand linuxCommand;
 
   var url;
 
   Api(){
     this.config = new Config();
     this.jsonUtils = new JsonUtils();
+    this.linuxFormat = new LinuxFormat();
+    this.linuxCommand = new LinuxCommand();
     this.url = config.getInventoryConfig("url");
   }
 
@@ -51,7 +58,7 @@ class Api{
     }
   }
 
-  void sendInventory(Map<String, String> body) async {
+  void sendInventory(Map<String, dynamic> body) async {
     var url = Uri.parse(this.url + "/asset/bases/");
 
     var response = await http.post(
@@ -97,5 +104,68 @@ class Api{
       var encoder = new JsonEncoder.withIndent("\t");
       config.setTemplate(encoder.convert(template));
     }
+  }
+
+  Future<void> getInventory() async {
+    Map<String, dynamic> template = config.getTemplate();
+    Map<String, dynamic> inventory = new Map();
+    if (template == null){
+      print("Template is empty");
+    } else {
+      this.getInventoryResult(template, template["os"]).then((value) { 
+        print("inventory 2 : $value");
+        this.sendInventory(value);
+      });
+    }
+  }
+
+  Future<Map<String, dynamic>> getInventoryResult(Map<String, dynamic> template, String os) async {
+    var format;
+
+    if (os == "LIN") {
+      format = this.linuxFormat;
+    } else if (template["os"] == "WIN" && Platform.isWindows) {
+      print("windows");
+    } else if (template["os"] == "MAC" && Platform.isMacOS) {
+      print("macos");
+    } else {
+      print("error");
+    }
+
+    Map<String, dynamic> inventory = new Map();
+
+    List<dynamic> sections = template['sections'];
+    sections.forEach((section) {
+      List<dynamic> fields = section['fields'];
+      fields.forEach((field) async {
+        String valueTarget;
+        switch (section['retrival_output']) {
+          case "TBLE":
+            print("table");
+            await format.getbyArray(section["target"], field["retrival_value"]).then((value) => valueTarget = value);
+            print(valueTarget);
+            break;
+          case "JSON":
+            print("json");
+            await format.getbyJson(section["target"], field["retrival_value"]).then((value) => valueTarget = value);
+            print(valueTarget);
+            break;
+          case "PTXT":
+            print("texte");
+            await format.getbyPtxt(section["target"], field["retrival_value"]).then((value) => valueTarget = value);
+            print(valueTarget);
+            break;
+          default:
+            print("error");
+            valueTarget = null;
+            break;
+        }
+        inventory.putIfAbsent(field['name'], () => valueTarget);
+      });
+    });
+
+    print(inventory);
+    return Future.delayed(Duration(seconds: 3), () => inventory);
+    //return inventory;
   }
 }
