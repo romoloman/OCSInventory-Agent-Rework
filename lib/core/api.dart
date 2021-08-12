@@ -3,17 +3,23 @@ import 'dart:io';
 import 'dart:io' show Platform;
 
 import 'package:ocs_agent/core/config.dart';
-
-import 'package:http/http.dart' as http;
 import 'package:ocs_agent/core/inventory/linux/commands.dart';
 import 'package:ocs_agent/core/inventory/linux/format.dart';
+import 'package:ocs_agent/core/inventory/windows/commands.dart';
+import 'package:ocs_agent/core/inventory/windows/format.dart';
 import 'package:ocs_agent/core/json_utils.dart';
+
+import 'package:http/http.dart' as http;
 
 class Api{
   Config config;
   JsonUtils jsonUtils;
+  
   LinuxFormat linuxFormat;
   LinuxCommand linuxCommand;
+  
+  WindowsFormat windowsFormat;
+  WindowsCommand windowsCommand;
 
   var url;
 
@@ -22,6 +28,8 @@ class Api{
     this.jsonUtils = new JsonUtils();
     this.linuxFormat = new LinuxFormat();
     this.linuxCommand = new LinuxCommand();
+    this.windowsFormat = new WindowsFormat();
+    this.windowsCommand = new WindowsCommand();
     this.url = config.getInventoryConfig("url");
   }
 
@@ -125,7 +133,7 @@ class Api{
     if (os == "LIN") {
       format = this.linuxFormat;
     } else if (template["os"] == "WIN" && Platform.isWindows) {
-      print("windows");
+      format = this.windowsFormat;
     } else if (template["os"] == "MAC" && Platform.isMacOS) {
       print("macos");
     } else {
