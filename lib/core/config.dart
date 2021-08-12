@@ -49,8 +49,8 @@ class Config{
     filesUtils.rewriteFile(core, str);
   }
 
-  String getTemplate(){
-    return jsonUtils.getContentFromFile(template).toString();
+  Map<String, dynamic> getTemplate(){
+    return jsonUtils.getContentFromFile(template);
   }
 
   String getTemplateKey(String key){
@@ -65,6 +65,5 @@ class Config{
   void setTemplate(String strTemplate){
     filesUtils.rewriteFile(template, strTemplate);
   }
-
 
 }
