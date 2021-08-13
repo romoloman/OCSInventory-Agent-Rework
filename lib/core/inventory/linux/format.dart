@@ -9,11 +9,15 @@ class LinuxFormat{
     this.linuxCommand = new LinuxCommand();
   }
 
-  Future<String> getbyArray(String command, String indexString) async {
+  Future<String> getbyArray(String command, String indexString, bool file) async {
     String result;
     int index = int.parse(indexString);
-    
-    await linuxCommand.commandShell(command).then((value) => result = value);
+
+    if (file) {
+      await linuxCommand.readFile(command).then((value) => result = value);
+    } else {
+      await linuxCommand.commandShell(command).then((value) => result = value);
+    }
 
     List<String> list = result.split("\n");
     list.removeAt(0);
@@ -30,19 +34,29 @@ class LinuxFormat{
     });
   }
 
-  Future<String> getbyJson(String command, String key) async {
+  Future<String> getbyJson(String command, String key, bool file) async {
     String result;
-    await linuxCommand.commandShell(command).then((value) => result = value);
+    
+    if (file) {
+      await linuxCommand.readFile(command).then((value) => result = value);
+    } else {
+      await linuxCommand.commandShell(command).then((value) => result = value);
+    }
 
     var json = this.FormatJson(result);
 
     return json[key];
   }
 
-  Future<String> getbyPtxt(String command, String lineString) async {
+  Future<String> getbyPtxt(String command, String lineString, bool file) async {
     String result;
     int line = int.parse(lineString);
-    await linuxCommand.commandShell(command).then((value) => result = value);
+    
+    if (file) {
+      await linuxCommand.readFile(command).then((value) => result = value);
+    } else {
+      await linuxCommand.commandShell(command).then((value) => result = value);
+    }
 
     var txt = result.split("\n").toList();
 

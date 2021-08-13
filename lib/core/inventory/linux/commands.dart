@@ -10,9 +10,12 @@ class LinuxCommand {
     }
 
     var process = await Process.run(command, args);
-    //print(process.exitCode);
-    //print(process.stderr);
-    //print(process.stdout);
+
+    return process.stdout;
+  }
+
+  Future<String> readFile(String path) async {
+    var process = await Process.run("cat", [path]);
 
     return process.stdout;
   }

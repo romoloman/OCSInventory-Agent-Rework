@@ -152,22 +152,29 @@ class Api{
     List<dynamic> sections = template['sections'];
     sections.forEach((section) {
       List<dynamic> fields = section['fields'];
+      bool file;
+      if (section['retrival_method'] == 'FILE') {
+        file = true;
+      } else {
+        file = false;
+      }
+      
       fields.forEach((field) async {
         String valueTarget;
         switch (section['retrival_output']) {
           case "TBLE":
             print("table");
-            await format.getbyArray(section["target"], field["retrival_value"]).then((value) => valueTarget = value);
+            await format.getbyArray(section["target"], field["retrival_value"], file).then((value) => valueTarget = value);
             print(valueTarget);
             break;
           case "JSON":
             print("json");
-            await format.getbyJson(section["target"], field["retrival_value"]).then((value) => valueTarget = value);
+            await format.getbyJson(section["target"], field["retrival_value"], file).then((value) => valueTarget = value);
             print(valueTarget);
             break;
           case "PTXT":
             print("texte");
-            await format.getbyPtxt(section["target"], field["retrival_value"]).then((value) => valueTarget = value);
+            await format.getbyPtxt(section["target"], field["retrival_value"], file).then((value) => valueTarget = value);
             print(valueTarget);
             break;
           default:
