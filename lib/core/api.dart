@@ -194,11 +194,3 @@ class Api{
     //return inventory;
   }
 }
-
-void main (List<String> args) async {
-  Api api = new Api();
-
-  //api.generateToken();
-  //api.getTemplate(2);
-  api.getInventory();
-}
