@@ -9,14 +9,17 @@ class LinuxFormat{
     this.linuxCommand = new LinuxCommand();
   }
 
-  Future<String> getbyArray(String command, String indexString, bool file) async {
+  Future<String> getbyArray(String command, String indexString, String type) async {
     String result;
     int index = int.parse(indexString);
 
-    if (file) {
-      await linuxCommand.readFile(command).then((value) => result = value);
-    } else {
-      await linuxCommand.commandShell(command).then((value) => result = value);
+    switch (type) {
+      case "FILE":
+        await linuxCommand.readFile(command).then((value) => result = value);
+        break;
+      case "CMD":
+        await linuxCommand.commandShell(command).then((value) => result = value);
+        break;
     }
 
     List<String> list = result.split("\n");
@@ -34,13 +37,16 @@ class LinuxFormat{
     });
   }
 
-  Future<String> getbyJson(String command, String key, bool file) async {
+  Future<String> getbyJson(String command, String key, String type) async {
     String result;
-    
-    if (file) {
-      await linuxCommand.readFile(command).then((value) => result = value);
-    } else {
-      await linuxCommand.commandShell(command).then((value) => result = value);
+
+    switch (type) {
+      case "FILE":
+        await linuxCommand.readFile(command).then((value) => result = value);
+        break;
+      case "CMD":
+        await linuxCommand.commandShell(command).then((value) => result = value);
+        break;
     }
 
     var json = this.FormatJson(result);
@@ -48,14 +54,17 @@ class LinuxFormat{
     return json[key];
   }
 
-  Future<String> getbyPtxt(String command, String lineString, bool file) async {
+  Future<String> getbyPtxt(String command, String lineString, String type) async {
     String result;
     int line = int.parse(lineString);
-    
-    if (file) {
-      await linuxCommand.readFile(command).then((value) => result = value);
-    } else {
-      await linuxCommand.commandShell(command).then((value) => result = value);
+
+    switch (type) {
+      case "FILE":
+        await linuxCommand.readFile(command).then((value) => result = value);
+        break;
+      case "CMD":
+        await linuxCommand.commandShell(command).then((value) => result = value);
+        break;
     }
 
     var txt = result.split("\n").toList();
