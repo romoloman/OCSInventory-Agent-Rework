@@ -2,14 +2,14 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:io' show Platform;
 
-import 'package:ocs_agent/core/config.dart';
-import 'package:ocs_agent/core/inventory/linux/commands.dart';
-import 'package:ocs_agent/core/inventory/linux/format.dart';
-import 'package:ocs_agent/core/inventory/macos/commands.dart';
-import 'package:ocs_agent/core/inventory/macos/format.dart';
-import 'package:ocs_agent/core/inventory/windows/commands.dart';
-import 'package:ocs_agent/core/inventory/windows/format.dart';
-import 'package:ocs_agent/core/json_utils.dart';
+import 'config.dart';
+import 'inventory/linux/commands.dart';
+import 'inventory/linux/format.dart';
+import 'inventory/macos/commands.dart';
+import 'inventory/macos/format.dart';
+import 'inventory/windows/commands.dart';
+import 'inventory/windows/format.dart';
+import 'json_utils.dart';
 
 import 'package:http/http.dart' as http;
 
@@ -75,6 +75,8 @@ class Api{
 
   void sendInventory(Map<String, dynamic> body) async {
     var url = Uri.parse(this.url + "/asset/bases/");
+
+    //print(body);
 
     var response = await http.post(
       url,
@@ -164,17 +166,17 @@ class Api{
         switch (section['retrival_output']) {
           case "TBLE":
             print("table");
-            await format.getbyArray(section["target"], field["retrival_value"], file).then((value) => valueTarget = value);
+            await format.getbyArray(section["target"], field["retrival_value"], section['retrival_method']).then((value) => valueTarget = value);
             print(valueTarget);
             break;
           case "JSON":
             print("json");
-            await format.getbyJson(section["target"], field["retrival_value"], file).then((value) => valueTarget = value);
+            await format.getbyJson(section["target"], field["retrival_value"], section['retrival_method']).then((value) => valueTarget = value);
             print(valueTarget);
             break;
           case "PTXT":
             print("texte");
-            await format.getbyPtxt(section["target"], field["retrival_value"], file).then((value) => valueTarget = value);
+            await format.getbyPtxt(section["target"], field["retrival_value"], section['retrival_method']).then((value) => valueTarget = value);
             print(valueTarget);
             break;
           default:
@@ -182,12 +184,21 @@ class Api{
             valueTarget = null;
             break;
         }
+        print(inventory);
         inventory.putIfAbsent(field['name'], () => valueTarget);
       });
     });
 
-    print(inventory);
+    //print(inventory);
     return Future.delayed(Duration(seconds: 3), () => inventory);
     //return inventory;
   }
+}
+
+void main (List<String> args) async {
+  Api api = new Api();
+
+  //api.generateToken();
+  //api.getTemplate(2);
+  api.getInventory();
 }
