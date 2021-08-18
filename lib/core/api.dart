@@ -76,8 +76,6 @@ class Api{
   void sendInventory(Map<String, dynamic> body) async {
     var url = Uri.parse(this.url + "/asset/bases/");
 
-    //print(body);
-
     var response = await http.post(
       url,
       headers: this.getHeader(),
@@ -113,30 +111,29 @@ class Api{
       List<dynamic> fields = json.decode(responseFields.body);
 
       sections.forEach((v) {
-        var test = fields.where((map) => map['section'] == v['id']);
-        v["fields"] = test.toList();
+        var listfield = fields.where((map) => map['section'] == v['id']);
+        v["fields"] = listfield.toList();
       });
 
-      template["sections"] = sections;
+      template["sections"] = sections.where((sec) => sec['template'] == id).toList();
       var encoder = new JsonEncoder.withIndent("\t");
       config.setTemplate(encoder.convert(template));
     }
   }
 
-  Future<void> getInventory() async {
+  getInventory() async {
     Map<String, dynamic> template = config.getTemplate();
-    Map<String, dynamic> inventory = new Map();
+
     if (template == null){
       print("Template is empty");
     } else {
-      this.getInventoryResult(template, template["os"]).then((value) { 
-        print("inventory 2 : $value");
-        this.sendInventory(value);
-      });
+      var value = await this.getInventoryResult(template, template["os"]);
+      print("inventory 2 : $value");
+      this.sendInventory(value);
     }
   }
 
-  Future<Map<String, dynamic>> getInventoryResult(Map<String, dynamic> template, String os) async {
+  Future<Map<String, dynamic>> getInventoryResult(Map<String, dynamic> template, String os) async{
     var format;
 
     if (os == "LIN") {
@@ -152,31 +149,26 @@ class Api{
     Map<String, dynamic> inventory = new Map();
 
     List<dynamic> sections = template['sections'];
-    sections.forEach((section) {
+
+    for (var section in sections){
       List<dynamic> fields = section['fields'];
-      bool file;
-      if (section['retrival_method'] == 'FILE') {
-        file = true;
-      } else {
-        file = false;
-      }
       
-      fields.forEach((field) async {
+      for (var field in fields){
         String valueTarget;
         switch (section['retrival_output']) {
           case "TBLE":
             print("table");
-            await format.getbyArray(section["target"], field["retrival_value"], section['retrival_method']).then((value) => valueTarget = value);
+            valueTarget = await format.getbyArray(section["target"], field["retrival_value"], section['retrival_method']);
             print(valueTarget);
             break;
           case "JSON":
             print("json");
-            await format.getbyJson(section["target"], field["retrival_value"], section['retrival_method']).then((value) => valueTarget = value);
+            valueTarget = await format.getbyJson(section["target"], field["retrival_value"], section['retrival_method']);
             print(valueTarget);
             break;
           case "PTXT":
             print("texte");
-            await format.getbyPtxt(section["target"], field["retrival_value"], section['retrival_method']).then((value) => valueTarget = value);
+            valueTarget = await format.getbyPtxt(section["target"], field["retrival_value"], section['retrival_method']);
             print(valueTarget);
             break;
           default:
@@ -184,13 +176,19 @@ class Api{
             valueTarget = null;
             break;
         }
-        print(inventory);
         inventory.putIfAbsent(field['name'], () => valueTarget);
-      });
-    });
+      }
+    }
 
-    //print(inventory);
-    return Future.delayed(Duration(seconds: 3), () => inventory);
-    //return inventory;
+    return inventory;
   }
+}
+
+void main (List<String> args) async {
+  Api api = new Api();
+
+  //api.generateToken();
+  //api.getTemplate(1);
+  await api.getInventory();
+  print("fait !");
 }

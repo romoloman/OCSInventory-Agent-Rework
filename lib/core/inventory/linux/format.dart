@@ -13,14 +13,7 @@ class LinuxFormat{
     String result;
     int index = int.parse(indexString);
 
-    switch (type) {
-      case "FILE":
-        await linuxCommand.readFile(command).then((value) => result = value);
-        break;
-      case "CMD":
-        await linuxCommand.commandShell(command).then((value) => result = value);
-        break;
-    }
+    result = await linuxCommand.getResult(command, type);
 
     List<String> list = result.split("\n");
     list.removeAt(0);
@@ -38,18 +31,9 @@ class LinuxFormat{
   }
 
   Future<String> getbyJson(String command, String key, String type) async {
-    String result;
+    String result = await linuxCommand.getResult(command, type);
 
-    switch (type) {
-      case "FILE":
-        await linuxCommand.readFile(command).then((value) => result = value);
-        break;
-      case "CMD":
-        await linuxCommand.commandShell(command).then((value) => result = value);
-        break;
-    }
-
-    var json = this.FormatJson(result);
+    var json = this.formatJson(result);
 
     return json[key];
   }
@@ -57,22 +41,15 @@ class LinuxFormat{
   Future<String> getbyPtxt(String command, String lineString, String type) async {
     String result;
     int line = int.parse(lineString);
-
-    switch (type) {
-      case "FILE":
-        await linuxCommand.readFile(command).then((value) => result = value);
-        break;
-      case "CMD":
-        await linuxCommand.commandShell(command).then((value) => result = value);
-        break;
-    }
+    
+    result = await linuxCommand.getResult(command, type);
 
     var txt = result.split("\n").toList();
 
     return txt[line - 1];
   }
 
-  Map<String, dynamic> FormatJson(String txt){
+  Map<String, dynamic> formatJson(String txt){
     String json = "{\n";
 
     var list = txt.split("\n");
@@ -89,6 +66,7 @@ class LinuxFormat{
       if (list2.asMap().containsKey(1)) {
         //list2[1] = list2[1].replaceAll(new RegExp(r"^ *"), '');
         list2[1] = list2[1].replaceAll(new RegExp(r"^\s*"), '');
+        list2[1] = list2[1].replaceAll(new RegExp(r"\s*$"), '');
 
         if (n < list.length) {
           json += "\"" + list2[0] + "\": \"" + list2[1] + "\",\n";
