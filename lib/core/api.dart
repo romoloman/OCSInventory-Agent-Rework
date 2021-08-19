@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:io' show Platform;
 
+import 'package:ocs_agent/core/log.dart';
+
 import 'config.dart';
 import 'inventory/linux/commands.dart';
 import 'inventory/linux/format.dart';
@@ -16,6 +18,7 @@ import 'package:http/http.dart' as http;
 class Api{
   Config config;
   JsonUtils jsonUtils;
+  Logger logger;
   
   LinuxFormat linuxFormat;
   LinuxCommand linuxCommand;
@@ -37,6 +40,7 @@ class Api{
     this.windowsCommand = new WindowsCommand();
     this.macosFormat = new MacOSFormat();
     this.macosCommand = new MacOSCommand();
+    this.logger = new Logger();
     this.url = config.getInventoryConfig("url");
   }
 
@@ -83,7 +87,7 @@ class Api{
     );
 
     if (response.statusCode != 200){
-      print("Error");
+      logger.error("Error");
     }
   }
 
@@ -125,10 +129,10 @@ class Api{
     Map<String, dynamic> template = config.getTemplate();
 
     if (template == null){
-      print("Template is empty");
+      logger.error("Template is empty");
     } else {
       var value = await this.getInventoryResult(template, template["os"]);
-      print("inventory 2 : $value");
+      logger.info("inventory 2 : $value");
       this.sendInventory(value);
     }
   }
@@ -143,7 +147,7 @@ class Api{
     } else if (template["os"] == "MAC" && Platform.isMacOS) {
       format = this.macosFormat;
     } else {
-      print("error");
+      logger.error("Error");
     }
 
     Map<String, dynamic> inventory = new Map();
@@ -157,22 +161,15 @@ class Api{
         String valueTarget;
         switch (section['retrival_output']) {
           case "TBLE":
-            print("table");
             valueTarget = await format.getbyArray(section["target"], field["retrival_value"], section['retrival_method']);
-            print(valueTarget);
             break;
           case "JSON":
-            print("json");
             valueTarget = await format.getbyJson(section["target"], field["retrival_value"], section['retrival_method']);
-            print(valueTarget);
             break;
           case "PTXT":
-            print("texte");
             valueTarget = await format.getbyPtxt(section["target"], field["retrival_value"], section['retrival_method']);
-            print(valueTarget);
             break;
           default:
-            print("error");
             valueTarget = null;
             break;
         }
@@ -182,13 +179,4 @@ class Api{
 
     return inventory;
   }
-}
-
-void main (List<String> args) async {
-  Api api = new Api();
-
-  //api.generateToken();
-  //api.getTemplate(1);
-  await api.getInventory();
-  print("fait !");
 }
