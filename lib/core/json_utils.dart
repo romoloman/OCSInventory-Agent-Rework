@@ -2,9 +2,10 @@ import 'dart:io';
 import 'dart:convert';
 
 
+/// functions utils for json management.
 class JsonUtils{
 
-  /// Return all Json data.
+  /// Return all Json data from [file].
   Map<String, dynamic> getContentFromFile(File file){
     try {
       var jsonContent = file.readAsStringSync();
@@ -16,7 +17,7 @@ class JsonUtils{
     }
   }
 
-  /// Return specific value from Json key.
+  /// Return specific [key] from Json [file].
   dynamic getContentFromFileByKey(File file, String key){
     try {
       var jsonContent = file.readAsStringSync();
@@ -28,7 +29,7 @@ class JsonUtils{
     }
   }
 
-  /// Return specific value from Json key.
+  /// Return specific [key] from Json [str].
   dynamic getContentFromStringByKey(String str, String key){
     try {
       Map<String, dynamic> json = jsonDecode(str);
@@ -39,7 +40,7 @@ class JsonUtils{
     }
   }
 
-  /// Set new value from key in Json file.
+  /// Set new [_value] from [_index] in Json [file].
   String setContentFromFile(File file, String _index, String _value){
       var jsonContent = file.readAsStringSync();
       Map<String, dynamic> json = jsonDecode(jsonContent);
@@ -52,7 +53,7 @@ class JsonUtils{
       return serializeJson(file, json);
   }
 
-  /// Serialize and write Json.
+  /// Serialize and write [file] with [json].
   String serializeJson(File file, Map<String, dynamic> json){
     String str = "";
     try {

@@ -2,13 +2,16 @@ import 'dart:convert';
 
 import 'package:ocs_agent/core/inventory/windows/commands.dart';
 
+/// Format command result by type for Windows.
 class WindowsFormat{
   WindowsCommand windowsCommand;
 
+  /// Constructor.
   WindowsFormat() {
     this.windowsCommand = new WindowsCommand();
   }
 
+  /// get array [indexString] of [command] by [type].
   Future<String> getbyArray(String command, String indexString, String type) async {
     String result;
     int index = int.parse(indexString);
@@ -40,6 +43,7 @@ class WindowsFormat{
     });
   }
 
+  /// get Json [key] of [command] result in terms of [type].
   Future<String> getbyJson(String command, String key, String type) async {
     String result;
     
@@ -60,6 +64,7 @@ class WindowsFormat{
     return json[key];
   }
 
+  /// Get text [lineString] of [command] result in term of [type].
   Future<String> getbyPtxt(String command, String lineString, String type) async {
     String result;
     int line = int.parse(lineString);
@@ -81,6 +86,7 @@ class WindowsFormat{
     return txt[line - 1];
   }
 
+  /// format result [txt] to json.
   Map<String, dynamic> FormatJson(String txt){
     String json = "{\r\n";
 

@@ -2,13 +2,16 @@ import 'dart:convert';
 
 import 'package:ocs_agent/core/inventory/linux/commands.dart';
 
+/// Format command result by type for Linux.
 class LinuxFormat{
   LinuxCommand linuxCommand;
 
+  /// Constructor.
   LinuxFormat() {
     this.linuxCommand = new LinuxCommand();
   }
 
+  /// get array [indexString] of [command] by [type].
   Future<String> getbyArray(String command, String indexString, String type) async {
     String result;
     int index = int.parse(indexString);
@@ -30,6 +33,7 @@ class LinuxFormat{
     });
   }
 
+  /// get Json [key] of [command] result in terms of [type].
   Future<String> getbyJson(String command, String key, String type) async {
     String result = await linuxCommand.getResult(command, type);
 
@@ -38,6 +42,7 @@ class LinuxFormat{
     return json[key];
   }
 
+  /// Get text [lineString] of [command] result in term of [type].
   Future<String> getbyPtxt(String command, String lineString, String type) async {
     String result;
     int line = int.parse(lineString);
@@ -49,6 +54,7 @@ class LinuxFormat{
     return txt[line - 1];
   }
 
+  /// format result [txt] to json.
   Map<String, dynamic> formatJson(String txt){
     String json = "{\n";
 

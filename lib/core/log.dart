@@ -3,11 +3,13 @@ import 'dart:io';
 import 'package:intl/intl.dart';
 import 'package:ocs_agent/core/config.dart';
 
+/// Insert log in console or file if configured in inventory.json.
 class Logger {
   bool _isFile;
   File file;
   DateFormat dateFormat;
 
+  /// Constructor.
   Logger() {
     Config conf = Config();
     _isFile = (conf.getInventoryConfig("log_file").toLowerCase() == 'true');
@@ -19,6 +21,7 @@ class Logger {
     dateFormat = DateFormat('yyyy-MM-dd H:m:s');
   }
 
+  /// print info message.
   void info(String info){
     var now = DateTime.now();
     String date = dateFormat.format(now);
@@ -30,6 +33,7 @@ class Logger {
     }
   }
 
+  /// print warning message.
   void warning(String warning){
     var now = DateTime.now();
     String date = dateFormat.format(now);
@@ -41,6 +45,7 @@ class Logger {
     }
   }
 
+  /// print error message.
   void error(String error){
     var now = DateTime.now();
     String date = dateFormat.format(now);
@@ -52,6 +57,7 @@ class Logger {
     }
   }
 
+  /// print verbose message.
   void verbose(String verbose){
     var now = DateTime.now();
     String date = dateFormat.format(now);

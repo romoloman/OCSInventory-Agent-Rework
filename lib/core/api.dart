@@ -15,6 +15,7 @@ import 'json_utils.dart';
 
 import 'package:http/http.dart' as http;
 
+/// This class communicate with the server.
 class Api{
   Config config;
   JsonUtils jsonUtils;
@@ -31,6 +32,7 @@ class Api{
 
   var url;
 
+  /// Constructor.
   Api(){
     this.config = new Config();
     this.jsonUtils = new JsonUtils();
@@ -44,6 +46,8 @@ class Api{
     this.url = config.getInventoryConfig("url");
   }
 
+  /// Send to Api the username and password and
+  /// save it in inventory.json.
   void generateToken() async {
     String username = config.getInventoryConfig("username");
     String password = config.getInventoryConfig("password");
@@ -64,6 +68,7 @@ class Api{
     }
   }
 
+  /// Check if api is working and generate token if not.
   void apiCheck() async {
     var url = Uri.parse(this.url);
 
@@ -77,6 +82,7 @@ class Api{
     }
   }
 
+  /// Send [body] to api /asset/bases.
   void sendInventory(Map<String, dynamic> body) async {
     var url = Uri.parse(this.url + "/asset/bases/");
 
@@ -90,7 +96,8 @@ class Api{
       logger.error("Error");
     }
   }
-
+  
+  /// return header in json format.
   Map<String, String> getHeader(){
     String token = config.getInventoryConfig("token");
 
@@ -100,6 +107,7 @@ class Api{
     };
   }
 
+  /// Get and generate template with his [id].
   void getTemplate(id) async {
     var urlTemplates = Uri.parse(this.url + "/templates/$id/");
     var urlSections = Uri.parse(this.url + "/sections/");
@@ -125,6 +133,8 @@ class Api{
     }
   }
 
+  /// Check if the template is not empty, get all informations from template 
+  /// and send inventory.
   getInventory() async {
     Map<String, dynamic> template = config.getTemplate();
 
@@ -137,6 +147,8 @@ class Api{
     }
   }
 
+  /// Get all informations present in the [template] from the computer 
+  /// with a [os] verification and format it in json.
   Future<Map<String, dynamic>> getInventoryResult(Map<String, dynamic> template, String os) async{
     var format;
 

@@ -1,6 +1,8 @@
 import 'dart:io';
 
+/// Class for execute command on Windows.
 class WindowsCommand {
+  /// Execute [commandLine] to cmd.
   Future<String> commandCmd(String commandLine) async {
     List<String> args = commandLine.split(" ");
     String command = args[0];
@@ -14,6 +16,7 @@ class WindowsCommand {
     return process.stdout;
   }
   
+  /// Execute [commandLine] to powershell.
   Future<String> commandPowershell(String commandLine) async {
     List<String> args = commandLine.split(" ");
     String command = "powershell.exe";
@@ -23,6 +26,7 @@ class WindowsCommand {
     return process.stdout;
   }
 
+  /// Return [path] file content.
   Future<String> readFile(String path) async {
     var process = await Process.run("type", [path]);
 

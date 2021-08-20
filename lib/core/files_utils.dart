@@ -1,6 +1,8 @@
 import 'dart:io';
 
+/// functions utils for files management.
 class FilesUtils{
+  /// Return file by [filename].
   File getFile(String filename){
     try{
       return File(filename);
@@ -10,6 +12,7 @@ class FilesUtils{
     }
   }
 
+  /// add [data] to [file].
   void writeFile(File file, String data){
     try{
       file.writeAsStringSync(data);
@@ -18,6 +21,7 @@ class FilesUtils{
     }
   }
 
+  /// Try to rewrite a [file] with [data] and apply ancient text if failed.
   void rewriteFile(File file, String data){
     String backup = file.readAsStringSync();
     try{
