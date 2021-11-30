@@ -2,7 +2,6 @@ import 'dart:io';
 
 /// Class for execute command on linux.
 class LinuxCommand {
-
   /// Execute [commandLine] to Shell.
   Future<String> commandShell(String commandLine) async {
     List<String> args = commandLine.split(" ");
@@ -27,6 +26,7 @@ class LinuxCommand {
   }
 
   /// Execute or read [command] in terms of [type].
+  // ignore: missing_return
   Future<String> getResult(String command, String type) async {
     switch (type) {
       case "FILE":
@@ -37,7 +37,6 @@ class LinuxCommand {
         break;
       case "BASH":
         return await this.commandShell(command);
-        break;
     }
   }
 }
