@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:ocs_agent/core/inventory/windows/commands.dart';
 
 /// Format command result by type for Windows.
-class WindowsFormat{
+class WindowsFormat {
   WindowsCommand windowsCommand;
 
   /// Constructor.
@@ -12,7 +12,9 @@ class WindowsFormat{
   }
 
   /// get array [indexString] of [command] by [type].
-  Future<String> getbyArray(String command, String indexString, String type) async {
+  // ignore: missing_return
+  Future<String> getbyArray(
+      String command, String indexString, String type) async {
     String result;
     int index = int.parse(indexString);
 
@@ -21,10 +23,14 @@ class WindowsFormat{
         await windowsCommand.readFile(command).then((value) => result = value);
         break;
       case "PW":
-        await windowsCommand.commandPowershell(command).then((value) => result = value);
+        await windowsCommand
+            .commandPowershell(command)
+            .then((value) => result = value);
         break;
       case "CMD":
-        await windowsCommand.commandCmd(command).then((value) => result = value);
+        await windowsCommand
+            .commandCmd(command)
+            .then((value) => result = value);
         break;
     }
 
@@ -46,38 +52,47 @@ class WindowsFormat{
   /// get Json [key] of [command] result in terms of [type].
   Future<String> getbyJson(String command, String key, String type) async {
     String result;
-    
+
     switch (type) {
       case "FILE":
         await windowsCommand.readFile(command).then((value) => result = value);
         break;
       case "PW":
-        await windowsCommand.commandPowershell(command).then((value) => result = value);
+        await windowsCommand
+            .commandPowershell(command)
+            .then((value) => result = value);
         break;
       case "CMD":
-        await windowsCommand.commandCmd(command).then((value) => result = value);
+        await windowsCommand
+            .commandCmd(command)
+            .then((value) => result = value);
         break;
     }
 
-    var json = this.FormatJson(result);
+    var json = this.formatJson(result);
 
     return json[key];
   }
 
   /// Get text [lineString] of [command] result in term of [type].
-  Future<String> getbyPtxt(String command, String lineString, String type) async {
+  Future<String> getbyPtxt(
+      String command, String lineString, String type) async {
     String result;
     int line = int.parse(lineString);
-    
+
     switch (type) {
       case "FILE":
         await windowsCommand.readFile(command).then((value) => result = value);
         break;
       case "PW":
-        await windowsCommand.commandPowershell(command).then((value) => result = value);
+        await windowsCommand
+            .commandPowershell(command)
+            .then((value) => result = value);
         break;
       case "CMD":
-        await windowsCommand.commandCmd(command).then((value) => result = value);
+        await windowsCommand
+            .commandCmd(command)
+            .then((value) => result = value);
         break;
     }
 
@@ -87,7 +102,7 @@ class WindowsFormat{
   }
 
   /// format result [txt] to json.
-  Map<String, dynamic> FormatJson(String txt){
+  Map<String, dynamic> formatJson(String txt) {
     String json = "{\r\n";
 
     var list = txt.split("\r\n");
@@ -108,7 +123,7 @@ class WindowsFormat{
         list2[1] = list2[1].replaceAll(new RegExp(r"^ *"), '');
         list2[1] = list2[1].replaceAll(new RegExp(r"^\s*"), '');
 
-        if (list2[1] == null || list2[1] == ""){
+        if (list2[1] == null || list2[1] == "") {
           list2[1] = list2[0];
         }
 
@@ -119,10 +134,9 @@ class WindowsFormat{
         }
       }
       n++;
-
     });
     json += "}";
-    
+
     return jsonDecode(json);
   }
 }
