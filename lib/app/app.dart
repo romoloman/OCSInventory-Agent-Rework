@@ -1,6 +1,11 @@
+import 'dart:io' show Platform;
+
 import 'package:ocs_agent/core/api.dart' as api;
 
 import 'package:ocs_agent/core/inventory/linux/baseLinux.dart' as baseLinux;
+
+import 'package:ocs_agent/core/inventory/macos/baseMacOS.dart' as baseMacOS;
+import 'package:ocs_agent/core/log.dart';
 
 ///in this main section we send the [body] to the asset/bases
 void main(List<String> args) async {
@@ -12,5 +17,11 @@ void main(List<String> args) async {
 
   sendBody.getHeader();
 
-  sendBody.sendInventory(await baseLinux.getBody());
+  if (Platform.isMacOS) {
+    sendBody.sendInventory(await baseMacOS.getBody());
+  } else if (Platform.isLinux) {
+    sendBody.sendInventory(await baseLinux.getBody());
+  } else {
+    sendBody.logger.error("Error Platform");
+  }
 }
