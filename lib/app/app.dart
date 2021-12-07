@@ -4,7 +4,7 @@ import 'package:ocs_agent/core/api.dart' as api;
 
 import 'package:ocs_agent/core/inventory/linux/baseLinux.dart' as baseLinux;
 
-import 'package:ocs_agent/core/inventory/macos/baseMasOS.dart' as baseMacOS;
+import 'package:ocs_agent/core/inventory/macos/baseMacOS.dart' as baseMacOS;
 import 'package:ocs_agent/core/log.dart';
 
 ///in this main section we send the [body] to the asset/bases
