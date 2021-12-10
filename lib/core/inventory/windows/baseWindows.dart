@@ -17,21 +17,6 @@ dynamic getBody() async {
   var getMacAddr;
   getMacAddr = regexMacAddr.stringMatch(macAddr);
 
-  /// Command get to the domain
-  dynamic domain;
-  domain = await windowsCommand.commandCmd("ipconfig");
-
-  /// RegExp to match domain
-  RegExp regexDomain;
-  regexDomain = RegExp(
-    r"([a-z]{0,15}\.[a-z]{0,4})$",
-    multiLine: true,
-  );
-
-  /// Get domain value
-  var getDomain;
-  getDomain = regexDomain.stringMatch(domain);
-
   /// Command get to get the IP
   String ip;
   ip = await windowsCommand.commandCmd("ipconfig");
@@ -59,7 +44,8 @@ dynamic getBody() async {
         "(Get-WMIObject -Class Win32_ComputerSystemProduct).UUID"),
     "srcip": await getIP,
     "srcmac": await getMacAddr,
-    "domain": await getDomain,
+    "domain": await windowsCommand.commandPowershell(
+        "(Get-WMIObject -Class Win32_ComputerSystem).Domain"),
   });
 
   return body;
