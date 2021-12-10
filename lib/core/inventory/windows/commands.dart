@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 /// Class for execute command on Windows.
@@ -15,13 +16,13 @@ class WindowsCommand {
 
     return process.stdout;
   }
-  
+
   /// Execute [commandLine] to powershell.
   Future<String> commandPowershell(String commandLine) async {
     List<String> args = commandLine.split(" ");
     String command = "powershell.exe";
 
-    var process = await Process.run(command, args);
+    var process = await Process.run(command, args, stdoutEncoding: utf8);
 
     return process.stdout;
   }
