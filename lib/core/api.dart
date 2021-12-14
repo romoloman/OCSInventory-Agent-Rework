@@ -75,13 +75,41 @@ class Api {
 
   /// Send [body] to api /asset/bases.
   void sendInventory(Map<String, dynamic> body) async {
-    var url = Uri.parse(this.url + "/asset/bases/");
+    /// Get the UUID of the body
+    String uuidBody = await body['uuid'];
 
-    var response =
-        await http.post(url, headers: this.getHeader(), body: jsonEncode(body));
+    /// [uuid.length - 1] is used to skape the buffer character
+    String uuid = uuidBody.substring(0, uuidBody.length - 1);
+    var urlGet = Uri.parse(this.url + "/asset/bases/?uuid=$uuid");
 
-    if (response.statusCode != 200) {
-      logger.error("Error");
+    /// Get the inventory of this [uuid] in asset bases
+    var responseGet = await http.get(urlGet, headers: this.getHeader());
+
+    if (responseGet.statusCode == 200) {
+      /// test if the body exist in asset bases or not
+      if (responseGet.body.contains(uuid)) {
+        /// Get the ID
+        var getID = jsonDecode(responseGet.body);
+        var id = getID[0]['id'];
+        var urlUpdate = Uri.parse(this.url + "/asset/bases/$id/");
+        var responseUpdate = await http.put(urlUpdate,
+            headers: this.getHeader(), body: jsonEncode(body));
+        if (responseUpdate.statusCode != 200) {
+          logger.error("Error to update body");
+        } else {
+          logger.info("Inventory updating");
+        }
+      } else {
+        var urlPost = Uri.parse(this.url + "/asset/bases/");
+        var responsePost = await http.post(urlPost,
+            headers: this.getHeader(), body: jsonEncode(body));
+
+        if (responsePost.statusCode != 200) {
+          logger.error("Error to send body");
+        } else {
+          logger.info("Inventory sending");
+        }
+      }
     }
   }
 
@@ -153,7 +181,7 @@ class Api {
     } else if (template["os"] == "MAC" && Platform.isMacOS) {
       format = this.macosFormat;
     } else {
-      logger.error("Error");
+      logger.error("Error to get the result");
     }
 
     Map<String, dynamic> inventory = new Map();
