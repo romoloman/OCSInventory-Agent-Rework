@@ -1,11 +1,11 @@
 {
-	"url": "https://url.inventory",
-	"token": "Token",
-	"data_dir": "null",
-	"prolog_freq": "1",
-	"log_level": "0",
-	"log_file": "false",
-	"log_filename": "null",
-	"username": "username",
-	"password": "password"
+  "url": "https://url.inventory",
+  "token": "Token",
+  "data_dir": "null",
+  "prolog_freq": "1",
+  "log_level": "0",
+  "log_file": "false",
+  "log_filename": "null",
+  "username": "username",
+  "password": "password"
 }
