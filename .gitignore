@@ -8,6 +8,7 @@
 .buildlog/
 .history
 .svn/
+.directory
 
 # IntelliJ related
 *.iml
@@ -45,3 +46,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# GH Actions
+report/
