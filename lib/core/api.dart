@@ -172,12 +172,16 @@ class Api {
   int getIdTemplate() {
     Map<String, dynamic> template = config.getTemplate();
     var idTemplate;
-    if (template != null) {
+    if (template.isNotEmpty) {
       idTemplate = template["id"];
     } else {
-      logger.error("ID Template is null");
+      idTemplate = config.getInventoryConfig('template_id');
     }
-    return idTemplate;
+    if (idTemplate is int) {
+      return idTemplate;
+    } else {
+      return int.parse(idTemplate);
+    }
   }
 
   /// Check if the template is not empty, get all informations from template

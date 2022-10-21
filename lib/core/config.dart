@@ -48,7 +48,12 @@ class Config{
 
   /// return [key] content in inventory file.
   String getInventoryConfig(String key){
-    return jsonUtils.getContentFromFileByKey(inventory, key);
+    var returnValue = jsonUtils.getContentFromFileByKey(inventory, key);
+    if (returnValue is int){
+      return returnValue.toString();
+    } else {
+      return returnValue;
+    }
   }
 
   /// Update inventory config file by [_index] and [_value].
