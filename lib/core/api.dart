@@ -184,9 +184,40 @@ class Api {
     }
   }
 
+  /// Find template if agent hstatusCodeasn't one
+  Future<void> findTemplate() async {
+    // Find OS 
+    var os;
+    if (Platform.isMacOS) {
+      os = "MAC";
+    } else if (Platform.isLinux) {
+      os = "LIN";
+    } else if (Platform.isWindows) {
+      os = "WIN";
+    } else {
+      logger.error("What is your OS ?");
+    }
+
+    var url = Uri.parse(this.url + "/templates?os=" + os);
+    var response = await http.get(url, headers: this.getHeader());
+
+    if (response.statusCode == 200) {
+      var templates = json.decode(response.body);
+      var id = 1000000;
+
+      templates.forEach((t) {
+        if (id > t['id']) {
+          id = t['id'];
+        }
+      });
+      print(id);
+      this.getTemplate(id);
+    }
+  }
+
   /// Check if the template is not empty, get all informations from template
   /// and send inventory.
-  getInventory() async {
+  Future<void> getInventory() async {
     Map<String, dynamic> template = config.getTemplate();
 
     if (template == null) {

@@ -34,7 +34,10 @@ void main(List<String> args) async {
 
   sendBody.getHeader();
 
-  sendBody.getTemplate(sendBody.getIdTemplate());
+  /* var id = sendBody.getIdTemplate();
+  sendBody.getTemplate(id); */
+
+  await sendBody.findTemplate();
 
   if (Platform.isMacOS) {
     sendBody.sendInventory(await baseMacOS.getBody());
@@ -46,5 +49,5 @@ void main(List<String> args) async {
     sendBody.logger.error('Error Platform');
   }
 
-  sendBody.getInventory();
+  await sendBody.getInventory();
 }
