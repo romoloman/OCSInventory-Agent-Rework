@@ -79,6 +79,8 @@ class LinuxFormat {
 
     var list = txt.split("\n");
     list.removeWhere((element) => element == "");
+    list.removeWhere((element) => element == "{");
+    list.removeWhere((element) => element == "}");
 
     int n = 1;
 
@@ -93,10 +95,25 @@ class LinuxFormat {
         list2[1] = list2[1].replaceAll(new RegExp(r"^\s*"), '');
         list2[1] = list2[1].replaceAll(new RegExp(r"\s*$"), '');
 
-        if (n < list.length) {
-          json += "\"" + list2[0] + "\": \"" + list2[1] + "\",\n";
+        String sep1;
+        String sep2;
+
+        if (list2[0].contains("\"")) {
+          sep1 = "";
         } else {
-          json += "\"" + list2[0] + "\": \"" + list2[1] + "\"\n";
+          sep1 = "\"";
+        }
+
+        if (list2[1].contains("\"")) {
+          sep2 = "";
+        } else {
+          sep2 = "\"";
+        }
+
+        if (n < list.length) {
+          json += sep1 + list2[0] + "$sep1: $sep2" + list2[1] + "$sep2,\n";
+        } else {
+          json += sep1 + list2[0] + "$sep1: $sep2" + list2[1] + "$sep2\n";
         }
       }
       n++;
