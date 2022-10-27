@@ -27,50 +27,52 @@ class LinuxFormat {
     this.linuxCommand = new LinuxCommand();
   }
 
-  /// get array [indexString] of [command] by [type].
-  // ignore: missing_return
-  Future<String> getbyArray(
-      String command, String indexString, String type) async {
-    String result;
-    int index = int.parse(indexString);
-
-    result = await linuxCommand.getResult(command, type);
-
-    List<String> list = result.split("\n");
+  /// get result of [resultCommand] for each [fields].
+  List<dynamic> getByArray(List<dynamic> fields, String resultCommand) {
+    List<String> list = resultCommand.split("\n");
     list.removeAt(0);
+    List<dynamic> inventory = [];
 
     list.forEach((element) {
       var list2 = element.split(" ");
       list2.removeWhere((element2) => element2 == "");
+      Map<String, dynamic> subInventory = new Map();
 
-      if (list2.asMap().containsKey(index)) {
-        return list2[index];
-      } else {
-        return null;
+      for (var field in fields) {
+        int index = int.parse(field["retrival_value"]);
+
+        if (list2.asMap().containsKey(index)) {
+          subInventory.putIfAbsent(field['name'], () => list2[index]);
+        } else {
+          subInventory.putIfAbsent(field['name'], () => "null");
+        }
       }
+      inventory.add(subInventory);
     });
+    return inventory;
   }
 
-  /// get Json [key] of [command] result in terms of [type].
-  Future<String> getbyJson(String command, String key, String type) async {
-    String result = await linuxCommand.getResult(command, type);
+  /// get result of [resultCommand] for each [fields].
+  Map<String, dynamic> getByJson(List<dynamic> fields, String resultCommand) {
+    Map<String, dynamic> subInventory = new Map();
+    var json = this.formatJson(resultCommand);
 
-    var json = this.formatJson(result);
-
-    return json[key];
+    for (var field in fields) {
+      subInventory.putIfAbsent(field['name'], () => json[field['retrival_value']]);
+    }
+    return subInventory;
   }
 
-  /// Get text [lineString] of [command] result in term of [type].
-  Future<String> getbyPtxt(
-      String command, String lineString, String type) async {
-    String result;
-    int line = int.parse(lineString);
+  /// get result of [resultCommand] for each [fields].
+  Map<String, dynamic> getByPtxt(List<dynamic> fields, String resultCommand) {
+    Map<String, dynamic> subInventory = new Map();
+    var txt = resultCommand.split("\n").toList();
 
-    result = await linuxCommand.getResult(command, type);
-
-    var txt = result.split("\n").toList();
-
-    return txt[line - 1];
+    for (var field in fields) {
+      int line = int.parse(field['retrival_value']);
+      subInventory.putIfAbsent(field['name'], () => txt[line - 1]);
+    }
+    return subInventory;
   }
 
   /// format result [txt] to json.

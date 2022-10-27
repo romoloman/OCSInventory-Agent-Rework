@@ -210,7 +210,6 @@ class Api {
           id = t['id'];
         }
       });
-      print(id);
       this.getTemplate(id);
     }
   }
@@ -234,13 +233,17 @@ class Api {
   Future<Map<String, dynamic>> getInventoryResult(
       Map<String, dynamic> template, String os) async {
     var format;
+    var command;
 
     if (os == "LIN") {
       format = this.linuxFormat;
+      command = this.linuxCommand;
     } else if (template["os"] == "WIN" && Platform.isWindows) {
       format = this.windowsFormat;
+      command = this.windowsCommand;
     } else if (template["os"] == "MAC" && Platform.isMacOS) {
       format = this.macosFormat;
+      command = this.macosCommand;
     } else {
       logger.error("Error to get the result");
     }
@@ -250,31 +253,29 @@ class Api {
     List<dynamic> sections = template['sections'];
 
     for (var section in sections) {
-      List<dynamic> fields = section['fields'];
+      String result = await command.getResult(section["target"], section['retrival_method']);
+      var valueTarget;
 
-      for (var field in fields) {
-        String valueTarget;
-        switch (section['retrival_output']) {
-          case "TBLE":
-            valueTarget = await format.getbyArray(section["target"],
-                field["retrival_value"], section['retrival_method']);
-            break;
-          case "JSON":
-            valueTarget = await format.getbyJson(section["target"],
-                field["retrival_value"], section['retrival_method']);
-            break;
-          case "PTXT":
-            valueTarget = await format.getbyPtxt(section["target"],
-                field["retrival_value"], section['retrival_method']);
-            break;
-          default:
-            valueTarget = null;
-            break;
-        }
-        inventory.putIfAbsent(field['name'], () => valueTarget);
+      switch (section['retrival_output']) {
+        case "TBLE":
+          valueTarget = format.getByArray(section["fields"],
+              result);
+          break;
+        case "JSON":
+          valueTarget = format.getByJson(section["fields"],
+              result);
+          break;
+        case "PTXT":
+          valueTarget = format.getByPtxt(section["fields"],
+              result);
+          break;
+        default:
+          valueTarget = null;
+          break;
       }
+      inventory.putIfAbsent(section['name'], () => valueTarget);
     }
-
+    
     return inventory;
   }
 
