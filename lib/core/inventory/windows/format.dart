@@ -27,94 +27,52 @@ class WindowsFormat {
     this.windowsCommand = new WindowsCommand();
   }
 
-  /// get array [indexString] of [command] by [type].
-  // ignore: missing_return
-  Future<String> getbyArray(
-      String command, String indexString, String type) async {
-    String result;
-    int index = int.parse(indexString);
-
-    switch (type) {
-      case "FILE":
-        await windowsCommand.readFile(command, true).then((value) => result = value);
-        break;
-      case "PW":
-        await windowsCommand
-            .commandPowershell(command, true)
-            .then((value) => result = value);
-        break;
-      case "CMD":
-        await windowsCommand
-            .commandCmd(command, true)
-            .then((value) => result = value);
-        break;
-    }
-
-    List<String> list = result.split("\r\n");
+  /// get result of [resultCommand] for each [fields].
+  List<dynamic> getByArray(List<dynamic> fields, String resultCommand) {
+    List<String> list = resultCommand.split("\n");
     list.removeAt(0);
+    List<dynamic> inventory = [];
 
     list.forEach((element) {
       var list2 = element.split(" ");
       list2.removeWhere((element2) => element2 == "");
+      Map<String, dynamic> subInventory = new Map();
 
-      if (list2.asMap().containsKey(index)) {
-        return list2[index];
-      } else {
-        return null;
+      for (var field in fields) {
+        int index = int.parse(field["retrival_value"]);
+
+        if (list2.asMap().containsKey(index)) {
+          subInventory.putIfAbsent(field['name'], () => list2[index]);
+        } else {
+          subInventory.putIfAbsent(field['name'], () => "null");
+        }
       }
+      inventory.add(subInventory);
     });
+    return inventory;
   }
 
-  /// get Json [key] of [command] result in terms of [type].
-  Future<String> getbyJson(String command, String key, String type) async {
-    String result;
+  /// get result of [resultCommand] for each [fields].
+  Map<String, dynamic> getByJson(List<dynamic> fields, String resultCommand) {
+    Map<String, dynamic> subInventory = new Map();
+    var json = this.formatJson(resultCommand);
 
-    switch (type) {
-      case "FILE":
-        await windowsCommand.readFile(command, true).then((value) => result = value);
-        break;
-      case "PW":
-        await windowsCommand
-            .commandPowershell(command, true)
-            .then((value) => result = value);
-        break;
-      case "CMD":
-        await windowsCommand
-            .commandCmd(command, true)
-            .then((value) => result = value);
-        break;
+    for (var field in fields) {
+      subInventory.putIfAbsent(field['name'], () => json[field['retrival_value']]);
     }
-
-    var json = this.formatJson(result);
-
-    return json[key];
+    return subInventory;
   }
 
-  /// Get text [lineString] of [command] result in term of [type].
-  Future<String> getbyPtxt(
-      String command, String lineString, String type) async {
-    String result;
-    int line = int.parse(lineString);
+  /// get result of [resultCommand] for each [fields].
+  Map<String, dynamic> getByPtxt(List<dynamic> fields, String resultCommand) {
+    Map<String, dynamic> subInventory = new Map();
+    var txt = resultCommand.split("\n").toList();
 
-    switch (type) {
-      case "FILE":
-        await windowsCommand.readFile(command, true).then((value) => result = value);
-        break;
-      case "PW":
-        await windowsCommand
-            .commandPowershell(command, true)
-            .then((value) => result = value);
-        break;
-      case "CMD":
-        await windowsCommand
-            .commandCmd(command, true)
-            .then((value) => result = value);
-        break;
+    for (var field in fields) {
+      int line = int.parse(field['retrival_value']);
+      subInventory.putIfAbsent(field['name'], () => txt[line - 1]);
     }
-
-    var txt = result.split("\r\n").toList();
-
-    return txt[line - 1];
+    return subInventory;
   }
 
   /// format result [txt] to json.

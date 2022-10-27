@@ -75,4 +75,19 @@ class WindowsCommand {
 
     return process;
   }
+
+  /// Execute or read [command] in terms of [type].
+  // ignore: missing_return
+  Future<String> getResult(String command, String type) async {
+    switch (type) {
+      case "FILE":
+        return await this.readFile(command, true);
+        break;
+      case "CMD":
+        return await this.commandCmd(command, true);
+        break;
+      case "PW":
+        return await this.commandPowershell(command, true);
+    }
+  }
 }
