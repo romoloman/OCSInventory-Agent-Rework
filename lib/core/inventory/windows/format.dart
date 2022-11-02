@@ -29,20 +29,17 @@ class WindowsFormat {
 
   /// get result of [resultCommand] for each [fields].
   List<dynamic> getByArray(List<dynamic> fields, String resultCommand) {
-    List<String> list = resultCommand.split("\n");
-    list.removeAt(0);
+    List<Map<String, dynamic>> result = this.formatArray(resultCommand);
     List<dynamic> inventory = [];
 
-    list.forEach((element) {
-      var list2 = element.split(" ");
-      list2.removeWhere((element2) => element2 == "");
+    result.forEach((element) {
       Map<String, dynamic> subInventory = new Map();
 
       for (var field in fields) {
-        int index = int.parse(field["retrival_value"]);
+        String index = field["retrival_value"];
 
-        if (list2.asMap().containsKey(index)) {
-          subInventory.putIfAbsent(field['name'], () => list2[index]);
+        if (element.containsKey(index)) {
+          subInventory.putIfAbsent(field['name'], () => element[index]);
         } else {
           subInventory.putIfAbsent(field['name'], () => "null");
         }
@@ -73,6 +70,46 @@ class WindowsFormat {
       subInventory.putIfAbsent(field['name'], () => txt[line - 1]);
     }
     return subInventory;
+  }
+
+  /// Format [result] text to a list of json.
+  List<Map<String, dynamic>> formatArray(String result) {
+    List<String> list = result.split("\n");
+    String headerLine = list[0];
+    list.removeAt(0);
+    List<String> listIndex = headerLine.split(" ");
+    listIndex.removeWhere((element) => element == "");
+    Map<String, int> mapIndex = new Map<String, int>();
+    List<int> listLines = [];
+    List<Map<String, dynamic>> returnValue = [];
+
+    int max = 0;
+    listIndex.forEach((element) {
+      int index = headerLine.indexOf(element, max);
+      max = index;
+      mapIndex.putIfAbsent(element, () => index);
+      listLines.add(index);
+    });
+
+    list.forEach((element) {
+      Map<String, dynamic> lineJson = new Map<String, dynamic>();
+      mapIndex.forEach((key, value) {
+        int start = listLines[listLines.indexOf(value)];
+        int after;
+        if (listLines.indexOf(value)+1 >= listLines.length) {
+          after = null;
+        } else {
+          after = listLines[listLines.indexOf(value)+1];
+        }
+        String lineValue = element.substring(start, after);
+        lineValue = lineValue.replaceAll(new RegExp(r'[\s]+$'), '');
+
+        lineJson.putIfAbsent(key, () => lineValue);
+      });
+      returnValue.add(lineJson);
+    });
+
+    return returnValue;
   }
 
   /// format result [txt] to json.
