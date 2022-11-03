@@ -22,10 +22,10 @@ import 'dart:convert';
 class JsonUtils{
 
   /// Return all Json data from [file].
-  Map<String, dynamic> getContentFromFile(File file){
+  dynamic getContentFromFile(File file){
     try {
       var jsonContent = file.readAsStringSync();
-      Map<String, dynamic> json = jsonDecode(jsonContent);
+      var json = jsonDecode(jsonContent);
       return json;
     } catch (e) {
       print(e);

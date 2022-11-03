@@ -63,8 +63,8 @@ class Config{
   }
 
   /// Return all content in core config file.
-  String getCoreConfigs(){
-    return jsonUtils.getContentFromFile(core).toString();
+  List<dynamic> getCoreConfigs(){
+    return jsonUtils.getContentFromFile(core);
   }
 
   /// return [key] content in core file.
@@ -76,6 +76,11 @@ class Config{
   void updateCoreConfig(String _index, String _value){
     String str = jsonUtils.setContentFromFile(core, _index, _value);
     filesUtils.rewriteFile(core, str);
+  }
+
+  /// Update all core file.
+  void setCore(String strCore){
+    filesUtils.rewriteFile(core, strCore);
   }
 
   /// return template file in json format.

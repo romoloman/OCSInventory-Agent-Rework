@@ -168,6 +168,25 @@ class Api {
     }
   }
 
+  /// Check if config file exist and save it if not
+  Future<void> checkAndApplyConfig() async {
+    List<dynamic> confFile = this.config.getCoreConfigs();
+
+    if (confFile.isEmpty) {
+      await this.saveConfig();
+    }
+  }
+
+  /// Save the server configs in config/core.json
+  Future<void> saveConfig() async {
+    var urlConfig = Uri.parse(this.url + "/config/");
+    var responseConfig = await http.get(urlConfig, headers: this.getHeader());
+    List<dynamic> config = json.decode(responseConfig.body);
+
+    var encoder = new JsonEncoder.withIndent("\t");
+    this.config.setCore(encoder.convert(config));
+  }
+
   /// Get Template ID
   int getIdTemplate() {
     Map<String, dynamic> template = config.getTemplate();

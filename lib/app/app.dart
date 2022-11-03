@@ -38,6 +38,7 @@ void main(List<String> args) async {
   sendBody.getTemplate(id); */
 
   await sendBody.findTemplate();
+  await sendBody.checkAndApplyConfig();
 
   if (Platform.isMacOS) {
     sendBody.sendInventory(await baseMacOS.getBody());
