@@ -72,6 +72,39 @@ class WindowsFormat {
     return subInventory;
   }
 
+  /// get result of [resultCommand] for each [fields].
+  Map<String, dynamic> getByRegx(List<dynamic> fields, String resultCommand) {
+    Map<String, dynamic> subInventory = new Map();
+    var lines = resultCommand.split("\n").toList();
+
+    for (var line in lines) {
+      for (var field in fields) {
+        var regex = RegExp(field['retrival_value']);
+        if (regex.hasMatch(line)) {
+          var match = regex.firstMatch(line);
+          subInventory.putIfAbsent(field['name'], () => match.group(1));
+        }
+      }
+    }
+    return subInventory;
+  }
+
+  /// get result of [resultCommand] for each [fields].
+  Map<String, dynamic> getByGrep(List<dynamic> fields, String resultCommand) {
+    Map<String, dynamic> subInventory = new Map();
+    var lines = resultCommand.split("\n").toList();
+
+    for (var line in lines) {
+      for (var field in fields) {
+        var grep = field['retrival_value'];
+        if (line.contains(grep)) {
+          subInventory.putIfAbsent(field['name'], () => line.substring(line.indexOf(grep) + grep.length +1));
+        }
+      }
+    }
+    return subInventory;
+  }
+
   /// Format [result] text to a list of json.
   List<Map<String, dynamic>> formatArray(String result) {
     List<String> list = result.split("\n");

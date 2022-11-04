@@ -288,6 +288,14 @@ class Api {
           valueTarget = format.getByPtxt(section["fields"],
               result);
           break;
+        case "REGX":
+          valueTarget = format.getByRegx(section["fields"],
+              result);
+          break;
+        case "GREP":
+          valueTarget = format.getByGrep(section["fields"],
+              result);
+          break;
         default:
           valueTarget = null;
           break;
