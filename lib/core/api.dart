@@ -272,7 +272,7 @@ class Api {
     List<dynamic> sections = template['sections'];
 
     for (var section in sections) {
-      String result = await command.getResult(section["target"], section['retrival_method']);
+      Map<String, dynamic> result = await this.getResult(os, template, section);
       var valueTarget;
 
       switch (section['retrival_output']) {
@@ -285,7 +285,7 @@ class Api {
               result);
           break;
         case "PTXT":
-          valueTarget = format.getByPtxt(section["fields"],
+          valueTarget = await format.getByPtxt(section["fields"],
               result);
           break;
         case "REGX":
@@ -306,6 +306,42 @@ class Api {
     return inventory;
   }
 
+  Future<Map<String, dynamic>> getResult(String os, Map<String, dynamic> template, Map<String, dynamic> section) async {
+    Map<String, dynamic> result = new Map<String, dynamic>();
+    var command;
+
+    if (os == "LIN") {
+      command = this.linuxCommand;
+    } else if (template["os"] == "WIN" && Platform.isWindows) {
+      command = this.windowsCommand;
+    } else if (template["os"] == "MAC" && Platform.isMacOS) {
+      command = this.macosCommand;
+    } else {
+      logger.error("Error to get the result");
+    }
+
+    Map<String, dynamic> main = new Map<String, dynamic>();
+
+    String mainRes = await command.getResult(section["target"], section['retrival_method']);
+    main.putIfAbsent('result', () => mainRes);
+    main.putIfAbsent('type', () => section['retrival_output']);
+    main.putIfAbsent('name', () => section['name']);
+    result.putIfAbsent('main', () => main);
+    List<dynamic> test = section['fields'];
+    var fieldOver = test.where((element) => element["override_target"]);
+
+    for (var field in fieldOver) {
+      Map<String, dynamic> sub = new Map<String, dynamic>();
+      String res = await command.getResult(field["new_target"], field['retrival_method']);
+      sub.putIfAbsent('result', () => res);
+      sub.putIfAbsent('type', () => field['retrival_output']);
+      sub.putIfAbsent('name', () => field['name']);
+      result.putIfAbsent(field['name'], () => sub);
+    }
+
+    return result;
+  }
+
   /// Send [Template] to api /asset/bases.
   void sendTemplate(Map<String, dynamic> template) async {
     /// [idTemplate] proved to the template [getInventory()]
@@ -317,6 +353,7 @@ class Api {
 
     /// Get ID the inventory to patch
     var getTemplate = jsonDecode(responseGetTemplate.body);
+    print(responseGetTemplate.statusCode);
     var idToPatch = getTemplate[0]['id'];
 
     /// Set a PATCH request to send the template inventory
