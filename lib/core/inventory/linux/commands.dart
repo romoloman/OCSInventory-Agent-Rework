@@ -27,10 +27,13 @@ class LinuxCommand {
       args = [];
     }
 
+    Map<String, String> ev = new Map<String, String>();
+    ev.putIfAbsent("LANG", () => "C");
+
     var process;
     if (normalization) {
       String processNormalization;
-      await Process.run(command, args)
+      await Process.run(command, args, environment: ev)
           .then((value) => processNormalization = value.stdout);
       process = processNormalization.trim();
     } else {
