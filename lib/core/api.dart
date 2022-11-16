@@ -242,7 +242,7 @@ class Api {
       logger.error("Template is empty");
     } else {
       var value = await this.getInventoryResult(template, template["os"]);
-      logger.info("inventory 2 : $value");
+      logger.info("inventory 2 : " + jsonEncode(value));
       this.sendTemplate(value);
     }
   }
@@ -321,11 +321,16 @@ class Api {
     }
 
     Map<String, dynamic> main = new Map<String, dynamic>();
+    Map<String, dynamic> options = new Map<String, dynamic>();
+    if (section['options'] != null) {
+      options = section['options'];
+    }
 
     String mainRes = await command.getResult(section["target"], section['retrival_method']);
     main.putIfAbsent('result', () => mainRes);
     main.putIfAbsent('type', () => section['retrival_output']);
     main.putIfAbsent('name', () => section['name']);
+    main.putIfAbsent('options', () => options);
     result.putIfAbsent('main', () => main);
     List<dynamic> test = section['fields'];
     var fieldOver = test.where((element) => element["override_target"]);

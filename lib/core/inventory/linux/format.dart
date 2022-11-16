@@ -29,13 +29,14 @@ class LinuxFormat {
 
   /// get result of [resultCommand] for each [fields].
   List<dynamic> getByArray(List<dynamic> fields, Map<String, dynamic> resultCommand) {
-    List<Map<String, dynamic>> result = this.formatArray(resultCommand['main']['result']);
+    //print(resultCommand);
+    List<Map<String, dynamic>> result = this.formatArray(resultCommand['main']['result'], resultCommand['main']['options']);
     List<dynamic> inventory = [];
 
     result.forEach((element) {
       Map<String, dynamic> subInventory = new Map();
 
-      print(result);
+      //print(result);
 
       for (var field in fields) {
         if (resultCommand.containsKey(field['name'])) {
@@ -168,43 +169,65 @@ class LinuxFormat {
   }
 
   /// Format [result] text to a list of json.
-  List<Map<String, dynamic>> formatArray(String result) {
+  List<Map<String, dynamic>> formatArray(String result, Map<String, dynamic> options) {
     List<String> list = result.split("\n");
-    String headerLine = list[0];
-    list.removeAt(0);
-    List<String> listIndex = headerLine.split(" ");
-    listIndex.removeWhere((element) => element == "");
+
+    String headerLine;
+    List<String> listIndex;
+
+    if (options == null || (options.containsKey("use_index") && options['use_index'])) {
+      headerLine = list[0];
+      list.removeAt(0);
+      listIndex = headerLine.split(" ");
+      listIndex.removeWhere((element) => element == "");
+    } else {
+      list.removeAt(0);
+    }
+
+    //print(headerLine);
     Map<String, int> mapIndex = new Map<String, int>();
     List<int> listLines = [];
     List<Map<String, dynamic>> returnValue = [];
 
-    int max = 0;
-    listIndex.forEach((element) {
-      int index = headerLine.indexOf(element, max);
-      max = index;
-      mapIndex.putIfAbsent(element, () => index);
-      listLines.add(index);
-    });
-
-    list.forEach((element) {
-      Map<String, dynamic> lineJson = new Map<String, dynamic>();
-      print(element);
-      print(mapIndex);
-      mapIndex.forEach((key, value) {
-        int start = listLines[listLines.indexOf(value)];
-        int after;
-        if (listLines.indexOf(value)+1 >= listLines.length) {
-          after = null;
-        } else {
-          after = listLines[listLines.indexOf(value)+1];
-        }
-        String lineValue = element.substring(start, after);
-        lineValue = lineValue.replaceAll(new RegExp(r'[\s]+$'), '');
-
-        lineJson.putIfAbsent(key, () => lineValue);
+    if (options == null || (options.containsKey("use_index") && options['use_index'])) {
+      int max = 0;
+      listIndex.forEach((element) {
+        int index = headerLine.indexOf(element, max);
+        max = index;
+        mapIndex.putIfAbsent(element, () => index);
+        listLines.add(index);
       });
-      returnValue.add(lineJson);
-    });
+
+      list.forEach((element) {
+        Map<String, dynamic> lineJson = new Map<String, dynamic>();
+        mapIndex.forEach((key, value) {
+          int start = listLines[listLines.indexOf(value)];
+          int after;
+          if (listLines.indexOf(value)+1 >= listLines.length) {
+            after = null;
+          } else {
+            after = listLines[listLines.indexOf(value)+1];
+          }
+          String lineValue = element.substring(start, after);
+          lineValue = lineValue.replaceAll(new RegExp(r'[\s]+$'), '');
+
+          lineJson.putIfAbsent(key, () => lineValue);
+        });
+        returnValue.add(lineJson);
+      });
+    } else {
+      list.forEach((element) {
+        Map<String, dynamic> lineJson = new Map<String, dynamic>();
+        var test = element.split(' ');
+        test.removeWhere((element2) => element2 == "");
+        int index = 0;
+        test.forEach((element) {
+          lineJson.putIfAbsent(index.toString(), () => element);
+          index++;
+        });
+        returnValue.add(lineJson);
+      });
+    }
 
     return returnValue;
   }
