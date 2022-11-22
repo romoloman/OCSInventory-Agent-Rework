@@ -88,10 +88,23 @@ class LinuxFormat {
   }
 
   /// get result of [resultCommand] for each [fields].
-  Map<String, dynamic> getByRegx(List<dynamic> fields, Map<String, dynamic> resultCommand) {
+  dynamic getByRegx(List<dynamic> fields, Map<String, dynamic> resultCommand) {
     Map<String, dynamic> subInventory = new Map();
     var lines = resultCommand['main']['result'].split("\n").toList();
+    bool multiple = false;
+    var separator;
+    bool haveSeparator = false;
+    bool separate = false;
+    List<dynamic> list = [];
+    if (resultCommand['main']['options'] != null && resultCommand['main']['options'].containsKey('multiple') && resultCommand['main']['options']['multiple']) {
+      multiple = true;
+    }
+    if (resultCommand['main']['options'] != null && resultCommand['main']['options'].containsKey('separator')) {
+      separator = RegExp(resultCommand['main']['options']['separator']);
+      haveSeparator = true;
+    }
 
+    int x = 1;
     for (var line in lines) {
       for (var field in fields) {
         if (resultCommand.containsKey(field['name'])) {
@@ -104,6 +117,30 @@ class LinuxFormat {
           }
         }
       }
+      if (multiple) {
+        if ((separator != null && separator.hasMatch(line) || x == lines.length)) {
+          separate = true;
+        }
+        if (haveSeparator) {
+          if (separate) {
+            if (subInventory.isNotEmpty) {
+              list.add(subInventory);
+              subInventory = new Map();
+            }
+            separate = false;
+          }
+        } else {
+          if (subInventory.isNotEmpty) {
+            list.add(subInventory);
+            subInventory = new Map();
+          }
+        }
+      }
+      x++;
+    }
+
+    if (multiple) {
+      return list;
     }
     return subInventory;
   }
