@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import 'dart:convert';
+
 import 'package:ocs_agent/core/inventory/linux/commands.dart' as command;
 
 ///This fonction return the body for to asset/bases
@@ -37,7 +39,7 @@ dynamic getBody() async {
         (await linuxCommand.commandShell("hostname -I", true)).split(" ")[0],
     "srcmac":
         await linuxCommand.readFile("/sys/class/net/$interface/address", true),
-    "domain": await linuxCommand.commandShell("dnsdomainname", true)
+    "domain": await linuxCommand.commandShell("domainname", true)
   });
 
   return body;

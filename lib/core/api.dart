@@ -168,28 +168,81 @@ class Api {
     }
   }
 
+  /// Check if config file exist and save it if not
+  Future<void> checkAndApplyConfig() async {
+    List<dynamic> confFile = this.config.getCoreConfigs();
+
+    if (confFile.isEmpty) {
+      await this.saveConfig();
+    }
+  }
+
+  /// Save the server configs in config/core.json
+  Future<void> saveConfig() async {
+    var urlConfig = Uri.parse(this.url + "/config/");
+    var responseConfig = await http.get(urlConfig, headers: this.getHeader());
+    List<dynamic> config = json.decode(responseConfig.body);
+
+    var encoder = new JsonEncoder.withIndent("\t");
+    this.config.setCore(encoder.convert(config));
+  }
+
   /// Get Template ID
   int getIdTemplate() {
     Map<String, dynamic> template = config.getTemplate();
     var idTemplate;
-    if (template != null) {
+    if (template.isNotEmpty) {
       idTemplate = template["id"];
     } else {
-      logger.error("ID Template is null");
+      idTemplate = config.getInventoryConfig('template_id');
     }
-    return idTemplate;
+    if (idTemplate is int) {
+      return idTemplate;
+    } else {
+      return int.parse(idTemplate);
+    }
+  }
+
+  /// Find template if agent hstatusCodeasn't one
+  Future<void> findTemplate() async {
+    // Find OS 
+    var os;
+    if (Platform.isMacOS) {
+      os = "MAC";
+    } else if (Platform.isLinux) {
+      os = "LIN";
+    } else if (Platform.isWindows) {
+      os = "WIN";
+    } else {
+      logger.error("What is your OS ?");
+    }
+
+    var url = Uri.parse(this.url + "/templates?os=" + os);
+    var response = await http.get(url, headers: this.getHeader());
+
+    if (response.statusCode == 200) {
+      var templates = json.decode(response.body);
+      var id = 1000000;
+
+      templates.forEach((t) {
+        if (id > t['id']) {
+          id = t['id'];
+        }
+      });
+      this.getTemplate(id);
+    }
   }
 
   /// Check if the template is not empty, get all informations from template
   /// and send inventory.
-  getInventory() async {
+  Future<void> getInventory() async {
     Map<String, dynamic> template = config.getTemplate();
 
     if (template == null) {
       logger.error("Template is empty");
     } else {
       var value = await this.getInventoryResult(template, template["os"]);
-      logger.info("inventory 2 : $value");
+      logger.info("inventory 2 : " + jsonEncode(value));
       this.sendTemplate(value);
     }
   }
@@ -199,13 +252,17 @@ class Api {
   Future<Map<String, dynamic>> getInventoryResult(
       Map<String, dynamic> template, String os) async {
     var format;
+    var command;
 
     if (os == "LIN") {
       format = this.linuxFormat;
+      command = this.linuxCommand;
     } else if (template["os"] == "WIN" && Platform.isWindows) {
       format = this.windowsFormat;
+      command = this.windowsCommand;
     } else if (template["os"] == "MAC" && Platform.isMacOS) {
       format = this.macosFormat;
+      command = this.macosCommand;
     } else {
       logger.error("Error to get the result");
     }
@@ -215,32 +272,79 @@ class Api {
     List<dynamic> sections = template['sections'];
 
     for (var section in sections) {
-      List<dynamic> fields = section['fields'];
+      Map<String, dynamic> result = await this.getResult(os, template, section);
+      var valueTarget;
 
-      for (var field in fields) {
-        String valueTarget;
-        switch (section['retrival_output']) {
-          case "TBLE":
-            valueTarget = await format.getbyArray(section["target"],
-                field["retrival_value"], section['retrival_method']);
-            break;
-          case "JSON":
-            valueTarget = await format.getbyJson(section["target"],
-                field["retrival_value"], section['retrival_method']);
-            break;
-          case "PTXT":
-            valueTarget = await format.getbyPtxt(section["target"],
-                field["retrival_value"], section['retrival_method']);
-            break;
-          default:
-            valueTarget = null;
-            break;
-        }
-        inventory.putIfAbsent(field['name'], () => valueTarget);
+      switch (section['retrival_output']) {
+        case "TBLE":
+          valueTarget = format.getByArray(section["fields"],
+              result);
+          break;
+        case "JSON":
+          valueTarget = format.getByJson(section["fields"],
+              result);
+          break;
+        case "PTXT":
+          valueTarget = await format.getByPtxt(section["fields"],
+              result);
+          break;
+        case "REGX":
+          valueTarget = format.getByRegx(section["fields"],
+              result);
+          break;
+        case "GREP":
+          valueTarget = format.getByGrep(section["fields"],
+              result);
+          break;
+        default:
+          valueTarget = null;
+          break;
       }
+      inventory.putIfAbsent(section['name'], () => valueTarget);
+    }
+    
+    return inventory;
+  }
+
+  Future<Map<String, dynamic>> getResult(String os, Map<String, dynamic> template, Map<String, dynamic> section) async {
+    Map<String, dynamic> result = new Map<String, dynamic>();
+    var command;
+
+    if (os == "LIN") {
+      command = this.linuxCommand;
+    } else if (template["os"] == "WIN" && Platform.isWindows) {
+      command = this.windowsCommand;
+    } else if (template["os"] == "MAC" && Platform.isMacOS) {
+      command = this.macosCommand;
+    } else {
+      logger.error("Error to get the result");
     }
 
-    return inventory;
+    Map<String, dynamic> main = new Map<String, dynamic>();
+    Map<String, dynamic> options = new Map<String, dynamic>();
+    if (section['options'] != null) {
+      options = section['options'];
+    }
+
+    String mainRes = await command.getResult(section["target"], section['retrival_method']);
+    main.putIfAbsent('result', () => mainRes);
+    main.putIfAbsent('type', () => section['retrival_output']);
+    main.putIfAbsent('name', () => section['name']);
+    main.putIfAbsent('options', () => options);
+    result.putIfAbsent('main', () => main);
+    List<dynamic> test = section['fields'];
+    var fieldOver = test.where((element) => element["override_target"]);
+
+    for (var field in fieldOver) {
+      Map<String, dynamic> sub = new Map<String, dynamic>();
+      String res = await command.getResult(field["new_target"], field['retrival_method']);
+      sub.putIfAbsent('result', () => res);
+      sub.putIfAbsent('type', () => field['retrival_output']);
+      sub.putIfAbsent('name', () => field['name']);
+      result.putIfAbsent(field['name'], () => sub);
+    }
+
+    return result;
   }
 
   /// Send [Template] to api /asset/bases.
@@ -254,6 +358,7 @@ class Api {
 
     /// Get ID the inventory to patch
     var getTemplate = jsonDecode(responseGetTemplate.body);
+    print(responseGetTemplate.statusCode);
     var idToPatch = getTemplate[0]['id'];
 
     /// Set a PATCH request to send the template inventory

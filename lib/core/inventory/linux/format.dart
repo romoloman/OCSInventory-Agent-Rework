@@ -27,50 +27,246 @@ class LinuxFormat {
     this.linuxCommand = new LinuxCommand();
   }
 
-  /// get array [indexString] of [command] by [type].
-  // ignore: missing_return
-  Future<String> getbyArray(
-      String command, String indexString, String type) async {
-    String result;
-    int index = int.parse(indexString);
+  /// get result of [resultCommand] for each [fields].
+  List<dynamic> getByArray(List<dynamic> fields, Map<String, dynamic> resultCommand) {
+    //print(resultCommand);
+    List<Map<String, dynamic>> result = this.formatArray(resultCommand['main']['result'], resultCommand['main']['options']);
+    List<dynamic> inventory = [];
 
-    result = await linuxCommand.getResult(command, type);
+    result.forEach((element) {
+      Map<String, dynamic> subInventory = new Map();
 
-    List<String> list = result.split("\n");
-    list.removeAt(0);
+      //print(result);
 
-    list.forEach((element) {
-      var list2 = element.split(" ");
-      list2.removeWhere((element2) => element2 == "");
+      for (var field in fields) {
+        if (resultCommand.containsKey(field['name'])) {
+          subInventory.putIfAbsent(field['name'], () => this.getResult(field['retrival_output'], resultCommand[field['name']]['result'], field['retrival_value']));
+        } else {
+          String index = field["retrival_value"];
 
-      if (list2.asMap().containsKey(index)) {
-        return list2[index];
-      } else {
-        return null;
+          if (element.containsKey(index)) {
+            subInventory.putIfAbsent(field['name'], () => element[index]);
+          } else {
+            subInventory.putIfAbsent(field['name'], () => "null");
+          }
+        }
       }
+      inventory.add(subInventory);
     });
+    return inventory;
   }
 
-  /// get Json [key] of [command] result in terms of [type].
-  Future<String> getbyJson(String command, String key, String type) async {
-    String result = await linuxCommand.getResult(command, type);
+  /// get result of [resultCommand] for each [fields].
+  Map<String, dynamic> getByJson(List<dynamic> fields, Map<String, dynamic> resultCommand) {
+    Map<String, dynamic> subInventory = new Map();
+    var json = this.formatJson(resultCommand['main']['result']);
 
-    var json = this.formatJson(result);
-
-    return json[key];
+    for (var field in fields) {
+      if (resultCommand.containsKey(field['name'])) {
+        subInventory.putIfAbsent(field['name'], () => this.getResult(field['retrival_output'], resultCommand[field['name']]['result'], field['retrival_value']));
+      } else {
+        subInventory.putIfAbsent(field['name'], () => json[field['retrival_value']]);
+      }
+    }
+    return subInventory;
   }
 
-  /// Get text [lineString] of [command] result in term of [type].
-  Future<String> getbyPtxt(
-      String command, String lineString, String type) async {
-    String result;
-    int line = int.parse(lineString);
+  /// get result of [resultCommand] for each [fields].
+  Future<Map<String, dynamic>> getByPtxt(List<dynamic> fields, Map<String, dynamic> resultCommand) async {
+    Map<String, dynamic> subInventory = new Map();
+    var txt = resultCommand['main']['result'].split("\n").toList();
 
-    result = await linuxCommand.getResult(command, type);
+    for (var field in fields) {
+      if (resultCommand.containsKey(field['name'])) {
+        subInventory.putIfAbsent(field['name'], () => this.getResult(field['retrival_output'], resultCommand[field['name']]['result'], field['retrival_value']));
+      } else {
+        int line = int.parse(field['retrival_value']);
+        subInventory.putIfAbsent(field['name'], () => txt[line - 1]);
+      }
+    }
+    return subInventory;
+  }
 
-    var txt = result.split("\n").toList();
+  /// get result of [resultCommand] for each [fields].
+  dynamic getByRegx(List<dynamic> fields, Map<String, dynamic> resultCommand) {
+    Map<String, dynamic> subInventory = new Map();
+    var lines = resultCommand['main']['result'].split("\n").toList();
+    bool multiple = false;
+    var separator;
+    bool haveSeparator = false;
+    bool separate = false;
+    List<dynamic> list = [];
+    if (resultCommand['main']['options'] != null && resultCommand['main']['options'].containsKey('multiple') && resultCommand['main']['options']['multiple']) {
+      multiple = true;
+    }
+    if (resultCommand['main']['options'] != null && resultCommand['main']['options'].containsKey('separator')) {
+      separator = RegExp(resultCommand['main']['options']['separator']);
+      haveSeparator = true;
+    }
 
-    return txt[line - 1];
+    int x = 1;
+    for (var line in lines) {
+      for (var field in fields) {
+        if (resultCommand.containsKey(field['name'])) {
+          subInventory.putIfAbsent(field['name'], () => this.getResult(field['retrival_output'], resultCommand[field['name']]['result'], field['retrival_value']));
+        } else {
+          var regex = RegExp(field['retrival_value']);
+          if (regex.hasMatch(line)) {
+            var match = regex.firstMatch(line);
+            subInventory.putIfAbsent(field['name'], () => match.group(1));
+          }
+        }
+      }
+      if (multiple) {
+        if ((separator != null && separator.hasMatch(line) || x == lines.length)) {
+          separate = true;
+        }
+        if (haveSeparator) {
+          if (separate) {
+            if (subInventory.isNotEmpty) {
+              list.add(subInventory);
+              subInventory = new Map();
+            }
+            separate = false;
+          }
+        } else {
+          if (subInventory.isNotEmpty) {
+            list.add(subInventory);
+            subInventory = new Map();
+          }
+        }
+      }
+      x++;
+    }
+
+    if (multiple) {
+      return list;
+    }
+    return subInventory;
+  }
+
+  /// get result of [resultCommand] for each [fields].
+  Map<String, dynamic> getByGrep(List<dynamic> fields, Map<String, dynamic> resultCommand) {
+    Map<String, dynamic> subInventory = new Map();
+    var lines = resultCommand['main']['result'].split("\n").toList();
+
+    for (var line in lines) {
+      for (var field in fields) {
+        if (resultCommand.containsKey(field['name'])) {
+          subInventory.putIfAbsent(field['name'], () => this.getResult(field['retrival_output'], resultCommand[field['name']]['result'], field['retrival_value']));
+        } else {
+          var grep = field['retrival_value'];
+          if (line.contains(grep)) {
+            subInventory.putIfAbsent(field['name'], () => line.substring(line.indexOf(grep) + grep.length +1));
+          }
+        }
+      }
+    }
+    return subInventory;
+  }
+
+  String getResult(String type, String result, retrivalValue) {
+    switch (type) {
+        case "JSON":
+          var json = this.formatJson(result);
+          return json[retrivalValue];
+
+          break;
+        case "PTXT":
+          var txt = result.split("\n").toList();
+          int line = int.parse(retrivalValue);
+          return txt[line - 1];
+
+          break;
+        case "REGX":
+          var lines = result.split("\n").toList();
+          var regex = RegExp(retrivalValue);
+          for (var line in lines) {
+            if (regex.hasMatch(line)) {
+              var match = regex.firstMatch(line);
+              return match.group(1);
+            }
+          }
+
+          break;
+        case "GREP":
+          var lines = result.split("\n").toList();
+          var grep = retrivalValue;
+          for (var line in lines) {
+            if (line.contains(grep)) {
+              return line.substring(line.indexOf(grep) + grep.length +1);
+            }
+          }
+
+          break;
+        default:
+          return "null";
+          break;
+      }
+  }
+
+  /// Format [result] text to a list of json.
+  List<Map<String, dynamic>> formatArray(String result, Map<String, dynamic> options) {
+    List<String> list = result.split("\n");
+
+    String headerLine;
+    List<String> listIndex;
+
+    if (options == null || (options.containsKey("use_index") && options['use_index'])) {
+      headerLine = list[0];
+      list.removeAt(0);
+      listIndex = headerLine.split(" ");
+      listIndex.removeWhere((element) => element == "");
+    } else {
+      list.removeAt(0);
+    }
+
+    //print(headerLine);
+    Map<String, int> mapIndex = new Map<String, int>();
+    List<int> listLines = [];
+    List<Map<String, dynamic>> returnValue = [];
+
+    if (options == null || (options.containsKey("use_index") && options['use_index'])) {
+      int max = 0;
+      listIndex.forEach((element) {
+        int index = headerLine.indexOf(element, max);
+        max = index;
+        mapIndex.putIfAbsent(element, () => index);
+        listLines.add(index);
+      });
+
+      list.forEach((element) {
+        Map<String, dynamic> lineJson = new Map<String, dynamic>();
+        mapIndex.forEach((key, value) {
+          int start = listLines[listLines.indexOf(value)];
+          int after;
+          if (listLines.indexOf(value)+1 >= listLines.length) {
+            after = null;
+          } else {
+            after = listLines[listLines.indexOf(value)+1];
+          }
+          String lineValue = element.substring(start, after);
+          lineValue = lineValue.replaceAll(new RegExp(r'[\s]+$'), '');
+
+          lineJson.putIfAbsent(key, () => lineValue);
+        });
+        returnValue.add(lineJson);
+      });
+    } else {
+      list.forEach((element) {
+        Map<String, dynamic> lineJson = new Map<String, dynamic>();
+        var test = element.split(' ');
+        test.removeWhere((element2) => element2 == "");
+        int index = 0;
+        test.forEach((element) {
+          lineJson.putIfAbsent(index.toString(), () => element);
+          index++;
+        });
+        returnValue.add(lineJson);
+      });
+    }
+
+    return returnValue;
   }
 
   /// format result [txt] to json.
@@ -79,6 +275,8 @@ class LinuxFormat {
 
     var list = txt.split("\n");
     list.removeWhere((element) => element == "");
+    list.removeWhere((element) => element == "{");
+    list.removeWhere((element) => element == "}");
 
     int n = 1;
 
@@ -93,10 +291,25 @@ class LinuxFormat {
         list2[1] = list2[1].replaceAll(new RegExp(r"^\s*"), '');
         list2[1] = list2[1].replaceAll(new RegExp(r"\s*$"), '');
 
-        if (n < list.length) {
-          json += "\"" + list2[0] + "\": \"" + list2[1] + "\",\n";
+        String sep1;
+        String sep2;
+
+        if (list2[0].contains("\"")) {
+          sep1 = "";
         } else {
-          json += "\"" + list2[0] + "\": \"" + list2[1] + "\"\n";
+          sep1 = "\"";
+        }
+
+        if (list2[1].contains("\"")) {
+          sep2 = "";
+        } else {
+          sep2 = "\"";
+        }
+
+        if (n < list.length) {
+          json += sep1 + list2[0] + "$sep1: $sep2" + list2[1] + "$sep2,\n";
+        } else {
+          json += sep1 + list2[0] + "$sep1: $sep2" + list2[1] + "$sep2\n";
         }
       }
       n++;
