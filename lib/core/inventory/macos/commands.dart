@@ -29,7 +29,7 @@ class MacOSCommand {
 
     var process;
     if (normalization) {
-      String processNormalization;
+      late String processNormalization;
       await Process.run(command, args)
           .then((value) => processNormalization = value.stdout);
 

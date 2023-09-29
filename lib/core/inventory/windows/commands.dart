@@ -30,7 +30,7 @@ class WindowsCommand {
 
     var process;
     if (normalization) {
-      String processNormalization;
+      late String processNormalization;
       await Process.run(command, args)
           .then((value) => processNormalization = value.stdout);
       process = processNormalization.trim();
@@ -49,7 +49,7 @@ class WindowsCommand {
 
     var process;
     if (normalization) {
-      String processNormalization;
+      late String processNormalization;
       await Process.run(command, args, stdoutEncoding: utf8)
           .then((value) => processNormalization = value.stdout);
       process = processNormalization.trim();
@@ -65,7 +65,7 @@ class WindowsCommand {
   Future<String> readFile(String path, bool normalization) async {
     var process;
     if (normalization) {
-      String processNormalization;
+      late String processNormalization;
       await Process.run("type", [path])
           .then((value) => processNormalization = value.stdout);
       process = processNormalization.trim();
@@ -78,7 +78,7 @@ class WindowsCommand {
 
   /// Execute or read [command] in terms of [type].
   // ignore: missing_return
-  Future<String> getResult(String command, String type) async {
+  Future<String?> getResult(String command, String type) async {
     switch (type) {
       case "FILE":
         return await this.readFile(command, true);
@@ -89,5 +89,6 @@ class WindowsCommand {
       case "PW":
         return await this.commandPowershell(command, true);
     }
+    return null;
   }
 }
