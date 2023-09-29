@@ -19,7 +19,7 @@ import 'dart:io';
 /// functions utils for files management.
 class FilesUtils{
   /// Return file by [filename].
-  File getFile(String filename){
+  File? getFile(String filename){
     try{
       return File(filename);
     } catch(e){
