@@ -19,21 +19,21 @@ import 'dart:convert';
 import 'package:ocs_agent/core/inventory/macos/commands.dart';
 
 class MacOSFormat {
-  MacOSCommand macosCommand;
+  late MacOSCommand macosCommand;
 
   MacOSFormat() {
     this.macosCommand = new MacOSCommand();
   }
 
-  Future<String> getbyArray(String command, String indexString) async {
+  Future<String?> getbyArray(String command, String indexString) async {
     return null;
   }
 
-  Future<String> getbyJson(String command, String key) async {
+  Future<String?> getbyJson(String command, String key) async {
     return null;
   }
 
-  Future<String> getbyPtxt(String command, String lineString) async {
+  Future<String?> getbyPtxt(String command, String lineString) async {
     return null;
   }
 
