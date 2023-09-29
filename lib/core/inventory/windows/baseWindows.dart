@@ -31,7 +31,7 @@ dynamic getBody() async {
 
   /// Get the Mac Address value
   var getMacAddr;
-  getMacAddr = regexMacAddr.stringMatch(macAddr).trim();
+  getMacAddr = regexMacAddr.stringMatch(macAddr)!.trim();
 
   /// Command get to get the IP
   String ip;
@@ -43,7 +43,7 @@ dynamic getBody() async {
 
   /// Get IP value
   var getIP;
-  getIP = regexIP.stringMatch(ip).trim();
+  getIP = regexIP.stringMatch(ip)!.trim();
 
   dynamic body = ({
     "name": await windowsCommand.commandCmd("hostname", true),
