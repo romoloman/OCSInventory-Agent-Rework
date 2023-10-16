@@ -20,7 +20,7 @@ import 'package:ocs_agent/core/inventory/linux/commands.dart';
 
 /// Format command result by type for Linux.
 class LinuxFormat {
-  LinuxCommand linuxCommand;
+  late LinuxCommand linuxCommand;
 
   /// Constructor.
   LinuxFormat() {
@@ -28,9 +28,11 @@ class LinuxFormat {
   }
 
   /// get result of [resultCommand] for each [fields].
-  List<dynamic> getByArray(List<dynamic> fields, Map<String, dynamic> resultCommand) {
+  List<dynamic> getByArray(
+      List<dynamic> fields, Map<String, dynamic> resultCommand) {
     //print(resultCommand);
-    List<Map<String, dynamic>> result = this.formatArray(resultCommand['main']['result'], resultCommand['main']['options']);
+    List<Map<String, dynamic>> result = this.formatArray(
+        resultCommand['main']['result'], resultCommand['main']['options']);
     List<dynamic> inventory = [];
 
     result.forEach((element) {
@@ -40,7 +42,12 @@ class LinuxFormat {
 
       for (var field in fields) {
         if (resultCommand.containsKey(field['name'])) {
-          subInventory.putIfAbsent(field['name'], () => this.getResult(field['retrival_output'], resultCommand[field['name']]['result'], field['retrival_value']));
+          subInventory.putIfAbsent(
+              field['name'],
+              () => this.getResult(
+                  field['retrival_output'],
+                  resultCommand[field['name']]['result'],
+                  field['retrival_value']));
         } else {
           String index = field["retrival_value"];
 
@@ -57,28 +64,41 @@ class LinuxFormat {
   }
 
   /// get result of [resultCommand] for each [fields].
-  Map<String, dynamic> getByJson(List<dynamic> fields, Map<String, dynamic> resultCommand) {
+  Map<String, dynamic> getByJson(
+      List<dynamic> fields, Map<String, dynamic> resultCommand) {
     Map<String, dynamic> subInventory = new Map();
     var json = this.formatJson(resultCommand['main']['result']);
 
     for (var field in fields) {
       if (resultCommand.containsKey(field['name'])) {
-        subInventory.putIfAbsent(field['name'], () => this.getResult(field['retrival_output'], resultCommand[field['name']]['result'], field['retrival_value']));
+        subInventory.putIfAbsent(
+            field['name'],
+            () => this.getResult(
+                field['retrival_output'],
+                resultCommand[field['name']]['result'],
+                field['retrival_value']));
       } else {
-        subInventory.putIfAbsent(field['name'], () => json[field['retrival_value']]);
+        subInventory.putIfAbsent(
+            field['name'], () => json[field['retrival_value']]);
       }
     }
     return subInventory;
   }
 
   /// get result of [resultCommand] for each [fields].
-  Future<Map<String, dynamic>> getByPtxt(List<dynamic> fields, Map<String, dynamic> resultCommand) async {
+  Future<Map<String, dynamic>> getByPtxt(
+      List<dynamic> fields, Map<String, dynamic> resultCommand) async {
     Map<String, dynamic> subInventory = new Map();
     var txt = resultCommand['main']['result'].split("\n").toList();
 
     for (var field in fields) {
       if (resultCommand.containsKey(field['name'])) {
-        subInventory.putIfAbsent(field['name'], () => this.getResult(field['retrival_output'], resultCommand[field['name']]['result'], field['retrival_value']));
+        subInventory.putIfAbsent(
+            field['name'],
+            () => this.getResult(
+                field['retrival_output'],
+                resultCommand[field['name']]['result'],
+                field['retrival_value']));
       } else {
         int line = int.parse(field['retrival_value']);
         subInventory.putIfAbsent(field['name'], () => txt[line - 1]);
@@ -96,10 +116,13 @@ class LinuxFormat {
     bool haveSeparator = false;
     bool separate = false;
     List<dynamic> list = [];
-    if (resultCommand['main']['options'] != null && resultCommand['main']['options'].containsKey('multiple') && resultCommand['main']['options']['multiple']) {
+    if (resultCommand['main']['options'] != null &&
+        resultCommand['main']['options'].containsKey('multiple') &&
+        resultCommand['main']['options']['multiple']) {
       multiple = true;
     }
-    if (resultCommand['main']['options'] != null && resultCommand['main']['options'].containsKey('separator')) {
+    if (resultCommand['main']['options'] != null &&
+        resultCommand['main']['options'].containsKey('separator')) {
       separator = RegExp(resultCommand['main']['options']['separator']);
       haveSeparator = true;
     }
@@ -108,17 +131,23 @@ class LinuxFormat {
     for (var line in lines) {
       for (var field in fields) {
         if (resultCommand.containsKey(field['name'])) {
-          subInventory.putIfAbsent(field['name'], () => this.getResult(field['retrival_output'], resultCommand[field['name']]['result'], field['retrival_value']));
+          subInventory.putIfAbsent(
+              field['name'],
+              () => this.getResult(
+                  field['retrival_output'],
+                  resultCommand[field['name']]['result'],
+                  field['retrival_value']));
         } else {
           var regex = RegExp(field['retrival_value']);
           if (regex.hasMatch(line)) {
             var match = regex.firstMatch(line);
-            subInventory.putIfAbsent(field['name'], () => match.group(1));
+            subInventory.putIfAbsent(field['name'], () => match!.group(1));
           }
         }
       }
       if (multiple) {
-        if ((separator != null && separator.hasMatch(line) || x == lines.length)) {
+        if ((separator != null && separator.hasMatch(line) ||
+            x == lines.length)) {
           separate = true;
         }
         if (haveSeparator) {
@@ -146,18 +175,25 @@ class LinuxFormat {
   }
 
   /// get result of [resultCommand] for each [fields].
-  Map<String, dynamic> getByGrep(List<dynamic> fields, Map<String, dynamic> resultCommand) {
+  Map<String, dynamic> getByGrep(
+      List<dynamic> fields, Map<String, dynamic> resultCommand) {
     Map<String, dynamic> subInventory = new Map();
     var lines = resultCommand['main']['result'].split("\n").toList();
 
     for (var line in lines) {
       for (var field in fields) {
         if (resultCommand.containsKey(field['name'])) {
-          subInventory.putIfAbsent(field['name'], () => this.getResult(field['retrival_output'], resultCommand[field['name']]['result'], field['retrival_value']));
+          subInventory.putIfAbsent(
+              field['name'],
+              () => this.getResult(
+                  field['retrival_output'],
+                  resultCommand[field['name']]['result'],
+                  field['retrival_value']));
         } else {
           var grep = field['retrival_value'];
           if (line.contains(grep)) {
-            subInventory.putIfAbsent(field['name'], () => line.substring(line.indexOf(grep) + grep.length +1));
+            subInventory.putIfAbsent(field['name'],
+                () => line.substring(line.indexOf(grep) + grep.length + 1));
           }
         }
       }
@@ -165,54 +201,56 @@ class LinuxFormat {
     return subInventory;
   }
 
-  String getResult(String type, String result, retrivalValue) {
+  String? getResult(String type, String result, retrivalValue) {
     switch (type) {
-        case "JSON":
-          var json = this.formatJson(result);
-          return json[retrivalValue];
+      case "JSON":
+        var json = this.formatJson(result);
+        return json[retrivalValue];
 
-          break;
-        case "PTXT":
-          var txt = result.split("\n").toList();
-          int line = int.parse(retrivalValue);
-          return txt[line - 1];
+        break;
+      case "PTXT":
+        var txt = result.split("\n").toList();
+        int line = int.parse(retrivalValue);
+        return txt[line - 1];
 
-          break;
-        case "REGX":
-          var lines = result.split("\n").toList();
-          var regex = RegExp(retrivalValue);
-          for (var line in lines) {
-            if (regex.hasMatch(line)) {
-              var match = regex.firstMatch(line);
-              return match.group(1);
-            }
+        break;
+      case "REGX":
+        var lines = result.split("\n").toList();
+        var regex = RegExp(retrivalValue);
+        for (var line in lines) {
+          if (regex.hasMatch(line)) {
+            var match = regex.firstMatch(line);
+            return match!.group(1);
           }
+        }
 
-          break;
-        case "GREP":
-          var lines = result.split("\n").toList();
-          var grep = retrivalValue;
-          for (var line in lines) {
-            if (line.contains(grep)) {
-              return line.substring(line.indexOf(grep) + grep.length +1);
-            }
+        break;
+      case "GREP":
+        var lines = result.split("\n").toList();
+        String grep = retrivalValue;
+        for (var line in lines) {
+          if (line.contains(grep)) {
+            return line.substring(line.indexOf(grep) + grep.length + 1);
           }
+        }
 
-          break;
-        default:
-          return "null";
-          break;
-      }
+        break;
+      default:
+        return "null";
+        break;
+    }
+    return null;
   }
 
   /// Format [result] text to a list of json.
-  List<Map<String, dynamic>> formatArray(String result, Map<String, dynamic> options) {
+  List<Map<String, dynamic>> formatArray(
+      String result, Map<String, dynamic> options) {
     List<String> list = result.split("\n");
 
-    String headerLine;
-    List<String> listIndex;
+    late String headerLine;
+    late List<String> listIndex;
 
-    if (options == null || (options.containsKey("use_index") && options['use_index'])) {
+    if (options.containsKey("use_index") && options['use_index']) {
       headerLine = list[0];
       list.removeAt(0);
       listIndex = headerLine.split(" ");
@@ -226,7 +264,7 @@ class LinuxFormat {
     List<int> listLines = [];
     List<Map<String, dynamic>> returnValue = [];
 
-    if (options == null || (options.containsKey("use_index") && options['use_index'])) {
+    if (options.containsKey("use_index") && options['use_index']) {
       int max = 0;
       listIndex.forEach((element) {
         int index = headerLine.indexOf(element, max);
@@ -239,11 +277,11 @@ class LinuxFormat {
         Map<String, dynamic> lineJson = new Map<String, dynamic>();
         mapIndex.forEach((key, value) {
           int start = listLines[listLines.indexOf(value)];
-          int after;
-          if (listLines.indexOf(value)+1 >= listLines.length) {
+          int? after;
+          if (listLines.indexOf(value) + 1 >= listLines.length) {
             after = null;
           } else {
-            after = listLines[listLines.indexOf(value)+1];
+            after = listLines[listLines.indexOf(value) + 1];
           }
           String lineValue = element.substring(start, after);
           lineValue = lineValue.replaceAll(new RegExp(r'[\s]+$'), '');

@@ -16,7 +16,6 @@
 
 import 'dart:convert';
 import 'dart:io';
-import 'dart:io' show Platform;
 
 import 'package:ocs_agent/core/log.dart';
 
@@ -33,18 +32,18 @@ import 'package:http/http.dart' as http;
 
 /// This class communicate with the server.
 class Api {
-  Config config;
-  JsonUtils jsonUtils;
-  Logger logger;
+  late Config config;
+  late JsonUtils jsonUtils;
+  late Logger logger;
 
-  LinuxFormat linuxFormat;
-  LinuxCommand linuxCommand;
+  late LinuxFormat linuxFormat;
+  late LinuxCommand linuxCommand;
 
-  WindowsFormat windowsFormat;
-  WindowsCommand windowsCommand;
+  late WindowsFormat windowsFormat;
+  late WindowsCommand windowsCommand;
 
-  MacOSFormat macosFormat;
-  MacOSCommand macosCommand;
+  late MacOSFormat macosFormat;
+  late MacOSCommand macosCommand;
 
   var url;
 
@@ -94,11 +93,11 @@ class Api {
     /// Get the UUID of the body
     String uuid = await body['uuid'];
 
+    uuid = uuid.isEmpty ? 'none' : uuid;
     var urlGet = Uri.parse(this.url + "/asset/bases/?uuid=$uuid");
 
     /// Get the inventory of this [uuid] in asset bases
     var responseGet = await http.get(urlGet, headers: this.getHeader());
-
     if (responseGet.statusCode == 200) {
       /// test if the body exist in asset bases or not
       if (responseGet.body.contains(uuid)) {
@@ -205,7 +204,7 @@ class Api {
 
   /// Find template if agent hstatusCodeasn't one
   Future<void> findTemplate() async {
-    // Find OS 
+    // Find OS
     var os;
     if (Platform.isMacOS) {
       os = "MAC";
@@ -238,7 +237,10 @@ class Api {
   Future<void> getInventory() async {
     Map<String, dynamic> template = config.getTemplate();
 
-    if (template == null) {
+    if (template.isEmpty ||
+        template.values.isEmpty ||
+        template.keys.isEmpty ||
+        template.length == 0) {
       logger.error("Template is empty");
     } else {
       var value = await this.getInventoryResult(template, template["os"]);
@@ -252,17 +254,13 @@ class Api {
   Future<Map<String, dynamic>> getInventoryResult(
       Map<String, dynamic> template, String os) async {
     var format;
-    var command;
 
     if (os == "LIN") {
       format = this.linuxFormat;
-      command = this.linuxCommand;
     } else if (template["os"] == "WIN" && Platform.isWindows) {
       format = this.windowsFormat;
-      command = this.windowsCommand;
     } else if (template["os"] == "MAC" && Platform.isMacOS) {
       format = this.macosFormat;
-      command = this.macosCommand;
     } else {
       logger.error("Error to get the result");
     }
@@ -277,24 +275,19 @@ class Api {
 
       switch (section['retrival_output']) {
         case "TBLE":
-          valueTarget = format.getByArray(section["fields"],
-              result);
+          valueTarget = format.getByArray(section["fields"], result);
           break;
         case "JSON":
-          valueTarget = format.getByJson(section["fields"],
-              result);
+          valueTarget = format.getByJson(section["fields"], result);
           break;
         case "PTXT":
-          valueTarget = await format.getByPtxt(section["fields"],
-              result);
+          valueTarget = await format.getByPtxt(section["fields"], result);
           break;
         case "REGX":
-          valueTarget = format.getByRegx(section["fields"],
-              result);
+          valueTarget = format.getByRegx(section["fields"], result);
           break;
         case "GREP":
-          valueTarget = format.getByGrep(section["fields"],
-              result);
+          valueTarget = format.getByGrep(section["fields"], result);
           break;
         default:
           valueTarget = null;
@@ -302,11 +295,12 @@ class Api {
       }
       inventory.putIfAbsent(section['name'], () => valueTarget);
     }
-    
+
     return inventory;
   }
 
-  Future<Map<String, dynamic>> getResult(String os, Map<String, dynamic> template, Map<String, dynamic> section) async {
+  Future<Map<String, dynamic>> getResult(String os,
+      Map<String, dynamic> template, Map<String, dynamic> section) async {
     Map<String, dynamic> result = new Map<String, dynamic>();
     var command;
 
@@ -326,7 +320,8 @@ class Api {
       options = section['options'];
     }
 
-    String mainRes = await command.getResult(section["target"], section['retrival_method']);
+    String mainRes =
+        await command.getResult(section["target"], section['retrival_method']);
     main.putIfAbsent('result', () => mainRes);
     main.putIfAbsent('type', () => section['retrival_output']);
     main.putIfAbsent('name', () => section['name']);
@@ -337,7 +332,8 @@ class Api {
 
     for (var field in fieldOver) {
       Map<String, dynamic> sub = new Map<String, dynamic>();
-      String res = await command.getResult(field["new_target"], field['retrival_method']);
+      String res = await command.getResult(
+          field["new_target"], field['retrival_method']);
       sub.putIfAbsent('result', () => res);
       sub.putIfAbsent('type', () => field['retrival_output']);
       sub.putIfAbsent('name', () => field['name']);

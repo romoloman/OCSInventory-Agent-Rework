@@ -20,7 +20,7 @@ import 'package:ocs_agent/core/inventory/windows/commands.dart';
 
 /// Format command result by type for Windows.
 class WindowsFormat {
-  WindowsCommand windowsCommand;
+  late WindowsCommand windowsCommand;
 
   /// Constructor.
   WindowsFormat() {
@@ -28,8 +28,10 @@ class WindowsFormat {
   }
 
   /// get result of [resultCommand] for each [fields].
-  List<dynamic> getByArray(List<dynamic> fields, Map<String, dynamic> resultCommand) {
-    List<Map<String, dynamic>> result = this.formatArray(resultCommand['main']['result'], resultCommand['main']['options']);
+  List<dynamic> getByArray(
+      List<dynamic> fields, Map<String, dynamic> resultCommand) {
+    List<Map<String, dynamic>> result = this.formatArray(
+        resultCommand['main']['result'], resultCommand['main']['options']);
     List<dynamic> inventory = [];
 
     result.forEach((element) {
@@ -37,7 +39,12 @@ class WindowsFormat {
 
       for (var field in fields) {
         if (resultCommand.containsKey(field['name'])) {
-          subInventory.putIfAbsent(field['name'], () => this.getResult(field['retrival_output'], resultCommand[field['name']]['result'], field['retrival_value']));
+          subInventory.putIfAbsent(
+              field['name'],
+              () => this.getResult(
+                  field['retrival_output'],
+                  resultCommand[field['name']]['result'],
+                  field['retrival_value']));
         } else {
           String index = field["retrival_value"];
 
@@ -54,23 +61,28 @@ class WindowsFormat {
   }
 
   /// get result of [resultCommand] for each [fields].
-  Map<String, dynamic> getByJson(List<dynamic> fields, Map<String, dynamic> resultCommand) {
+  Map<String, dynamic> getByJson(
+      List<dynamic> fields, Map<String, dynamic> resultCommand) {
     Map<String, dynamic> subInventory = new Map();
     var json;
     bool isList = false;
 
-    if (resultCommand['main']['options'] != null && resultCommand['main']['options'].containsKey('is_list') && resultCommand['main']['options']['is_list']) {
+    if (resultCommand['main']['options'] != null &&
+        resultCommand['main']['options'].containsKey('is_list') &&
+        resultCommand['main']['options']['is_list']) {
       isList = true;
     }
     try {
-      if (resultCommand['main']['options'] != null && resultCommand['main']['options'].containsKey('need_format') && !resultCommand['main']['options']['need_format']) {
+      if (resultCommand['main']['options'] != null &&
+          resultCommand['main']['options'].containsKey('need_format') &&
+          !resultCommand['main']['options']['need_format']) {
         json = jsonDecode(resultCommand['main']['result']);
-        
       } else {
         json = this.formatJson(resultCommand['main']['result']);
       }
-      
-      if (resultCommand['main']['options'] != null && resultCommand['main']['options'].containsKey('submap')) {
+
+      if (resultCommand['main']['options'] != null &&
+          resultCommand['main']['options'].containsKey('submap')) {
         var maps = resultCommand['main']['options']['need_format'].split(',');
         if (isList) {
           json.forEach((element) {
@@ -89,16 +101,14 @@ class WindowsFormat {
     }
 
     if (isList) {
-      List<dynamic> subList = new List<dynamic>();
+      List<dynamic> subList = new List<dynamic>.empty();
       json.forEach((element) {
         Map<String, dynamic> subInventory2 = new Map();
         for (var field in fields) {
           try {
-            subInventory2.putIfAbsent(field['name'], () => element[field['retrival_value']]);
-          } catch (e) {
-            
-          }
-  
+            subInventory2.putIfAbsent(
+                field['name'], () => element[field['retrival_value']]);
+          } catch (e) {}
         }
         subList.add(subInventory2);
       });
@@ -106,11 +116,9 @@ class WindowsFormat {
     } else {
       for (var field in fields) {
         try {
-          subInventory.putIfAbsent(field['name'], () => json[field['retrival_value']]);
-        } catch (e) {
-          
-        }
-        
+          subInventory.putIfAbsent(
+              field['name'], () => json[field['retrival_value']]);
+        } catch (e) {}
       }
     }
 
@@ -139,7 +147,7 @@ class WindowsFormat {
         var regex = RegExp(field['retrival_value']);
         if (regex.hasMatch(line)) {
           var match = regex.firstMatch(line);
-          subInventory.putIfAbsent(field['name'], () => match.group(1));
+          subInventory.putIfAbsent(field['name'], () => match!.group(1));
         }
       }
     }
@@ -153,63 +161,66 @@ class WindowsFormat {
 
     for (var line in lines) {
       for (var field in fields) {
-        var grep = field['retrival_value'];
+        String grep = field['retrival_value'];
         if (line.contains(grep)) {
-          subInventory.putIfAbsent(field['name'], () => line.substring(line.indexOf(grep) + grep.length +1));
+          subInventory.putIfAbsent(field['name'],
+              () => line.substring(line.indexOf(grep) + grep.length + 1));
         }
       }
     }
     return subInventory;
   }
 
-  String getResult(String type, String result, retrivalValue) {
+  String? getResult(String type, String result, retrivalValue) {
     switch (type) {
-        case "JSON":
-          var json = this.formatJson(result);
-          return json[retrivalValue];
+      case "JSON":
+        var json = this.formatJson(result);
+        return json[retrivalValue];
 
-          break;
-        case "PTXT":
-          var txt = result.split("\n").toList();
-          int line = int.parse(retrivalValue);
-          return txt[line - 1];
+        break;
+      case "PTXT":
+        var txt = result.split("\n").toList();
+        int line = int.parse(retrivalValue);
+        return txt[line - 1];
 
-          break;
-        case "REGX":
-          var lines = result.split("\n").toList();
-          var regex = RegExp(retrivalValue);
-          for (var line in lines) {
-            if (regex.hasMatch(line)) {
-              var match = regex.firstMatch(line);
-              return match.group(1);
-            }
+        break;
+      case "REGX":
+        var lines = result.split("\n").toList();
+        var regex = RegExp(retrivalValue);
+        for (var line in lines) {
+          if (regex.hasMatch(line)) {
+            var match = regex.firstMatch(line);
+            return match!.group(1);
           }
+        }
 
-          break;
-        case "GREP":
-          var lines = result.split("\n").toList();
-          var grep = retrivalValue;
-          for (var line in lines) {
-            if (line.contains(grep)) {
-              return line.substring(line.indexOf(grep) + grep.length +1);
-            }
+        break;
+      case "GREP":
+        var lines = result.split("\n").toList();
+        String grep = retrivalValue;
+        for (var line in lines) {
+          if (line.contains(grep)) {
+            return line.substring(line.indexOf(grep) + grep.length + 1);
           }
+        }
 
-          break;
-        default:
-          return "null";
-          break;
-      }
+        break;
+      default:
+        return "null";
+        break;
+    }
+    return null;
   }
 
   /// Format [result] text to a list of json.
-  List<Map<String, dynamic>> formatArray(String result, Map<String, dynamic> options) {
+  List<Map<String, dynamic>> formatArray(
+      String result, Map<String, dynamic> options) {
     List<String> list = result.split("\n");
 
-    String headerLine;
-    List<String> listIndex;
+    String? headerLine;
+    List<String>? listIndex;
 
-    if (options == null || (options.containsKey("use_index") && options['use_index'])) {
+    if (options.containsKey("use_index") && options['use_index']) {
       headerLine = list[0];
       list.removeAt(0);
       listIndex = headerLine.split(" ");
@@ -223,10 +234,10 @@ class WindowsFormat {
     List<int> listLines = [];
     List<Map<String, dynamic>> returnValue = [];
 
-    if (options == null || (options.containsKey("use_index") && options['use_index'])) {
+    if (options.containsKey("use_index") && options['use_index']) {
       int max = 0;
-      listIndex.forEach((element) {
-        int index = headerLine.indexOf(element, max);
+      listIndex!.forEach((element) {
+        int index = headerLine!.indexOf(element, max);
         max = index;
         mapIndex.putIfAbsent(element, () => index);
         listLines.add(index);
@@ -236,11 +247,11 @@ class WindowsFormat {
         Map<String, dynamic> lineJson = new Map<String, dynamic>();
         mapIndex.forEach((key, value) {
           int start = listLines[listLines.indexOf(value)];
-          int after;
-          if (listLines.indexOf(value)+1 >= listLines.length) {
+          int? after;
+          if (listLines.indexOf(value) + 1 >= listLines.length) {
             after = null;
           } else {
-            after = listLines[listLines.indexOf(value)+1];
+            after = listLines[listLines.indexOf(value) + 1];
           }
           String lineValue = element.substring(start, after);
           lineValue = lineValue.replaceAll(new RegExp(r'[\s]+$'), '');

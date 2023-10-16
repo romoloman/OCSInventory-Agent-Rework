@@ -32,14 +32,14 @@ class LinuxCommand {
 
     var process;
     if (normalization) {
-      String processNormalization;
+      late String processNormalization;
       await Process.run(command, args, environment: ev)
           .then((value) => processNormalization = value.stdout);
       process = processNormalization.trim();
     } else {
       await Process.run(command, args).then((value) => process = value.stdout);
     }
-    
+
     return process;
   }
 
@@ -47,7 +47,7 @@ class LinuxCommand {
   Future<String> readFile(String path, bool normalization) async {
     var process;
     if (normalization) {
-      String processNormalization;
+      late String processNormalization;
       await Process.run("cat", [path])
           .then((value) => processNormalization = value.stdout);
       process = processNormalization.trim();
@@ -60,7 +60,7 @@ class LinuxCommand {
 
   /// Execute or read [command] in terms of [type].
   // ignore: missing_return
-  Future<String> getResult(String command, String type) async {
+  Future<String?> getResult(String command, String type) async {
     switch (type) {
       case "FILE":
         return await this.readFile(command, true);
@@ -71,5 +71,6 @@ class LinuxCommand {
       case "BASH":
         return await this.commandShell(command, true);
     }
+    return null;
   }
 }

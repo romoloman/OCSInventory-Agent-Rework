@@ -21,9 +21,9 @@ import 'package:ocs_agent/core/config.dart';
 
 /// Insert log in console or file if configured in inventory.json.
 class Logger {
-  bool _isFile;
-  File file;
-  DateFormat dateFormat;
+  late bool _isFile;
+  late File file;
+  late DateFormat dateFormat;
 
   /// Constructor.
   Logger() {
@@ -38,7 +38,7 @@ class Logger {
   }
 
   /// print info message.
-  void info(String info){
+  void info(String info) {
     var now = DateTime.now();
     String date = dateFormat.format(now);
     String txt = "$date INFO: $info\n";
@@ -50,7 +50,7 @@ class Logger {
   }
 
   /// print warning message.
-  void warning(String warning){
+  void warning(String warning) {
     var now = DateTime.now();
     String date = dateFormat.format(now);
     String txt = "$date WARNING: $warning\n";
@@ -62,7 +62,7 @@ class Logger {
   }
 
   /// print error message.
-  void error(String error){
+  void error(String error) {
     var now = DateTime.now();
     String date = dateFormat.format(now);
     String txt = "$date ERROR: $error\n";
@@ -74,7 +74,7 @@ class Logger {
   }
 
   /// print verbose message.
-  void verbose(String verbose){
+  void verbose(String verbose) {
     var now = DateTime.now();
     String date = dateFormat.format(now);
     String txt = "$date VERBOSE: $verbose\n";

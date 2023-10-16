@@ -29,20 +29,20 @@ dynamic getBody() async {
   RegExp regexpSerial;
   regexpSerial = RegExp(r"(?<=Serial\sNumber\s\(system\):\s)\w+");
   String getSerial;
-  getSerial = regexpSerial.stringMatch(commandSerialUUID).trim();
+  getSerial = regexpSerial.stringMatch(commandSerialUUID)!.trim();
 
   /// Regex to get [UUID]
   RegExp regexpUUID;
   regexpUUID = RegExp(r"(?<=Hardware\sUUID:\s)(\w*-\w*-\w*-\w*-\w*)?\n");
   String getUUID;
-  getUUID = regexpUUID.stringMatch(commandSerialUUID).trim();
+  getUUID = regexpUUID.stringMatch(commandSerialUUID)!.trim();
 
   /// Get default route, regExp to Interface for [srcip] and [srcmac]
   String getDefaultRoute;
   getDefaultRoute = await macOsCommand.commandShell("route get default", true);
   RegExp regexpInterface;
   regexpInterface = RegExp(r"(?<=interface:\s)\w*");
-  String getInterface;
+  String? getInterface;
   getInterface = regexpInterface.stringMatch(getDefaultRoute);
 
   /// Get domains list and apply this Regex to get domain
@@ -50,8 +50,8 @@ dynamic getBody() async {
   listDomains = await macOsCommand.commandShell("scutil --dns", true);
   RegExp regexpDomain;
   regexpDomain = RegExp(r'(?<=search\sdomain\[0\]\s:\s)\w*.[a-z]{0,4}');
-  String getDomain;
-  getDomain = regexpDomain.stringMatch(listDomains).trim();
+  String? getDomain;
+  getDomain = regexpDomain.stringMatch(listDomains)!.trim();
 
   dynamic body = ({
     "name": await macOsCommand.commandShell("hostname", true),
