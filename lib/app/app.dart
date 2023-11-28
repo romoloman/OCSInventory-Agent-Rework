@@ -16,39 +16,64 @@
 
 import 'dart:io' show Platform;
 
+import 'package:sprintf/sprintf.dart';
+
 import 'package:ocs_agent/core/api.dart' as api;
 
 import 'package:ocs_agent/core/inventory/linux/baseLinux.dart' as baseLinux;
 
 import 'package:ocs_agent/core/inventory/macos/baseMacOS.dart' as baseMacOS;
 
-import 'package:ocs_agent/core/inventory/windows/baseWindows.dart' as baseWindows;
+import 'package:ocs_agent/core/inventory/windows/baseWindows.dart'
+    as baseWindows;
 
 ///in this main section we send the [body] to the asset/bases
 void main(List<String> args) async {
-  var sendBody = api.Api();
+  var agent = api.Api();
 
-  sendBody.generateToken();
+  var body;
 
-  sendBody.apiCheck();
-
-  sendBody.getHeader();
-
-  /* var id = sendBody.getIdTemplate();
-  sendBody.getTemplate(id); */
-
-  await sendBody.findTemplate();
-  await sendBody.checkAndApplyConfig();
-
-  if (Platform.isMacOS) {
-    sendBody.sendInventory(await baseMacOS.getBody());
-  } else if (Platform.isLinux) {
-    sendBody.sendInventory(await baseLinux.getBody());
+  if (Platform.isLinux) {
+    body = await baseLinux.getBody();
+  } else if (Platform.isMacOS) {
+    body = await baseMacOS.getBody();
   } else if (Platform.isWindows) {
-    sendBody.sendInventory(await baseWindows.getBody());
+    body = await baseWindows.getBody();
   } else {
-    sendBody.logger.error('Error Platform');
+    agent.logger.error(
+        "The agent can't define in which operating system you are using !");
   }
 
-  await sendBody.getInventory();
+  Map<int, String> enumMode = {
+    0: "Remote with template",
+    1: "Remote without template",
+    2: "Local with template",
+    3: "Local without template",
+  };
+
+  int mode = agent.getMode();
+
+  agent.logger.info(sprintf("Stating agent in %s mode...", [enumMode[mode]]));
+
+  if (mode == 0 || mode == 1) {
+    if (await agent.apiCheck()) {
+      await agent.sendRemoteAssetInventory(body);
+      // if (mode == 0) {
+      //   agent.getLocalTemplate();
+      //   await agent.getRemoteTemplate();
+      //   agent.compareTemplate();
+      //   agent.ExecuteTemplate();
+      //   await agent.sendRemoteTemplateInventory();
+      // }
+    }
+  } else if (mode == 2 || mode == 3) {
+    // await agent.sendLocalAssetInventory(body);
+    // if (mode == 2) {
+    //   agent.getLocalTemplate();
+    //   agent.ExecuteTemplate();
+    //   await agent.sendLocalTemplateInventory();
+    // }
+  }
+
+  agent.logger.info("Agent process end.");
 }
