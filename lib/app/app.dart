@@ -31,6 +31,17 @@ import 'package:ocs_agent/core/inventory/windows/baseWindows.dart'
 void main(List<String> args) async {
   var agent = api.Api();
 
+  Map<int, String> enumMode = {
+    0: "Remote with template",
+    1: "Remote without template",
+    2: "Local with template",
+    3: "Local without template",
+  };
+
+  int mode = agent.getMode();
+
+  agent.logger.info(sprintf("Stating agent in %s mode...", [enumMode[mode]]));
+
   var body;
 
   if (Platform.isLinux) {
@@ -44,34 +55,17 @@ void main(List<String> args) async {
         "The agent can't define in which operating system you are using !");
   }
 
-  Map<int, String> enumMode = {
-    0: "Remote with template",
-    1: "Remote without template",
-    2: "Local with template",
-    3: "Local without template",
-  };
-
-  int mode = agent.getMode();
-
-  agent.logger.info(sprintf("Stating agent in %s mode...", [enumMode[mode]]));
-
   if (mode == 0 || mode == 1) {
     if (await agent.apiCheck()) {
       await agent.sendRemoteAssetInventory(body);
       if (mode == 0) {
-        agent.getLocalTemplate();
-        await agent.getRemoteTemplate();
-        agent.compareTemplate();
-        agent.ExecuteTemplate();
-        await agent.sendRemoteTemplateInventory();
+        await agent.sendRemoteTemplateInventory(body);
       }
     }
   } else if (mode == 2 || mode == 3) {
     agent.sendLocalAssetInventory(body);
     if (mode == 2) {
-      agent.getLocalTemplate();
-      agent.ExecuteTemplate();
-      await agent.sendLocalTemplateInventory();
+      agent.sendLocalTemplateInventory();
     }
   }
 
