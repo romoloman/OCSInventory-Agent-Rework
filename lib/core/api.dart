@@ -322,8 +322,6 @@ class Api {
 
   int compareTemplate(
       Map<String, String> localInfo, Map<String, String> remoteInfo) {
-    logger.info(remoteInfo.toString());
-    logger.info(localInfo.toString());
     if (remoteInfo["id"] == localInfo["id"]) {
       logger.info("Local template exist on the server !");
       if (remoteInfo["last_update"] == localInfo["last_update"]) {
