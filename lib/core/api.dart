@@ -28,6 +28,7 @@ import 'inventory/windows/commands.dart';
 import 'inventory/windows/format.dart';
 import 'json_utils.dart';
 
+import 'package:sprintf/sprintf.dart';
 import 'package:http/http.dart' as http;
 
 /// This class communicate with the server.
@@ -61,31 +62,156 @@ class Api {
     this.url = config.getInventoryConfig("url");
   }
 
-  /// Send to Api the username and password and
-  /// save it in inventory.json.
-  void generateToken() async {
+  int getMode() {
+    return int.parse(config.getInventoryConfig("mode"));
+  }
+
+  /// Check if api is working and generate token if not.
+  Future<bool> apiCheck() async {
     String username = config.getInventoryConfig("username");
     String password = config.getInventoryConfig("password");
+
+    logger.info("Checking API...");
+
+    try {
+      var response = await http.post(Uri.parse(this.url + "/api-auth/token"),
+          headers: {HttpHeaders.contentTypeHeader: 'application/json'},
+          body: jsonEncode({'username': username, 'password': password}));
+      if (response.statusCode == 200) {
+        logger.info("API status's up !");
+        await this.generateToken();
+        return true;
+      } else if (response.statusCode == 401) {
+        logger.error(
+            "Unauthorized ! (Check username or password in the configuration file)");
+        return false;
+      } else {
+        logger.error("API check error !");
+        return false;
+      }
+    } catch (exception) {
+      logger.error(
+          sprintf("API not found ! (%s)", [exception.toString().trim()]));
+      return false;
+    }
+  }
+
+  /// Send to Api the username and password and
+  /// save it in inventory.json.
+  Future<bool> generateToken() async {
+    String username = config.getInventoryConfig("username");
+    String password = config.getInventoryConfig("password");
+    String token = config.getInventoryConfig("token");
+
+    logger.info("Generating token...");
 
     var response = await http.post(Uri.parse(this.url + "/api-auth/token"),
         headers: {HttpHeaders.contentTypeHeader: 'application/json'},
         body: jsonEncode({'username': username, 'password': password}));
 
     if (response.statusCode == 200) {
-      config.updateInventoryConfig(
-          "token", jsonUtils.getContentFromStringByKey(response.body, "token"));
+      logger.info("Token has been retreive from server !");
+      if (jsonUtils.getContentFromStringByKey(response.body, "token") !=
+          token) {
+        logger.info(
+            "Local token has been changed with token retreive from server !");
+        config.updateInventoryConfig("token",
+            jsonUtils.getContentFromStringByKey(response.body, "token"));
+        return true;
+      } else {
+        logger.info(
+            "Local token is the same as the token from server. Keep the local token.");
+        return true;
+      }
+    } else {
+      logger.error("Generate token error !");
+      return false;
     }
   }
 
-  /// Check if api is working and generate token if not.
-  void apiCheck() async {
-    var url = Uri.parse(this.url);
+  Future<bool> checkInventory(Map<String, dynamic> body) async {
+    String uuid = await body['uuid'];
+    uuid = uuid.isEmpty ? 'none' : uuid;
 
-    var response = await http.get(url, headers: this.getHeader());
+    logger.info("Checking if there is existing inventory of the machine...");
 
-    if (response.statusCode != 200) {
-      this.generateToken();
+    var response = await http.get(Uri.parse(url + "/asset/bases/?uuid=$uuid"),
+        headers: this.getHeader());
+    if (response.statusCode == 200) {
+      if (response.body.contains(uuid)) {
+        logger.info("Existing inventory found !");
+        return true;
+      } else {
+        logger.error("Checking existing inventory error !");
+        return false;
+      }
+    } else {
+      logger.info("No inventory found !");
+
+      var response = await http.post(Uri.parse(this.url + "/asset/bases/"),
+          headers: this.getHeader(), body: jsonEncode(body));
+
+      if (response.statusCode == 200) {
+        logger.info("New inventory has been sent to the server !");
+        return true;
+      } else {
+        logger.error("Checking new inventory error !");
+        return false;
+      }
     }
+  }
+
+  Future<bool> sendRemoteAssetInventory(Map<String, dynamic> body) async {
+    if (await this.checkInventory(body)) {
+      String uuid = await body['uuid'];
+      uuid = uuid.isEmpty ? 'none' : uuid;
+
+      logger.info("Sending Asset base to server...");
+
+      var response = await http.get(Uri.parse(url + "/asset/bases/?uuid=$uuid"),
+          headers: this.getHeader());
+      if (response.statusCode == 200) {
+        if (response.body.contains(uuid)) {
+          logger.info("Existing inventory found ! Updating inventory...");
+
+          var id = jsonDecode(response.body)[0]['id'];
+          var responseGet = await http.put(Uri.parse(url + "/asset/bases/$id/"),
+              headers: this.getHeader(), body: jsonEncode(body));
+          if (responseGet.statusCode == 200) {
+            logger.info("Update inventory has been sent to the server !");
+            return true;
+          } else {
+            logger.error("Failed to send inventory update !");
+            return false;
+          }
+        } else {
+          logger.info("No inventory found ! Creating new inventory...");
+
+          var responsePost = await http.post(
+              Uri.parse(this.url + "/asset/bases/"),
+              headers: this.getHeader(),
+              body: jsonEncode(body));
+
+          if (responsePost.statusCode == 200) {
+            logger.info("New inventory has been sent to the server !");
+            return true;
+          } else {
+            logger.error("Failed to send new inventory !");
+            return false;
+          }
+        }
+      } else {
+        logger.error("Can't get inventory from server !");
+        return false;
+      }
+    } else {
+      logger.error("Can't check inventory !");
+      return false;
+    }
+  }
+
+  Future<bool> sendLocalAssetInventory(Map<String, dynamic> body) async {
+    return false;
   }
 
   /// Send [body] to api /asset/bases.
