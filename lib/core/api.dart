@@ -47,6 +47,9 @@ class Api {
   late MacOSFormat macosFormat;
   late MacOSCommand macosCommand;
 
+  late String inventoryFileName;
+  late File inventory;
+
   var url;
 
   /// Constructor.
@@ -61,6 +64,12 @@ class Api {
     this.macosCommand = new MacOSCommand();
     this.logger = new Logger();
     this.url = config.getInventoryConfig("url");
+
+    this.inventoryFileName = sprintf('%s/%s.json', [
+      config.getInventoryConfig("data_dir"),
+      DateFormat("yyyy-MM-dd_HH-mm-ss").format(DateTime.now())
+    ]);
+    this.inventory = File(inventoryFileName);
   }
 
   int getMode() {
@@ -74,12 +83,12 @@ class Api {
 
     logger.info("Checking API...");
     try {
-      var response = await http.post(Uri.parse(this.url + "/api-auth/token"),
+      var response = await http.post(Uri.parse(url + "/api-auth/token"),
           headers: {HttpHeaders.contentTypeHeader: 'application/json'},
           body: jsonEncode({'username': username, 'password': password}));
       if (response.statusCode == 200) {
         logger.info("API status's up !");
-        await this.generateToken();
+        await generateToken();
         return true;
       } else if (response.statusCode == 401) {
         logger.error(
@@ -104,7 +113,7 @@ class Api {
     String token = config.getInventoryConfig("token");
 
     logger.info("Generating token...");
-    var response = await http.post(Uri.parse(this.url + "/api-auth/token"),
+    var response = await http.post(Uri.parse(url + "/api-auth/token"),
         headers: {HttpHeaders.contentTypeHeader: 'application/json'},
         body: jsonEncode({'username': username, 'password': password}));
     if (response.statusCode == 200) {
@@ -128,19 +137,19 @@ class Api {
   }
 
   Future<bool> sendRemoteAssetInventory(Map<String, dynamic> body) async {
-    if (await this.checkInventory(body)) {
+    if (await checkInventory(body)) {
       String uuid = await body['uuid'];
       uuid = uuid.isEmpty ? 'none' : uuid;
 
       logger.info("Sending Asset base to server...");
       var response = await http.get(Uri.parse(url + "/asset/bases/?uuid=$uuid"),
-          headers: this.getHeader());
+          headers: getHeader());
       if (response.statusCode == 200) {
         if (response.body.contains(uuid)) {
           logger.info("Existing inventory found ! Updating inventory...");
           var id = jsonDecode(response.body)[0]['id'];
           var responseGet = await http.put(Uri.parse(url + "/asset/bases/$id/"),
-              headers: this.getHeader(), body: jsonEncode(body));
+              headers: getHeader(), body: jsonEncode(body));
           if (responseGet.statusCode == 200) {
             logger.info("Update inventory has been sent to the server !");
             return true;
@@ -150,10 +159,8 @@ class Api {
           }
         } else {
           logger.info("No inventory found ! Creating new inventory...");
-          var responsePost = await http.post(
-              Uri.parse(this.url + "/asset/bases/"),
-              headers: this.getHeader(),
-              body: jsonEncode(body));
+          var responsePost = await http.post(Uri.parse(url + "/asset/bases/"),
+              headers: getHeader(), body: jsonEncode(body));
           if (responsePost.statusCode == 200) {
             logger.info("New inventory has been sent to the server !");
             return true;
@@ -173,16 +180,10 @@ class Api {
   }
 
   bool sendLocalAssetInventory(Map<String, dynamic> body) {
-    final String inventoryFileName = sprintf('%s/%s.json', [
-      config.getInventoryConfig("data_dir"),
-      DateFormat("yyyy-MM-dd_HH-mm-ss").format(DateTime.now())
-    ]);
-
     logger.info("Sending Asset base to local...");
-    late File inventory = File(inventoryFileName);
     logger.info("Creating inventory file...");
     inventory.create(recursive: true);
-    var encoder = JsonEncoder.withIndent("  ");
+    var encoder = JsonEncoder.withIndent("\t");
     inventory.writeAsStringSync(encoder.convert(body));
     logger.info(sprintf("New inventory created in %s", [inventoryFileName]));
     return true;
@@ -194,7 +195,7 @@ class Api {
 
     logger.info("Checking if there is existing inventory of the machine...");
     var response = await http.get(Uri.parse(url + "/asset/bases/?uuid=$uuid"),
-        headers: this.getHeader());
+        headers: getHeader());
     if (response.statusCode == 200) {
       if (response.body.contains(uuid)) {
         logger.info("Existing inventory found !");
@@ -205,8 +206,8 @@ class Api {
       }
     } else {
       logger.info("No inventory found !");
-      var response = await http.post(Uri.parse(this.url + "/asset/bases/"),
-          headers: this.getHeader(), body: jsonEncode(body));
+      var response = await http.post(Uri.parse(url + "/asset/bases/"),
+          headers: getHeader(), body: jsonEncode(body));
       if (response.statusCode == 200) {
         logger.info("New inventory has been sent to the server !");
         return true;
@@ -218,7 +219,18 @@ class Api {
   }
 
   bool getLocalTemplate() {
-    return false;
+    Map<String, dynamic> template = config.getTemplate();
+
+    if (template.isNotEmpty ||
+        template.values.isNotEmpty ||
+        template.keys.isNotEmpty ||
+        template.length != 0) {
+      logger.info("Local template found !");
+      return true;
+    } else {
+      logger.error("Local template not found !");
+      return false;
+    }
   }
 
   /// Send [body] to api /asset/bases.
@@ -227,28 +239,28 @@ class Api {
     String uuid = await body['uuid'];
 
     uuid = uuid.isEmpty ? 'none' : uuid;
-    var urlGet = Uri.parse(this.url + "/asset/bases/?uuid=$uuid");
 
     /// Get the inventory of this [uuid] in asset bases
-    var responseGet = await http.get(urlGet, headers: this.getHeader());
+    var responseGet = await http
+        .get(Uri.parse(url + "/asset/bases/?uuid=$uuid"), headers: getHeader());
     if (responseGet.statusCode == 200) {
       /// test if the body exist in asset bases or not
       if (responseGet.body.contains(uuid)) {
         /// Get the ID
         var getID = jsonDecode(responseGet.body);
         var id = getID[0]['id'];
-        var urlUpdate = Uri.parse(this.url + "/asset/bases/$id/");
-        var responseUpdate = await http.put(urlUpdate,
-            headers: this.getHeader(), body: jsonEncode(body));
+        var responseUpdate = await http.put(
+            Uri.parse(url + "/asset/bases/$id/"),
+            headers: getHeader(),
+            body: jsonEncode(body));
         if (responseUpdate.statusCode != 200) {
           logger.error("Error to update body");
         } else {
           logger.info("Inventory updating");
         }
       } else {
-        var urlPost = Uri.parse(this.url + "/asset/bases/");
-        var responsePost = await http.post(urlPost,
-            headers: this.getHeader(), body: jsonEncode(body));
+        var responsePost = await http.post(Uri.parse(url + "/asset/bases/"),
+            headers: getHeader(), body: jsonEncode(body));
 
         if (responsePost.statusCode != 200) {
           logger.error("Error to send body");
@@ -271,15 +283,12 @@ class Api {
 
   /// Get and generate template with his [id].
   void getTemplate(id) async {
-    var urlTemplates = Uri.parse(this.url + "/templates/$id/");
-    var urlSections = Uri.parse(this.url + "/sections/");
-    var urlFields = Uri.parse(this.url + "/fields/");
-
-    var responseTemplates =
-        await http.get(urlTemplates, headers: this.getHeader());
+    var responseTemplates = await http.get(Uri.parse(url + "/templates/$id/"),
+        headers: getHeader());
     var responseSections =
-        await http.get(urlSections, headers: this.getHeader());
-    var responseFields = await http.get(urlFields, headers: this.getHeader());
+        await http.get(Uri.parse(url + "/sections/"), headers: getHeader());
+    var responseFields =
+        await http.get(Uri.parse(url + "/fields/"), headers: getHeader());
 
     if (responseTemplates.statusCode == 200 &&
         responseSections.statusCode == 200 &&
@@ -302,17 +311,17 @@ class Api {
 
   /// Check if config file exist and save it if not
   Future<void> checkAndApplyConfig() async {
-    List<dynamic> confFile = this.config.getCoreConfigs();
+    List<dynamic> confFile = config.getCoreConfigs();
 
     if (confFile.isEmpty) {
-      await this.saveConfig();
+      await saveConfig();
     }
   }
 
   /// Save the server configs in config/core.json
   Future<void> saveConfig() async {
-    var urlConfig = Uri.parse(this.url + "/config/");
-    var responseConfig = await http.get(urlConfig, headers: this.getHeader());
+    var responseConfig =
+        await http.get(Uri.parse(url + "/config/"), headers: getHeader());
     List<dynamic> config = json.decode(responseConfig.body);
 
     var encoder = new JsonEncoder.withIndent("\t");
@@ -349,8 +358,8 @@ class Api {
       logger.error("What is your OS ?");
     }
 
-    var url = Uri.parse(this.url + "/templates?os=" + os);
-    var response = await http.get(url, headers: this.getHeader());
+    var response = await http.get(Uri.parse(url + "/templates?os=" + os),
+        headers: getHeader());
 
     if (response.statusCode == 200) {
       var templates = json.decode(response.body);
@@ -361,7 +370,7 @@ class Api {
           id = t['id'];
         }
       });
-      this.getTemplate(id);
+      getTemplate(id);
     }
   }
 
@@ -376,9 +385,9 @@ class Api {
         template.length == 0) {
       logger.error("Template is empty");
     } else {
-      var value = await this.getInventoryResult(template, template["os"]);
+      var value = await getInventoryResult(template, template["os"]);
       logger.info("inventory 2 : " + jsonEncode(value));
-      this.sendTemplate(value);
+      sendTemplate(value);
     }
   }
 
@@ -389,11 +398,11 @@ class Api {
     var format;
 
     if (os == "LIN") {
-      format = this.linuxFormat;
+      format = linuxFormat;
     } else if (template["os"] == "WIN" && Platform.isWindows) {
-      format = this.windowsFormat;
+      format = windowsFormat;
     } else if (template["os"] == "MAC" && Platform.isMacOS) {
-      format = this.macosFormat;
+      format = macosFormat;
     } else {
       logger.error("Error to get the result");
     }
@@ -403,7 +412,7 @@ class Api {
     List<dynamic> sections = template['sections'];
 
     for (var section in sections) {
-      Map<String, dynamic> result = await this.getResult(os, template, section);
+      Map<String, dynamic> result = await getResult(os, template, section);
       var valueTarget;
 
       switch (section['retrival_output']) {
@@ -438,11 +447,11 @@ class Api {
     var command;
 
     if (os == "LIN") {
-      command = this.linuxCommand;
+      command = linuxCommand;
     } else if (template["os"] == "WIN" && Platform.isWindows) {
-      command = this.windowsCommand;
+      command = windowsCommand;
     } else if (template["os"] == "MAC" && Platform.isMacOS) {
-      command = this.macosCommand;
+      command = macosCommand;
     } else {
       logger.error("Error to get the result");
     }
@@ -480,10 +489,10 @@ class Api {
   void sendTemplate(Map<String, dynamic> template) async {
     /// [idTemplate] proved to the template [getInventory()]
     /// Get the associed inventory to the template
-    var id = this.getIdTemplate();
-    var urlGetTemplate = Uri.parse(this.url + "/asset/bases/?template=$id");
-    var responseGetTemplate =
-        await http.get(urlGetTemplate, headers: this.getHeader());
+    var id = getIdTemplate();
+    var responseGetTemplate = await http.get(
+        Uri.parse(url + "/asset/bases/?template=$id"),
+        headers: getHeader());
 
     /// Get ID the inventory to patch
     var getTemplate = jsonDecode(responseGetTemplate.body);
@@ -493,9 +502,10 @@ class Api {
     /// Set a PATCH request to send the template inventory
     /// Before sending test the Last Update
     if (DateTime.now().isAfter(DateTime.parse(getTemplate[0]['last_update']))) {
-      var urlUpdateTemplate = Uri.parse(this.url + "/asset/bases/$idToPatch/");
-      var responseUpdateTemplate = await http.patch(urlUpdateTemplate,
-          headers: this.getHeader(), body: jsonEncode(template));
+      var responseUpdateTemplate = await http.patch(
+          Uri.parse(url + "/asset/bases/$idToPatch/"),
+          headers: getHeader(),
+          body: jsonEncode(template));
       if (responseUpdateTemplate.statusCode != 200) {
         logger.error("Error to send template inventory ");
       } else {
