@@ -17,6 +17,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:intl/intl.dart';
 import 'package:ocs_agent/core/log.dart';
 
 import 'config.dart';
@@ -72,7 +73,6 @@ class Api {
     String password = config.getInventoryConfig("password");
 
     logger.info("Checking API...");
-
     try {
       var response = await http.post(Uri.parse(this.url + "/api-auth/token"),
           headers: {HttpHeaders.contentTypeHeader: 'application/json'},
@@ -104,17 +104,15 @@ class Api {
     String token = config.getInventoryConfig("token");
 
     logger.info("Generating token...");
-
     var response = await http.post(Uri.parse(this.url + "/api-auth/token"),
         headers: {HttpHeaders.contentTypeHeader: 'application/json'},
         body: jsonEncode({'username': username, 'password': password}));
-
     if (response.statusCode == 200) {
       logger.info("Token has been retreive from server !");
       if (jsonUtils.getContentFromStringByKey(response.body, "token") !=
           token) {
         logger.info(
-            "Local token has been changed with token retreive from server !");
+            "Local token has been changed with token retreived from server !");
         config.updateInventoryConfig("token",
             jsonUtils.getContentFromStringByKey(response.body, "token"));
         return true;
@@ -129,51 +127,17 @@ class Api {
     }
   }
 
-  Future<bool> checkInventory(Map<String, dynamic> body) async {
-    String uuid = await body['uuid'];
-    uuid = uuid.isEmpty ? 'none' : uuid;
-
-    logger.info("Checking if there is existing inventory of the machine...");
-
-    var response = await http.get(Uri.parse(url + "/asset/bases/?uuid=$uuid"),
-        headers: this.getHeader());
-    if (response.statusCode == 200) {
-      if (response.body.contains(uuid)) {
-        logger.info("Existing inventory found !");
-        return true;
-      } else {
-        logger.error("Checking existing inventory error !");
-        return false;
-      }
-    } else {
-      logger.info("No inventory found !");
-
-      var response = await http.post(Uri.parse(this.url + "/asset/bases/"),
-          headers: this.getHeader(), body: jsonEncode(body));
-
-      if (response.statusCode == 200) {
-        logger.info("New inventory has been sent to the server !");
-        return true;
-      } else {
-        logger.error("Checking new inventory error !");
-        return false;
-      }
-    }
-  }
-
   Future<bool> sendRemoteAssetInventory(Map<String, dynamic> body) async {
     if (await this.checkInventory(body)) {
       String uuid = await body['uuid'];
       uuid = uuid.isEmpty ? 'none' : uuid;
 
       logger.info("Sending Asset base to server...");
-
       var response = await http.get(Uri.parse(url + "/asset/bases/?uuid=$uuid"),
           headers: this.getHeader());
       if (response.statusCode == 200) {
         if (response.body.contains(uuid)) {
           logger.info("Existing inventory found ! Updating inventory...");
-
           var id = jsonDecode(response.body)[0]['id'];
           var responseGet = await http.put(Uri.parse(url + "/asset/bases/$id/"),
               headers: this.getHeader(), body: jsonEncode(body));
@@ -186,12 +150,10 @@ class Api {
           }
         } else {
           logger.info("No inventory found ! Creating new inventory...");
-
           var responsePost = await http.post(
               Uri.parse(this.url + "/asset/bases/"),
               headers: this.getHeader(),
               body: jsonEncode(body));
-
           if (responsePost.statusCode == 200) {
             logger.info("New inventory has been sent to the server !");
             return true;
@@ -210,7 +172,52 @@ class Api {
     }
   }
 
-  Future<bool> sendLocalAssetInventory(Map<String, dynamic> body) async {
+  bool sendLocalAssetInventory(Map<String, dynamic> body) {
+    final String inventoryFileName = sprintf('%s/%s.json', [
+      config.getInventoryConfig("data_dir"),
+      DateFormat("yyyy-MM-dd_HH-mm-ss").format(DateTime.now())
+    ]);
+
+    logger.info("Sending Asset base to local...");
+    late File inventory = File(inventoryFileName);
+    logger.info("Creating inventory file...");
+    inventory.create(recursive: true);
+    var encoder = JsonEncoder.withIndent("  ");
+    inventory.writeAsStringSync(encoder.convert(body));
+    logger.info(sprintf("New inventory created in %s", [inventoryFileName]));
+    return true;
+  }
+
+  Future<bool> checkInventory(Map<String, dynamic> body) async {
+    String uuid = await body['uuid'];
+    uuid = uuid.isEmpty ? 'none' : uuid;
+
+    logger.info("Checking if there is existing inventory of the machine...");
+    var response = await http.get(Uri.parse(url + "/asset/bases/?uuid=$uuid"),
+        headers: this.getHeader());
+    if (response.statusCode == 200) {
+      if (response.body.contains(uuid)) {
+        logger.info("Existing inventory found !");
+        return true;
+      } else {
+        logger.error("Checking existing inventory error !");
+        return false;
+      }
+    } else {
+      logger.info("No inventory found !");
+      var response = await http.post(Uri.parse(this.url + "/asset/bases/"),
+          headers: this.getHeader(), body: jsonEncode(body));
+      if (response.statusCode == 200) {
+        logger.info("New inventory has been sent to the server !");
+        return true;
+      } else {
+        logger.error("Checking new inventory error !");
+        return false;
+      }
+    }
+  }
+
+  bool getLocalTemplate() {
     return false;
   }
 
