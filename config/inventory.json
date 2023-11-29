@@ -1,5 +1,5 @@
 {
-  "data_dir": "null",
+  "data_dir": "inventory",
   "log_level": "0",
   "log_file": "false",
   "log_filename": "null",
@@ -8,5 +8,5 @@
   "prolog_freq": "1",
   "token": "null",
   "username": "null",
-  "url": "https://url.inventory"
+  "url": "null"
 }
