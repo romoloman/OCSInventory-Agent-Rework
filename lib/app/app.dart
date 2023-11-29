@@ -58,21 +58,21 @@ void main(List<String> args) async {
   if (mode == 0 || mode == 1) {
     if (await agent.apiCheck()) {
       await agent.sendRemoteAssetInventory(body);
-      // if (mode == 0) {
-      //   agent.getLocalTemplate();
-      //   await agent.getRemoteTemplate();
-      //   agent.compareTemplate();
-      //   agent.ExecuteTemplate();
-      //   await agent.sendRemoteTemplateInventory();
-      // }
+      if (mode == 0) {
+        agent.getLocalTemplate();
+        await agent.getRemoteTemplate();
+        agent.compareTemplate();
+        agent.ExecuteTemplate();
+        await agent.sendRemoteTemplateInventory();
+      }
     }
   } else if (mode == 2 || mode == 3) {
-    // await agent.sendLocalAssetInventory(body);
-    // if (mode == 2) {
-    //   agent.getLocalTemplate();
-    //   agent.ExecuteTemplate();
-    //   await agent.sendLocalTemplateInventory();
-    // }
+    agent.sendLocalAssetInventory(body);
+    if (mode == 2) {
+      agent.getLocalTemplate();
+      agent.ExecuteTemplate();
+      await agent.sendLocalTemplateInventory();
+    }
   }
 
   agent.logger.info("Agent process end.");
