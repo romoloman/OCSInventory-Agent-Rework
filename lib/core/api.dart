@@ -136,12 +136,41 @@ class Api {
     }
   }
 
+  Future<bool> checkInventory(Map<String, dynamic> body) async {
+    String uuid = await body['uuid'];
+    uuid = uuid.isEmpty ? 'none' : uuid;
+
+    logger.info("Checking if there is existing inventory of the machine...");
+    var response = await http.get(Uri.parse(url + "/asset/bases?uuid=$uuid"),
+        headers: getHeader());
+    if (response.statusCode == 200) {
+      if (response.body.contains(uuid)) {
+        logger.info("Existing inventory found !");
+        return true;
+      } else {
+        logger.error("Checking existing inventory error !");
+        return false;
+      }
+    } else {
+      logger.info("No inventory found !");
+      var response = await http.post(Uri.parse(url + "/asset/bases/"),
+          headers: getHeader(), body: jsonEncode(body));
+      if (response.statusCode == 200) {
+        logger.info("New inventory has been sent to the server !");
+        return true;
+      } else {
+        logger.error("Checking new inventory error !");
+        return false;
+      }
+    }
+  }
+
   Future<bool> sendRemoteAssetInventory(Map<String, dynamic> body) async {
     if (await checkInventory(body)) {
       String uuid = await body['uuid'];
       uuid = uuid.isEmpty ? 'none' : uuid;
 
-      logger.info("Sending Asset base to server...");
+      logger.info("Sending asset base to server...");
       var response = await http.get(Uri.parse(url + "/asset/bases/?uuid=$uuid"),
           headers: getHeader());
       if (response.statusCode == 200) {
@@ -151,7 +180,7 @@ class Api {
           var responseGet = await http.put(Uri.parse(url + "/asset/bases/$id/"),
               headers: getHeader(), body: jsonEncode(body));
           if (responseGet.statusCode == 200) {
-            logger.info("Update inventory has been sent to the server !");
+            logger.info("Update asset inventory has been sent to the server !");
             return true;
           } else {
             logger.error("Failed to send inventory update !");
@@ -180,7 +209,7 @@ class Api {
   }
 
   bool sendLocalAssetInventory(Map<String, dynamic> body) {
-    logger.info("Sending Asset base to local...");
+    logger.info("Sending asset base to local...");
     logger.info("Creating inventory file...");
     inventory.create(recursive: true);
     var encoder = JsonEncoder.withIndent("\t");
@@ -189,33 +218,91 @@ class Api {
     return true;
   }
 
-  Future<bool> checkInventory(Map<String, dynamic> body) async {
+  Future<Map<String, String>> getRemoteTemplateInfo(
+      Map<String, dynamic> body) async {
+    Map<String, String> info;
     String uuid = await body['uuid'];
     uuid = uuid.isEmpty ? 'none' : uuid;
 
-    logger.info("Checking if there is existing inventory of the machine...");
-    var response = await http.get(Uri.parse(url + "/asset/bases/?uuid=$uuid"),
+    var responseAsset = await http.get(
+        Uri.parse(url + "/asset/bases?uuid=" + uuid),
         headers: getHeader());
-    if (response.statusCode == 200) {
-      if (response.body.contains(uuid)) {
-        logger.info("Existing inventory found !");
-        return true;
+
+    if (responseAsset.statusCode == 200) {
+      logger.info("Asset base found !");
+      var responseTemplate = await http.get(
+          Uri.parse(url +
+              "/templates?id=" +
+              jsonDecode(responseAsset.body)[0]['template'].toString()),
+          headers: getHeader());
+      if (responseTemplate.statusCode == 200) {
+        info = {
+          "id": jsonDecode(responseTemplate.body)[0]['id'].toString(),
+          "last_update":
+              jsonDecode(responseTemplate.body)[0]['last_update'].toString(),
+          "return": "true",
+        };
       } else {
-        logger.error("Checking existing inventory error !");
-        return false;
+        logger.error("Remote template not found !");
+        info = {
+          "return": "false",
+        };
       }
     } else {
-      logger.info("No inventory found !");
-      var response = await http.post(Uri.parse(url + "/asset/bases/"),
-          headers: getHeader(), body: jsonEncode(body));
-      if (response.statusCode == 200) {
-        logger.info("New inventory has been sent to the server !");
-        return true;
-      } else {
-        logger.error("Checking new inventory error !");
-        return false;
+      logger.error("Asset base not found !");
+      info = {
+        "return": "false",
+      };
+    }
+    return info;
+  }
+
+  Map<String, String> getLocalTemplateInfo() {
+    Map<String, String> info;
+    if (getLocalTemplate()) {
+      var template = config.getTemplate();
+      info = {
+        "id": template["id"].toString(),
+        "last_update": template["last_update"].toString(),
+      };
+    } else {
+      info = {
+        "return": "false",
+      };
+    }
+    return info;
+  }
+
+  Future<bool> getRemoteTemplate(Map<String, dynamic> body) async {
+    var info = await getRemoteTemplateInfo(body);
+    if (info["return"] != "false") {
+      var id = info["id"];
+      var responseTemplates = await http.get(Uri.parse(url + "/templates/$id/"),
+          headers: getHeader());
+      var responseSections =
+          await http.get(Uri.parse(url + "/sections/"), headers: getHeader());
+      var responseFields =
+          await http.get(Uri.parse(url + "/fields/"), headers: getHeader());
+
+      if (responseTemplates.statusCode == 200 &&
+          responseSections.statusCode == 200 &&
+          responseFields.statusCode == 200) {
+        Map<String, dynamic> template = json.decode(responseTemplates.body);
+        List<dynamic> sections = json.decode(responseSections.body);
+        List<dynamic> fields = json.decode(responseFields.body);
+
+        sections.forEach((v) {
+          var listfield = fields.where((map) => map['section'] == v['id']);
+          v["fields"] = listfield.toList();
+        });
+
+        template["sections"] =
+            sections.where((sec) => sec['template'] == id).toList();
+        var encoder = new JsonEncoder.withIndent("\t");
+        config.setTemplate(encoder.convert(template));
       }
     }
+    return false;
   }
 
   bool getLocalTemplate() {
@@ -231,6 +318,45 @@ class Api {
       logger.error("Local template not found !");
       return false;
     }
+  }
+
+  int compareTemplate(
+      Map<String, String> localInfo, Map<String, String> remoteInfo) {
+    logger.info(remoteInfo.toString());
+    logger.info(localInfo.toString());
+    if (remoteInfo["id"] == localInfo["id"]) {
+      logger.info("Local template exist on the server !");
+      if (remoteInfo["last_update"] == localInfo["last_update"]) {
+        logger.info("Local template's up to date !");
+        return 0;
+      } else {
+        logger.info("Local template isn't up to date !");
+        return 1;
+      }
+    } else {
+      logger.info("Local template doesn't exist on the server !");
+      return 2;
+    }
+  }
+
+  Future<bool> sendRemoteTemplateInventory(Map<String, dynamic> body) async {
+    var remoteInfo = await getRemoteTemplateInfo(body);
+    var localInfo = getLocalTemplateInfo();
+    var compareResult = compareTemplate(localInfo, remoteInfo);
+    if (compareResult == 0) {
+    } else if (compareResult == 1) {
+    } else if (compareResult == 2) {}
+    logger.info("Sending template inventory to server...");
+
+    return false;
+  }
+
+  bool sendLocalTemplateInventory() {
+    return false;
+  }
+
+  bool executeTemplate(Map<String, dynamic> template) {
+    return false;
   }
 
   /// Send [body] to api /asset/bases.
