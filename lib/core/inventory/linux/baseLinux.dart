@@ -22,6 +22,8 @@ dynamic getBody() async {
   var linuxCommand = new command.LinuxCommand();
   var agent = new api.Api();
 
+  agent.logger.info("Plateform: LINUX");
+
   agent.logger.info("Getting OS body...");
 
   dynamic interface =

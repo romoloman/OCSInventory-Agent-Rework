@@ -22,6 +22,8 @@ dynamic getBody() async {
   var macOsCommand = new command.MacOSCommand();
   var agent = new api.Api();
 
+  agent.logger.info("Plateform: MACOS");
+
   agent.logger.info("Getting OS body...");
 
   /// This command [commandSerialUUID] display list Serial and UUID

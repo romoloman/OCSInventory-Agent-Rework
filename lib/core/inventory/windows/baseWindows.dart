@@ -22,6 +22,8 @@ dynamic getBody() async {
   var windowsCommand = new command.WindowsCommand();
   var agent = new api.Api();
 
+  agent.logger.info("Plateform: WINDOWS");
+
   agent.logger.info("Getting OS body...");
 
   /// Command get the mac address list
