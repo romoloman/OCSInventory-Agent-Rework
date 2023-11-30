@@ -16,11 +16,15 @@
 
 import 'dart:convert';
 
+import 'package:ocs_agent/core/api.dart' as api;
 import 'package:ocs_agent/core/inventory/linux/commands.dart' as command;
 
 ///This fonction return the body for to asset/bases
 dynamic getBody() async {
   var linuxCommand = new command.LinuxCommand();
+  var agent = new api.Api();
+
+  agent.logger.info("Getting OS body...");
 
   dynamic interface =
       (await linuxCommand.commandShell("ip route show default", true))
@@ -41,6 +45,8 @@ dynamic getBody() async {
         await linuxCommand.readFile("/sys/class/net/$interface/address", true),
     "domain": await linuxCommand.commandShell("domainname", true)
   });
+
+  agent.logger.info("OS body has been retreived !");
 
   return body;
 }

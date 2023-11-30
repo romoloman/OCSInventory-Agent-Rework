@@ -14,12 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import 'package:ocs_agent/core/api.dart' as api;
 import 'package:ocs_agent/core/inventory/windows/commands.dart' as command;
 
 ///This fonction return the body for the asset/bases
 dynamic getBody() async {
-  command.WindowsCommand windowsCommand;
-  windowsCommand = new command.WindowsCommand();
+  var windowsCommand = new command.WindowsCommand();
+  var agent = new api.Api();
+
+  agent.logger.info("Getting OS body...");
 
   /// Command get the mac address list
   dynamic macAddr;
@@ -63,6 +66,8 @@ dynamic getBody() async {
     "domain": await windowsCommand.commandPowershell(
         "(Get-WMIObject -Class Win32_ComputerSystem).Domain", true),
   });
+
+  agent.logger.info("OS body has been retreived !");
 
   return body;
 }

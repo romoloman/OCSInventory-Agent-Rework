@@ -14,11 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import 'package:ocs_agent/core/api.dart' as api;
 import 'package:ocs_agent/core/inventory/macos/commands.dart' as command;
 
 ///This fonction return the body for to asset/bases
 dynamic getBody() async {
   var macOsCommand = new command.MacOSCommand();
+  var agent = new api.Api();
+
+  agent.logger.info("Getting OS body...");
 
   /// This command [commandSerialUUID] display list Serial and UUID
   String commandSerialUUID;
@@ -68,6 +72,8 @@ dynamic getBody() async {
         .split(" ")[2],
     "domain": getDomain
   });
+
+  agent.logger.info("OS body has been retreived !");
 
   return body;
 }
