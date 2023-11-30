@@ -51,12 +51,13 @@ void main(List<String> args) async {
   } else if (Platform.isWindows) {
     body = await baseWindows.getBody();
   } else {
-    agent.logger.error(
-        "The agent can't define in which operating system you are using !");
+    agent.logger
+        .error("Can't define in which operating system you are using !");
   }
 
   if (mode == 0 || mode == 1) {
     if (await agent.apiCheck()) {
+      await agent.checkAndApplyConfig();
       await agent.sendRemoteAssetInventory(body);
       if (mode == 0) {
         await agent.sendRemoteTemplateInventory(body);
