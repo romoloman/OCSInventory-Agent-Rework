@@ -177,13 +177,11 @@ class WindowsFormat {
         var json = this.formatJson(result);
         return json[retrivalValue];
 
-        break;
       case "PTXT":
         var txt = result.split("\n").toList();
         int line = int.parse(retrivalValue);
         return txt[line - 1];
 
-        break;
       case "REGX":
         var lines = result.split("\n").toList();
         var regex = RegExp(retrivalValue);
@@ -207,7 +205,6 @@ class WindowsFormat {
         break;
       default:
         return "null";
-        break;
     }
     return null;
   }
@@ -298,7 +295,7 @@ class WindowsFormat {
         list2[1] = list2[1].replaceAll(new RegExp(r"^ *"), '');
         list2[1] = list2[1].replaceAll(new RegExp(r"^\s*"), '');
 
-        if (list2[1] == null || list2[1] == "") {
+        if (list2[1].isEmpty || list2[1] == "") {
           list2[1] = list2[0];
         }
 
