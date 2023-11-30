@@ -72,6 +72,7 @@ class Api {
     this.inventory = File(inventoryFileName);
   }
 
+  /// Get the running mode of the agent.
   int getMode() {
     return int.parse(config.getInventoryConfig("mode"));
   }
@@ -165,6 +166,7 @@ class Api {
     }
   }
 
+  /// Check if an inventory already exist on the server.
   Future<bool> checkInventory(Map<String, dynamic> body) async {
     String uuid = await body['uuid'];
     uuid = uuid.isEmpty ? 'none' : uuid;
@@ -194,6 +196,7 @@ class Api {
     }
   }
 
+  /// Create or update the inventory and send it to the server.
   Future<bool> sendRemoteAssetInventory(Map<String, dynamic> body) async {
     if (await checkInventory(body)) {
       String uuid = await body['uuid'];
@@ -237,6 +240,7 @@ class Api {
     }
   }
 
+  /// Create a local inventory in the JSON format.
   bool sendLocalAssetInventory(Map<String, dynamic> body) {
     logger.info("Sending asset base to local...");
     logger.info("Creating inventory file...");
@@ -247,6 +251,7 @@ class Api {
     return true;
   }
 
+  /// Get the remote template id and last update.
   Future<Map<String, String>> getRemoteTemplateInfo(
       Map<String, dynamic> body) async {
     Map<String, String> info;
@@ -286,6 +291,7 @@ class Api {
     return info;
   }
 
+  /// Get the local template id and last update.
   Map<String, String> getLocalTemplateInfo() {
     Map<String, String> info;
     if (getLocalTemplate()) {
@@ -302,6 +308,7 @@ class Api {
     return info;
   }
 
+  /// Compare the both template to know if we need to create or update the local template.
   int compareTemplate(
       Map<String, String> localInfo, Map<String, String> remoteInfo) {
     if (remoteInfo["id"] == localInfo["id"]) {
@@ -319,6 +326,7 @@ class Api {
     }
   }
 
+  /// Get the remote template values to create or update the local template.
   Future<bool> getRemoteTemplate(Map<String, dynamic> body) async {
     var remoteInfo = await getRemoteTemplateInfo(body);
     var localInfo = getLocalTemplateInfo();
@@ -355,6 +363,7 @@ class Api {
     }
   }
 
+  /// Return if a local template is existing or not. 
   bool getLocalTemplate() {
     Map<String, dynamic> template = config.getTemplate();
 
@@ -370,14 +379,17 @@ class Api {
     }
   }
 
+  /// Execute the template and format template inventory.
   bool executeTemplate(Map<String, dynamic> template) {
     return false;
   }
 
+  /// Update the remote inventory to add template inventory
   Future<bool> sendRemoteTemplateInventory(Map<String, dynamic> body) async {
     if (await getRemoteTemplate(body)) {
       // executeTemplate(template);
       logger.info("Sending template inventory to server...");
+      inventory.
       return true;
     } else {
       logger.error("Can't get remote template !");
@@ -385,7 +397,15 @@ class Api {
     }
   }
 
+  /// Update the local inventory to add template inventory
   bool sendLocalTemplateInventory() {
-    return false;
+    if (getLocalTemplate()) {
+      // executeTemplate(template);
+      logger.info("Sending template inventory to local...");
+      return true;
+    } else {
+      logger.error("Can't get local template !");
+      return false;
+    }
   }
 }
