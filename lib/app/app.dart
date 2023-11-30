@@ -66,7 +66,7 @@ void main(List<String> args) async {
   } else if (mode == 2 || mode == 3) {
     agent.sendLocalBaseInventory(body);
     if (mode == 2) {
-      agent.sendLocalTemplateInventory();
+      await agent.sendLocalTemplateInventory();
     }
   }
 

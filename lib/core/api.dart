@@ -222,9 +222,9 @@ class Api {
         if (response.body.contains(uuid)) {
           logger.info("Updating inventory...");
           var id = jsonDecode(response.body)[0]['id'];
-          var responseGet = await http.put(Uri.parse(url + "/asset/bases/$id/"),
+          var responsePut = await http.put(Uri.parse(url + "/asset/bases/$id/"),
               headers: getHeader(), body: jsonEncode(body));
-          if (responseGet.statusCode == 200) {
+          if (responsePut.statusCode == 200) {
             logger.info("Update base inventory has been sent to the server !");
             return true;
           } else {
@@ -256,11 +256,12 @@ class Api {
   /// Create a local inventory in the JSON format.
   bool sendLocalBaseInventory(Map<String, dynamic> body) {
     logger.info("Sending base inventory to local...");
-    logger.info("Creating inventory file...");
+    logger.info("Creating base inventory file...");
     inventory.create(recursive: true);
     var encoder = JsonEncoder.withIndent("\t");
     inventory.writeAsStringSync(encoder.convert(body));
-    logger.info(sprintf("New inventory created in %s", [inventoryFileName]));
+    logger
+        .info(sprintf("New base inventory created in %s", [inventoryFileName]));
     return true;
   }
 
@@ -279,14 +280,14 @@ class Api {
       logger.info("Base inventory found !");
       var responseTemplate = await http.get(
           Uri.parse(url +
-              "/templates?id=" +
+              "/templates/" +
               jsonDecode(responseAsset.body)[0]['template'].toString()),
           headers: getHeader());
       if (responseTemplate.statusCode == 200) {
         info = {
-          "id": jsonDecode(responseTemplate.body)[0]['id'].toString(),
+          "id": jsonDecode(responseTemplate.body)['id'].toString(),
           "last_update":
-              jsonDecode(responseTemplate.body)[0]['last_update'].toString(),
+              jsonDecode(responseTemplate.body)['last_update'].toString(),
           "return": "true",
         };
       } else {
@@ -364,7 +365,7 @@ class Api {
           Map<String, dynamic> template = json.decode(responseTemplates.body);
           var encoder = new JsonEncoder.withIndent("\t");
           config.setTemplate(encoder.convert(template));
-          logger.info("Remote template has been saved to the local !");
+          logger.info("Remote template has been saved into local !");
           return true;
         } else {
           logger.error("Remote template not found !");
@@ -382,7 +383,7 @@ class Api {
 
   /// Return if a local template is existing or not.
   bool getLocalTemplate() {
-    logger.info("Getting remote template...");
+    logger.info("Getting local template...");
 
     Map<String, dynamic> template = config.getTemplate();
 
@@ -398,26 +399,181 @@ class Api {
     }
   }
 
+  Future<Map<String, dynamic>> getResult(String os,
+      Map<String, dynamic> template, Map<String, dynamic> section) async {
+    Map<String, dynamic> result = new Map<String, dynamic>();
+    var command;
+
+    if (os == "LIN") {
+      command = this.linuxCommand;
+    } else if (template["os"] == "WIN" && Platform.isWindows) {
+      command = this.windowsCommand;
+    } else if (template["os"] == "MAC" && Platform.isMacOS) {
+      command = this.macosCommand;
+    } else {
+      logger.error("Error to get the result");
+    }
+
+    Map<String, dynamic> main = new Map<String, dynamic>();
+    Map<String, dynamic> options = new Map<String, dynamic>();
+    if (section['options'] != null) {
+      options = section['options'];
+    }
+
+    String mainRes =
+        await command.getResult(section["target"], section['retrival_method']);
+    main.putIfAbsent('result', () => mainRes);
+    main.putIfAbsent('type', () => section['retrival_output']);
+    main.putIfAbsent('name', () => section['name']);
+    main.putIfAbsent('options', () => options);
+    result.putIfAbsent('main', () => main);
+    List<dynamic> test = section['fields'];
+    var fieldOver = test.where((element) => element["override_target"]);
+
+    for (var field in fieldOver) {
+      Map<String, dynamic> sub = new Map<String, dynamic>();
+      String res = await command.getResult(
+          field["new_target"], field['retrival_method']);
+      sub.putIfAbsent('result', () => res);
+      sub.putIfAbsent('type', () => field['retrival_output']);
+      sub.putIfAbsent('name', () => field['name']);
+      result.putIfAbsent(field['name'], () => sub);
+    }
+
+    return result;
+  }
+
+  /// Get all informations present in the [template] from the computer
+  /// with a [os] verification and format it in json.
+  Future<Map<String, dynamic>> getInventoryResult(
+      Map<String, dynamic> template, String os) async {
+    var format;
+
+    if (os == "LIN") {
+      format = this.linuxFormat;
+    } else if (template["os"] == "WIN" && Platform.isWindows) {
+      format = this.windowsFormat;
+    } else if (template["os"] == "MAC" && Platform.isMacOS) {
+      format = this.macosFormat;
+    } else {
+      logger.error("Error to get the result");
+    }
+
+    Map<String, dynamic> inventoryResult = new Map();
+
+    List<dynamic> sections = template['sections'];
+
+    for (var section in sections) {
+      Map<String, dynamic> result = await getResult(os, template, section);
+      var valueTarget;
+
+      switch (section['retrival_output']) {
+        case "TBLE":
+          valueTarget = format.getByArray(section["fields"], result);
+          break;
+        case "JSON":
+          valueTarget = format.getByJson(section["fields"], result);
+          break;
+        case "PTXT":
+          valueTarget = await format.getByPtxt(section["fields"], result);
+          break;
+        case "REGX":
+          valueTarget = format.getByRegx(section["fields"], result);
+          break;
+        case "GREP":
+          valueTarget = format.getByGrep(section["fields"], result);
+          break;
+        default:
+          valueTarget = null;
+          break;
+      }
+      inventoryResult.putIfAbsent(section['name'], () => valueTarget);
+    }
+
+    return inventoryResult;
+  }
+
   /// Execute the template and format template inventory.
-  bool executeTemplate(Map<String, dynamic> template) {
-    return false;
+  Future<Map<String, dynamic>> executeTemplate() async {
+    var template = config.getTemplate();
+    logger.info("Executing template...");
+    var value = await getInventoryResult(template, template["os"]);
+    var templateInventory;
+    if (value.isNotEmpty) {
+      templateInventory = {
+        "values": value,
+        "return": "true",
+      };
+      logger.info("Template executed successfully !");
+      return templateInventory;
+    } else {
+      templateInventory = {
+        "return": "false",
+      };
+      logger.error("Can't execute the template because he is empty !");
+      return templateInventory;
+    }
   }
 
   /// Update the remote inventory to add template inventory
   Future<void> sendRemoteTemplateInventory(Map<String, dynamic> body) async {
     if (await getRemoteTemplate(body)) {
-      // executeTemplate(template);
-      logger.info("Sending template inventory to server...");
+      var templateInventory = await executeTemplate();
+      if (templateInventory["return"] != false) {
+        logger.info("Sending template inventory to server...");
+        String uuid = await body['uuid'];
+        uuid = uuid.isEmpty ? 'none' : uuid;
+        var response = await http.get(
+            Uri.parse(url + "/asset/bases/?uuid=$uuid"),
+            headers: getHeader());
+        if (response.statusCode == 200) {
+          if (response.body.contains(uuid)) {
+            logger.info("Updating inventory...");
+            var id = jsonDecode(response.body)[0]['id'];
+            var content = jsonDecode(response.body)[0];
+            var encoder = new JsonEncoder.withIndent("\t");
+            content["template_inventory"] = templateInventory["values"];
+            var responsePut = await http.put(
+                Uri.parse(url + "/asset/bases/$id/"),
+                headers: getHeader(),
+                body: encoder.convert(content));
+            if (responsePut.statusCode == 200) {
+              logger
+                  .info("Template inventory added to remote base inventory !");
+            } else {
+              logger.error(
+                  "Can't upload template inventory to remote base inventory !");
+            }
+          } else {
+            logger.error("Base inventory not found !");
+          }
+        } else {
+          logger.error("Can't get base inventory from server !");
+        }
+      } else {
+        logger.error("Can't execute template !");
+      }
     } else {
       logger.error("Can't get remote template !");
     }
   }
 
   /// Update the local inventory to add template inventory
-  void sendLocalTemplateInventory() {
+  Future<void> sendLocalTemplateInventory() async {
+    logger.info("Sending template inventory to local...");
+
     if (getLocalTemplate()) {
-      // executeTemplate(template);
-      logger.info("Sending template inventory to local...");
+      var templateInventory = await executeTemplate();
+
+      if (templateInventory["return"] != false) {
+        var content = jsonDecode(inventory.readAsStringSync());
+        var encoder = new JsonEncoder.withIndent("\t");
+        content["template_inventory"] = templateInventory["values"];
+        inventory.writeAsStringSync(encoder.convert(content));
+        logger.info("Template inventory added to base inventory !");
+      } else {
+        logger.error("Can't execute template !");
+      }
     } else {
       logger.error("Can't get local template !");
     }
