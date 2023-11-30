@@ -58,13 +58,13 @@ void main(List<String> args) async {
   if (mode == 0 || mode == 1) {
     if (await agent.apiCheck()) {
       await agent.checkAndApplyConfig();
-      await agent.sendRemoteAssetInventory(body);
+      await agent.sendRemoteBaseInventory(body);
       if (mode == 0) {
         await agent.sendRemoteTemplateInventory(body);
       }
     }
   } else if (mode == 2 || mode == 3) {
-    agent.sendLocalAssetInventory(body);
+    agent.sendLocalBaseInventory(body);
     if (mode == 2) {
       agent.sendLocalTemplateInventory();
     }

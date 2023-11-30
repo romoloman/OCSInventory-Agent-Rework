@@ -149,20 +149,33 @@ class Api {
 
   /// Save the server configs in config/core.json
   Future<void> saveConfig() async {
+    logger.info("Getting remote config...");
+
     var responseConfig =
         await http.get(Uri.parse(url + "/config/"), headers: getHeader());
     List<dynamic> config = json.decode(responseConfig.body);
 
-    var encoder = new JsonEncoder.withIndent("\t");
-    this.config.setCore(encoder.convert(config));
+    if (responseConfig.statusCode == 200) {
+      logger.info("Remote config found !");
+      var encoder = new JsonEncoder.withIndent("\t");
+      this.config.setCore(encoder.convert(config));
+      logger.info("Remote config saved in local !");
+    } else {
+      logger.error("Remote config not found !");
+    }
   }
 
   /// Check if config file exist and save it if not
   Future<void> checkAndApplyConfig() async {
     List<dynamic> confFile = config.getCoreConfigs();
 
+    logger.info("Checking local config...");
+
     if (confFile.isEmpty) {
+      logger.info("local config not found ! Creating one...");
       await saveConfig();
+    } else {
+      logger.info("Local config found !");
     }
   }
 
@@ -197,12 +210,12 @@ class Api {
   }
 
   /// Create or update the inventory and send it to the server.
-  Future<bool> sendRemoteAssetInventory(Map<String, dynamic> body) async {
+  Future<bool> sendRemoteBaseInventory(Map<String, dynamic> body) async {
     if (await checkInventory(body)) {
       String uuid = await body['uuid'];
       uuid = uuid.isEmpty ? 'none' : uuid;
 
-      logger.info("Sending asset base to server...");
+      logger.info("Sending base inventory to server...");
       var response = await http.get(Uri.parse(url + "/asset/bases/?uuid=$uuid"),
           headers: getHeader());
       if (response.statusCode == 200) {
@@ -212,7 +225,7 @@ class Api {
           var responseGet = await http.put(Uri.parse(url + "/asset/bases/$id/"),
               headers: getHeader(), body: jsonEncode(body));
           if (responseGet.statusCode == 200) {
-            logger.info("Update asset inventory has been sent to the server !");
+            logger.info("Update base inventory has been sent to the server !");
             return true;
           } else {
             logger.error("Failed to send inventory update !");
@@ -241,8 +254,8 @@ class Api {
   }
 
   /// Create a local inventory in the JSON format.
-  bool sendLocalAssetInventory(Map<String, dynamic> body) {
-    logger.info("Sending asset base to local...");
+  bool sendLocalBaseInventory(Map<String, dynamic> body) {
+    logger.info("Sending base inventory to local...");
     logger.info("Creating inventory file...");
     inventory.create(recursive: true);
     var encoder = JsonEncoder.withIndent("\t");
@@ -263,7 +276,7 @@ class Api {
         headers: getHeader());
 
     if (responseAsset.statusCode == 200 && responseAsset.body.isNotEmpty) {
-      logger.info("Asset base found !");
+      logger.info("Base inventory found !");
       var responseTemplate = await http.get(
           Uri.parse(url +
               "/templates?id=" +
@@ -330,14 +343,18 @@ class Api {
   Future<bool> getRemoteTemplate(Map<String, dynamic> body) async {
     var remoteInfo = await getRemoteTemplateInfo(body);
     var localInfo = getLocalTemplateInfo();
+
+    logger.info("Getting remote template...");
+
     if (remoteInfo["return"] != "false" || localInfo["return"] != "false") {
       var compareResult = compareTemplate(localInfo, remoteInfo);
       if (compareResult == 0) {
+        logger.info("No need to erase current template.");
         return true;
       } else if (compareResult == 1 || compareResult == 2) {
         var id = remoteInfo["id"];
 
-        logger.info("Getting remote template...");
+        logger.info("Creating or updating the local template...");
 
         var responseTemplates = await http
             .get(Uri.parse(url + "/templates/$id/"), headers: getHeader());
@@ -347,7 +364,7 @@ class Api {
           Map<String, dynamic> template = json.decode(responseTemplates.body);
           var encoder = new JsonEncoder.withIndent("\t");
           config.setTemplate(encoder.convert(template));
-          logger.info("Remote template has been retreived from the server !");
+          logger.info("Remote template has been saved to the local !");
           return true;
         } else {
           logger.error("Remote template not found !");
@@ -363,8 +380,10 @@ class Api {
     }
   }
 
-  /// Return if a local template is existing or not. 
+  /// Return if a local template is existing or not.
   bool getLocalTemplate() {
+    logger.info("Getting remote template...");
+
     Map<String, dynamic> template = config.getTemplate();
 
     if (template.isNotEmpty ||
@@ -385,27 +404,22 @@ class Api {
   }
 
   /// Update the remote inventory to add template inventory
-  Future<bool> sendRemoteTemplateInventory(Map<String, dynamic> body) async {
+  Future<void> sendRemoteTemplateInventory(Map<String, dynamic> body) async {
     if (await getRemoteTemplate(body)) {
       // executeTemplate(template);
       logger.info("Sending template inventory to server...");
-      inventory.
-      return true;
     } else {
       logger.error("Can't get remote template !");
-      return false;
     }
   }
 
   /// Update the local inventory to add template inventory
-  bool sendLocalTemplateInventory() {
+  void sendLocalTemplateInventory() {
     if (getLocalTemplate()) {
       // executeTemplate(template);
       logger.info("Sending template inventory to local...");
-      return true;
     } else {
       logger.error("Can't get local template !");
-      return false;
     }
   }
 }
