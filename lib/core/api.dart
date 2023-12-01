@@ -97,15 +97,15 @@ class Api {
         logger.info("API status's up!");
         await generateToken();
         return true;
-      } else if (response["status_code"] == 400) {
-        logger.error("(Check username or password in the configuration file)");
-        return false;
       } else {
+        logger
+            .verbose("(Check username or password in the configuration file)");
         logger.error("API check error!");
         return false;
       }
     } catch (exception) {
-      logger.error(sprintf("HTTP query: %s", [exception.toString().trim()]));
+      logger.error(
+          sprintf("HTTP query error: %s", [exception.toString().trim()]));
       return false;
     }
   }
@@ -140,11 +140,14 @@ class Api {
           return true;
         }
       } else {
+        logger
+            .verbose("(Check username or password in the configuration file)");
         logger.error("Generate token error!");
         return false;
       }
     } catch (exception) {
-      logger.error(sprintf("HTTP query: %s", [exception.toString().trim()]));
+      logger.error(
+          sprintf("HTTP query error: %s", [exception.toString().trim()]));
       return false;
     }
   }
@@ -176,7 +179,8 @@ class Api {
         logger.error("Remote config not found!");
       }
     } catch (exception) {
-      logger.error(sprintf("HTTP query: %s", [exception.toString().trim()]));
+      logger.error(
+          sprintf("HTTP query error: %s", [exception.toString().trim()]));
     }
   }
 
@@ -227,7 +231,8 @@ class Api {
         }
       }
     } catch (exception) {
-      logger.error(sprintf("HTTP query: %s", [exception.toString().trim()]));
+      logger.error(
+          sprintf("HTTP query error: %s", [exception.toString().trim()]));
       return false;
     }
   }
@@ -283,7 +288,8 @@ class Api {
           return false;
         }
       } catch (exception) {
-        logger.error(sprintf("HTTP query: %s", [exception.toString().trim()]));
+        logger.error(
+            sprintf("HTTP query error: %s", [exception.toString().trim()]));
         return false;
       }
     } else {
@@ -347,7 +353,8 @@ class Api {
       }
       return info;
     } catch (exception) {
-      logger.error(sprintf("HTTP query: %s", [exception.toString().trim()]));
+      logger.error(
+          sprintf("HTTP query error: %s", [exception.toString().trim()]));
       info = {
         "return": "false",
       };
@@ -422,8 +429,8 @@ class Api {
             return false;
           }
         } catch (exception) {
-          logger
-              .error(sprintf("HTTP query: %s", [exception.toString().trim()]));
+          logger.error(
+              sprintf("HTTP query error: %s", [exception.toString().trim()]));
           return false;
         }
       } else {
@@ -611,8 +618,8 @@ class Api {
             logger.error("Can't get base inventory from server!");
           }
         } catch (exception) {
-          logger
-              .error(sprintf("HTTP query: %s", [exception.toString().trim()]));
+          logger.error(
+              sprintf("HTTP query error: %s", [exception.toString().trim()]));
         }
       } else {
         logger.error("Can't execute template!");
