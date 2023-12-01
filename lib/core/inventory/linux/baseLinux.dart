@@ -46,7 +46,7 @@ dynamic getBody() async {
     "domain": await linuxCommand.commandShell("domainname", true)
   });
 
-  agent.logger.info("OS body has been retreived !");
+  agent.logger.info("OS body has been retreived!");
 
   return body;
 }

@@ -27,7 +27,7 @@ import 'package:ocs_agent/core/inventory/macos/baseMacOS.dart' as baseMacOS;
 import 'package:ocs_agent/core/inventory/windows/baseWindows.dart'
     as baseWindows;
 
-///in this main section we send the [body] to the asset/bases
+/// In this main section we send the [body] to the asset/bases
 void main(List<String> args) async {
   var agent = api.Api();
 
@@ -51,8 +51,8 @@ void main(List<String> args) async {
   } else if (Platform.isWindows) {
     body = await baseWindows.getBody();
   } else {
-    agent.logger
-        .error("Can't define in which operating system you are using !");
+    agent.logger.error(
+        "Can't define in which operating system you are using! (Check Plateform class return)");
   }
 
   if (mode == 0 || mode == 1) {
@@ -70,5 +70,5 @@ void main(List<String> args) async {
     }
   }
 
-  agent.logger.info("Agent process end.");
+  agent.logger.info("Agent's process ends!");
 }

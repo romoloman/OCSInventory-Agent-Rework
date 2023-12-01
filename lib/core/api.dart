@@ -18,6 +18,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:intl/intl.dart';
+import 'package:ocs_agent/core/exception.dart';
 import 'package:ocs_agent/core/log.dart';
 
 import 'config.dart';
@@ -37,6 +38,7 @@ class Api {
   late Config config;
   late JsonUtils jsonUtils;
   late Logger logger;
+  late HTTPQuery query;
 
   late LinuxFormat linuxFormat;
   late LinuxCommand linuxCommand;
@@ -62,6 +64,7 @@ class Api {
     this.windowsCommand = new WindowsCommand();
     this.macosFormat = new MacOSFormat();
     this.macosCommand = new MacOSCommand();
+    this.query = new HTTPQuery();
     this.logger = new Logger();
     this.url = config.getInventoryConfig("url");
 
@@ -84,24 +87,27 @@ class Api {
 
     logger.info("Checking API...");
     try {
-      var response = await http.post(Uri.parse(url + "/api-auth/token"),
-          headers: {HttpHeaders.contentTypeHeader: 'application/json'},
-          body: jsonEncode({'username': username, 'password': password}));
-      if (response.statusCode == 200) {
-        logger.info("API status's up !");
+      var response = await query.post(
+          "apiCheck",
+          Uri.parse(url + "/api-auth/token"),
+          {HttpHeaders.contentTypeHeader: 'application/json'},
+          jsonEncode({'username': username, 'password': password}));
+      logger.verbose(response["message"]);
+      if (response["status_code"] == 200) {
+        logger.info("API status's up!");
         await generateToken();
         return true;
-      } else if (response.statusCode == 401) {
+      } else if (response["status_code"] == 401) {
         logger.error(
-            "Unauthorized ! (Check username or password in the configuration file)");
+            "401: Unauthorized! (Check username or password in the configuration file)");
         return false;
       } else {
-        logger.error("API check error !");
+        logger.error("API check error!");
         return false;
       }
     } catch (exception) {
       logger.error(
-          sprintf("API not found ! (%s)", [exception.toString().trim()]));
+          sprintf("HTTP query error: %s", [exception.toString().trim()]));
       return false;
     }
   }
@@ -114,25 +120,34 @@ class Api {
     String token = config.getInventoryConfig("token");
 
     logger.info("Generating token...");
-    var response = await http.post(Uri.parse(url + "/api-auth/token"),
-        headers: {HttpHeaders.contentTypeHeader: 'application/json'},
-        body: jsonEncode({'username': username, 'password': password}));
-    if (response.statusCode == 200) {
-      logger.info("Token has been retreive from server !");
-      if (jsonUtils.getContentFromStringByKey(response.body, "token") !=
-          token) {
-        config.updateInventoryConfig("token",
-            jsonUtils.getContentFromStringByKey(response.body, "token"));
-        logger.info(
-            "Local token has been changed with token retreived from server !");
-        return true;
+    try {
+      var response = await query.post(
+          "generateToken",
+          Uri.parse(url + "/api-auth/token"),
+          {HttpHeaders.contentTypeHeader: 'application/json'},
+          jsonEncode({'username': username, 'password': password}));
+      logger.verbose(response["message"]);
+      if (response["status_code"] == 200) {
+        logger.info("Token has been retreive from server!");
+        if (jsonUtils.getContentFromStringByKey(response["body"], "token") !=
+            token) {
+          config.updateInventoryConfig("token",
+              jsonUtils.getContentFromStringByKey(response["body"], "token"));
+          logger.info(
+              "Local token has been changed with token retreived from server!");
+          return true;
+        } else {
+          logger.info(
+              "Local token is the same as the token from server. Keep the local token.");
+          return true;
+        }
       } else {
-        logger.info(
-            "Local token is the same as the token from server. Keep the local token.");
-        return true;
+        logger.error("Generate token error!");
+        return false;
       }
-    } else {
-      logger.error("Generate token error !");
+    } catch (exception) {
+      logger.error(
+          sprintf("HTTP query error: %s", [exception.toString().trim()]));
       return false;
     }
   }
@@ -150,18 +165,22 @@ class Api {
   /// Save the server configs in config/core.json
   Future<void> saveConfig() async {
     logger.info("Getting remote config...");
-
-    var responseConfig =
-        await http.get(Uri.parse(url + "/config/"), headers: getHeader());
-    List<dynamic> config = json.decode(responseConfig.body);
-
-    if (responseConfig.statusCode == 200) {
-      logger.info("Remote config found !");
-      var encoder = new JsonEncoder.withIndent("\t");
-      this.config.setCore(encoder.convert(config));
-      logger.info("Remote config saved in local !");
-    } else {
-      logger.error("Remote config not found !");
+    try {
+      var response = await query.get(
+          "saveConfig", Uri.parse(url + "/config/"), getHeader());
+      logger.verbose(response["message"]);
+      if (response["status_code"] == 200) {
+        logger.info("Remote config found!");
+        List<dynamic> config = json.decode(response["body"]);
+        var encoder = new JsonEncoder.withIndent("\t");
+        this.config.setCore(encoder.convert(config));
+        logger.info("Remote config saved in local!");
+      } else {
+        logger.error("Remote config not found!");
+      }
+    } catch (exception) {
+      logger.error(
+          sprintf("HTTP query error: %s", [exception.toString().trim()]));
     }
   }
 
@@ -175,7 +194,7 @@ class Api {
       logger.info("local config not found ! Creating one...");
       await saveConfig();
     } else {
-      logger.info("Local config found !");
+      logger.info("Local config found!");
     }
   }
 
@@ -184,28 +203,37 @@ class Api {
     String uuid = await body['uuid'];
     uuid = uuid.isEmpty ? 'none' : uuid;
 
-    logger.info("Checking if there is existing inventory of the machine...");
-    var response = await http.get(Uri.parse(url + "/asset/bases?uuid=$uuid"),
-        headers: getHeader());
-    if (response.statusCode == 200) {
-      if (response.body.contains(uuid)) {
-        logger.info("Existing inventory found !");
-        return true;
+    logger.info(
+        "Checking if there is existing inventory of the machine on the server...");
+    try {
+      var response = await query.get("checkInventory",
+          Uri.parse(url + "/asset/bases?uuid=$uuid"), getHeader());
+      logger.verbose(response["message"]);
+      if (response["status_code"] == 200) {
+        if (response["body"].contains(uuid)) {
+          logger.info("Existing inventory found!");
+          return true;
+        } else {
+          logger.error("No existing inventory found!");
+          return true;
+        }
       } else {
-        logger.error("No existing inventory found !");
-        return true;
+        logger.info("No inventory found!");
+        var response = await query.post("checkInventory",
+            Uri.parse(url + "/asset/bases/"), getHeader(), jsonEncode(body));
+        logger.verbose(response["message"]);
+        if (response["status_code"] == 200) {
+          logger.info("New inventory has been sent to the server!");
+          return true;
+        } else {
+          logger.error("Checking new inventory error!");
+          return false;
+        }
       }
-    } else {
-      logger.info("No inventory found !");
-      var response = await http.post(Uri.parse(url + "/asset/bases/"),
-          headers: getHeader(), body: jsonEncode(body));
-      if (response.statusCode == 200) {
-        logger.info("New inventory has been sent to the server !");
-        return true;
-      } else {
-        logger.error("Checking new inventory error !");
-        return false;
-      }
+    } catch (exception) {
+      logger.error(
+          sprintf("HTTP query error: %s", [exception.toString().trim()]));
+      return false;
     }
   }
 
@@ -216,39 +244,56 @@ class Api {
       uuid = uuid.isEmpty ? 'none' : uuid;
 
       logger.info("Sending base inventory to server...");
-      var response = await http.get(Uri.parse(url + "/asset/bases/?uuid=$uuid"),
-          headers: getHeader());
-      if (response.statusCode == 200) {
-        if (response.body.contains(uuid)) {
-          logger.info("Updating inventory...");
-          var id = jsonDecode(response.body)[0]['id'];
-          var responsePut = await http.put(Uri.parse(url + "/asset/bases/$id/"),
-              headers: getHeader(), body: jsonEncode(body));
-          if (responsePut.statusCode == 200) {
-            logger.info("Update base inventory has been sent to the server !");
-            return true;
+      try {
+        var response = await query.get("senRemoteBaseInventory",
+            Uri.parse(url + "/asset/bases/?uuid=$uuid"), getHeader());
+        logger.verbose(response["message"]);
+
+        if (response["status_code"] == 200) {
+          if (response["body"].contains(uuid)) {
+            logger.info("Updating inventory...");
+            var id = jsonDecode(response["body"])[0]['id'];
+            var responsePut = await query.put(
+                "senRemoteBaseInventory",
+                Uri.parse(url + "/asset/bases/$id/"),
+                getHeader(),
+                jsonEncode(body));
+            logger.verbose(responsePut["message"]);
+
+            if (responsePut["status_code"] == 200) {
+              logger.info("Update base inventory has been sent to the server!");
+              return true;
+            } else {
+              logger.error("Failed to send inventory update!");
+              return false;
+            }
           } else {
-            logger.error("Failed to send inventory update !");
-            return false;
+            logger.info("Creating new inventory...");
+            var responsePost = await query.post(
+                "senRemoteBaseInventory",
+                Uri.parse(url + "/asset/bases/"),
+                getHeader(),
+                jsonEncode(body));
+            logger.verbose(responsePost["message"]);
+            if (responsePost["status_code"] == 200) {
+              logger.info("New inventory has been sent to the server!");
+              return true;
+            } else {
+              logger.error("Failed to send new inventory!");
+              return false;
+            }
           }
         } else {
-          logger.info("Creating new inventory...");
-          var responsePost = await http.post(Uri.parse(url + "/asset/bases/"),
-              headers: getHeader(), body: jsonEncode(body));
-          if (responsePost.statusCode == 200) {
-            logger.info("New inventory has been sent to the server !");
-            return true;
-          } else {
-            logger.error("Failed to send new inventory !");
-            return false;
-          }
+          logger.error("Can't get inventory from server!");
+          return false;
         }
-      } else {
-        logger.error("Can't get inventory from server !");
+      } catch (exception) {
+        logger.error(
+            sprintf("HTTP query error: %s", [exception.toString().trim()]));
         return false;
       }
     } else {
-      logger.error("Can't check inventory !");
+      logger.error("Can't check inventory!");
       return false;
     }
   }
@@ -271,38 +316,50 @@ class Api {
     Map<String, String> info;
     String uuid = await body['uuid'];
     uuid = uuid.isEmpty ? 'none' : uuid;
-
-    var responseAsset = await http.get(
-        Uri.parse(url + "/asset/bases?uuid=" + uuid),
-        headers: getHeader());
-
-    if (responseAsset.statusCode == 200 && responseAsset.body.isNotEmpty) {
-      logger.info("Base inventory found !");
-      var responseTemplate = await http.get(
-          Uri.parse(url +
-              "/templates/" +
-              jsonDecode(responseAsset.body)[0]['template'].toString()),
-          headers: getHeader());
-      if (responseTemplate.statusCode == 200) {
-        info = {
-          "id": jsonDecode(responseTemplate.body)['id'].toString(),
-          "last_update":
-              jsonDecode(responseTemplate.body)['last_update'].toString(),
-          "return": "true",
-        };
+    logger.info("Getting remote template info...");
+    try {
+      var responseAsset = await query.get("getRemoteTemplateInfo",
+          Uri.parse(url + "/asset/bases?uuid=" + uuid), getHeader());
+      logger.verbose(responseAsset["message"]);
+      if (responseAsset["status_code"] == 200 &&
+          responseAsset["body"].isNotEmpty) {
+        logger.info("Base inventory found!");
+        var responseTemplate = await query.get(
+            "getRemoteTemplateInfo",
+            Uri.parse(url +
+                "/templates/" +
+                jsonDecode(responseAsset["body"])[0]['template'].toString()),
+            getHeader());
+        logger.verbose(responseTemplate["message"]);
+        if (responseTemplate["status_code"] == 200) {
+          logger.info("Remote template info found!");
+          info = {
+            "id": jsonDecode(responseTemplate["body"])['id'].toString(),
+            "last_update":
+                jsonDecode(responseTemplate["body"])['last_update'].toString(),
+            "return": "true",
+          };
+        } else {
+          logger.error("Remote template not found!");
+          info = {
+            "return": "false",
+          };
+        }
       } else {
-        logger.error("Remote template not found !");
+        logger.error("Asset base not found!");
         info = {
           "return": "false",
         };
       }
-    } else {
-      logger.error("Asset base not found !");
+      return info;
+    } catch (exception) {
+      logger.error(
+          sprintf("HTTP query error: %s", [exception.toString().trim()]));
       info = {
         "return": "false",
       };
+      return info;
     }
-    return info;
   }
 
   /// Get the local template id and last update.
@@ -325,17 +382,18 @@ class Api {
   /// Compare the both template to know if we need to create or update the local template.
   int compareTemplate(
       Map<String, String> localInfo, Map<String, String> remoteInfo) {
+    logger.info("Comparing both templates...");
     if (remoteInfo["id"] == localInfo["id"]) {
-      logger.info("Local template exist on the server !");
+      logger.info("Local template exist on the server!");
       if (remoteInfo["last_update"] == localInfo["last_update"]) {
-        logger.info("Local template's up to date !");
+        logger.info("Local template's up to date!");
         return 0;
       } else {
-        logger.info("Local template isn't up to date !");
+        logger.info("Local template isn't up to date!");
         return 1;
       }
     } else {
-      logger.info("Local template doesn't exist on the server !");
+      logger.info("Local template doesn't exist on the server!");
       return 2;
     }
   }
@@ -353,30 +411,34 @@ class Api {
         logger.info("No need to erase current template.");
         return true;
       } else if (compareResult == 1 || compareResult == 2) {
-        var id = remoteInfo["id"];
-
-        logger.info("Creating or updating the local template...");
-
-        var responseTemplates = await http
-            .get(Uri.parse(url + "/templates/$id/"), headers: getHeader());
-
-        if (responseTemplates.statusCode == 200) {
-          logger.info("Remote template found !");
-          Map<String, dynamic> template = json.decode(responseTemplates.body);
-          var encoder = new JsonEncoder.withIndent("\t");
-          config.setTemplate(encoder.convert(template));
-          logger.info("Remote template has been saved into local !");
-          return true;
-        } else {
-          logger.error("Remote template not found !");
+        try {
+          logger.info("Creating or updating the local template...");
+          var id = remoteInfo["id"];
+          var response = await query.get("getRemoteTemplate",
+              Uri.parse(url + "/templates/$id"), getHeader());
+          logger.verbose(response["message"]);
+          if (response["status_code"] == 200) {
+            logger.info("Remote template found!");
+            Map<String, dynamic> template = json.decode(response["body"]);
+            var encoder = new JsonEncoder.withIndent("\t");
+            config.setTemplate(encoder.convert(template));
+            logger.info("Remote template has been saved into local!");
+            return true;
+          } else {
+            logger.error("Remote template not found!");
+            return false;
+          }
+        } catch (exception) {
+          logger.error(
+              sprintf("HTTP query error: %s", [exception.toString().trim()]));
           return false;
         }
       } else {
-        logger.error("Compare result not found !");
+        logger.error("Compare result not found!");
         return false;
       }
     } else {
-      logger.error("Can't get local or remote template info !");
+      logger.error("Can't get local or remote template info!");
       return false;
     }
   }
@@ -391,10 +453,10 @@ class Api {
         template.values.isNotEmpty ||
         template.keys.isNotEmpty ||
         template.length != 0) {
-      logger.info("Local template found !");
+      logger.info("Local template found!");
       return true;
     } else {
-      logger.error("Local template not found !");
+      logger.error("Local template not found!");
       return false;
     }
   }
@@ -504,13 +566,13 @@ class Api {
         "values": value,
         "return": "true",
       };
-      logger.info("Template executed successfully !");
+      logger.info("Template executed successfully!");
       return templateInventory;
     } else {
       templateInventory = {
         "return": "false",
       };
-      logger.error("Can't execute the template because he is empty !");
+      logger.error("Can't execute the template because he is empty!");
       return templateInventory;
     }
   }
@@ -519,42 +581,51 @@ class Api {
   Future<void> sendRemoteTemplateInventory(Map<String, dynamic> body) async {
     if (await getRemoteTemplate(body)) {
       var templateInventory = await executeTemplate();
+      logger.info("Sending template inventory to server...");
       if (templateInventory["return"] != false) {
-        logger.info("Sending template inventory to server...");
+        logger.info("Getting remote base inventory...");
         String uuid = await body['uuid'];
         uuid = uuid.isEmpty ? 'none' : uuid;
-        var response = await http.get(
-            Uri.parse(url + "/asset/bases/?uuid=$uuid"),
-            headers: getHeader());
-        if (response.statusCode == 200) {
-          if (response.body.contains(uuid)) {
-            logger.info("Updating inventory...");
-            var id = jsonDecode(response.body)[0]['id'];
-            var content = jsonDecode(response.body)[0];
-            var encoder = new JsonEncoder.withIndent("\t");
-            content["template_inventory"] = templateInventory["values"];
-            var responsePut = await http.put(
-                Uri.parse(url + "/asset/bases/$id/"),
-                headers: getHeader(),
-                body: encoder.convert(content));
-            if (responsePut.statusCode == 200) {
-              logger
-                  .info("Template inventory added to remote base inventory !");
+        try {
+          var response = await query.get("sendRemoteTemplateInventory",
+              Uri.parse(url + "/asset/bases/?uuid=$uuid"), getHeader());
+          logger.verbose(response["message"]);
+          if (response["status_code"] == 200) {
+            logger.info("Remote base inventory found!");
+            if (response["body"].contains(uuid)) {
+              logger.info("Updating base inventory...");
+              var id = jsonDecode(response["body"])[0]['id'];
+              var content = jsonDecode(response["body"])[0];
+              var encoder = new JsonEncoder.withIndent("\t");
+              content["template_inventory"] = templateInventory["values"];
+              var responsePut = await query.put(
+                  "sendRemoteTemplateInventory",
+                  Uri.parse(url + "/asset/bases/$id/"),
+                  getHeader(),
+                  encoder.convert(content));
+              logger.verbose(responsePut["message"]);
+              if (responsePut["status_code"] == 200) {
+                logger
+                    .info("Template inventory added to remote base inventory!");
+              } else {
+                logger.error(
+                    "Can't upload template inventory to remote base inventory!");
+              }
             } else {
-              logger.error(
-                  "Can't upload template inventory to remote base inventory !");
+              logger.error("Unstandardized base inventory!");
             }
           } else {
-            logger.error("Base inventory not found !");
+            logger.error("Can't get base inventory from server!");
           }
-        } else {
-          logger.error("Can't get base inventory from server !");
+        } catch (exception) {
+          logger.error(
+              sprintf("HTTP query error: %s", [exception.toString().trim()]));
         }
       } else {
-        logger.error("Can't execute template !");
+        logger.error("Can't execute template!");
       }
     } else {
-      logger.error("Can't get remote template !");
+      logger.error("Can't get remote template!");
     }
   }
 
@@ -570,12 +641,12 @@ class Api {
         var encoder = new JsonEncoder.withIndent("\t");
         content["template_inventory"] = templateInventory["values"];
         inventory.writeAsStringSync(encoder.convert(content));
-        logger.info("Template inventory added to base inventory !");
+        logger.info("Template inventory added to base inventory!");
       } else {
-        logger.error("Can't execute template !");
+        logger.error("Can't execute template!");
       }
     } else {
-      logger.error("Can't get local template !");
+      logger.error("Can't get local template!");
     }
   }
 }

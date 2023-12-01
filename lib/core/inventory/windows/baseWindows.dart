@@ -69,7 +69,7 @@ dynamic getBody() async {
         "(Get-WMIObject -Class Win32_ComputerSystem).Domain", true),
   });
 
-  agent.logger.info("OS body has been retreived !");
+  agent.logger.info("OS body has been retreived!");
 
   return body;
 }

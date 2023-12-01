@@ -13,3 +13,88 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import 'package:sprintf/sprintf.dart';
+import 'package:http/http.dart' as http;
+
+/// This class will execute the query and log the status of the query
+class HTTPQuery {
+  /// Return the statusCode message
+  String? statusCodeMessage(int statusCode, String currentMethod) {
+    var statusMessage = new Map<int, String>();
+    statusMessage[200] = sprintf("200: OK (From %s method)", [currentMethod]);
+    statusMessage[201] =
+        sprintf("201: Created (From %s method)", [currentMethod]);
+    statusMessage[400] =
+        sprintf("400: Bad request (From %s method)", [currentMethod]);
+    statusMessage[401] =
+        sprintf("401: Unauthorized (From %s method)", [currentMethod]);
+    statusMessage[403] =
+        sprintf("403: Forbidden (From %s method)", [currentMethod]);
+    statusMessage[404] =
+        sprintf("404: Not found (From %s method)", [currentMethod]);
+    statusMessage[500] =
+        sprintf("500: Internal server error (From %s method)", [currentMethod]);
+    return statusMessage[statusCode];
+  }
+
+  /// Do a delete HTTP query
+  Future<Map<String, dynamic>> delete(
+      String currentMethod, Uri uri, Map<String, String>? headers) async {
+    var returnObject = new Map<String, dynamic>();
+    var query = await http.delete(uri, headers: headers);
+    returnObject["body"] = query.body;
+    returnObject["status_code"] = query.statusCode;
+    returnObject["message"] =
+        statusCodeMessage(query.statusCode, currentMethod);
+    return returnObject;
+  }
+
+  /// Do a get HTTP query
+  Future<Map<String, dynamic>> get(
+      String currentMethod, Uri uri, Map<String, String>? headers) async {
+    var returnObject = new Map<String, dynamic>();
+    var query = await http.get(uri, headers: headers);
+    returnObject["body"] = query.body;
+    returnObject["status_code"] = query.statusCode;
+    returnObject["message"] =
+        statusCodeMessage(query.statusCode, currentMethod);
+    return returnObject;
+  }
+
+  /// Do a patch HTTP query
+  Future<Map<String, dynamic>> patch(String currentMethod, Uri uri,
+      Map<String, String>? headers, Object? body) async {
+    var returnObject = new Map<String, dynamic>();
+    var query = await http.patch(uri, headers: headers, body: body);
+    returnObject["body"] = query.body;
+    returnObject["status_code"] = query.statusCode;
+    returnObject["message"] =
+        statusCodeMessage(query.statusCode, currentMethod);
+    return returnObject;
+  }
+
+  /// Do a post HTTP query
+  Future<Map<String, dynamic>> post(String currentMethod, Uri uri,
+      Map<String, String>? headers, Object? body) async {
+    var returnObject = new Map<String, dynamic>();
+    var query = await http.post(uri, headers: headers, body: body);
+    returnObject["body"] = query.body;
+    returnObject["status_code"] = query.statusCode;
+    returnObject["message"] =
+        statusCodeMessage(query.statusCode, currentMethod);
+    return returnObject;
+  }
+
+  /// Do a put HTTP query
+  Future<Map<String, dynamic>> put(String currentMethod, Uri uri,
+      Map<String, String>? headers, Object? body) async {
+    var returnObject = new Map<String, dynamic>();
+    var query = await http.put(uri, headers: headers, body: body);
+    returnObject["body"] = query.body;
+    returnObject["status_code"] = query.statusCode;
+    returnObject["message"] =
+        statusCodeMessage(query.statusCode, currentMethod);
+    return returnObject;
+  }
+}

@@ -75,7 +75,7 @@ dynamic getBody() async {
     "domain": getDomain
   });
 
-  agent.logger.info("OS body has been retreived !");
+  agent.logger.info("OS body has been retreived!");
 
   return body;
 }
