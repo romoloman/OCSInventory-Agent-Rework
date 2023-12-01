@@ -97,9 +97,8 @@ class Api {
         logger.info("API status's up!");
         await generateToken();
         return true;
-      } else if (response["status_code"] == 401) {
-        logger.error(
-            "401: Unauthorized! (Check username or password in the configuration file)");
+      } else if (response["status_code"] == 400) {
+        logger.error("(Check username or password in the configuration file)");
         return false;
       } else {
         logger.error("API check error!");
