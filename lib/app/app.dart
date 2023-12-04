@@ -27,23 +27,23 @@ import 'package:ocs_agent/core/inventory/macos/baseMacOS.dart' as baseMacOS;
 import 'package:ocs_agent/core/inventory/windows/baseWindows.dart'
     as baseWindows;
 
-/// In this main section we send the [body] to the asset/bases
+/// In this main section we send the [body] to the asset/bases endpoint
 void main(List<String> args) async {
+  // Create an instance to access to the API
   var agent = api.Api();
 
+  // Get the agent execution mode
   Map<int, String> enumMode = {
     0: "Remote with template",
     1: "Remote without template",
     2: "Local with template",
     3: "Local without template",
   };
-
   int mode = agent.getMode();
+  agent.logger.info(sprintf("Starting agent in %s mode...", [enumMode[mode]]));
 
-  agent.logger.info(sprintf("Stating agent in %s mode...", [enumMode[mode]]));
-
+  // Get the OS body
   var body;
-
   if (Platform.isLinux) {
     body = await baseLinux.getBody();
   } else if (Platform.isMacOS) {
@@ -52,9 +52,10 @@ void main(List<String> args) async {
     body = await baseWindows.getBody();
   } else {
     agent.logger.error(
-        "Can't define in which operating system you are using! (Check Plateform class return)");
+        "OS does not match any of the supported OSs! (Check Plateform class return)");
   }
 
+  // Running process
   if (mode == 0 || mode == 1) {
     if (await agent.apiCheck()) {
       await agent.checkAndApplyConfig();
@@ -70,5 +71,5 @@ void main(List<String> args) async {
     }
   }
 
-  agent.logger.info("Agent's process ends!");
+  agent.logger.info("Agent's process has ended!");
 }
