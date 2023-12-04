@@ -668,7 +668,7 @@ class Api {
 
   /// Update the local inventory to add template inventory
   Future<void> sendLocalTemplateInventory() async {
-    logger.info("Writing template inventory locally...");
+    logger.info("Adding template inventory locally...");
 
     if (getLocalTemplate()) {
       var templateInventory = await processTemplate();
