@@ -22,24 +22,61 @@ import 'package:ocs_agent/core/inventory/linux/commands.dart' as command;
 dynamic getBody() async {
   var linuxCommand = new command.LinuxCommand();
 
+  dynamic getOSRelease =
+      (await linuxCommand.readFile("/etc/os-release", true)).split("\n");
+  Map<String, String> osRelease = {};
+  for (final info in getOSRelease) {
+    RegExp exp = RegExp(r'(?<key>[\S]+?)="(?<value>[\S\s]+?)"');
+    RegExpMatch? match = exp.firstMatch(info);
+    if (match != null) {
+      final entry = <String, String>{
+        match.namedGroup("key").toString(): match.namedGroup("value").toString()
+      };
+      osRelease.addEntries(entry.entries);
+    }
+  }
+
+  dynamic getHostnamectl =
+      (await linuxCommand.commandShell("hostnamectl", true)).split("\n");
+  Map<String, String> hostnamectl = {};
+  for (final info in getHostnamectl) {
+    RegExp exp = RegExp(r'(?<key>[^\n][\S\s]+?): (?<value>[\S\s][^\n]+)');
+    RegExpMatch? match = exp.firstMatch(info);
+    if (match != null) {
+      final entry = <String, String>{
+        match.namedGroup("key").toString().trim():
+            match.namedGroup("value").toString()
+      };
+      hostnamectl.addEntries(entry.entries);
+    }
+  }
+
   dynamic interface =
       (await linuxCommand.commandShell("ip route show default", true))
           .split(" ")[4];
 
+  dynamic getMACAddress = await linuxCommand.commandShell(
+      "ip link show " + interface.toString(), true);
+  RegExp exp = RegExp(r'link\/ether (?<mac>[\S\s]+?) ');
+  RegExpMatch? match = exp.firstMatch(getMACAddress);
+  String macAddress =
+      match![0].toString().substring(11, match[0].toString().length);
+
   dynamic body = ({
-    "name": await linuxCommand.commandShell("uname -n", true),
-    "description": await linuxCommand.commandShell("uname -m", true),
+    "name": await linuxCommand.commandShell("hostname", true),
+    "description": osRelease["PRETTY_NAME"].toString() +
+        " " +
+        hostnamectl["Architecture"].toString(),
     "serial": await linuxCommand.commandShell(
         "sudo dmidecode -s system-serial-number", true),
-    "osname": await linuxCommand.commandShell("uname -o", true),
-    "osversion": await linuxCommand.commandShell("uname -v", true),
+    "osname": osRelease["NAME"].toString(),
+    "osversion": osRelease["VERSION_ID"].toString(),
     "uuid":
         await linuxCommand.commandShell("sudo dmidecode -s system-uuid", true),
     "srcip":
         (await linuxCommand.commandShell("hostname -I", true)).split(" ")[0],
-    "srcmac":
-        await linuxCommand.readFile("/sys/class/net/$interface/address", true),
-    "domain": await linuxCommand.commandShell("domainname", true)
+    "srcmac": macAddress,
+    "domain": await linuxCommand.commandShell("hostname -d", true)
   });
 
   return body;
