@@ -283,20 +283,7 @@ class Api {
               logger.error("Failed to send inventory update!");
             }
           } else {
-            // Create the inventory
-            logger.info("Creating new inventory...");
-            // API call
-            var responsePost = await query.post(
-                "senRemoteBaseInventory",
-                Uri.parse(url + "/asset/bases/"),
-                getHeader(),
-                jsonEncode(body));
-            logger.verbose(responsePost["message"]);
-            if (responsePost["status_code"] == 200) {
-              logger.info("New inventory has been sent to the server!");
-            } else {
-              logger.error("Failed to send new inventory!");
-            }
+            logger.error("Can't get the UUID from the base inventory");
           }
         } else {
           logger.error("Can't get inventory from server!");
@@ -305,7 +292,17 @@ class Api {
         logger.error(sprintf("HTTP query: %s", [exception.toString().trim()]));
       }
     } else {
-      logger.error("Failed to check inventory!");
+      // Create the inventory
+      logger.info("Creating new inventory...");
+      // API call
+      var responsePost = await query.post("senRemoteBaseInventory",
+          Uri.parse(url + "/asset/bases/"), getHeader(), jsonEncode(body));
+      logger.verbose(responsePost["message"]);
+      if (responsePost["status_code"] == 200) {
+        logger.info("New inventory has been sent to the server!");
+      } else {
+        logger.error("Failed to send new inventory!");
+      }
     }
   }
 
