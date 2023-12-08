@@ -23,7 +23,7 @@ class MacOSCommand {
     List<String> args = commandLine.split(" ");
     String command = args[0];
     args.removeAt(0);
-    if (args == null) {
+    if (args.isEmpty) {
       args = [];
     }
 

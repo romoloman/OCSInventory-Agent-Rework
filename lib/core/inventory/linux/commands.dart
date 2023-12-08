@@ -23,7 +23,7 @@ class LinuxCommand {
     List<String> args = commandLine.split(" ");
     String command = args[0];
     args.removeAt(0);
-    if (args == null) {
+    if (args.isEmpty) {
       args = [];
     }
 
@@ -64,10 +64,8 @@ class LinuxCommand {
     switch (type) {
       case "FILE":
         return await this.readFile(command, true);
-        break;
       case "CMD":
         return await this.commandShell(command, true);
-        break;
       case "BASH":
         return await this.commandShell(command, true);
     }
