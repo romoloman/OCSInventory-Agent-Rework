@@ -78,7 +78,8 @@ class WindowsFormat {
           !resultCommand['main']['options']['need_format']) {
         json = jsonDecode(resultCommand['main']['result']);
       } else {
-        json = this.formatJson(resultCommand['main']['result']);
+        json = this.formatJson(
+            resultCommand['main']['result'].replaceAll("\\", "\\\\"));
       }
 
       if (resultCommand['main']['options'] != null &&
