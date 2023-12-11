@@ -271,7 +271,7 @@ class Api {
             var id = jsonDecode(response["body"])[0]['id'];
             // API call
             var responsePut = await query.put(
-                "senRemoteBaseInventory",
+                "sendRemoteBaseInventory",
                 Uri.parse(url + "/asset/bases/$id/"),
                 getHeader(),
                 jsonEncode(body));
@@ -354,6 +354,73 @@ class Api {
                 jsonDecode(responseTemplate["body"])['last_update'].toString(),
             "return": "true",
           };
+        } else if (responseTemplate["status_code"] == 404) {
+          logger.error(
+              "Remote template info not found! Trying to get a existing template info...");
+          var os;
+          if (Platform.isMacOS) {
+            os = "MAC";
+          } else if (Platform.isLinux) {
+            os = "LIN";
+          } else if (Platform.isWindows) {
+            os = "WIN";
+          } else {
+            logger.error(
+                "OS does not match any of the supported OSs! (Check Plateform class return)");
+          }
+          var responseGET = await query.get("getRemoteTemplateInfo",
+              Uri.parse(url + "/templates?os=" + os), getHeader());
+
+          if (responseGET["status_code"] == 200) {
+            logger.info("Remote template info filtered per OS found!");
+            var newBody = jsonDecode(responseAsset["body"])[0];
+            newBody["template"] = jsonDecode(responseGET["body"])[0]["id"];
+            var responsePUT = await query.put(
+                "getRemoteTemplateInfo",
+                Uri.parse(url +
+                    "/asset/bases/" +
+                    jsonDecode(responseAsset["body"])[0]["id"].toString() +
+                    "/"),
+                getHeader(),
+                jsonEncode(newBody));
+            logger.verbose(responsePUT["message"]);
+            if (responsePUT["status_code"] == 200) {
+              logger.info("Remote template info updated!");
+              // API call
+              var responseTemplate = await query.get(
+                  "getRemoteTemplateInfo",
+                  Uri.parse(
+                      url + "/templates/" + newBody['template'].toString()),
+                  getHeader());
+              logger.verbose(responseTemplate["message"]);
+              if (responseTemplate["status_code"] == 200) {
+                // Create info object
+                logger.info("Remote template info found!");
+                info = {
+                  "id": jsonDecode(responseTemplate["body"])['id'].toString(),
+                  "last_update":
+                      jsonDecode(responseTemplate["body"])['last_update']
+                          .toString(),
+                  "return": "true",
+                };
+              } else {
+                logger.error("Remote template not found!");
+                info = {
+                  "return": "false",
+                };
+              }
+            } else {
+              logger.error("Failed to update remote template info!");
+              info = {
+                "return": "false",
+              };
+            }
+          } else {
+            logger.error("Remote template info filtered per OS not found!");
+            info = {
+              "return": "false",
+            };
+          }
         } else {
           logger.error("Remote template not found!");
           info = {
