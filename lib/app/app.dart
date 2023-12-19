@@ -71,5 +71,5 @@ void main(List<String> args) async {
     }
   }
 
-  agent.logger.info("Agent's process has ended!");
+  agent.logger.info("Agent's process has ended!\n\n\n\n\n\n\n\n\n\n");
 }

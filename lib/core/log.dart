@@ -22,12 +22,14 @@ import 'package:ocs_agent/core/config.dart';
 /// Insert log in console or file if configured in inventory.json.
 class Logger {
   late bool _isFile;
+  late String _log_level;
   late File file;
   late DateFormat dateFormat;
 
   /// Constructor.
   Logger() {
     Config conf = Config();
+    _log_level = conf.getInventoryConfig("log_level");
     _isFile = (conf.getInventoryConfig("log_file").toLowerCase() == 'true');
 
     if (_isFile) {
@@ -78,10 +80,12 @@ class Logger {
     var now = DateTime.now();
     String date = dateFormat.format(now);
     String txt = "$date VERBOSE: $verbose\n";
-    if (_isFile) {
-      file.writeAsStringSync(txt, mode: FileMode.append);
-    } else {
-      print(txt);
+    if (_log_level == "1") {
+      if (_isFile) {
+        file.writeAsStringSync(txt, mode: FileMode.append);
+      } else {
+        print(txt);
+      }
     }
   }
 }
