@@ -577,10 +577,10 @@ class Api {
 
     String mainRes =
         await command.getResult(section["target"], section['retrival_method']);
-    main.putIfAbsent('result', () => mainRes);
-    main.putIfAbsent('type', () => section['retrival_output']);
     main.putIfAbsent('name', () => section['name']);
+    main.putIfAbsent('type', () => section['retrival_output']);
     main.putIfAbsent('options', () => options);
+    main.putIfAbsent('result', () => mainRes);
     result.putIfAbsent('main', () => main);
     List<dynamic> test = section['fields'];
     var fieldOver = test.where((element) => element["override_target"]);
@@ -589,9 +589,10 @@ class Api {
       Map<String, dynamic> sub = new Map<String, dynamic>();
       String res = await command.getResult(
           field["new_target"], field['retrival_method']);
-      sub.putIfAbsent('result', () => res);
-      sub.putIfAbsent('type', () => field['retrival_output']);
       sub.putIfAbsent('name', () => field['name']);
+      sub.putIfAbsent('type', () => field['retrival_output']);
+      sub.putIfAbsent('options', () => field['options']);
+      sub.putIfAbsent('result', () => res);
       result.putIfAbsent(field['name'], () => sub);
     }
 
