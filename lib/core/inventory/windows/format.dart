@@ -17,13 +17,16 @@
 import 'dart:convert';
 
 import 'package:ocs_agent/core/inventory/windows/commands.dart';
+import 'package:ocs_agent/core/log.dart';
 
 /// Format command result by type for Windows.
 class WindowsFormat {
   late WindowsCommand windowsCommand;
+  late Logger logger;
 
   /// Constructor.
   WindowsFormat() {
+    this.logger = new Logger();
     this.windowsCommand = new WindowsCommand();
   }
 
@@ -61,67 +64,104 @@ class WindowsFormat {
   }
 
   /// get result of [resultCommand] for each [fields].
-  Map<String, dynamic> getByJson(
+  List<dynamic> getByJson(
       List<dynamic> fields, Map<String, dynamic> resultCommand) {
-    Map<String, dynamic> subInventory = new Map();
-    var json;
-    bool isList = false;
+    var fieldsOver = fields.where((element) => element["override_target"]);
+    var json = new Map<String, dynamic>();
+    late Map<String, dynamic> result;
+    List<dynamic> subInventory = new List.empty(growable: true);
 
-    if (resultCommand['main']['options'] != null &&
-        resultCommand['main']['options'].containsKey('is_list') &&
-        resultCommand['main']['options']['is_list']) {
-      isList = true;
-    }
-    try {
-      if (resultCommand['main']['options'] != null &&
-          resultCommand['main']['options'].containsKey('need_format') &&
-          !resultCommand['main']['options']['need_format']) {
-        json = jsonDecode(resultCommand['main']['result']);
-      } else {
-        json =
-            this.formatJson(resultCommand.toString().replaceAll("\\", "\\\\"));
-      }
-
-      if (resultCommand['main']['options'] != null &&
-          resultCommand['main']['options'].containsKey('submap')) {
-        var maps = resultCommand['main']['options']['need_format'].split(',');
-        if (isList) {
-          json.forEach((element) {
-            maps.forEach((element2) {
-              element = element[element2];
-            });
-          });
+    resultCommand.keys.forEach((element) {
+      try {
+        if (resultCommand[element]['options'] != null &&
+            resultCommand[element]['options'].containsKey('need_format') &&
+            !resultCommand[element]['options']['need_format']) {
+          json[element] = jsonDecode(resultCommand[element]['result']);
         } else {
-          maps.forEach((element) {
-            json = json[element];
-          });
+          json[element] = this.formatJson(resultCommand[element]['result']);
         }
+      } catch (e) {
+        json[element] = null;
+        logger.verbose(e.toString());
       }
-    } catch (e) {
-      json = null;
+    });
+
+    if (json["main"] != null) {
+      if (json["main"] is List<dynamic>) {
+        json["main"].forEach((element) {
+          result = new Map();
+          fields.forEach((field) {
+            if (element.containsKey(field["retrival_value"])) {
+              if (element[field["retrival_value"]] is String) {
+                result.putIfAbsent(field['name'],
+                    () => element[field['retrival_value']].trim());
+              } else if (element[field["retrival_value"]] is int) {
+                result.putIfAbsent(
+                    field['name'], () => element[field['retrival_value']]);
+              } else {
+                result.putIfAbsent(field['name'], () => null);
+              }
+            } else {
+              result.putIfAbsent(field['name'], () => null);
+            }
+          });
+          subInventory.add(result);
+        });
+      } else {
+        result = new Map();
+        fields.forEach((field) {
+          if (json["main"].containsKey(field["retrival_value"])) {
+            if (json["main"][field["retrival_value"]] is String) {
+              result.putIfAbsent(field['name'],
+                  () => json["main"][field['retrival_value']].trim());
+            } else if (json["main"][field["retrival_value"]] is int) {
+              result.putIfAbsent(
+                  field['name'], () => json["main"][field['retrival_value']]);
+            } else {
+              result.putIfAbsent(field['name'], () => null);
+            }
+          } else {
+            result.putIfAbsent(field['name'], () => null);
+          }
+        });
+        subInventory.add(result);
+      }
+    } else {
+      result = new Map();
+      fields.forEach((field) {
+        result.putIfAbsent(field['name'], () => null);
+      });
+      subInventory.add(result);
     }
 
-    if (isList) {
-      List<dynamic> subList = new List<dynamic>.empty();
-      json.forEach((element) {
-        Map<String, dynamic> subInventory2 = new Map();
-        for (var field in fields) {
-          try {
-            subInventory2.putIfAbsent(
-                field['name'], () => element[field['retrival_value']]);
-          } catch (e) {}
+    fieldsOver.forEach((fieldOver) {
+      if (json[fieldOver["name"]] != null) {
+        if (json[fieldOver["name"]] is List<dynamic>) {
+        } else {
+          if (json[fieldOver["name"]]
+              .containsKey(fieldOver["retrival_value"])) {
+            if (json[fieldOver["name"]][fieldOver["retrival_value"]]
+                is String) {
+              result.update(
+                  fieldOver['name'],
+                  (dynamic) => json[fieldOver["name"]]
+                          [fieldOver['retrival_value']]
+                      .trim());
+            } else if (json[fieldOver["name"]][fieldOver["retrival_value"]]
+                is int) {
+              result.update(
+                  fieldOver['name'],
+                  (dynamic) =>
+                      json[fieldOver["name"]][fieldOver['retrival_value']]);
+            } else {
+              result.update(fieldOver['name'], (dynamic) => null);
+            }
+          }
         }
-        subList.add(subInventory2);
-      });
-      subInventory.putIfAbsent("TEST", () => subList);
-    } else {
-      for (var field in fields) {
-        try {
-          subInventory.putIfAbsent(
-              field['name'], () => json[field['retrival_value']]);
-        } catch (e) {}
       }
-    }
+    });
+
+    logger.verbose(subInventory.toString());
 
     return subInventory;
   }
