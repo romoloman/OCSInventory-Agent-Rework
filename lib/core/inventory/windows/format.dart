@@ -64,11 +64,12 @@ class WindowsFormat {
   }
 
   /// get result of [resultCommand] for each [fields].
-  Map<String, dynamic> getByJson(
+  List<dynamic> getByJson(
       List<dynamic> fields, Map<String, dynamic> resultCommand) {
-    var fieldOver = fields.where((element) => element["override_target"]);
+    var fieldsOver = fields.where((element) => element["override_target"]);
     var json = new Map<String, dynamic>();
-    Map<String, dynamic> subInventory = new Map();
+    late Map<String, dynamic> result;
+    List<dynamic> subInventory = new List.empty(growable: true);
 
     resultCommand.keys.forEach((element) {
       try {
@@ -81,80 +82,84 @@ class WindowsFormat {
         }
       } catch (e) {
         json[element] = null;
-        logger.error(e.toString());
+        logger.verbose(e.toString());
       }
     });
 
-    for (var field in fields) {
-      if (json["main"] != null) {
-        if (json["main"] is List<dynamic>) {
-          json["main"].forEach((element) {
+    if (json["main"] != null) {
+      if (json["main"] is List<dynamic>) {
+        json["main"].forEach((element) {
+          result = new Map();
+          fields.forEach((field) {
             if (element.containsKey(field["retrival_value"])) {
               if (element[field["retrival_value"]] is String) {
-                subInventory.putIfAbsent(field['name'],
+                result.putIfAbsent(field['name'],
                     () => element[field['retrival_value']].trim());
               } else if (element[field["retrival_value"]] is int) {
-                subInventory.putIfAbsent(
+                result.putIfAbsent(
                     field['name'], () => element[field['retrival_value']]);
               } else {
-                subInventory.putIfAbsent(field['name'], () => null);
+                result.putIfAbsent(field['name'], () => null);
               }
             } else {
-              subInventory.putIfAbsent(field['name'], () => null);
+              result.putIfAbsent(field['name'], () => null);
             }
           });
-        } else {
+          subInventory.add(result);
+        });
+      } else {
+        result = new Map();
+        fields.forEach((field) {
           if (json["main"].containsKey(field["retrival_value"])) {
             if (json["main"][field["retrival_value"]] is String) {
-              subInventory.putIfAbsent(field['name'],
+              result.putIfAbsent(field['name'],
                   () => json["main"][field['retrival_value']].trim());
             } else if (json["main"][field["retrival_value"]] is int) {
-              subInventory.putIfAbsent(
+              result.putIfAbsent(
                   field['name'], () => json["main"][field['retrival_value']]);
             } else {
-              subInventory.putIfAbsent(field['name'], () => null);
+              result.putIfAbsent(field['name'], () => null);
             }
           } else {
-            subInventory.putIfAbsent(field['name'], () => null);
+            result.putIfAbsent(field['name'], () => null);
           }
-        }
-      } else {
-        subInventory.putIfAbsent(field['name'], () => null);
+        });
+        subInventory.add(result);
       }
+    } else {
+      result = new Map();
+      fields.forEach((field) {
+        result.putIfAbsent(field['name'], () => null);
+      });
+      subInventory.add(result);
     }
-    for (var field in fieldOver) {
-      if (json[field["name"]] != null) {
-        if (json[field["name"]] is List<dynamic>) {
-          json[field["name"]].forEach((element) {
-            if (element.containsKey(field["retrival_value"])) {
-              if (element[field["retrival_value"]] is String) {
-                subInventory.update(field['name'],
-                    (dynamic) => element[field['retrival_value']].trim());
-              } else if (element[field["retrival_value"]] is int) {
-                subInventory.update(field['name'],
-                    (dynamic) => element[field['retrival_value']]);
-              } else {
-                subInventory.update(field['name'], (dynamic) => null);
-              }
-            }
-          });
+
+    fieldsOver.forEach((fieldOver) {
+      if (json[fieldOver["name"]] != null) {
+        if (json[fieldOver["name"]] is List<dynamic>) {
         } else {
-          if (json[field["name"]].containsKey(field["retrival_value"])) {
-            if (json[field["name"]][field["retrival_value"]] is String) {
-              subInventory.update(
-                  field['name'],
+          if (json[fieldOver["name"]]
+              .containsKey(fieldOver["retrival_value"])) {
+            if (json[fieldOver["name"]][fieldOver["retrival_value"]]
+                is String) {
+              result.update(
+                  fieldOver['name'],
+                  (dynamic) => json[fieldOver["name"]]
+                          [fieldOver['retrival_value']]
+                      .trim());
+            } else if (json[fieldOver["name"]][fieldOver["retrival_value"]]
+                is int) {
+              result.update(
+                  fieldOver['name'],
                   (dynamic) =>
-                      json[field["name"]][field['retrival_value']].trim());
-            } else if (json[field["name"]][field["retrival_value"]] is int) {
-              subInventory.update(field['name'],
-                  (dynamic) => json[field["name"]][field['retrival_value']]);
+                      json[fieldOver["name"]][fieldOver['retrival_value']]);
             } else {
-              subInventory.update(field['name'], (dynamic) => null);
+              result.update(fieldOver['name'], (dynamic) => null);
             }
           }
         }
       }
-    }
+    });
 
     logger.verbose(subInventory.toString());
 
