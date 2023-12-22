@@ -226,16 +226,11 @@ class Api {
     try {
       // API call
       var response = await query.get("checkInventory",
-          Uri.parse(url + "/asset/bases?uuid=$uuid"), getHeader());
+          Uri.parse(url + "/asset/bases/?uuid=$uuid"), getHeader());
       logger.verbose(response["message"]);
-      if (response["status_code"] == 200) {
-        if (response["body"].contains(uuid)) {
-          logger.info("Existing inventory found!");
-          return true;
-        } else {
-          logger.error("No inventory found!");
-          return false;
-        }
+      if (response["status_code"] == 200 && response["body"].contains(uuid)) {
+        logger.info("Existing inventory found!");
+        return true;
       } else {
         logger.info("No inventory found!");
         return false;
@@ -332,7 +327,7 @@ class Api {
     try {
       // API call
       var responseAsset = await query.get("getRemoteTemplateInfo",
-          Uri.parse(url + "/asset/bases?uuid=" + uuid), getHeader());
+          Uri.parse(url + "/asset/bases/?uuid=" + uuid), getHeader());
       logger.verbose(responseAsset["message"]);
       if (responseAsset["status_code"] == 200 &&
           responseAsset["body"].isNotEmpty) {
@@ -342,7 +337,8 @@ class Api {
             "getRemoteTemplateInfo",
             Uri.parse(url +
                 "/templates/" +
-                jsonDecode(responseAsset["body"])[0]['template'].toString()),
+                jsonDecode(responseAsset["body"])[0]['template'].toString() +
+                "/"),
             getHeader());
         logger.verbose(responseTemplate["message"]);
         if (responseTemplate["status_code"] == 200) {
@@ -369,13 +365,15 @@ class Api {
                 "OS does not match any of the supported OSs! (Check Plateform class return)");
           }
           var responseGET = await query.get("getRemoteTemplateInfo",
-              Uri.parse(url + "/templates?os=" + os), getHeader());
+              Uri.parse(url + "/templates/?os=" + os), getHeader());
 
-          if (responseGET["status_code"] == 200) {
+          if (responseGET["status_code"] == 200 &&
+              responseGET["body"].isNotEmpty) {
             logger.info("Remote template info filtered per OS found!");
-            var newBody = jsonDecode(responseAsset["body"])[0];
+            Map<String, dynamic> newBody = new Map();
             newBody["template"] = jsonDecode(responseGET["body"])[0]["id"];
-            var responsePUT = await query.put(
+            logger.verbose(newBody.toString());
+            var responsePUT = await query.patch(
                 "getRemoteTemplateInfo",
                 Uri.parse(url +
                     "/asset/bases/" +
@@ -389,8 +387,10 @@ class Api {
               // API call
               var responseTemplate = await query.get(
                   "getRemoteTemplateInfo",
-                  Uri.parse(
-                      url + "/templates/" + newBody['template'].toString()),
+                  Uri.parse(url +
+                      "/templates/" +
+                      newBody['template'].toString() +
+                      "/"),
                   getHeader());
               logger.verbose(responseTemplate["message"]);
               if (responseTemplate["status_code"] == 200) {
@@ -505,7 +505,7 @@ class Api {
           var id = remoteInfo["id"];
           // API call
           var response = await query.get("getRemoteTemplate",
-              Uri.parse(url + "/templates/$id"), getHeader());
+              Uri.parse(url + "/templates/$id/"), getHeader());
           logger.verbose(response["message"]);
           if (response["status_code"] == 200) {
             // Save remote template locally
@@ -695,14 +695,14 @@ class Api {
             // Else, return an error
             if (response["body"].contains(uuid)) {
               logger.info("Updating base inventory...");
-              var id = jsonDecode(response["body"])[0]['id'];
               var content = jsonDecode(response["body"])[0];
               var encoder = new JsonEncoder.withIndent("\t");
               content["template_inventory"] = templateInventory["values"];
+              logger.verbose(content.toString());
               // API call
               var responsePut = await query.put(
                   "sendRemoteTemplateInventory",
-                  Uri.parse(url + "/asset/bases/$id/"),
+                  Uri.parse(url + "/asset/collection/"),
                   getHeader(),
                   encoder.convert(content));
               logger.verbose(responsePut["message"]);
