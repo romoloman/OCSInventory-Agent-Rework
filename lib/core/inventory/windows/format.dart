@@ -133,6 +133,21 @@ class WindowsFormat {
     fieldsOver.forEach((fieldOver) {
       if (json[fieldOver["name"]] != null) {
         if (json[fieldOver["name"]] is List<dynamic>) {
+          json[fieldOver["name"]].forEach((element) {
+            result = new Map();
+            if (element.containsKey(fieldOver["retrival_value"])) {
+              if (element[fieldOver["retrival_value"]] is String) {
+                result.update(fieldOver['name'],
+                    (dynamic) => element[fieldOver['retrival_value']].trim());
+              } else {
+                result.update(fieldOver['name'],
+                    (dynamic) => element[fieldOver['retrival_value']]);
+              }
+            } else {
+              result.update(fieldOver['name'], (dynamic) => null);
+            }
+            subInventory.add(result);
+          });
         } else {
           if (json[fieldOver["name"]]
               .containsKey(fieldOver["retrival_value"])) {
