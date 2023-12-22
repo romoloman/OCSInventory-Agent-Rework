@@ -95,11 +95,9 @@ class WindowsFormat {
               if (element[field["retrival_value"]] is String) {
                 result.putIfAbsent(field['name'],
                     () => element[field['retrival_value']].trim());
-              } else if (element[field["retrival_value"]] is int) {
+              } else {
                 result.putIfAbsent(
                     field['name'], () => element[field['retrival_value']]);
-              } else {
-                result.putIfAbsent(field['name'], () => null);
               }
             } else {
               result.putIfAbsent(field['name'], () => null);
@@ -114,11 +112,9 @@ class WindowsFormat {
             if (json["main"][field["retrival_value"]] is String) {
               result.putIfAbsent(field['name'],
                   () => json["main"][field['retrival_value']].trim());
-            } else if (json["main"][field["retrival_value"]] is int) {
+            } else {
               result.putIfAbsent(
                   field['name'], () => json["main"][field['retrival_value']]);
-            } else {
-              result.putIfAbsent(field['name'], () => null);
             }
           } else {
             result.putIfAbsent(field['name'], () => null);
@@ -147,14 +143,11 @@ class WindowsFormat {
                   (dynamic) => json[fieldOver["name"]]
                           [fieldOver['retrival_value']]
                       .trim());
-            } else if (json[fieldOver["name"]][fieldOver["retrival_value"]]
-                is int) {
+            } else {
               result.update(
                   fieldOver['name'],
                   (dynamic) =>
                       json[fieldOver["name"]][fieldOver['retrival_value']]);
-            } else {
-              result.update(fieldOver['name'], (dynamic) => null);
             }
           }
         }
