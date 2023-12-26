@@ -90,71 +90,91 @@ class WindowsFormat {
         if (json["main"] is List<dynamic>) {
           json["main"].forEach((element) {
             if (element.containsKey(field["retrival_value"])) {
-              if (element[field["retrival_value"]] is String) {
-                subInventory.putIfAbsent(field['name'],
-                    () => element[field['retrival_value']].trim());
-              } else if (element[field["retrival_value"]] is int) {
-                subInventory.putIfAbsent(
-                    field['name'], () => element[field['retrival_value']]);
-              } else {
-                subInventory.putIfAbsent(field['name'], () => null);
-              }
+              // if (element[field["retrival_value"]] is String) {
+              //   result.putIfAbsent(field['name'],
+              //       () => element[field['retrival_value']].trim());
+              // } else {
+              //   result.putIfAbsent(
+              //       field['name'], () => element[field['retrival_value']]);
+              // }
+              result.putIfAbsent(field['name'],
+                  () => element[field['retrival_value']].toString().trim());
             } else {
               subInventory.putIfAbsent(field['name'], () => null);
             }
           });
         } else {
           if (json["main"].containsKey(field["retrival_value"])) {
-            if (json["main"][field["retrival_value"]] is String) {
-              subInventory.putIfAbsent(field['name'],
-                  () => json["main"][field['retrival_value']].trim());
-            } else if (json["main"][field["retrival_value"]] is int) {
-              subInventory.putIfAbsent(
-                  field['name'], () => json["main"][field['retrival_value']]);
-            } else {
-              subInventory.putIfAbsent(field['name'], () => null);
-            }
+            // if (json["main"][field["retrival_value"]] is String) {
+            //   result.putIfAbsent(field['name'],
+            //       () => json["main"][field['retrival_value']].trim());
+            // } else {
+            //   result.putIfAbsent(
+            //       field['name'], () => json["main"][field['retrival_value']]);
+            // }
+            result.putIfAbsent(field['name'],
+                () => json["main"][field['retrival_value']].toString().trim());
           } else {
             subInventory.putIfAbsent(field['name'], () => null);
           }
-        }
-      } else {
-        subInventory.putIfAbsent(field['name'], () => null);
+        });
+        subInventory.add(result);
       }
+    } else {
+      result = new Map();
+      fields.forEach((field) {
+        result.putIfAbsent(field['name'], () => null);
+      });
+      subInventory.add(result);
     }
-    for (var field in fieldOver) {
-      if (json[field["name"]] != null) {
-        if (json[field["name"]] is List<dynamic>) {
-          json[field["name"]].forEach((element) {
-            if (element.containsKey(field["retrival_value"])) {
-              if (element[field["retrival_value"]] is String) {
-                subInventory.update(field['name'],
-                    (dynamic) => element[field['retrival_value']].trim());
-              } else if (element[field["retrival_value"]] is int) {
-                subInventory.update(field['name'],
-                    (dynamic) => element[field['retrival_value']]);
-              } else {
-                subInventory.update(field['name'], (dynamic) => null);
-              }
+
+    fieldsOver.forEach((fieldOver) {
+      if (json[fieldOver["name"]] != null) {
+        if (json[fieldOver["name"]] is List<dynamic>) {
+          json[fieldOver["name"]].forEach((element) {
+            result = new Map();
+            if (element.containsKey(fieldOver["retrival_value"])) {
+              // if (element[fieldOver["retrival_value"]] is String) {
+              //   result.update(fieldOver['name'],
+              //       (dynamic) => element[fieldOver['retrival_value']].trim());
+              // } else {
+              //   result.update(fieldOver['name'],
+              //       (dynamic) => element[fieldOver['retrival_value']]);
+              // }
+              result.update(
+                  fieldOver['name'],
+                  (dynamic) =>
+                      element[fieldOver['retrival_value']].toString().trim());
+            } else {
+              result.update(fieldOver['name'], (dynamic) => null);
             }
           });
         } else {
-          if (json[field["name"]].containsKey(field["retrival_value"])) {
-            if (json[field["name"]][field["retrival_value"]] is String) {
-              subInventory.update(
-                  field['name'],
-                  (dynamic) =>
-                      json[field["name"]][field['retrival_value']].trim());
-            } else if (json[field["name"]][field["retrival_value"]] is int) {
-              subInventory.update(field['name'],
-                  (dynamic) => json[field["name"]][field['retrival_value']]);
-            } else {
-              subInventory.update(field['name'], (dynamic) => null);
-            }
+          if (json[fieldOver["name"]]
+              .containsKey(fieldOver["retrival_value"])) {
+            // if (json[fieldOver["name"]][fieldOver["retrival_value"]]
+            //     is String) {
+            //   result.update(
+            //       fieldOver['name'],
+            //       (dynamic) => json[fieldOver["name"]]
+            //               [fieldOver['retrival_value']]
+            //           .trim());
+            // } else {
+            //   result.update(
+            //       fieldOver['name'],
+            //       (dynamic) =>
+            //           json[fieldOver["name"]][fieldOver['retrival_value']]);
+            // }
+            result.update(
+                fieldOver['name'],
+                (dynamic) => json[fieldOver["name"]]
+                        [fieldOver['retrival_value']]
+                    .toString()
+                    .trim());
           }
         }
       }
-    }
+    });
 
     logger.verbose(subInventory.toString());
 
