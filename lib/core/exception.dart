@@ -20,21 +20,23 @@ import 'package:http/http.dart' as http;
 /// This class will execute the query and log the status of the query
 class HTTPQuery {
   /// Return the statusCode message
-  String? statusCodeMessage(int statusCode, String currentMethod) {
+  String? statusCodeMessage(
+      String type, int statusCode, String detail, String currentMethod) {
     var statusMessage = new Map<int, String>();
-    statusMessage[200] = sprintf("200: OK (From %s method)", [currentMethod]);
+    statusMessage[200] =
+        sprintf("%s: 200: %s (From %s method)", [type, detail, currentMethod]);
     statusMessage[201] =
-        sprintf("201: Created (From %s method)", [currentMethod]);
+        sprintf("%s: 201: %s (From %s method)", [type, detail, currentMethod]);
     statusMessage[400] =
-        sprintf("400: Bad request (From %s method)", [currentMethod]);
+        sprintf("%s: 400: %s (From %s method)", [type, detail, currentMethod]);
     statusMessage[401] =
-        sprintf("401: Unauthorized (From %s method)", [currentMethod]);
+        sprintf("%s: 401: %s (From %s method)", [type, detail, currentMethod]);
     statusMessage[403] =
-        sprintf("403: Forbidden (From %s method)", [currentMethod]);
+        sprintf("%s: 403: %s (From %s method)", [type, detail, currentMethod]);
     statusMessage[404] =
-        sprintf("404: Not found (From %s method)", [currentMethod]);
+        sprintf("%s: 404: %s (From %s method)", [type, detail, currentMethod]);
     statusMessage[500] =
-        sprintf("500: Internal server error (From %s method)", [currentMethod]);
+        sprintf("%s: 500: %s (From %s method)", [type, detail, currentMethod]);
     return statusMessage[statusCode];
   }
 
@@ -45,8 +47,8 @@ class HTTPQuery {
     var query = await http.delete(uri, headers: headers);
     returnObject["body"] = query.body;
     returnObject["status_code"] = query.statusCode;
-    returnObject["message"] =
-        statusCodeMessage(query.statusCode, currentMethod);
+    returnObject["message"] = statusCodeMessage(
+        "DELETE", query.statusCode, query.body, currentMethod);
     return returnObject;
   }
 
@@ -58,7 +60,7 @@ class HTTPQuery {
     returnObject["body"] = query.body;
     returnObject["status_code"] = query.statusCode;
     returnObject["message"] =
-        statusCodeMessage(query.statusCode, currentMethod);
+        statusCodeMessage("GET", query.statusCode, query.body, currentMethod);
     return returnObject;
   }
 
@@ -70,7 +72,7 @@ class HTTPQuery {
     returnObject["body"] = query.body;
     returnObject["status_code"] = query.statusCode;
     returnObject["message"] =
-        statusCodeMessage(query.statusCode, currentMethod);
+        statusCodeMessage("PATCH", query.statusCode, query.body, currentMethod);
     return returnObject;
   }
 
@@ -82,7 +84,7 @@ class HTTPQuery {
     returnObject["body"] = query.body;
     returnObject["status_code"] = query.statusCode;
     returnObject["message"] =
-        statusCodeMessage(query.statusCode, currentMethod);
+        statusCodeMessage("POST", query.statusCode, query.body, currentMethod);
     return returnObject;
   }
 
@@ -94,7 +96,7 @@ class HTTPQuery {
     returnObject["body"] = query.body;
     returnObject["status_code"] = query.statusCode;
     returnObject["message"] =
-        statusCodeMessage(query.statusCode, currentMethod);
+        statusCodeMessage("PUT", query.statusCode, query.body, currentMethod);
     return returnObject;
   }
 }

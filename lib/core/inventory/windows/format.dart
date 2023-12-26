@@ -64,11 +64,12 @@ class WindowsFormat {
   }
 
   /// get result of [resultCommand] for each [fields].
-  Map<String, dynamic> getByJson(
+  List<dynamic> getByJson(
       List<dynamic> fields, Map<String, dynamic> resultCommand) {
-    var fieldOver = fields.where((element) => element["override_target"]);
+    var fieldsOver = fields.where((element) => element["override_target"]);
     var json = new Map<String, dynamic>();
-    Map<String, dynamic> subInventory = new Map();
+    late Map<String, dynamic> result;
+    List<dynamic> subInventory = new List.empty(growable: true);
 
     resultCommand.keys.forEach((element) {
       try {
@@ -81,14 +82,15 @@ class WindowsFormat {
         }
       } catch (e) {
         json[element] = null;
-        logger.error(e.toString());
+        logger.verbose(e.toString());
       }
     });
 
-    for (var field in fields) {
-      if (json["main"] != null) {
-        if (json["main"] is List<dynamic>) {
-          json["main"].forEach((element) {
+    if (json["main"] != null) {
+      if (json["main"] is List<dynamic>) {
+        json["main"].forEach((element) {
+          result = new Map();
+          fields.forEach((field) {
             if (element.containsKey(field["retrival_value"])) {
               // if (element[field["retrival_value"]] is String) {
               //   result.putIfAbsent(field['name'],
@@ -100,10 +102,14 @@ class WindowsFormat {
               result.putIfAbsent(field['name'],
                   () => element[field['retrival_value']].toString().trim());
             } else {
-              subInventory.putIfAbsent(field['name'], () => null);
+              result.putIfAbsent(field['name'], () => null);
             }
           });
-        } else {
+          subInventory.add(result);
+        });
+      } else {
+        result = new Map();
+        fields.forEach((field) {
           if (json["main"].containsKey(field["retrival_value"])) {
             // if (json["main"][field["retrival_value"]] is String) {
             //   result.putIfAbsent(field['name'],
@@ -115,7 +121,7 @@ class WindowsFormat {
             result.putIfAbsent(field['name'],
                 () => json["main"][field['retrival_value']].toString().trim());
           } else {
-            subInventory.putIfAbsent(field['name'], () => null);
+            result.putIfAbsent(field['name'], () => null);
           }
         });
         subInventory.add(result);
@@ -148,6 +154,7 @@ class WindowsFormat {
             } else {
               result.update(fieldOver['name'], (dynamic) => null);
             }
+            subInventory.add(result);
           });
         } else {
           if (json[fieldOver["name"]]
