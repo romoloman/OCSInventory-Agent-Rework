@@ -698,6 +698,7 @@ class Api {
               var content = jsonDecode(response["body"])[0];
               var encoder = new JsonEncoder.withIndent("\t");
               content["template_inventory"] = templateInventory["values"];
+              content.remove("inventory_sections");
               logger.verbose(content.toString());
               // API call
               var responsePut = await query.put(
