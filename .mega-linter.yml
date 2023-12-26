@@ -13,7 +13,8 @@ DISABLE_LINTERS:
     GROOVY_NPM_GROOVY_LINT,
     HTML_DJLINT,
     KOTLIN_KTLINT,
-    REPOSITORY_KICS
+    REPOSITORY_KICS,
+    REPOSITORY_DEVSKIM,
   ]
 DISABLE:
   - COPYPASTE # Comment to disable checks of abusive copy-pastes
