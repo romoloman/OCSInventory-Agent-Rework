@@ -84,7 +84,7 @@ class WindowsCommand {
         return await this.readFile(command, true);
       case "CMD":
         return await this.commandCmd(command, true);
-      case "PW":
+      case "PS":
         return await this.commandPowershell(command, true);
     }
     return null;
