@@ -743,9 +743,8 @@ class Api {
               });
               filesUtils.writeFile(
                   inventoryBase64, encoder.convert(sectionJson));
-              if (content["inventory_sections"] != []) {
+              if (content["inventory_sections"].isNotEmpty) {
                 content["template_inventory"] = updatedInventory;
-                logger.verbose(content.toString());
                 content.remove("inventory_sections");
                 var responsePatch = await query.patch(
                     "sendRemoteTemplateInventory",
