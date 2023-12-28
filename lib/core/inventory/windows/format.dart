@@ -92,13 +92,15 @@ class WindowsFormat {
           result = new Map();
           fields.forEach((field) {
             if (element.containsKey(field["retrival_value"])) {
-              if (element[field["retrival_value"]] is String) {
-                result.putIfAbsent(field['name'],
-                    () => element[field['retrival_value']].trim());
-              } else {
-                result.putIfAbsent(
-                    field['name'], () => element[field['retrival_value']]);
-              }
+              // if (element[field["retrival_value"]] is String) {
+              //   result.putIfAbsent(field['name'],
+              //       () => element[field['retrival_value']].trim());
+              // } else {
+              //   result.putIfAbsent(
+              //       field['name'], () => element[field['retrival_value']]);
+              // }
+              result.putIfAbsent(field['name'],
+                  () => element[field['retrival_value']].toString().trim());
             } else {
               result.putIfAbsent(field['name'], () => null);
             }
@@ -109,13 +111,15 @@ class WindowsFormat {
         result = new Map();
         fields.forEach((field) {
           if (json["main"].containsKey(field["retrival_value"])) {
-            if (json["main"][field["retrival_value"]] is String) {
-              result.putIfAbsent(field['name'],
-                  () => json["main"][field['retrival_value']].trim());
-            } else {
-              result.putIfAbsent(
-                  field['name'], () => json["main"][field['retrival_value']]);
-            }
+            // if (json["main"][field["retrival_value"]] is String) {
+            //   result.putIfAbsent(field['name'],
+            //       () => json["main"][field['retrival_value']].trim());
+            // } else {
+            //   result.putIfAbsent(
+            //       field['name'], () => json["main"][field['retrival_value']]);
+            // }
+            result.putIfAbsent(field['name'],
+                () => json["main"][field['retrival_value']].toString().trim());
           } else {
             result.putIfAbsent(field['name'], () => null);
           }
@@ -136,13 +140,17 @@ class WindowsFormat {
           json[fieldOver["name"]].forEach((element) {
             result = new Map();
             if (element.containsKey(fieldOver["retrival_value"])) {
-              if (element[fieldOver["retrival_value"]] is String) {
-                result.update(fieldOver['name'],
-                    (dynamic) => element[fieldOver['retrival_value']].trim());
-              } else {
-                result.update(fieldOver['name'],
-                    (dynamic) => element[fieldOver['retrival_value']]);
-              }
+              // if (element[fieldOver["retrival_value"]] is String) {
+              //   result.update(fieldOver['name'],
+              //       (dynamic) => element[fieldOver['retrival_value']].trim());
+              // } else {
+              //   result.update(fieldOver['name'],
+              //       (dynamic) => element[fieldOver['retrival_value']]);
+              // }
+              result.update(
+                  fieldOver['name'],
+                  (dynamic) =>
+                      element[fieldOver['retrival_value']].toString().trim());
             } else {
               result.update(fieldOver['name'], (dynamic) => null);
             }
@@ -151,19 +159,25 @@ class WindowsFormat {
         } else {
           if (json[fieldOver["name"]]
               .containsKey(fieldOver["retrival_value"])) {
-            if (json[fieldOver["name"]][fieldOver["retrival_value"]]
-                is String) {
-              result.update(
-                  fieldOver['name'],
-                  (dynamic) => json[fieldOver["name"]]
-                          [fieldOver['retrival_value']]
-                      .trim());
-            } else {
-              result.update(
-                  fieldOver['name'],
-                  (dynamic) =>
-                      json[fieldOver["name"]][fieldOver['retrival_value']]);
-            }
+            // if (json[fieldOver["name"]][fieldOver["retrival_value"]]
+            //     is String) {
+            //   result.update(
+            //       fieldOver['name'],
+            //       (dynamic) => json[fieldOver["name"]]
+            //               [fieldOver['retrival_value']]
+            //           .trim());
+            // } else {
+            //   result.update(
+            //       fieldOver['name'],
+            //       (dynamic) =>
+            //           json[fieldOver["name"]][fieldOver['retrival_value']]);
+            // }
+            result.update(
+                fieldOver['name'],
+                (dynamic) => json[fieldOver["name"]]
+                        [fieldOver['retrival_value']]
+                    .toString()
+                    .trim());
           }
         }
       }

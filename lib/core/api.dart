@@ -19,6 +19,8 @@ import 'dart:io';
 
 import 'package:intl/intl.dart';
 import 'package:ocs_agent/core/exception.dart';
+import 'package:ocs_agent/core/files_utils.dart';
+import 'package:ocs_agent/core/json_utils.dart';
 import 'package:ocs_agent/core/log.dart';
 
 import 'config.dart';
@@ -28,13 +30,13 @@ import 'inventory/macos/commands.dart';
 import 'inventory/macos/format.dart';
 import 'inventory/windows/commands.dart';
 import 'inventory/windows/format.dart';
-import 'json_utils.dart';
 
 import 'package:sprintf/sprintf.dart';
 
 /// This class communicate with the server.
 class Api {
   late Config config;
+  late FilesUtils filesUtils;
   late JsonUtils jsonUtils;
   late Logger logger;
   late HTTPQuery query;
@@ -50,12 +52,14 @@ class Api {
 
   late String inventoryFileName;
   late File inventory;
+  late File inventoryBase64;
 
   var url;
 
   /// Constructor.
   Api() {
     this.config = new Config();
+    this.filesUtils = new FilesUtils();
     this.jsonUtils = new JsonUtils();
     this.linuxFormat = new LinuxFormat();
     this.linuxCommand = new LinuxCommand();
@@ -67,11 +71,12 @@ class Api {
     this.logger = new Logger();
     this.url = config.getInventoryConfig("url");
 
-    this.inventoryFileName = sprintf('%s/%s.json', [
+    this.inventory = File(sprintf('%s/%s.json', [
       config.getInventoryConfig("data_dir"),
       DateFormat("yyyy-MM-dd_HH-mm-ss").format(DateTime.now())
-    ]);
-    this.inventory = File(inventoryFileName);
+    ]));
+    this.inventoryBase64 = File(sprintf(
+        '%s/%s.json', [config.getInventoryConfig("data_dir"), "Base64"]));
   }
 
   /// Get the running mode of the agent.
@@ -309,7 +314,7 @@ class Api {
     inventory.create(recursive: true);
     var encoder = JsonEncoder.withIndent("\t");
     // Write the new inventory inside
-    inventory.writeAsStringSync(encoder.convert(body));
+    filesUtils.writeFile(inventory, encoder.convert(body));
     logger
         .info(sprintf("New base inventory created in %s", [inventoryFileName]));
   }
@@ -372,7 +377,6 @@ class Api {
             logger.info("Remote template info filtered per OS found!");
             Map<String, dynamic> newBody = new Map();
             newBody["template"] = jsonDecode(responseGET["body"])[0]["id"];
-            logger.verbose(newBody.toString());
             var responsePUT = await query.patch(
                 "getRemoteTemplateInfo",
                 Uri.parse(url +
@@ -698,21 +702,79 @@ class Api {
               var content = jsonDecode(response["body"])[0];
               var encoder = new JsonEncoder.withIndent("\t");
               content["template_inventory"] = templateInventory["values"];
-              content.remove("inventory_sections");
-              logger.verbose(content.toString());
-              // API call
-              var responsePut = await query.put(
-                  "sendRemoteTemplateInventory",
-                  Uri.parse(url + "/asset/collection/"),
-                  getHeader(),
-                  encoder.convert(content));
-              logger.verbose(responsePut["message"]);
-              if (responsePut["status_code"] == 200) {
-                logger
-                    .info("Template inventory added to remote base inventory!");
+              late var sectionBase64, sectionBytes, sectionJson;
+              var updatedInventory = new Map();
+              sectionJson = new Map();
+              content["template_inventory"].keys.forEach((element) {
+                sectionBytes = utf8
+                    .encode(content["template_inventory"][element].toString());
+                sectionBase64 = base64.encode(sectionBytes);
+                sectionJson[element] = sectionBase64;
+              });
+              if (!inventoryBase64.existsSync()) {
+                logger.error("Can't find base64 file, creating one...");
+                inventoryBase64.createSync(recursive: true);
+                filesUtils.writeFile(inventoryBase64, "{}");
+              }
+              logger.info("Base64 file found!");
+              var fileBase64 = jsonDecode(inventoryBase64.readAsStringSync());
+              sectionJson.keys.forEach((newKey) {
+                fileBase64.keys.forEach((oldKey) {
+                  if (newKey == oldKey) {
+                    if (sectionJson[newKey] == fileBase64[oldKey]) {
+                      logger.verbose(sprintf(
+                          "%s section hasn't changed since last inventory.",
+                          [newKey.toString()]));
+                    } else {
+                      logger.verbose(sprintf(
+                          "%s section will be sent and updated.",
+                          [newKey.toString()]));
+                      updatedInventory[newKey] =
+                          content["template_inventory"][newKey];
+                    }
+                  }
+                });
+                if (!fileBase64.containsKey(newKey)) {
+                  logger.verbose(sprintf("%s section added to the inventory.",
+                      [newKey.toString()]));
+                  updatedInventory[newKey] =
+                      content["template_inventory"][newKey];
+                }
+              });
+              filesUtils.writeFile(
+                  inventoryBase64, encoder.convert(sectionJson));
+              if (content["inventory_sections"].isNotEmpty) {
+                content["template_inventory"] = updatedInventory;
+                content.remove("inventory_sections");
+                var responsePatch = await query.patch(
+                    "sendRemoteTemplateInventory",
+                    Uri.parse("$url/asset/collection/"),
+                    getHeader(),
+                    encoder.convert(content));
+                logger.verbose(responsePatch["message"]);
+                if (responsePatch["status_code"] == 200) {
+                  logger.info(
+                      "Template inventory updated to remote base inventory!");
+                } else {
+                  logger.error(
+                      "Can't update template inventory to remote base inventory!");
+                }
               } else {
-                logger.error(
-                    "Can't upload template inventory to remote base inventory!");
+                content.remove("inventory_sections");
+                // API call
+                var responsePut = await query.put(
+                    "sendRemoteTemplateInventory",
+                    Uri.parse(url + "/asset/collection/"),
+                    getHeader(),
+                    encoder.convert(content));
+                logger.verbose(responsePut["message"]);
+                if (responsePut["status_code"] == 200) {
+                  logger.info(
+                      "Template inventory added to remote base inventory!");
+                } else {
+                  logger.error(
+                      "Can't upload template inventory to remote base inventory!");
+                }
               }
             } else {
               logger.error("Missing uuid in base inventory!");
@@ -744,8 +806,9 @@ class Api {
         var content = jsonDecode(inventory.readAsStringSync());
         var encoder = new JsonEncoder.withIndent("\t");
         content["template_inventory"] = templateInventory["values"];
+        logger.verbose(content["template_inventory"].toString());
         // Write into inventory file
-        inventory.writeAsStringSync(encoder.convert(content));
+        filesUtils.writeFile(inventory, encoder.convert(content));
         logger.info("Template inventory added to base inventory!");
       } else {
         logger.error("Failed to process template!");
