@@ -14,26 +14,33 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:intl/intl.dart';
 import 'package:ocs_agent/core/config.dart';
+import 'package:ocs_agent/core/exception.dart';
+
+import 'package:sprintf/sprintf.dart';
 
 /// Insert log in console or file if configured in inventory.json.
 class Logger {
+  late Config config;
   late bool _isFile;
   late String _logLevel;
+  late String _url;
   late File file;
   late DateFormat dateFormat;
 
   /// Constructor.
   Logger() {
-    Config conf = Config();
-    _logLevel = conf.getInventoryConfig("log_level");
-    _isFile = (conf.getInventoryConfig("log_file").toLowerCase() == 'true');
+    config = new Config();
+    _logLevel = config.getInventoryConfig("log_level");
+    _isFile = (config.getInventoryConfig("log_file").toLowerCase() == 'true');
+    _url = config.getInventoryConfig("url");
 
     if (_isFile) {
-      file = File(conf.getInventoryConfig("log_filename"));
+      file = File(config.getInventoryConfig("log_filename"));
     }
 
     dateFormat = DateFormat('yyyy-MM-dd H:m:s');
@@ -86,6 +93,57 @@ class Logger {
       } else {
         print(txt);
       }
+    }
+  }
+
+  /// <pre>send formated logs to the server
+  /// Error codes:
+  /// 0: "UNKNOWN",
+  /// 1: "INVENTORY_BASE_INSERT",
+  /// 2: "INVENTORY_BASE_UPDATE",
+  /// 3: "INVENTORY_EXT_INSERT",
+  /// 4: "INVENTORY_EXT_UPDATE",
+  /// 5: "INVENTORY_BASE_ERR",
+  /// 6: "INVENTORY_EXT_ERR",
+  /// 7: "DEPLOYMENT_ACK",
+  /// 8: "DEPLOYMENT_ERR",
+  /// 9: "CONFIG_UPDATE",
+  /// 10: "CONFIG_ERR",
+  /// 11: "TEMPLATE_UPDATE",
+  /// 12: "TEMPLATE_ERR"</pre>
+  void serverLogger(int assetID, int errorCode, String comment) async {
+    HTTPQuery query = new HTTPQuery();
+    String token = config.getInventoryConfig("token");
+    Map<int, String> errorCodes = {
+      0: "UNKNOWN",
+      1: "INVENTORY_BASE_INSERT",
+      2: "INVENTORY_BASE_UPDATE",
+      3: "INVENTORY_EXT_INSERT",
+      4: "INVENTORY_EXT_UPDATE",
+      5: "INVENTORY_BASE_ERR",
+      6: "INVENTORY_EXT_ERR",
+      7: "DEPLOYMENT_ACK",
+      8: "DEPLOYMENT_ERR",
+      9: "CONFIG_UPDATE",
+      10: "CONFIG_ERR",
+      11: "TEMPLATE_UPDATE",
+      12: "TEMPLATE_ERR"
+    };
+    Map<String, dynamic> content = new Map();
+    content["asset"] = assetID;
+    content["scope"] = errorCodes[errorCode];
+    content["comment"] = comment;
+    try {
+      await query.post(
+          "serverLogger",
+          Uri.parse("$_url/asset/logs/"),
+          {
+            HttpHeaders.contentTypeHeader: 'application/json',
+            HttpHeaders.authorizationHeader: "Token $token"
+          },
+          jsonEncode(content));
+    } catch (exception) {
+      error(sprintf("HTTP query: %s", [exception.toString().trim()]));
     }
   }
 }
