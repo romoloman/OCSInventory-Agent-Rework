@@ -58,6 +58,7 @@ void main(List<String> args) async {
   // Running process
   if (mode == 0 || mode == 1) {
     if (await agent.apiCheck()) {
+      await agent.checkInventory(body);
       await agent.checkAndApplyConfig();
       await agent.sendRemoteBaseInventory(body);
       if (mode == 0) {

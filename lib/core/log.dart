@@ -112,38 +112,42 @@ class Logger {
   /// 11: "TEMPLATE_UPDATE",
   /// 12: "TEMPLATE_ERR"</pre>
   void serverLogger(int assetID, int errorCode, String comment) async {
-    HTTPQuery query = new HTTPQuery();
-    String token = config.getInventoryConfig("token");
-    Map<int, String> errorCodes = {
-      0: "UNKNOWN",
-      1: "INVENTORY_BASE_INSERT",
-      2: "INVENTORY_BASE_UPDATE",
-      3: "INVENTORY_EXT_INSERT",
-      4: "INVENTORY_EXT_UPDATE",
-      5: "INVENTORY_BASE_ERR",
-      6: "INVENTORY_EXT_ERR",
-      7: "DEPLOYMENT_ACK",
-      8: "DEPLOYMENT_ERR",
-      9: "CONFIG_UPDATE",
-      10: "CONFIG_ERR",
-      11: "TEMPLATE_UPDATE",
-      12: "TEMPLATE_ERR"
-    };
-    Map<String, dynamic> content = new Map();
-    content["asset"] = assetID;
-    content["scope"] = errorCodes[errorCode];
-    content["comment"] = comment;
-    try {
-      await query.post(
-          "serverLogger",
-          Uri.parse("$_url/asset/logs/"),
-          {
-            HttpHeaders.contentTypeHeader: 'application/json',
-            HttpHeaders.authorizationHeader: "Token $token"
-          },
-          jsonEncode(content));
-    } catch (exception) {
-      error(sprintf("HTTP query: %s", [exception.toString().trim()]));
+    if (assetID != -1) {
+      HTTPQuery query = new HTTPQuery();
+      String token = config.getInventoryConfig("token");
+      Map<int, String> errorCodes = {
+        0: "UNKNOWN",
+        1: "INVENTORY_BASE_INSERT",
+        2: "INVENTORY_BASE_UPDATE",
+        3: "INVENTORY_EXT_INSERT",
+        4: "INVENTORY_EXT_UPDATE",
+        5: "INVENTORY_BASE_ERR",
+        6: "INVENTORY_EXT_ERR",
+        7: "DEPLOYMENT_ACK",
+        8: "DEPLOYMENT_ERR",
+        9: "CONFIG_UPDATE",
+        10: "CONFIG_ERR",
+        11: "TEMPLATE_UPDATE",
+        12: "TEMPLATE_ERR"
+      };
+      Map<String, dynamic> content = new Map();
+      content["asset"] = assetID;
+      content["scope"] = errorCodes[errorCode];
+      content["comment"] = comment;
+      try {
+        await query.post(
+            "serverLogger",
+            Uri.parse("$_url/asset/logs/"),
+            {
+              HttpHeaders.contentTypeHeader: 'application/json',
+              HttpHeaders.authorizationHeader: "Token $token"
+            },
+            jsonEncode(content));
+      } catch (exception) {
+        error(sprintf("HTTP query: %s", [exception.toString().trim()]));
+      }
+    } else {
+      error("Failed to send remote logs!");
     }
   }
 }
