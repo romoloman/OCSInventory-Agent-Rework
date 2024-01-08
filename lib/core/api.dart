@@ -277,7 +277,7 @@ class Api {
       logger.verbose(responsePost["message"]);
       if (responsePost["status_code"] == 200) {
         logger.info("New inventory has been sent to the server!");
-        logger.serverLogger(assetID, 2, "Inventory created successfully!");
+        logger.serverLogger(assetID, 1, "Inventory created successfully!");
       } else {
         logger.error("Failed to send new inventory!");
         logger.serverLogger(assetID, 5, "Failed to send new inventory!");
