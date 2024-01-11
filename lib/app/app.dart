@@ -28,7 +28,7 @@ import 'package:ocs_agent/core/inventory/windows/baseWindows.dart'
     as baseWindows;
 
 /// In this main section we send the [body] to the asset/bases endpoint
-void main(List<String> args) async {
+Future<void> main(List<String> args) async {
   // Initiate modules
   Api api = new Api();
   Inventory inventory = new Inventory();
