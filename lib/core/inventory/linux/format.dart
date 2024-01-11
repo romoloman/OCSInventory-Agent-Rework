@@ -16,14 +16,20 @@
 
 import 'dart:convert';
 
+import 'package:ocs_agent/core/log.dart';
+
 import 'package:ocs_agent/core/inventory/linux/commands.dart';
 
 /// Format command result by type for Linux.
 class LinuxFormat {
+  late Logger logger;
+
   late LinuxCommand linuxCommand;
 
   /// Constructor.
   LinuxFormat() {
+    this.logger = new Logger();
+
     this.linuxCommand = new LinuxCommand();
   }
 
@@ -82,6 +88,9 @@ class LinuxFormat {
             field['name'], () => json[field['retrival_value']]);
       }
     }
+
+    logger.verbose(subInventory.toString());
+
     return subInventory;
   }
 
