@@ -82,7 +82,7 @@ class WindowsFormat {
         }
       } catch (e) {
         json[element] = null;
-        logger.verbose(e.toString());
+        logger.verbose("Next Json object won't be well formated!");
       }
     });
 

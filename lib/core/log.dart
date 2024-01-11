@@ -19,7 +19,7 @@ import 'dart:io';
 
 import 'package:intl/intl.dart';
 import 'package:ocs_agent/core/config.dart';
-import 'package:ocs_agent/core/exception.dart';
+import 'package:ocs_agent/core/common/http_utils.dart';
 
 import 'package:sprintf/sprintf.dart';
 
@@ -46,7 +46,7 @@ class Logger {
     dateFormat = DateFormat('yyyy-MM-dd H:m:s');
   }
 
-  /// print info message.
+  /// Print info message.
   void info(String info) {
     var now = DateTime.now();
     String date = dateFormat.format(now);
@@ -58,7 +58,7 @@ class Logger {
     }
   }
 
-  /// print warning message.
+  /// Print warning message.
   void warning(String warning) {
     var now = DateTime.now();
     String date = dateFormat.format(now);
@@ -70,7 +70,7 @@ class Logger {
     }
   }
 
-  /// print error message.
+  /// Print error message.
   void error(String error) {
     var now = DateTime.now();
     String date = dateFormat.format(now);
@@ -82,7 +82,7 @@ class Logger {
     }
   }
 
-  /// print verbose message.
+  /// Print verbose message.
   void verbose(String verbose) {
     var now = DateTime.now();
     String date = dateFormat.format(now);
@@ -96,7 +96,8 @@ class Logger {
     }
   }
 
-  /// <pre>send formated logs to the server
+  /// <pre>
+  /// Send formated logs to the server
   /// Error codes:
   /// 0: "UNKNOWN",
   /// 1: "INVENTORY_BASE_INSERT",
@@ -110,10 +111,11 @@ class Logger {
   /// 9: "CONFIG_UPDATE",
   /// 10: "CONFIG_ERR",
   /// 11: "TEMPLATE_UPDATE",
-  /// 12: "TEMPLATE_ERR"</pre>
+  /// 12: "TEMPLATE_ERR"
+  /// </pre>
   void serverLogger(int assetID, int errorCode, String comment) async {
     if (assetID != -1) {
-      HTTPQuery query = new HTTPQuery();
+      HTTPUtils query = new HTTPUtils();
       String token = config.getInventoryConfig("token");
       Map<int, String> errorCodes = {
         0: "UNKNOWN",
