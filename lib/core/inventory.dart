@@ -193,6 +193,26 @@ class Inventory {
     }
   }
 
+  /// Compare both templates to know if we need to create or update the local template.
+  int compareTemplate(
+      Map<String, String> localInfo, Map<String, String> remoteInfo) {
+    logger.info("Comparing both templates...");
+    // Compare both templates info
+    if (remoteInfo["id"] == localInfo["id"]) {
+      logger.info("Local template exists on the server!");
+      if (remoteInfo["last_update"] == localInfo["last_update"]) {
+        logger.info("Local template is up to date!");
+        return 0;
+      } else {
+        logger.info("Local template isn't up to date!");
+        return 1;
+      }
+    } else {
+      logger.info("Local template doesn't exist on the server!");
+      return 2;
+    }
+  }
+
   /// Process the template and format template inventory.
   Future<Map<String, dynamic>> processTemplate() async {
     // Get the template from template.json

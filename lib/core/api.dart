@@ -407,26 +407,6 @@ class Api {
     }
   }
 
-  /// Compare both templates to know if we need to create or update the local template.
-  int compareTemplate(
-      Map<String, String> localInfo, Map<String, String> remoteInfo) {
-    logger.info("Comparing both templates...");
-    // Compare both templates info
-    if (remoteInfo["id"] == localInfo["id"]) {
-      logger.info("Local template exists on the server!");
-      if (remoteInfo["last_update"] == localInfo["last_update"]) {
-        logger.info("Local template is up to date!");
-        return 0;
-      } else {
-        logger.info("Local template isn't up to date!");
-        return 1;
-      }
-    } else {
-      logger.info("Local template doesn't exist on the server!");
-      return 2;
-    }
-  }
-
   /// Get the remote template id and last update.
   Future<Map<String, String>> getRemoteTemplateInfo(
       Map<String, dynamic> body) async {
@@ -583,7 +563,7 @@ class Api {
     logger.info("Getting remote template...");
     // Check if it have both info
     if (remoteInfo["return"] != "false" || localInfo["return"] != "false") {
-      var compareResult = compareTemplate(localInfo, remoteInfo);
+      var compareResult = inventory.compareTemplate(localInfo, remoteInfo);
       // Depending on result, update the template or not
       if (compareResult == 0) {
         logger.info("No need to erase current template.");
