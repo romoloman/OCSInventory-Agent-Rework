@@ -625,7 +625,7 @@ class Inventory {
       try {
         // API call
         var response = await httpUtils.get(
-            "API: senRemoteBaseInventory method",
+            "API: sendRemoteBaseInventory method",
             Uri.parse(url + "/asset/bases/?uuid=$uuid"),
             httpUtils.getHeader(config));
         logger.verbose(response["message"]);
@@ -672,7 +672,7 @@ class Inventory {
       logger.info("Creating new inventory...");
       // API call
       var responsePost = await httpUtils.post(
-          "API: senRemoteBaseInventory method",
+          "API: sendRemoteBaseInventory method",
           Uri.parse(url + "/asset/bases/"),
           httpUtils.getHeader(config),
           jsonEncode(body));
@@ -753,9 +753,12 @@ class Inventory {
               });
               filesUtils.writeFile(
                   inventoryBase64, encoder.convert(sectionJson));
-              if (content["inventory_sections"].isNotEmpty) {
+              var inventoryExist = await httpUtils.get(
+                  "API: sendRemoteTemplateInventory method",
+                  Uri.parse(url + "/asset/sections/?base=$assetID"),
+                  httpUtils.getHeader(config));
+              if (inventoryExist["status_code"] == 200) {
                 content["template_inventory"] = updatedInventory;
-                content.remove("inventory_sections");
                 var responsePatch = await httpUtils.patch(
                     "API: sendRemoteTemplateInventory method",
                     Uri.parse("$url/asset/collection/"),
@@ -774,7 +777,6 @@ class Inventory {
                       "Can't update template inventory to remote base inventory!");
                 }
               } else {
-                content.remove("inventory_sections");
                 // API call
                 var responsePut = await httpUtils.put(
                     "API: sendRemoteTemplateInventory method",
