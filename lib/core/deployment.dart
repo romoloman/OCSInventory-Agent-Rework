@@ -14,7 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import 'package:ocs_agent/core/config.dart';
+import 'package:ocs_agent/core/log.dart';
+
+import 'package:ocs_agent/core/common/http_utils.dart';
+
 class Deployment {
+  late Config config;
+  late Logger logger;
+
   Map<int, String> errorCodes = new Map();
 
   Deployment() {
@@ -41,11 +49,11 @@ class Deployment {
     };
   }
 
-  bool checkDownload(int agentID) {
+  Future<bool> checkDownload(int assetID) async {
     return false;
   }
 
-  Map<int, dynamic> getActions(int agentID) {
+  Map<int, dynamic> getActions(int assetID) {
     return new Map();
   }
 

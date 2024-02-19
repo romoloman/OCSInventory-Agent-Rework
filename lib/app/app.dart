@@ -18,9 +18,9 @@ import 'dart:io' show Platform;
 
 import 'package:sprintf/sprintf.dart';
 
+import 'package:ocs_agent/core/deployment.dart';
 import 'package:ocs_agent/core/inventory.dart';
 import 'package:ocs_agent/core/log.dart';
-import 'package:ocs_agent/core/api.dart';
 
 import 'package:ocs_agent/core/inventory/linux/baseLinux.dart' as baseLinux;
 import 'package:ocs_agent/core/inventory/macos/baseMacOS.dart' as baseMacOS;
@@ -30,7 +30,7 @@ import 'package:ocs_agent/core/inventory/windows/baseWindows.dart'
 /// In this main section we send the [body] to the asset/bases endpoint
 Future<void> main(List<String> args) async {
   // Initiate modules
-  Api api = new Api();
+  Deployment deployment = new Deployment();
   Inventory inventory = new Inventory();
   Logger logger = new Logger();
 
@@ -57,14 +57,14 @@ Future<void> main(List<String> args) async {
         "OS does not match any of the supported OSs! (Check Plateform class return)");
   }
 
-  // Running process
+  // Inventory process
   if (inventory.getMode() == 0 || inventory.getMode() == 1) {
-    if (await api.check()) {
-      await api.checkInventoryExist(body);
-      await api.checkAndApplyConfig();
-      await api.sendRemoteBaseInventory(body);
+    if (await inventory.checkApi()) {
+      await inventory.checkInventoryExist(body);
+      await inventory.checkAndApplyConfig();
+      await inventory.sendRemoteBaseInventory(body);
       if (inventory.getMode() == 0) {
-        await api.sendRemoteTemplateInventory(body);
+        await inventory.sendRemoteTemplateInventory(body);
       }
     }
   } else if (inventory.getMode() == 2 || inventory.getMode() == 3) {
@@ -72,6 +72,12 @@ Future<void> main(List<String> args) async {
     if (inventory.getMode() == 2) {
       await inventory.sendLocalTemplateInventory();
     }
+  }
+
+  // deployment process
+  if (inventory.getMode() == 0 || inventory.getMode() == 1) {
+    logger.info("Enabling deployment module...");
+    await deployment.checkDownload(inventory.assetID);
   }
 
   logger.info("Agent's process has ended!\n");
