@@ -56,6 +56,8 @@ class Inventory {
   late File inventoryFile;
   late File inventoryBase64;
 
+  late Map<int, String> errorCodes;
+
   /// Constructor.
   Inventory() {
     this.config = new Config();
@@ -74,6 +76,7 @@ class Inventory {
 
     this.url = config.getInventoryConfig("url");
     this.inventoryCheck = false;
+    this.assetID = 1;
 
     this.inventoryFileName = sprintf('%s/%s.json', [
       config.getInventoryConfig("data_dir"),
@@ -82,6 +85,23 @@ class Inventory {
     this.inventoryFile = File(inventoryFileName);
     this.inventoryBase64 = File(sprintf(
         '%s/%s.json', [config.getInventoryConfig("data_dir"), "Base64"]));
+
+    this.errorCodes = new Map();
+    errorCodes = {
+      0: "UNKNOWN",
+      1: "INVENTORY_BASE_INSERT",
+      2: "INVENTORY_BASE_UPDATE",
+      3: "INVENTORY_EXT_INSERT",
+      4: "INVENTORY_EXT_UPDATE",
+      5: "INVENTORY_BASE_ERR",
+      6: "INVENTORY_EXT_ERR",
+      7: "DEPLOYMENT_ACK",
+      8: "DEPLOYMENT_ERR",
+      9: "CONFIG_UPDATE",
+      10: "CONFIG_ERR",
+      11: "TEMPLATE_UPDATE",
+      12: "TEMPLATE_ERR"
+    };
   }
 
   /// Get the running mode of the agent.
@@ -234,10 +254,12 @@ class Inventory {
         var encoder = new JsonEncoder.withIndent("\t");
         this.config.setCore(encoder.convert(config));
         logger.info("Remote config saved locally!");
-        logger.serverLogger(assetID, 9, "Remote config saved locally!");
+        logger.serverLogger(
+            assetID, errorCodes[9], "Remote config saved locally!");
       } else {
         logger.error("Remote config not found!");
-        logger.serverLogger(assetID, 10, "Remote config not found!");
+        logger.serverLogger(
+            assetID, errorCodes[10], "Remote config not found!");
       }
     } catch (exception) {
       logger.error(sprintf("HTTP query: %s", [exception.toString().trim()]));
@@ -276,12 +298,13 @@ class Inventory {
             var encoder = new JsonEncoder.withIndent("\t");
             config.setTemplate(encoder.convert(template));
             logger.info("Remote template has been saved locally!");
-            logger.serverLogger(
-                assetID, 11, "Remote template has been saved locally!");
+            logger.serverLogger(assetID, errorCodes[11],
+                "Remote template has been saved locally!");
             return true;
           } else {
             logger.error("Remote template not found!");
-            logger.serverLogger(assetID, 12, "Remote template not found!");
+            logger.serverLogger(
+                assetID, errorCodes[12], "Remote template not found!");
             return false;
           }
         } catch (exception) {
@@ -647,24 +670,25 @@ class Inventory {
             if (responsePut["status_code"] == 200) {
               logger.info("Base inventory update has been sent to the server!");
               logger.serverLogger(
-                  assetID, 2, "Inventory updated successfully!");
+                  assetID, errorCodes[2], "Inventory updated successfully!");
             } else {
               logger.error("Failed to send inventory update!");
               logger.serverLogger(
-                  assetID, 5, "Failed to send inventory update!");
+                  assetID, errorCodes[5], "Failed to send inventory update!");
             }
           } else {
             logger.error("Can't get the UUID from the base inventory!");
-            logger.serverLogger(
-                assetID, 5, "Can't get the UUID from the base inventory!");
+            logger.serverLogger(assetID, errorCodes[5],
+                "Can't get the UUID from the base inventory!");
           }
         } else {
           logger.error("Can't get inventory from server!");
-          logger.serverLogger(assetID, 5, "Can't get inventory from server!");
+          logger.serverLogger(
+              assetID, errorCodes[5], "Can't get inventory from server!");
         }
       } catch (exception) {
         logger.error(sprintf("HTTP query: %s", [exception.toString().trim()]));
-        logger.serverLogger(assetID, 5,
+        logger.serverLogger(assetID, errorCodes[5],
             sprintf("HTTP query: %s", [exception.toString().trim()]));
       }
     } else {
@@ -679,10 +703,12 @@ class Inventory {
       logger.verbose(responsePost["message"]);
       if (responsePost["status_code"] == 200) {
         logger.info("New inventory has been sent to the server!");
-        logger.serverLogger(assetID, 1, "Inventory created successfully!");
+        logger.serverLogger(
+            assetID, errorCodes[1], "Inventory created successfully!");
       } else {
         logger.error("Failed to send new inventory!");
-        logger.serverLogger(assetID, 5, "Failed to send new inventory!");
+        logger.serverLogger(
+            assetID, errorCodes[5], "Failed to send new inventory!");
       }
     }
   }
@@ -768,12 +794,12 @@ class Inventory {
                 if (responsePatch["status_code"] == 200) {
                   logger.info(
                       "Template inventory updated to remote base inventory!");
-                  logger.serverLogger(assetID, 4,
+                  logger.serverLogger(assetID, errorCodes[4],
                       "Template inventory updated to remote base inventory!");
                 } else {
                   logger.error(
                       "Can't update template inventory to remote base inventory!");
-                  logger.serverLogger(assetID, 6,
+                  logger.serverLogger(assetID, errorCodes[6],
                       "Can't update template inventory to remote base inventory!");
                 }
               } else {
@@ -787,8 +813,8 @@ class Inventory {
                 if (responsePut["status_code"] == 200) {
                   logger.info(
                       "Template inventory added to remote base inventory!");
-                  logger.serverLogger(
-                      assetID, 6, "Missing UUID in base inventory!");
+                  logger.serverLogger(assetID, errorCodes[6],
+                      "Missing UUID in base inventory!");
                 } else {
                   logger.error(
                       "Can't upload template inventory to remote base inventory!");
@@ -797,12 +823,12 @@ class Inventory {
             } else {
               logger.error("Missing UUID in base inventory!");
               logger.serverLogger(
-                  assetID, 6, "Missing UUID in base inventory!");
+                  assetID, errorCodes[6], "Missing UUID in base inventory!");
             }
           } else {
             logger.error("Can't get base inventory from server!");
-            logger.serverLogger(
-                assetID, 6, "Can't get base inventory from server!");
+            logger.serverLogger(assetID, errorCodes[6],
+                "Can't get base inventory from server!");
           }
         } catch (exception) {
           logger

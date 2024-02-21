@@ -33,7 +33,7 @@ class Deployment {
   late List<dynamic> results;
   late Map<int, dynamic> actions;
 
-  Map<int, String> errorCodes = new Map();
+  late Map<int, String> errorCodes;
 
   /// Constructor.
   Deployment() {
@@ -46,6 +46,7 @@ class Deployment {
 
     this.actions = new Map();
 
+    this.errorCodes = new Map();
     errorCodes = {
       0: "WAITING NOTIFICATION",
       1: "NOTIFIED",
@@ -108,7 +109,7 @@ class Deployment {
         }
       } catch (exception) {
         logger.error(sprintf("HTTP query: %s", [exception.toString().trim()]));
-        logger.serverLogger(assetID, 5,
+        logger.serverLogger(assetID, errorCodes[9],
             sprintf("HTTP query: %s", [exception.toString().trim()]));
         return false;
       }
