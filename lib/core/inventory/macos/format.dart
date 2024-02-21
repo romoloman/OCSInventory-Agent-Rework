@@ -16,12 +16,18 @@
 
 import 'dart:convert';
 
+import 'package:ocs_agent/core/log.dart';
+
 import 'package:ocs_agent/core/inventory/macos/commands.dart';
 
 class MacOSFormat {
+  late Logger logger;
+
   late MacOSCommand macosCommand;
 
   MacOSFormat() {
+    this.logger = new Logger();
+
     this.macosCommand = new MacOSCommand();
   }
 

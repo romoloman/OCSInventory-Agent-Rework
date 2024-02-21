@@ -16,17 +16,20 @@
 
 import 'dart:convert';
 
-import 'package:ocs_agent/core/inventory/windows/commands.dart';
 import 'package:ocs_agent/core/log.dart';
+
+import 'package:ocs_agent/core/inventory/windows/commands.dart';
 
 /// Format command result by type for Windows.
 class WindowsFormat {
-  late WindowsCommand windowsCommand;
   late Logger logger;
+
+  late WindowsCommand windowsCommand;
 
   /// Constructor.
   WindowsFormat() {
     this.logger = new Logger();
+
     this.windowsCommand = new WindowsCommand();
   }
 
@@ -82,7 +85,7 @@ class WindowsFormat {
         }
       } catch (e) {
         json[element] = null;
-        logger.verbose(e.toString());
+        logger.verbose("Next Json object won't be well formated!");
       }
     });
 

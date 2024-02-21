@@ -14,11 +14,24 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import 'package:sprintf/sprintf.dart';
-import 'package:http/http.dart' as http;
+import 'dart:io';
 
-/// This class will execute the query and log the status of the query
-class HTTPQuery {
+import 'package:http/http.dart' as http;
+import 'package:sprintf/sprintf.dart';
+
+/// This class will execute and log the status of the query
+class HTTPUtils {
+  /// Return header in json format.
+  Map<String, String> getHeader(dynamic config) {
+    // Get data from inventory.json file
+    String token = config.getInventoryConfig("token");
+
+    return {
+      HttpHeaders.contentTypeHeader: 'application/json',
+      HttpHeaders.authorizationHeader: "Token $token"
+    };
+  }
+
   /// Return the statusCode message
   String? statusCodeMessage(
       String type, int statusCode, String detail, String currentMethod) {

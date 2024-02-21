@@ -14,17 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import 'package:ocs_agent/core/api.dart' as api;
+import 'package:ocs_agent/core/log.dart';
+
 import 'package:ocs_agent/core/inventory/linux/commands.dart' as command;
 
 ///This fonction return the body for to asset/bases
 dynamic getBody() async {
   var linuxCommand = new command.LinuxCommand();
-  var agent = new api.Api();
+  var logger = new Logger();
 
-  agent.logger.info("Plateform: LINUX");
+  logger.info("Plateform: LINUX");
 
-  agent.logger.info("Getting OS body...");
+  logger.info("Getting OS body...");
 
   dynamic getOSRelease =
       (await linuxCommand.readFile("/etc/os-release", true)).split("\n");
@@ -83,7 +84,7 @@ dynamic getBody() async {
     "domain": await linuxCommand.commandShell("hostname -d", true)
   });
 
-  agent.logger.info("OS body has been retrieved!");
+  logger.info("OS body has been retrieved!");
 
   return body;
 }
