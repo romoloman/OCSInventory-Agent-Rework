@@ -33,8 +33,6 @@ class Deployment {
   late List<dynamic> results;
   late Map<int, dynamic> actions;
 
-  late Map<int, String> errorCodes;
-
   /// Constructor.
   Deployment() {
     this.config = new Config();
@@ -45,29 +43,6 @@ class Deployment {
     this.url = config.getInventoryConfig("url");
 
     this.actions = new Map();
-
-    this.errorCodes = new Map();
-    errorCodes = {
-      0: "WAITING NOTIFICATION",
-      1: "NOTIFIED",
-      2: "SUCCESS",
-      3: "ERROR_EXIT_CODE_XXX",
-      4: "ERR_ALREADY_SETUP",
-      5: "ERR_BAD_ID",
-      6: "ERR_BAD_DIGEST",
-      7: "ERR_DOWNLOAD_INFO",
-      8: "ERR_DOWNLOAD_PACK",
-      9: "ERR_BUILD",
-      10: "ERR_UNZIP",
-      11: "ERR_OUT_OF_SPACE",
-      12: "ERR_BAD_PARAM",
-      13: "ERR_EXECUTE_PACK",
-      14: "ERR_EXECUTE",
-      15: "ERR_CLEAN",
-      16: "ERR_DONE_FAILED",
-      17: "ERR_TIMEOUT",
-      18: "ERR_ABORTED"
-    };
   }
 
   /// Check if there is packages to download.
@@ -103,14 +78,24 @@ class Deployment {
         logger.verbose(response["message"]);
         if (response["status_code"] == 200) {
           actions.putIfAbsent(element["package"], () => response["body"]);
+          logger.serverLogger(
+              assetID,
+              7,
+              "Actions collected on package " +
+                  element["package"].toString() +
+                  ".");
         } else {
           logger.error("Can't collect actions from the server.");
+          logger.serverLogger(
+              assetID,
+              8,
+              "Can't collect actions from the server for the package " +
+                  element["package"].toString() +
+                  ".");
           return false;
         }
       } catch (exception) {
         logger.error(sprintf("HTTP query: %s", [exception.toString().trim()]));
-        logger.serverLogger(assetID, errorCodes[9],
-            sprintf("HTTP query: %s", [exception.toString().trim()]));
         return false;
       }
     }

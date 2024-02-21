@@ -45,27 +45,27 @@ Future<void> main(List<String> args) async {
       sprintf("Starting agent in %s mode...", [enumMode[inventory.getMode()]]));
 
   // Get the OS body
-  var body;
-  if (Platform.isLinux) {
-    body = await baseLinux.getBody();
-  } else if (Platform.isMacOS) {
-    body = await baseMacOS.getBody();
-  } else if (Platform.isWindows) {
-    body = await baseWindows.getBody();
-  } else {
-    logger.error(
-        "OS does not match any of the supported OSs! (Check Plateform class return)");
-  }
+  // var body;
+  // if (Platform.isLinux) {
+  //   body = await baseLinux.getBody();
+  // } else if (Platform.isMacOS) {
+  //   body = await baseMacOS.getBody();
+  // } else if (Platform.isWindows) {
+  //   body = await baseWindows.getBody();
+  // } else {
+  //   logger.error(
+  //       "OS does not match any of the supported OSs! (Check Plateform class return)");
+  // }
 
   if (inventory.getMode() == 0 || inventory.getMode() == 1) {
     if (await inventory.checkApi()) {
       // Inventory process
-      await inventory.checkInventoryExist(body);
-      await inventory.checkAndApplyConfig();
-      await inventory.sendRemoteBaseInventory(body);
-      if (inventory.getMode() == 0) {
-        await inventory.sendRemoteTemplateInventory(body);
-      }
+      // await inventory.checkInventoryExist(body);
+      // await inventory.checkAndApplyConfig();
+      // await inventory.sendRemoteBaseInventory(body);
+      // if (inventory.getMode() == 0) {
+      //   await inventory.sendRemoteTemplateInventory(body);
+      // }
 
       // Deployment process
       if (await deployment.checkDownload(inventory.assetID)) {
@@ -75,10 +75,10 @@ Future<void> main(List<String> args) async {
       }
     }
   } else if (inventory.getMode() == 2 || inventory.getMode() == 3) {
-    inventory.sendLocalBaseInventory(body);
-    if (inventory.getMode() == 2) {
-      await inventory.sendLocalTemplateInventory();
-    }
+    // inventory.sendLocalBaseInventory(body);
+    // if (inventory.getMode() == 2) {
+    //   await inventory.sendLocalTemplateInventory();
+    // }
   }
 
   logger.info("Agent's process has ended!\n");
