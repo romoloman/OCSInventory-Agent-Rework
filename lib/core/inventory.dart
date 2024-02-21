@@ -107,7 +107,7 @@ class Inventory {
     try {
       // API call
       var response = await httpUtils.post(
-          "API: check method",
+          "CheckAPI",
           Uri.parse(url + "/api-auth/token"),
           {HttpHeaders.contentTypeHeader: 'application/json'},
           jsonEncode({'username': username, 'password': password}));
