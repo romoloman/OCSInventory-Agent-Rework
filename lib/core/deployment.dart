@@ -22,6 +22,10 @@ import 'package:ocs_agent/core/log.dart';
 
 import 'package:ocs_agent/core/common/http_utils.dart';
 
+import 'package:ocs_agent/core/inventory/linux/commands.dart';
+import 'package:ocs_agent/core/inventory/macos/commands.dart';
+import 'package:ocs_agent/core/inventory/windows/commands.dart';
+
 class Deployment {
   late Config config;
   late Logger logger;
@@ -50,7 +54,7 @@ class Deployment {
     logger.info("Enabling deployment module...");
     var response = await httpUtils.get(
         "checkDownload",
-        Uri.parse(url + "/deployment/results/?asset=$assetID&status=1"),
+        Uri.parse(url + "/deployment/results/?asset=$assetID&status=0"),
         httpUtils.getHeader(config));
     logger.verbose(response["message"]);
     if (response["status_code"] == 200 &&
@@ -104,26 +108,93 @@ class Deployment {
   }
 
   /// Execute actions from assigned packages.
-  void executeActions() {
+  Future<void> executeActions(String os, int assetID) async {
     logger.info("Executing actions...");
-    for (var element in actions.values) {}
-    if (getFile()) {
-    } else {}
+    for (var element in actions.values) {
+      for (var action in jsonDecode(element)) {
+        logger.verbose(action.toString());
+        if (checkFileExist(action)) {
+          switch (action["action_type"]) {
+            case "EXEC":
+              executeActions(os, action["file"]);
+              break;
+            case "STORE":
+              storeFile(action["file"]);
+              break;
+            case "LAUNCH":
+              launchFile(os, action["file"]);
+              break;
+            default:
+              logger.error("Canno't read correctly the action type!");
+              logger.serverLogger(
+                  assetID,
+                  8,
+                  "Can't get type from the action " +
+                      action["name"].toString() +
+                      ".");
+              break;
+          }
+        } else {
+          logger.info("Any file found in the action " +
+              action["name"] +
+              ". Starting directly the command...");
+          switch (os) {
+            case "LIN":
+              var command = new LinuxCommand();
+              String result =
+                  await command.commandShell(action["command"], true);
+              logger.verbose(result);
+              break;
+            case "MAC":
+              var command = new MacOSCommand();
+              String result =
+                  await command.commandShell(action["command"], true);
+              logger.verbose(result);
+              break;
+            case "WIN":
+              var command = new WindowsCommand();
+              String result =
+                  await command.commandPowershell(action["command"], true);
+              logger.verbose(result);
+              break;
+            default:
+              logger.error(
+                  "OS does not match any of the supported OSs! (Check Plateform class return)");
+              break;
+          }
+        }
+      }
+    }
   }
 
-  dynamic getFile() {
-    return false;
+  /// Check if there is a specified file for the action
+  bool checkFileExist(Map<String, dynamic> action) {
+    if (action["file"] != null) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
-  int executeFile(dynamic file) {
-    return 0;
+  /// Only download the file and execute it. This method doesn't store the file.
+  void executeFile(String os, String file) async {
+    switch (os) {
+      case "LIN":
+        break;
+      case "MAC":
+        break;
+      case "WIN":
+        break;
+      default:
+        logger.error(
+            "OS does not match any of the supported OSs! (Check Plateform class return)");
+        break;
+    }
   }
 
-  int storeFile(dynamic file) {
-    return 0;
-  }
+  /// Only store the file without execution
+  void storeFile(String file) {}
 
-  int launchFile(dynamic file) {
-    return 0;
-  }
+  /// Store the specified file and execute it.
+  void launchFile(String os, String file) async {}
 }
