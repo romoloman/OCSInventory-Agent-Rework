@@ -45,13 +45,16 @@ Future<void> main(List<String> args) async {
       sprintf("Starting agent in %s mode...", [enumMode[inventory.getMode()]]));
 
   // Get the OS body
-  var body;
+  var body, os;
   if (Platform.isLinux) {
     body = await baseLinux.getBody();
+    os = "LIN";
   } else if (Platform.isMacOS) {
     body = await baseMacOS.getBody();
+    os = "MAC";
   } else if (Platform.isWindows) {
     body = await baseWindows.getBody();
+    os = "WIN";
   } else {
     logger.error(
         "OS does not match any of the supported OSs! (Check Plateform class return)");
@@ -68,11 +71,11 @@ Future<void> main(List<String> args) async {
       }
 
       // Deployment process
-      // if (await deployment.checkDownload(inventory.assetID)) {
-      //   if (await deployment.getActions(inventory.assetID)) {
-      //     deployment.executeActions();
-      //   }
-      // }
+      if (await deployment.checkDownload(inventory.assetID)) {
+        if (await deployment.getActions(inventory.assetID)) {
+          await deployment.executeActions(os, inventory.assetID);
+        }
+      }
     }
   } else if (inventory.getMode() == 2 || inventory.getMode() == 3) {
     inventory.sendLocalBaseInventory(body);
