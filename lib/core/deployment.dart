@@ -61,6 +61,15 @@ class Deployment {
         jsonDecode(response["body"]).isNotEmpty) {
       logger.info("Assigned packages found!");
       results = jsonDecode(response["body"]);
+      for (var element in results) {
+        var responseNotified = await httpUtils.patch(
+            "executeActions",
+            Uri.parse(
+                url + "/deployment/results/" + element["id"].toString() + "/"),
+            httpUtils.getHeader(config),
+            "{\"comment\": \"Notified\"}");
+        logger.verbose(responseNotified["message"]);
+      }
       return true;
     } else {
       logger.info("Any package has been found on the server.");
@@ -111,7 +120,9 @@ class Deployment {
   Future<void> executeActions(String os, int assetID) async {
     logger.info("Executing actions...");
     for (var element in actions.values) {
+      int id = 0;
       for (var action in jsonDecode(element)) {
+        id = action["package"];
         logger.verbose(action.toString());
         if (checkFileExist(action)) {
           switch (action["action_type"]) {
@@ -135,9 +146,6 @@ class Deployment {
               break;
           }
         } else {
-          logger.info("Any file found in the action " +
-              action["name"] +
-              ". Starting directly the command...");
           switch (os) {
             case "LIN":
               var command = new LinuxCommand();
@@ -164,14 +172,24 @@ class Deployment {
           }
         }
       }
+      var responseSuccess = await httpUtils.patch(
+          "executeActions",
+          Uri.parse(url + "/deployment/results/$id/"),
+          httpUtils.getHeader(config),
+          "{\"status\": 1, \"comment\": \"Success\"}");
+      logger.verbose(responseSuccess["message"]);
     }
   }
 
   /// Check if there is a specified file for the action
   bool checkFileExist(Map<String, dynamic> action) {
     if (action["file"] != null) {
+      logger.info("File found in the action " + action["name"] + ".");
       return true;
     } else {
+      logger.info("Any file found in the action " +
+          action["name"] +
+          ". Starting directly the command...");
       return false;
     }
   }
