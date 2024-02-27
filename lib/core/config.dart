@@ -68,8 +68,18 @@ class Config {
   }
 
   /// return [key] content in core file.
-  String getCoreConfig(String key) {
-    return jsonUtils.getContentFromFileByKey(core, key);
+  dynamic getCoreConfig(String module, String key) {
+    dynamic result = "No result";
+    getCoreConfigs().forEach((element) {
+      if (element["name"] == module) {
+        element["value"].forEach((value) {
+          if (value["name"] == key) {
+            result = value["value"];
+          }
+        });
+      }
+    });
+    return result;
   }
 
   /// Update core config file by [_index] and [_value].
