@@ -120,10 +120,15 @@ class Deployment {
   /// Execute actions from assigned packages.
   Future<void> executeActions(String os, int assetID) async {
     logger.info("Executing actions...");
+    int id = 0;
+    logger.verbose(results.toString());
     for (var element in actions.values) {
-      int id = 0;
       for (var action in jsonDecode(element)) {
-        id = action["package"];
+        results.forEach((resultElement) {
+          if (resultElement["package"] == action["package"]) {
+            id = resultElement["id"];
+          }
+        });
         logger.verbose(action.toString());
         if (checkFileExist(action)) {
           switch (action["action_type"]) {
@@ -149,6 +154,7 @@ class Deployment {
         }
       }
       try {
+        logger.verbose(results.toString());
         var responseSuccess = await httpUtils.patch(
             "executeActions",
             Uri.parse(url + "/deployment/results/$id/"),
