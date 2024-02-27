@@ -15,6 +15,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import 'dart:convert';
+import 'dart:io';
 import 'package:sprintf/sprintf.dart';
 
 import 'package:ocs_agent/core/config.dart';
@@ -126,14 +127,11 @@ class Deployment {
         logger.verbose(action.toString());
         if (checkFileExist(action)) {
           switch (action["action_type"]) {
-            case "EXEC":
-              executeActions(os, action["file"]);
-              break;
             case "STORE":
-              storeFile(action["file"]);
+              await storeFile(action["file"]);
               break;
             case "LAUNCH":
-              launchFile(os, action["file"]);
+              await launchFile(os, action["command"], action["file"]);
               break;
             default:
               logger.error("Canno't read correctly the action type!");
@@ -146,30 +144,7 @@ class Deployment {
               break;
           }
         } else {
-          switch (os) {
-            case "LIN":
-              var command = new LinuxCommand();
-              String result =
-                  await command.commandShell(action["command"], true);
-              logger.verbose(result);
-              break;
-            case "MAC":
-              var command = new MacOSCommand();
-              String result =
-                  await command.commandShell(action["command"], true);
-              logger.verbose(result);
-              break;
-            case "WIN":
-              var command = new WindowsCommand();
-              String result =
-                  await command.commandPowershell(action["command"], true);
-              logger.verbose(result);
-              break;
-            default:
-              logger.error(
-                  "OS does not match any of the supported OSs! (Check Plateform class return)");
-              break;
-          }
+          await executeCommand(os, action["command"]);
         }
       }
       var responseSuccess = await httpUtils.patch(
@@ -194,14 +169,29 @@ class Deployment {
     }
   }
 
-  /// Only download the file and execute it. This method doesn't store the file.
-  void executeFile(String os, String file) async {
+  /// Execute the action command.
+  Future<void> executeCommand(String os, String actionCommand) async {
+    actionCommand = actionCommand.replaceAll(
+        "\$AGENT_PATH",
+        Directory.current.toString().substring(11, null).replaceAll("'", "") +
+            "/" +
+            config.getInventoryConfig("data_dir"));
+    logger.verbose(actionCommand);
     switch (os) {
       case "LIN":
+        var command = new LinuxCommand();
+        String result = await command.commandShell(actionCommand, true);
+        logger.verbose(result);
         break;
       case "MAC":
+        var command = new MacOSCommand();
+        String result = await command.commandShell(actionCommand, true);
+        logger.verbose(result);
         break;
       case "WIN":
+        var command = new WindowsCommand();
+        String result = await command.commandPowershell(actionCommand, true);
+        logger.verbose(result);
         break;
       default:
         logger.error(
@@ -211,8 +201,22 @@ class Deployment {
   }
 
   /// Only store the file without execution
-  void storeFile(String file) {}
+  Future<void> storeFile(String filePath) async {
+    logger.info("Downloading and storing file...");
+    var request = await HttpClient().getUrl(Uri.parse(filePath));
+    var response = await request.close();
+    response.pipe(File(config.getInventoryConfig("data_dir") +
+            "/" +
+            filePath.split("/").last)
+        .openWrite());
+    request.close();
+    logger.info("File downloaded and stored!");
+  }
 
   /// Store the specified file and execute it.
-  void launchFile(String os, String file) async {}
+  Future<void> launchFile(
+      String os, String actionCommand, String filePath) async {
+    await storeFile(filePath);
+    await executeCommand(os, actionCommand);
+  }
 }
