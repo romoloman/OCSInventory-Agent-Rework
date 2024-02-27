@@ -20,6 +20,7 @@ import 'package:sprintf/sprintf.dart';
 
 import 'package:ocs_agent/core/deployment.dart';
 import 'package:ocs_agent/core/inventory.dart';
+import 'package:ocs_agent/core/config.dart';
 import 'package:ocs_agent/core/log.dart';
 
 import 'package:ocs_agent/core/inventory/linux/baseLinux.dart' as baseLinux;
@@ -32,6 +33,7 @@ Future<void> main(List<String> args) async {
   // Initiate modules
   Deployment deployment = new Deployment();
   Inventory inventory = new Inventory();
+  Config config = new Config();
   Logger logger = new Logger();
 
   // Get the agent execution mode
@@ -71,9 +73,12 @@ Future<void> main(List<String> args) async {
       }
 
       // Deployment process
-      if (await deployment.checkDownload(inventory.assetID)) {
-        if (await deployment.getActions(inventory.assetID)) {
-          await deployment.executeActions(os, inventory.assetID);
+      dynamic deploymentMode = config.getCoreConfig("deployment", "enabled");
+      if (deploymentMode == 1) {
+        if (await deployment.checkDownload(inventory.assetID)) {
+          if (await deployment.getActions(inventory.assetID)) {
+            await deployment.executeActions(os, inventory.assetID);
+          }
         }
       }
     }
