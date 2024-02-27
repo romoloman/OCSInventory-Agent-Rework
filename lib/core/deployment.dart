@@ -185,7 +185,7 @@ class Deployment {
           Directory.current.toString().substring(11, null).replaceAll("'", "") +
               "/" +
               config.getInventoryConfig("data_dir"),
-      "\$PACKAGE": package.toString()
+      "\$PACKAGE": "deployment/" + package.toString()
     };
     variables.keys.forEach((key) {
       actionCommand = actionCommand.replaceAll(key, variables[key]);
@@ -219,13 +219,14 @@ class Deployment {
     logger.info("Downloading and storing file...");
     var request = await HttpClient().getUrl(Uri.parse(filePath));
     var response = await request.close();
-    var packageDirectory = Directory(
-        config.getInventoryConfig("data_dir") + "/" + package.toString());
+    var packageDirectory = Directory(config.getInventoryConfig("data_dir") +
+        "/deployment/" +
+        package.toString());
     if (!packageDirectory.existsSync()) {
       packageDirectory.createSync(recursive: true);
     }
     response.pipe(File(config.getInventoryConfig("data_dir") +
-            "/" +
+            "/deployment/" +
             package.toString() +
             "/" +
             filePath.split("/").last)
