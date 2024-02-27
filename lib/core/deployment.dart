@@ -128,10 +128,11 @@ class Deployment {
         if (checkFileExist(action)) {
           switch (action["action_type"]) {
             case "STORE":
-              await storeFile(action["file"]);
+              await storeFile(action["package"], action["file"]);
               break;
             case "LAUNCH":
-              await launchFile(os, action["command"], action["file"]);
+              await launchFile(
+                  os, action["package"], action["command"], action["file"]);
               break;
             default:
               logger.error("Canno't read correctly the action type!");
@@ -144,15 +145,22 @@ class Deployment {
               break;
           }
         } else {
-          await executeCommand(os, action["command"]);
+          await executeCommand(os, action["package"], action["command"]);
         }
       }
-      var responseSuccess = await httpUtils.patch(
-          "executeActions",
-          Uri.parse(url + "/deployment/results/$id/"),
-          httpUtils.getHeader(config),
-          "{\"status\": 1, \"comment\": \"Success\"}");
-      logger.verbose(responseSuccess["message"]);
+      try {
+        var responseSuccess = await httpUtils.patch(
+            "executeActions",
+            Uri.parse(url + "/deployment/results/$id/"),
+            httpUtils.getHeader(config),
+            "{\"status\": 1, \"comment\": \"Success\"}");
+        logger.verbose(responseSuccess["message"]);
+        if (responseSuccess["status_code"] == 200) {
+          logger.info("Package $id was completed successfully!");
+        }
+      } catch (exception) {
+        logger.error(sprintf("HTTP query: %s", [exception.toString().trim()]));
+      }
     }
   }
 
@@ -170,12 +178,18 @@ class Deployment {
   }
 
   /// Execute the action command.
-  Future<void> executeCommand(String os, String actionCommand) async {
-    actionCommand = actionCommand.replaceAll(
-        "\$AGENT_PATH",
-        Directory.current.toString().substring(11, null).replaceAll("'", "") +
-            "/" +
-            config.getInventoryConfig("data_dir"));
+  Future<void> executeCommand(
+      String os, int package, String actionCommand) async {
+    Map<String, dynamic> variables = {
+      "\$AGENT_PATH":
+          Directory.current.toString().substring(11, null).replaceAll("'", "") +
+              "/" +
+              config.getInventoryConfig("data_dir"),
+      "\$PACKAGE": package.toString()
+    };
+    variables.keys.forEach((key) {
+      actionCommand = actionCommand.replaceAll(key, variables[key]);
+    });
     logger.verbose(actionCommand);
     switch (os) {
       case "LIN":
@@ -201,11 +215,18 @@ class Deployment {
   }
 
   /// Only store the file without execution
-  Future<void> storeFile(String filePath) async {
+  Future<void> storeFile(int package, String filePath) async {
     logger.info("Downloading and storing file...");
     var request = await HttpClient().getUrl(Uri.parse(filePath));
     var response = await request.close();
+    var packageDirectory = Directory(
+        config.getInventoryConfig("data_dir") + "/" + package.toString());
+    if (!packageDirectory.existsSync()) {
+      packageDirectory.createSync(recursive: true);
+    }
     response.pipe(File(config.getInventoryConfig("data_dir") +
+            "/" +
+            package.toString() +
             "/" +
             filePath.split("/").last)
         .openWrite());
@@ -215,8 +236,8 @@ class Deployment {
 
   /// Store the specified file and execute it.
   Future<void> launchFile(
-      String os, String actionCommand, String filePath) async {
-    await storeFile(filePath);
-    await executeCommand(os, actionCommand);
+      String os, int package, String actionCommand, String filePath) async {
+    await storeFile(package, filePath);
+    await executeCommand(os, package, actionCommand);
   }
 }
