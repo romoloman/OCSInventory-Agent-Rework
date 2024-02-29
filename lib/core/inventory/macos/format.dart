@@ -158,4 +158,41 @@ class MacOSFormat {
     return subInventory;
   }
 
+  String? getResult(String type, String result, retrivalValue) {
+    switch (type) {
+      case "JSON":
+        var json = this.formatJson(result);
+        return json[retrivalValue];
+
+      case "PTXT":
+        var txt = result.split("\n").toList();
+        int line = int.parse(retrivalValue);
+        return txt[line - 1];
+
+      case "REGX":
+        var lines = result.split("\n").toList();
+        var regex = RegExp(retrivalValue);
+        for (var line in lines) {
+          if (regex.hasMatch(line)) {
+            var match = regex.firstMatch(line);
+            return match!.group(1);
+          }
+        }
+
+        break;
+      case "GREP":
+        var lines = result.split("\n").toList();
+        String grep = retrivalValue;
+        for (var line in lines) {
+          if (line.contains(grep)) {
+            return line.substring(line.indexOf(grep) + grep.length + 1);
+          }
+        }
+
+        break;
+      default:
+        return "null";
+    }
+    return null;
+  }
 }
