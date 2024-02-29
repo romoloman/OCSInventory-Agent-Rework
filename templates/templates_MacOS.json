@@ -1,0 +1,449 @@
+{
+    "name": "MacOS",
+    "os": "MAC",
+    "last_update": "2023-12-21T15:32:54.417197Z",
+    "sections": [
+        {
+            "name": "SOFTWARE",
+            "retrival_method": "BASH",
+            "retrival_output": "GREP",
+            "target": "system_profiler SPSoftwareDataType",
+            "fields": [
+                {
+                    "name": "System version",
+                    "retrival_value": "System Version",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Kernel version",
+                    "retrival_value": "Kernel Version",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Boot volume",
+                    "retrival_value": "Boot Volume",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Boot mode",
+                    "retrival_value": "Boot Mode",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Computer name",
+                    "retrival_value": "Computer Name",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "User name",
+                    "retrival_value": "User Name",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Secure virtual memory",
+                    "retrival_value": "Secure Virtual Memory",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "System integrity protection",
+                    "retrival_value": "System Integrity Protection",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Time since boot",
+                    "retrival_value": "Time since boot",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                }
+            ],
+            "options": {
+                "need_format": false
+            }
+        },
+        {
+            "name": "HARDWARE",
+            "retrival_method": "BASH",
+            "retrival_output": "GREP",
+            "target": "system_profiler SPHardwareDataType",
+            "fields": [
+                {
+                    "name": "Model name",
+                    "retrival_value": "Model Name",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Model identifier",
+                    "retrival_value": "Model Identifier",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Chip",
+                    "retrival_value": "Chip",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Total Number of Cores",
+                    "retrival_value": "Total Number of Cores",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Memory",
+                    "retrival_value": "Memory",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "System firmware version",
+                    "retrival_value": "System Firmware Version",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "OS Loader Version",
+                    "retrival_value": "OS Loader Version",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Serial Number (system)",
+                    "retrival_value": "Serial Number (system)",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Hardware UUID",
+                    "retrival_value": "Hardware UUID",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Provisioning UDID",
+                    "retrival_value": "Provisioning UDID",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Activation Lock Status",
+                    "retrival_value": "Activation Lock Status",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                }
+            ],
+            "options": {
+                "need_format": false
+            }
+        },
+        {
+            "name": "AUDIO",
+            "retrival_method": "BASH",
+            "retrival_output": "GREP",
+            "target": "system_profiler SPAudioDataType",
+            "fields": [
+                {
+                    "name": "Default Output Device",
+                    "retrival_value": "Default Output Device",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Default System Output Device",
+                    "retrival_value": "Default System Output Device",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Manufacturer",
+                    "retrival_value": "Manufacturer",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Output Channels",
+                    "retrival_value": "Output Channels",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Current SampleRate",
+                    "retrival_value": "Current SampleRate",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Transport",
+                    "retrival_value": "Transport",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Output Source",
+                    "retrival_value": "Output Source",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                }
+            ],
+            "options": {
+                "need_format": false
+            }
+        },
+        {
+            "name": "APPLICATION",
+            "retrival_method": "BASH",
+            "retrival_output": "JSON",
+            "target": "system_profiler SPApplicationsDataType -json",
+            "fields": [
+                {
+                    "name": "Name",
+                    "retrival_value": "_name",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Last Modified",
+                    "retrival_value": "lastModified",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Obtained from",
+                    "retrival_value": "obtained_from",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Location",
+                    "retrival_value": "path",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Version",
+                    "retrival_value": "version",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                }
+            ],
+            "options": {
+                "need_format": false
+            }
+        },
+        {
+            "name": "CONTROLLER",
+            "retrival_method": "BASH",
+            "retrival_output": "GREP",
+            "target": "system_profiler SPiBridgeDataType",
+            "fields": [
+                {
+                    "name": "Model Identifier",
+                    "retrival_value": "Model Identifier",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Boot UUID",
+                    "retrival_value": "Boot UUID",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Firmware Version",
+                    "retrival_value": "Firmware Version",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Secure Boot",
+                    "retrival_value": "Secure Boot",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "System Integrity Protection",
+                    "retrival_value": "System Integrity Protection",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Signed System Volume",
+                    "retrival_value": "Signed System Volume",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Kernel CTRR",
+                    "retrival_value": "Kernel CTRR",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Boot Arguments Filtering",
+                    "retrival_value": "Boot Arguments Filterings",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "Allow All Kernel Extensions",
+                    "retrival_value": "Allow All Kernel Extensions",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "User Approved Privileged MDM Operations",
+                    "retrival_value": "User Approved Privileged MDM Operations",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                },
+                {
+                    "name": "DEP Approved Privileged MDM Operations",
+                    "retrival_value": "DEP Approved Privileged MDM Operations",
+                    "override_target": false,
+                    "new_target": null,
+                    "retrival_method": null,
+                    "retrival_output": null,
+                    "options": null
+                }
+            ],
+            "options": {
+                "need_format": false
+            }
+        }
+    ]
+}
