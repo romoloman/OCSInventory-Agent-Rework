@@ -127,4 +127,35 @@ class MacOSFormat {
   }
 
 
+  /// get result of [resultCommand] for each [fields].
+  Map<String, dynamic> getByGrep(
+    List<dynamic> fields, Map<String, dynamic> resultCommand) {
+    Map<String, dynamic> subInventory = new Map();
+    Map<String, dynamic> json = new Map();
+
+    resultCommand.keys.forEach((element) {
+      try {
+        json[element] = resultCommand[element]['result'];
+      } catch (e) {
+        logger.verbose("Next Grep object won't be well formated!");
+      }
+    });
+
+    json.forEach((key, value) {
+      var lines = value.split("\n").toList();
+
+      for (var line in lines) {
+        for (var field in fields) {
+          String grep = field['retrival_value'];
+          if (line.contains(grep)) {
+            subInventory.putIfAbsent(field['name'],
+                () => line.substring(line.indexOf(grep) + grep.length + 1));
+          }
+        }
+      }
+    });
+
+    return subInventory;
+  }
+
 }
