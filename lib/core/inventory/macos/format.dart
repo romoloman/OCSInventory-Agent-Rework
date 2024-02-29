@@ -71,7 +71,6 @@ class MacOSFormat {
           });
           subInventory.add(result);
         });
-   
       } else {
         result = new Map();
         fields.forEach((field) {
@@ -126,10 +125,9 @@ class MacOSFormat {
     return subInventory;
   }
 
-
   /// get result of [resultCommand] for each [fields].
   Map<String, dynamic> getByGrep(
-    List<dynamic> fields, Map<String, dynamic> resultCommand) {
+      List<dynamic> fields, Map<String, dynamic> resultCommand) {
     Map<String, dynamic> subInventory = new Map();
     Map<String, dynamic> json = new Map();
 
@@ -194,5 +192,43 @@ class MacOSFormat {
         return "null";
     }
     return null;
+  }
+
+  /// format result [txt] to json.
+  Map<String, dynamic> formatJson(String txt) {
+    String json = "{\r\n";
+
+    var list = txt.split("\r");
+    list.removeWhere((element) => element == "");
+
+    int n = 1;
+
+    list.forEach((element) {
+      element = element.replaceAll(new RegExp(r"^ *"), '');
+      element = element.replaceAll(new RegExp(r"^\s*"), '');
+
+      var list2 = element.split(":");
+
+      if (list2.asMap().containsKey(1)) {
+        list2[0] = list2[0].replaceAll(new RegExp(r" *$"), '');
+        list2[0] = list2[0].replaceAll(new RegExp(r"\s*$"), '');
+        list2[1] = list2[1].replaceAll(new RegExp(r"^ *"), '');
+        list2[1] = list2[1].replaceAll(new RegExp(r"^\s*"), '');
+
+        if (list2[1].isEmpty || list2[1] == "") {
+          list2[1] = list2[0];
+        }
+
+        if (n < list.length) {
+          json += "\"" + list2[0] + "\": \"" + list2[1] + "\",\r\n";
+        } else {
+          json += "\"" + list2[0] + "\": \"" + list2[1] + "\"\r\n";
+        }
+      }
+      n++;
+    });
+    json += "}";
+
+    return jsonDecode(json);
   }
 }
