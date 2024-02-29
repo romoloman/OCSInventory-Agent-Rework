@@ -31,46 +31,100 @@ class MacOSFormat {
     this.macosCommand = new MacOSCommand();
   }
 
-  Future<String?> getbyArray(String command, String indexString) async {
-    return null;
-  }
+  /// get result of [resultCommand] for each [fields].
+  List<dynamic> getByJson(List<dynamic> fields,
+      Map<String, dynamic> resultCommand, String commandLine) {
+    var fieldsOver = fields.where((element) => element["override_target"]);
+    var json = new Map<String, dynamic>();
+    late Map<String, dynamic> result;
+    List<dynamic> subInventory = new List.empty(growable: true);
+    commandLine = commandLine.split(" ")[1];
 
-  Future<String?> getbyJson(String command, String key) async {
-    return null;
-  }
-
-  Future<String?> getbyPtxt(String command, String lineString) async {
-    return null;
-  }
-
-  Map<String, dynamic> formatJson(String txt) {
-    String json = "{\n";
-
-    var list = txt.split("\n");
-    list.removeWhere((element) => element == "");
-
-    int n = 1;
-
-    list.forEach((element) {
-      //element = element.replaceAll(new RegExp(r"^ *"), '');
-      element = element.replaceAll(new RegExp(r"^\s*"), '');
-
-      var list2 = element.split(":");
-
-      if (list2.asMap().containsKey(1)) {
-        //list2[1] = list2[1].replaceAll(new RegExp(r"^ *"), '');
-        list2[1] = list2[1].replaceAll(new RegExp(r"^\s*"), '');
-
-        if (n < list.length) {
-          json += "\"" + list2[0] + "\": \"" + list2[1] + "\",\n";
+    resultCommand.keys.forEach((element) {
+      try {
+        if (resultCommand[element]['options'] != null &&
+            resultCommand[element]['options'].containsKey('need_format') &&
+            !resultCommand[element]['options']['need_format']) {
+          json[element] = jsonDecode(resultCommand[element]['result']);
         } else {
-          json += "\"" + list2[0] + "\": \"" + list2[1] + "\"\n";
+          json[element] = this.formatJson(resultCommand[element]['result']);
+        }
+      } catch (e) {
+        json[element] = null;
+        logger.verbose("Next Json object won't be well formated!");
+      }
+    });
+
+    json["main"] = json["main"][commandLine];
+
+    if (json["main"] != null) {
+      if (json["main"] is List<dynamic>) {
+        json["main"].forEach((element) {
+          result = new Map();
+          fields.forEach((field) {
+            if (element.containsKey(field["retrival_value"])) {
+              result.putIfAbsent(field['name'],
+                  () => element[field['retrival_value']].toString().trim());
+            } else {
+              result.putIfAbsent(field['name'], () => null);
+            }
+          });
+          subInventory.add(result);
+        });
+   
+      } else {
+        result = new Map();
+        fields.forEach((field) {
+          if (json["main"].containsKey(field["retrival_value"])) {
+            result.putIfAbsent(field['name'],
+                () => json["main"][field['retrival_value']].toString().trim());
+          } else {
+            result.putIfAbsent(field['name'], () => null);
+          }
+        });
+        subInventory.add(result);
+      }
+    } else {
+      result = new Map();
+      fields.forEach((field) {
+        result.putIfAbsent(field['name'], () => null);
+      });
+      subInventory.add(result);
+    }
+
+    fieldsOver.forEach((fieldOver) {
+      if (json[fieldOver["name"]] != null) {
+        if (json[fieldOver["name"]] is List<dynamic>) {
+          json[fieldOver["name"]].forEach((element) {
+            result = new Map();
+            if (element.containsKey(fieldOver["retrival_value"])) {
+              result.update(
+                  fieldOver['name'],
+                  (dynamic) =>
+                      element[fieldOver['retrival_value']].toString().trim());
+            } else {
+              result.update(fieldOver['name'], (dynamic) => null);
+            }
+            subInventory.add(result);
+          });
+        } else {
+          if (json[fieldOver["name"]]
+              .containsKey(fieldOver["retrival_value"])) {
+            result.update(
+                fieldOver['name'],
+                (dynamic) => json[fieldOver["name"]]
+                        [fieldOver['retrival_value']]
+                    .toString()
+                    .trim());
+          }
         }
       }
-      n++;
     });
-    json += "}";
 
-    return jsonDecode(json);
+    logger.verbose(subInventory.toString());
+
+    return subInventory;
   }
+
+
 }
