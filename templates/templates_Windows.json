@@ -1,0 +1,729 @@
+{
+  "name": "Windows",
+  "os": "WIN",
+  "last_update": "2024-01-11T14:54:48.778257Z",
+  "sections": [
+    {
+      "name": "BATTERY",
+      "retrival_method": "PW",
+      "retrival_output": "JSON",
+      "target": "Get-WmiObject -ClassName Win32_PortableBattery -Property * | ConvertTo-Json",
+      "fields": [
+        {
+          "name": "CHEMISTRY",
+          "retrival_value": "Chemistry",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "DESIGN_CAPACITY",
+          "retrival_value": "DesignCapacity",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "DESIGN_VOLTAGE",
+          "retrival_value": "DesignVoltage",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "LOCATION",
+          "retrival_value": "Location",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "MANUFACTURER",
+          "retrival_value": "Manufacturer",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "MANUFACTURER_DATE",
+          "retrival_value": "ManufacturerDate",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "MAXIMUM_ERROR",
+          "retrival_value": "MaxBatteryError",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "NAME",
+          "retrival_value": "Name",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "SBDS_VERSION",
+          "retrival_value": "SmartBatteryVersion",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "SERIAL_NUMBER",
+          "retrival_value": "DeviceID",
+          "override_target": true,
+          "new_target": "Get-WmiObject -ClassName Win32_Battery -Property * | ConvertTo-Json",
+          "retrival_method": "PW",
+          "retrival_output": "JSON",
+          "options": {
+            "need_format": false
+          }
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
+    },
+    {
+      "name": "CPU",
+      "retrival_method": "PW",
+      "retrival_output": "JSON",
+      "target": "Get-WmiObject -ClassName Win32_Processor -Property * | ConvertTo-Json",
+      "fields": [
+        {
+          "name": "ARCHITECTURE",
+          "retrival_value": "OSArchitecture",
+          "override_target": true,
+          "new_target": "Get-WmiObject -ClassName Win32_OperatingSystem -Property * | ConvertTo-Json",
+          "retrival_method": "PW",
+          "retrival_output": "JSON",
+          "options": {
+            "need_format": false
+          }
+        },
+        {
+          "name": "CORES",
+          "retrival_value": "NumberOfLogicalProcessors",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "CURRENT_SPEED",
+          "retrival_value": "CurrentClockSpeed",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "L2_CACHE_SIZE",
+          "retrival_value": "L2CacheSize",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "MANUFACTURER",
+          "retrival_value": "Manufacturer",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "SPEED",
+          "retrival_value": "MaxClockSpeed",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "THREADS",
+          "retrival_value": "ThreadCount",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "TYPE",
+          "retrival_value": "Name",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
+    },
+    {
+      "name": "GROUP",
+      "retrival_method": "PW",
+      "retrival_output": "JSON",
+      "target": "Get-WmiObject -ClassName Win32_Group -Property * | ConvertTo-Json",
+      "fields": [
+        {
+          "name": "GROUP_ID",
+          "retrival_value": "SID",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "MEMBER",
+          "retrival_value": "null",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "NAME",
+          "retrival_value": "Name",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
+    },
+    {
+      "name": "INPUT",
+      "retrival_method": "PW",
+      "retrival_output": "JSON",
+      "target": "Get-WmiObject -className Win32_PnpEntity -Property * | ConvertTo-Json",
+      "fields": [
+        {
+          "name": "DESCRIPTION",
+          "retrival_value": "Description",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "MANUFACTURER",
+          "retrival_value": "Manufacturer",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "NAME",
+          "retrival_value": "Name",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "TYPE",
+          "retrival_value": "PNPClass",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
+    },
+    {
+      "name": "MOTHERBOARD",
+      "retrival_method": "PW",
+      "retrival_output": "JSON",
+      "target": "Get-WmiObject -ClassName Win32_SystemEnclosure -Property * | ConvertTo-Json",
+      "fields": [
+        {
+          "name": "BIOS_ASSETTAG",
+          "retrival_value": "SMBIOSAssetTag",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "BIOS_DATE",
+          "retrival_value": "ReleaseDate",
+          "override_target": true,
+          "new_target": "Get-WmiObject -ClassName Win32_Bios -Property * | ConvertTo-Json",
+          "retrival_method": "PW",
+          "retrival_output": "JSON",
+          "options": {
+            "need_format": false
+          }
+        },
+        {
+          "name": "BIOS_MANUFACTURER",
+          "retrival_value": "Manufacturer",
+          "override_target": true,
+          "new_target": "Get-WmiObject -ClassName Win32_Bios -Property * | ConvertTo-Json",
+          "retrival_method": "PW",
+          "retrival_output": "JSON",
+          "options": {
+            "need_format": false
+          }
+        },
+        {
+          "name": "BIOS_VERSION",
+          "retrival_value": "SMBIOSBIOSVersion",
+          "override_target": true,
+          "new_target": "Get-WmiObject -ClassName Win32_Bios -Property * | ConvertTo-Json",
+          "retrival_method": "PW",
+          "retrival_output": "JSON",
+          "options": {
+            "need_format": false
+          }
+        },
+        {
+          "name": "MOTHERBOARD_MANUFACTURER",
+          "retrival_value": "Manufacturer",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "MOTHERBOARD_MODEL",
+          "retrival_value": "Model",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "MOTHERBOARD_SERIAL_NUMBER",
+          "retrival_value": "SerialNumber",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "MOTHERBOARD_TYPE",
+          "retrival_value": "ChassisTypes",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
+    },
+    {
+      "name": "NETWORK",
+      "retrival_method": "PW",
+      "retrival_output": "JSON",
+      "target": "Get-WmiObject -ClassName Win32_NetworkAdapterConfiguration -property * -Filter IPEnabled=$true | ConvertTo-Json",
+      "fields": [
+        {
+          "name": "DEFAULT_GATEWAY",
+          "retrival_value": "DefaultIPGateway",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "DESCRIPTION",
+          "retrival_value": "Description",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "DHCP_ENABLED",
+          "retrival_value": "DHCPEnabled",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "DHCP_SERVER",
+          "retrival_value": "DHCPServer",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "DNS_DOMAIN",
+          "retrival_value": "DNSDomain",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "DNS_SERVER",
+          "retrival_value": "DNSServerSearchOrder",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "IP_ADDRESS",
+          "retrival_value": "IPAddress",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "IP_SUBNET",
+          "retrival_value": "IPSubnet",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "MAC_ADDRESS",
+          "retrival_value": "MACAddress",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
+    },
+    {
+      "name": "OPERATING_SYSTEM",
+      "retrival_method": "PW",
+      "retrival_output": "JSON",
+      "target": "Get-WmiObject -ClassName Win32_OperatingSystem -Property * | ConvertTo-Json",
+      "fields": [
+        {
+          "name": "DESCRIPTION",
+          "retrival_value": "Description",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "HOSTNAME",
+          "retrival_value": "DNSHostName",
+          "override_target": true,
+          "new_target": "Get-WmiObject -ClassName Win32_ComputerSystem -Property * | ConvertTo-Json",
+          "retrival_method": "PW",
+          "retrival_output": "JSON",
+          "options": {
+            "need_format": false
+          }
+        },
+        {
+          "name": "MANUFACTURER",
+          "retrival_value": "Manufacturer",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "MODEL",
+          "retrival_value": "Model",
+          "override_target": true,
+          "new_target": "Get-WmiObject -ClassName Win32_ComputerSystem -Property * | ConvertTo-Json",
+          "retrival_method": "PW",
+          "retrival_output": "JSON",
+          "options": {
+            "need_format": false
+          }
+        },
+        {
+          "name": "NAME",
+          "retrival_value": "Caption",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "SERIAL_NUMBER",
+          "retrival_value": "SerialNumber",
+          "override_target": true,
+          "new_target": "Get-WmiObject -ClassName Win32_Bios -Property * | ConvertTo-Json",
+          "retrival_method": "PW",
+          "retrival_output": "JSON",
+          "options": {
+            "need_format": false
+          }
+        },
+        {
+          "name": "VERSION",
+          "retrival_value": "Version",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
+    },
+    {
+      "name": "RAM",
+      "retrival_method": "PW",
+      "retrival_output": "JSON",
+      "target": "Get-WmiObject -ClassName Win32_PhysicalMemory -Property * | ConvertTo-Json",
+      "fields": [
+        {
+          "name": "CAPACITY",
+          "retrival_value": "Capacity",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "LOCATOR",
+          "retrival_value": "DeviceLocator",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "MANUFACTURER",
+          "retrival_value": "Manufacturer",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "SERIAL_NUMBER",
+          "retrival_value": "SerialNumber",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "SPEED",
+          "retrival_value": "Speed",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
+    },
+    {
+      "name": "ROM",
+      "retrival_method": "PW",
+      "retrival_output": "JSON",
+      "target": "Get-WmiObject -className Win32_LogicalDisk -Property * | ConvertTo-Json",
+      "fields": [
+        {
+          "name": "FILE_SYSTEM",
+          "retrival_value": "Name",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "FREE",
+          "retrival_value": "FreeSpace",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "TOTAL",
+          "retrival_value": "Size",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "TYPE",
+          "retrival_value": "FileSystem",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "VOLUME",
+          "retrival_value": "DeviceID",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
+    },
+    {
+      "name": "SLOT",
+      "retrival_method": "PW",
+      "retrival_output": "JSON",
+      "target": "Get-WmiObject -className Win32_SystemSlot -Property * | ConvertTo-Json",
+      "fields": [
+        {
+          "name": "DESCRIPTION",
+          "retrival_value": "Tag",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "NAME",
+          "retrival_value": "SlotDesignation",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "STATUS",
+          "retrival_value": "PMESignal",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
+    },
+    {
+      "name": "USER",
+      "retrival_method": "PW",
+      "retrival_output": "JSON",
+      "target": "Get-WmiObject -ClassName Win32_UserAccount -Property * | ConvertTo-Json",
+      "fields": [
+        {
+          "name": "DOMAIN",
+          "retrival_value": "Domain",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "LOGGED_USER",
+          "retrival_value": "Name",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "USER_ID",
+          "retrival_value": "SID",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
+    }
+  ]
+}
