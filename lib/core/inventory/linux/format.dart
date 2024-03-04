@@ -36,19 +36,16 @@ class LinuxFormat {
   /// get result of [resultCommand] for each [fields].
   List<dynamic> getByArray(
       List<dynamic> fields, Map<String, dynamic> resultCommand) {
-    //print(resultCommand);
-    List<Map<String, dynamic>> result = this.formatArray(
+    List<Map<String, dynamic>> arrayResult = this.formatArray(
         resultCommand['main']['result'], resultCommand['main']['options']);
-    List<dynamic> inventory = [];
+    List<dynamic> subinventory = new List.empty(growable: true);
+    Map<String, dynamic> result;
 
-    result.forEach((element) {
-      Map<String, dynamic> subInventory = new Map();
-
-      //print(result);
-
+    arrayResult.forEach((element) {
+      result = new Map();
       for (var field in fields) {
         if (resultCommand.containsKey(field['name'])) {
-          subInventory.putIfAbsent(
+          result.putIfAbsent(
               field['name'],
               () => this.getResult(
                   field['retrival_output'],
@@ -58,36 +55,40 @@ class LinuxFormat {
           String index = field["retrival_value"];
 
           if (element.containsKey(index)) {
-            subInventory.putIfAbsent(field['name'], () => element[index]);
+            result.putIfAbsent(field['name'], () => element[index]);
           } else {
-            subInventory.putIfAbsent(field['name'], () => "null");
+            result.putIfAbsent(field['name'], () => "null");
           }
         }
       }
-      inventory.add(subInventory);
+      subinventory.add(result);
     });
-    return inventory;
+
+    logger.verbose(subinventory.toString());
+
+    return subinventory;
   }
 
   /// get result of [resultCommand] for each [fields].
-  Map<String, dynamic> getByJson(
+  List<dynamic> getByJson(
       List<dynamic> fields, Map<String, dynamic> resultCommand) {
-    Map<String, dynamic> subInventory = new Map();
     var json = this.formatJson(resultCommand['main']['result']);
+    List<dynamic> subInventory = new List.empty(growable: true);
+    Map<String, dynamic> result = new Map();
 
     for (var field in fields) {
       if (resultCommand.containsKey(field['name'])) {
-        subInventory.putIfAbsent(
+        result.putIfAbsent(
             field['name'],
             () => this.getResult(
                 field['retrival_output'],
                 resultCommand[field['name']]['result'],
                 field['retrival_value']));
       } else {
-        subInventory.putIfAbsent(
-            field['name'], () => json[field['retrival_value']]);
+        result.putIfAbsent(field['name'], () => json[field['retrival_value']]);
       }
     }
+    subInventory.add(result);
 
     logger.verbose(subInventory.toString());
 
@@ -95,14 +96,15 @@ class LinuxFormat {
   }
 
   /// get result of [resultCommand] for each [fields].
-  Future<Map<String, dynamic>> getByPtxt(
+  Future<List<dynamic>> getByPtxt(
       List<dynamic> fields, Map<String, dynamic> resultCommand) async {
-    Map<String, dynamic> subInventory = new Map();
     var txt = resultCommand['main']['result'].split("\n").toList();
+    List<dynamic> subInventory = new List.empty(growable: true);
+    Map<String, dynamic> result = new Map();
 
     for (var field in fields) {
       if (resultCommand.containsKey(field['name'])) {
-        subInventory.putIfAbsent(
+        result.putIfAbsent(
             field['name'],
             () => this.getResult(
                 field['retrival_output'],
@@ -110,21 +112,28 @@ class LinuxFormat {
                 field['retrival_value']));
       } else {
         int line = int.parse(field['retrival_value']);
-        subInventory.putIfAbsent(field['name'], () => txt[line - 1]);
+        result.putIfAbsent(field['name'], () => txt[line - 1]);
       }
     }
+    subInventory.add(result);
+
+    logger.verbose(subInventory.toString());
+
     return subInventory;
   }
 
   /// get result of [resultCommand] for each [fields].
-  dynamic getByRegx(List<dynamic> fields, Map<String, dynamic> resultCommand) {
-    Map<String, dynamic> subInventory = new Map();
+  List<dynamic> getByRegx(
+      List<dynamic> fields, Map<String, dynamic> resultCommand) {
     var lines = resultCommand['main']['result'].split("\n").toList();
+    List<dynamic> subInventory = new List.empty(growable: true);
+    Map<String, dynamic> result = new Map();
+
     bool multiple = false;
     var separator;
     bool haveSeparator = false;
     bool separate = false;
-    List<dynamic> list = [];
+
     if (resultCommand['main']['options'] != null &&
         resultCommand['main']['options'].containsKey('multiple') &&
         resultCommand['main']['options']['multiple']) {
@@ -140,7 +149,7 @@ class LinuxFormat {
     for (var line in lines) {
       for (var field in fields) {
         if (resultCommand.containsKey(field['name'])) {
-          subInventory.putIfAbsent(
+          result.putIfAbsent(
               field['name'],
               () => this.getResult(
                   field['retrival_output'],
@@ -150,7 +159,7 @@ class LinuxFormat {
           var regex = RegExp(field['retrival_value']);
           if (regex.hasMatch(line)) {
             var match = regex.firstMatch(line);
-            subInventory.putIfAbsent(field['name'], () => match!.group(1));
+            result.putIfAbsent(field['name'], () => match!.group(1));
           }
         }
       }
@@ -161,38 +170,40 @@ class LinuxFormat {
         }
         if (haveSeparator) {
           if (separate) {
-            if (subInventory.isNotEmpty) {
-              list.add(subInventory);
-              subInventory = new Map();
+            if (result.isNotEmpty) {
+              subInventory.add(result);
+              result = new Map();
             }
             separate = false;
           }
         } else {
-          if (subInventory.isNotEmpty) {
-            list.add(subInventory);
-            subInventory = new Map();
+          if (result.isNotEmpty) {
+            subInventory.add(result);
+            result = new Map();
           }
         }
+      } else {
+        subInventory.add(result);
       }
       x++;
     }
 
-    if (multiple) {
-      return list;
-    }
+    logger.verbose(subInventory.toString());
+
     return subInventory;
   }
 
   /// get result of [resultCommand] for each [fields].
-  Map<String, dynamic> getByGrep(
+  List<dynamic> getByGrep(
       List<dynamic> fields, Map<String, dynamic> resultCommand) {
-    Map<String, dynamic> subInventory = new Map();
     var lines = resultCommand['main']['result'].split("\n").toList();
+    List<dynamic> subInventory = new List.empty(growable: true);
+    Map<String, dynamic> result = new Map();
 
     for (var line in lines) {
       for (var field in fields) {
         if (resultCommand.containsKey(field['name'])) {
-          subInventory.putIfAbsent(
+          result.putIfAbsent(
               field['name'],
               () => this.getResult(
                   field['retrival_output'],
@@ -201,12 +212,16 @@ class LinuxFormat {
         } else {
           var grep = field['retrival_value'];
           if (line.contains(grep)) {
-            subInventory.putIfAbsent(field['name'],
+            result.putIfAbsent(field['name'],
                 () => line.substring(line.indexOf(grep) + grep.length + 1));
           }
         }
       }
     }
+    subInventory.add(result);
+
+    logger.verbose(subInventory.toString());
+
     return subInventory;
   }
 
