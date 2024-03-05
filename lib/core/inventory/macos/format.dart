@@ -25,6 +25,15 @@ class MacOSFormat {
 
   late MacOSCommand macosCommand;
 
+  final Map<String, String> transcriptVariables = {
+    "spext_incomplete": "incomplete",
+    "spext_complete": "complete",
+    "spext_no": "No",
+    "spext_yes": "Yes",
+    "spext_not_signed": "Not Signed",
+    "spext_signed": "Signed",
+  };
+
   MacOSFormat() {
     this.logger = new Logger();
 
@@ -62,6 +71,13 @@ class MacOSFormat {
         json["main"].forEach((element) {
           result = new Map();
           fields.forEach((field) {
+            // Check if the value is a transcript variable
+            element[field['retrival_value']] = transcriptVariables.containsKey(
+                    element[field['retrival_value']].toString().trim())
+                ? transcriptVariables[
+                    element[field['retrival_value']].toString().trim()]
+                : element[field['retrival_value']];
+
             if (element.containsKey(field["retrival_value"])) {
               result.putIfAbsent(field['name'],
                   () => element[field['retrival_value']].toString().trim());
@@ -74,6 +90,14 @@ class MacOSFormat {
       } else {
         result = new Map();
         fields.forEach((field) {
+          // Check if the value is a transcript variable
+          json["main"][field['retrival_value']] =
+              transcriptVariables.containsKey(
+                      json["main"][field['retrival_value']].toString().trim())
+                  ? transcriptVariables[
+                      json["main"][field['retrival_value']].toString().trim()]
+                  : json["main"][field['retrival_value']];
+
           if (json["main"].containsKey(field["retrival_value"])) {
             result.putIfAbsent(field['name'],
                 () => json["main"][field['retrival_value']].toString().trim());
