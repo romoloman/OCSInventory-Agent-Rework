@@ -77,6 +77,13 @@ class MacOSFormat {
                 ? transcriptVariables[
                     element[field['retrival_value']].toString().trim()]
                 : element[field['retrival_value']];
+            // Check if the value of element[field['retrival_value']] is a map
+            if (element[field['retrival_value']] is Map) {
+              element[field['retrival_value']].forEach((key, value) {
+                // Add the sub element to this element
+                element[key] = value;
+              });
+            }
 
             if (element.containsKey(field["retrival_value"])) {
               result.putIfAbsent(field['name'],
