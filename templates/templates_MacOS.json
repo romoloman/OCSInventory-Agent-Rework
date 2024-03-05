@@ -536,6 +536,35 @@
       "options": {
         "need_format": false
       }
+    },
+    {
+      "name": "CAMERA",
+      "retrival_method": "BASH",
+      "retrival_output": "GREP",
+      "target": "system_profiler SPCameraDataType",
+      "fields": [
+        {
+          "name": "Model ID",
+          "retrival_value": "Model ID",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Unique ID",
+          "retrival_value": "Unique ID",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
     }
   ]
 }
