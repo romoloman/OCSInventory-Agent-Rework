@@ -84,10 +84,21 @@ class MacOSFormat {
                 element[key] = value;
               });
             }
+            if (element[field['retrival_value']] is List) {
+              element[field['retrival_value']].forEach((subElement) {
+                subElement.forEach((key, value) {
+                  // Add the sub element to this element
+                  element[key] = value;
+                });
+              });
+            }
 
             if (element.containsKey(field["retrival_value"])) {
-              result.putIfAbsent(field['name'],
-                  () => element[field['retrival_value']].toString().trim());
+              if (element[field["retrival_value"]] is! List &&
+                  element[field["retrival_value"]] is! Map) {
+                result.putIfAbsent(field['name'],
+                    () => element[field['retrival_value']].toString().trim());
+              }
             } else {
               result.putIfAbsent(field['name'], () => null);
             }
