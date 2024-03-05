@@ -565,6 +565,53 @@
       "options": {
         "need_format": false
       }
+    },
+    {
+      "name": "DEVELOPER TOOLS",
+      "retrival_method": "BASH",
+      "retrival_output": "GREP",
+      "target": "system_profiler SPDeveloperToolsDataType",
+      "fields": [
+        {
+          "name": "Version",
+          "retrival_value": "Version",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Location",
+          "retrival_value": "Location",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Xcode",
+          "retrival_value": "Xcode",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Instruments",
+          "retrival_value": "Instruments",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
     }
   ]
 }
