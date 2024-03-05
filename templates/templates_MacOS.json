@@ -1032,6 +1032,85 @@
       "options": {
         "need_format": false
       }
+    },
+    {
+      "id": 145,
+      "name": "FRAMEWORKS",
+      "retrival_method": "BASH",
+      "retrival_output": "JSON",
+      "target": "system_profiler SPFrameworksDataType -json",
+      "template": 36,
+      "fields": [
+        {
+          "id": 1072,
+          "name": "Name",
+          "retrival_value": "_name",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "section": 145,
+          "options": null
+        },
+        {
+          "id": 1073,
+          "name": "Last modified",
+          "retrival_value": "lastModified",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "section": 145,
+          "options": null
+        },
+        {
+          "id": 1074,
+          "name": "Obtained from",
+          "retrival_value": "obtained_from",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "section": 145,
+          "options": null
+        },
+        {
+          "id": 1075,
+          "name": "Location",
+          "retrival_value": "path",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "section": 145,
+          "options": null
+        },
+        {
+          "id": 1076,
+          "name": "Private",
+          "retrival_value": "private_framework",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "section": 145,
+          "options": null
+        },
+        {
+          "id": 1077,
+          "name": "Version",
+          "retrival_value": "version",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "section": 145,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
     }
   ]
 }
