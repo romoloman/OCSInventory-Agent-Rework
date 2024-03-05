@@ -612,6 +612,134 @@
       "options": {
         "need_format": false
       }
+    },
+    {
+      "name": "ETHERNET",
+      "retrival_method": "BASH",
+      "retrival_output": "GREP",
+      "target": "system_profiler SPEthernetDataType",
+      "fields": [
+        {
+          "name": "Bus",
+          "retrival_value": "Bus",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Vendor ID",
+          "retrival_value": "Vendor ID",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Device ID",
+          "retrival_value": "Device ID",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Subsystem Vendor ID",
+          "retrival_value": "Subsystem Vendor ID",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Subsystem ID",
+          "retrival_value": "Subsystem ID",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Revision ID",
+          "retrival_value": "Revision ID",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "PCIe Link Speed",
+          "retrival_value": "PCIe Link Speed",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "PCIe Link Width",
+          "retrival_value": "PCIe Link Width",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Driver",
+          "retrival_value": "Driver",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "BBSD Device Nameus",
+          "retrival_value": "BSD Device Name",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "MAC Address",
+          "retrival_value": "MAC Address",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "AVB Support",
+          "retrival_value": "AVB Support",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Maximum Link Speed",
+          "retrival_value": "Maximum Link Speed",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
     }
   ]
 }
