@@ -942,6 +942,96 @@
       "options": {
         "need_format": false
       }
-    }
+    },
+    {
+			"id": 144,
+			"name": "PRINTERS",
+			"retrival_method": "BASH",
+			"retrival_output": "JSON",
+			"target": "system_profiler SPPrintersDataType -json",
+			"template": 35,
+			"fields": [
+				{
+					"id": 1065,
+					"name": "Name",
+					"retrival_value": "_name",
+					"override_target": false,
+					"new_target": null,
+					"retrival_method": null,
+					"retrival_output": null,
+					"section": 144,
+					"options": null
+				},
+				{
+					"id": 1066,
+					"name": "Added",
+					"retrival_value": "creationDate",
+					"override_target": false,
+					"new_target": null,
+					"retrival_method": null,
+					"retrival_output": null,
+					"section": 144,
+					"options": null
+				},
+				{
+					"id": 1067,
+					"name": "Printer server",
+					"retrival_value": "printserver",
+					"override_target": false,
+					"new_target": null,
+					"retrival_method": null,
+					"retrival_output": null,
+					"section": 144,
+					"options": null
+				},
+				{
+					"id": 1068,
+					"name": "Status",
+					"retrival_value": "status",
+					"override_target": false,
+					"new_target": null,
+					"retrival_method": null,
+					"retrival_output": null,
+					"section": 144,
+					"options": null
+				},
+				{
+					"id": 1069,
+					"name": "Driver version",
+					"retrival_value": "driverversion",
+					"override_target": false,
+					"new_target": null,
+					"retrival_method": null,
+					"retrival_output": null,
+					"section": 144,
+					"options": null
+				},
+				{
+					"id": 1070,
+					"name": "Default",
+					"retrival_value": "default",
+					"override_target": false,
+					"new_target": null,
+					"retrival_method": null,
+					"retrival_output": null,
+					"section": 144,
+					"options": null
+				},
+				{
+					"id": 1071,
+					"name": "URI",
+					"retrival_value": "uri",
+					"override_target": false,
+					"new_target": null,
+					"retrival_method": null,
+					"retrival_output": null,
+					"section": 144,
+					"options": null
+				}
+			],
+			"options": {
+				"need_format": false
+			}
+		}
   ]
 }
