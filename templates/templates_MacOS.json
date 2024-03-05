@@ -1111,6 +1111,98 @@
       "options": {
         "need_format": false
       }
+    },
+    {
+      "name": "USB Devices",
+      "retrival_method": "BASH",
+      "retrival_output": "JSON",
+      "target": "system_profiler SPUSBDataType -json",
+      "fields": [
+        {
+          "name": "Items",
+          "retrival_value": "_items",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Name",
+          "retrival_value": "_name",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "bcd_device",
+          "retrival_value": "bcd_device",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "host_controller",
+          "retrival_value": "host_controller",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Manufacturer",
+          "retrival_value": "manufacturer",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Vendor ID",
+          "retrival_value": "vendor_id",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "host_controller",
+          "retrival_value": "host_controller",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Location ID",
+          "retrival_value": "location_id",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "device speed",
+          "retrival_value": "device_speed",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
     }
   ]
 }
