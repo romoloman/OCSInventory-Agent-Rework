@@ -124,42 +124,45 @@ class Deployment {
     int status = 0;
     logger.verbose(results.toString());
     for (var element in actions.values) {
-      // bool success = false;
-      // for (var retry in Iterable.generate(
-      //     config.getCoreConfig("deployment", "max_retry"))) {
-      // if (success == true) {
-      //   break;
-      // }
-      for (var action in jsonDecode(element)) {
-        results.forEach((resultElement) {
-          if (resultElement["package"] == action["package"]) {
-            id = resultElement["id"];
-          }
-        });
-        logger.verbose(action.toString());
-        switch (action["action_type"]) {
-          case "EXEC":
-            status =
-                await executeCommand(os, action["package"], action["command"]);
-            break;
-          case "STORE":
-            status = await storeFile(action["package"], action["file"]);
-            break;
-          case "LAUNCH":
-            status = await launchFile(
-                os, action["package"], action["command"], action["file"]);
-            break;
-          default:
-            logger.error("Canno't read correctly the action type!");
-            logger.serverLogger(
-                assetID,
-                8,
-                "Can't get type from the action " +
-                    action["name"].toString() +
-                    ".");
-            break;
+      bool success = false;
+      for (var _ in Iterable.generate(
+          config.getCoreConfig("deployment", "max_retry"))) {
+        if (success == true) {
+          break;
         }
-        // }
+        for (var action in jsonDecode(element)) {
+          results.forEach((resultElement) {
+            if (resultElement["package"] == action["package"]) {
+              id = resultElement["id"];
+            }
+          });
+          logger.verbose(action.toString());
+          switch (action["action_type"]) {
+            case "EXEC":
+              status = await executeCommand(
+                  os, action["package"], action["command"]);
+              break;
+            case "STORE":
+              status = await storeFile(action["package"], action["file"]);
+              break;
+            case "LAUNCH":
+              status = await launchFile(
+                  os, action["package"], action["command"], action["file"]);
+              break;
+            default:
+              logger.error("Canno't read correctly the action type!");
+              logger.serverLogger(
+                  assetID,
+                  8,
+                  "Can't get type from the action " +
+                      action["name"].toString() +
+                      ".");
+              break;
+          }
+          if (status == 0) {
+            success = true;
+          }
+        }
       }
       logger.verbose(results.toString());
       if (status == 0) {
