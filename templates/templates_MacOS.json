@@ -1228,6 +1228,44 @@
 			"options": {
 				"need_format": false
 			}
+		},
+    {
+			"name": "MEMORY",
+			"retrival_method": "BASH",
+			"retrival_output": "JSON",
+			"target": "system_profiler SPMemoryDataType -json",
+			"fields": [
+				{
+					"name": "Memory",
+					"retrival_value": "SPMemoryDataType",
+					"override_target": false,
+					"new_target": null,
+					"retrival_method": null,
+					"retrival_output": null,
+					"options": null
+				},
+				{
+					"name": "Type",
+					"retrival_value": "dimm_type",
+					"override_target": false,
+					"new_target": null,
+					"retrival_method": null,
+					"retrival_output": null,
+					"options": null
+				},
+				{
+					"name": "Manufacturer",
+					"retrival_value": "dimm_manufacturer",
+					"override_target": false,
+					"new_target": null,
+					"retrival_method": null,
+					"retrival_output": null,
+					"options": null
+				}
+			],
+			"options": {
+				"need_format": false
+			}
 		}
   ]
 }
