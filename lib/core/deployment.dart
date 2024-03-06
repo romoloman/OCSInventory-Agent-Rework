@@ -121,8 +121,15 @@ class Deployment {
   Future<void> executeActions(String os, int assetID) async {
     logger.info("Executing actions...");
     int id = 0;
+    int status = 0;
     logger.verbose(results.toString());
     for (var element in actions.values) {
+      // bool success = false;
+      // for (var retry in Iterable.generate(
+      //     config.getCoreConfig("deployment", "max_retry"))) {
+      // if (success == true) {
+      //   break;
+      // }
       for (var action in jsonDecode(element)) {
         results.forEach((resultElement) {
           if (resultElement["package"] == action["package"]) {
@@ -130,61 +137,71 @@ class Deployment {
           }
         });
         logger.verbose(action.toString());
-        if (checkFileExist(action)) {
-          switch (action["action_type"]) {
-            case "STORE":
-              await storeFile(action["package"], action["file"]);
-              break;
-            case "LAUNCH":
-              await launchFile(
-                  os, action["package"], action["command"], action["file"]);
-              break;
-            default:
-              logger.error("Canno't read correctly the action type!");
-              logger.serverLogger(
-                  assetID,
-                  8,
-                  "Can't get type from the action " +
-                      action["name"].toString() +
-                      ".");
-              break;
+        switch (action["action_type"]) {
+          case "EXEC":
+            status =
+                await executeCommand(os, action["package"], action["command"]);
+            break;
+          case "STORE":
+            status = await storeFile(action["package"], action["file"]);
+            break;
+          case "LAUNCH":
+            status = await launchFile(
+                os, action["package"], action["command"], action["file"]);
+            break;
+          default:
+            logger.error("Canno't read correctly the action type!");
+            logger.serverLogger(
+                assetID,
+                8,
+                "Can't get type from the action " +
+                    action["name"].toString() +
+                    ".");
+            break;
+        }
+        // }
+      }
+      logger.verbose(results.toString());
+      if (status == 0) {
+        try {
+          var responseSuccess = await httpUtils.patch(
+              "executeActions",
+              Uri.parse(url + "/deployment/results/$id/"),
+              httpUtils.getHeader(config),
+              "{\"status\": 1, \"comment\": \"Success\"}");
+          logger.verbose(responseSuccess["message"]);
+          if (responseSuccess["status_code"] == 200) {
+            logger.info("Package $id was completed successfully!");
+            logger.serverLogger(
+                assetID, 7, "Package $id was completed successfully!");
           }
-        } else {
-          await executeCommand(os, action["package"], action["command"]);
+        } catch (exception) {
+          logger
+              .error(sprintf("HTTP query: %s", [exception.toString().trim()]));
+        }
+      } else {
+        try {
+          var responseFail = await httpUtils.patch(
+              "executeActions",
+              Uri.parse(url + "/deployment/results/$id/"),
+              httpUtils.getHeader(config),
+              "{\"status\": 2, \"comment\": \"Error\"}");
+          logger.verbose(responseFail["message"]);
+          if (responseFail["status_code"] == 200) {
+            logger.info("Package $id was not completed successfully!");
+            logger.serverLogger(
+                assetID, 8, "Package $id was not completed successfully!");
+          }
+        } catch (exception) {
+          logger
+              .error(sprintf("HTTP query: %s", [exception.toString().trim()]));
         }
       }
-      try {
-        logger.verbose(results.toString());
-        var responseSuccess = await httpUtils.patch(
-            "executeActions",
-            Uri.parse(url + "/deployment/results/$id/"),
-            httpUtils.getHeader(config),
-            "{\"status\": 1, \"comment\": \"Success\"}");
-        logger.verbose(responseSuccess["message"]);
-        if (responseSuccess["status_code"] == 200) {
-          logger.info("Package $id was completed successfully!");
-        }
-      } catch (exception) {
-        logger.error(sprintf("HTTP query: %s", [exception.toString().trim()]));
-      }
-    }
-  }
-
-  /// Check if there is a specified file for the action
-  bool checkFileExist(Map<String, dynamic> action) {
-    if (action["file"] != null) {
-      logger.info("File found in the action " + action["name"] + ".");
-      return true;
-    } else {
-      logger.info("Any file found in the action " +
-          action["name"] +
-          ". Starting directly the command...");
-      return false;
     }
   }
 
   /// Execute the action command.
-  Future<void> executeCommand(
+  Future<int> executeCommand(
       String os, int package, String actionCommand) async {
     Map<String, dynamic> variables = {
       "\$AGENT_PATH":
@@ -196,55 +213,119 @@ class Deployment {
     variables.keys.forEach((key) {
       actionCommand = actionCommand.replaceAll(key, variables[key]);
     });
-    logger.verbose(actionCommand);
+    int status = 0;
     switch (os) {
       case "LIN":
         var command = new LinuxCommand();
-        String result = await command.commandShell(actionCommand, true);
-        logger.verbose(result);
+        String result = await command.commandShell(actionCommand, true).timeout(
+            Duration(
+                seconds: config.getCoreConfig(
+              "deployment",
+              "execution_timeout",
+            )), onTimeout: () {
+          status = 1;
+          return "TIMEOUT: Command execution time exceeded!";
+        });
+        if (status == 1) {
+          logger.error(result);
+        } else {
+          logger.verbose(result);
+        }
         break;
       case "MAC":
         var command = new MacOSCommand();
-        String result = await command.commandShell(actionCommand, true);
-        logger.verbose(result);
+        String result = await command.commandShell(actionCommand, true).timeout(
+            Duration(
+                seconds: config.getCoreConfig(
+              "deployment",
+              "execution_timeout",
+            )), onTimeout: () {
+          status = 1;
+          return "TIMEOUT: Command execution time exceeded!";
+        });
+        if (status == 1) {
+          logger.error(result);
+        } else {
+          logger.verbose(result);
+        }
         break;
       case "WIN":
         var command = new WindowsCommand();
-        String result = await command.commandPowershell(actionCommand, true);
-        logger.verbose(result);
+        String result =
+            await command.commandPowershell(actionCommand, true).timeout(
+                Duration(
+                    seconds: config.getCoreConfig(
+                  "deployment",
+                  "execution_timeout",
+                )), onTimeout: () {
+          status = 1;
+          return "TIMEOUT: Command execution time exceeded!";
+        });
+        if (status == 1) {
+          logger.error(result);
+        } else {
+          logger.verbose(result);
+        }
         break;
       default:
         logger.error(
             "OS does not match any of the supported OSs! (Check Plateform class return)");
         break;
     }
+    return status;
   }
 
   /// Only store the file without execution
-  Future<void> storeFile(int package, String filePath) async {
+  Future<int> storeFile(int package, String filePath) async {
     logger.info("Downloading and storing file...");
-    var request = await HttpClient().getUrl(Uri.parse(filePath));
-    var response = await request.close();
     var packageDirectory = Directory(config.getInventoryConfig("data_dir") +
         "/deployment/" +
         package.toString());
     if (!packageDirectory.existsSync()) {
       packageDirectory.createSync(recursive: true);
     }
-    response.pipe(File(config.getInventoryConfig("data_dir") +
-            "/deployment/" +
-            package.toString() +
-            "/" +
-            filePath.split("/").last)
-        .openWrite());
-    request.close();
-    logger.info("File downloaded and stored!");
+    int status = 0;
+    var client = HttpClient();
+    try {
+      HttpClientRequest request = await client.getUrl(Uri.parse(filePath));
+      HttpClientResponse response = await request.close();
+      await response
+          .pipe(File(config.getInventoryConfig("data_dir") +
+                  "/deployment/" +
+                  package.toString() +
+                  "/" +
+                  filePath.split("/").last)
+              .openWrite())
+          .timeout(
+              Duration(
+                  seconds: config.getCoreConfig(
+                "deployment",
+                "download_timeout",
+              )), onTimeout: () {
+        status = 1;
+        logger.error("TIMEOUT: Download time exceeded!");
+      });
+    } finally {
+      client.close();
+    }
+
+    if (status == 0) {
+      logger.info("File downloaded and stored!");
+    } else {
+      logger.error("Failed to download and store the file!");
+    }
+    return status;
   }
 
   /// Store the specified file and execute it.
-  Future<void> launchFile(
+  Future<int> launchFile(
       String os, int package, String actionCommand, String filePath) async {
-    await storeFile(package, filePath);
-    await executeCommand(os, package, actionCommand);
+    int storeStatus = await storeFile(package, filePath);
+    int execStatus = await executeCommand(os, package, actionCommand);
+    int status = 0;
+    if (storeStatus != 0 || execStatus != 0) {
+      status = 1;
+    }
+    return status;
   }
 }
