@@ -1,7 +1,6 @@
 {
   "name": "MacOS",
   "os": "MAC",
-  "last_update": "2023-12-21T15:32:54.417197Z",
   "sections": [
     {
       "name": "SOFTWARE",
@@ -948,7 +947,6 @@
       "retrival_method": "BASH",
       "retrival_output": "JSON",
       "target": "system_profiler SPPrintersDataType -json",
-      "template": 35,
       "fields": [
         {
           "name": "Name",
@@ -1023,7 +1021,6 @@
       "retrival_method": "BASH",
       "retrival_output": "JSON",
       "target": "system_profiler SPFrameworksDataType -json",
-      "template": 36,
       "fields": [
         {
           "name": "Name",
