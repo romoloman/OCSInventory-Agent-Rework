@@ -95,7 +95,8 @@ class MacOSFormat {
 
             if (element.containsKey(field["retrival_value"])) {
               if (element[field["retrival_value"]] is! List &&
-                  element[field["retrival_value"]] is! Map) {
+                  element[field["retrival_value"]] is! Map &&
+                  element[field["retrival_value"]] != null) {
                 result.putIfAbsent(field['name'],
                     () => element[field['retrival_value']].toString().trim());
               }
