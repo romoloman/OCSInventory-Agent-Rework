@@ -168,9 +168,10 @@ class MacOSFormat {
   }
 
   /// get result of [resultCommand] for each [fields].
-  Map<String, dynamic> getByGrep(
+  List<dynamic> getByGrep(
       List<dynamic> fields, Map<String, dynamic> resultCommand) {
-    Map<String, dynamic> subInventory = new Map();
+    List<dynamic> subInventory = new List.empty(growable: true);
+    Map<String, dynamic> result = new Map();
     Map<String, dynamic> json = new Map();
 
     resultCommand.keys.forEach((element) {
@@ -188,13 +189,15 @@ class MacOSFormat {
         for (var field in fields) {
           String grep = field['retrival_value'];
           if (line.contains(grep)) {
-            subInventory.putIfAbsent(field['name'],
+            result.putIfAbsent(field['name'],
                 () => line.substring(line.indexOf(grep) + grep.length + 1));
           }
         }
       }
     });
+    subInventory.add(result);
 
+    logger.verbose(subInventory.toString());
     return subInventory;
   }
 
