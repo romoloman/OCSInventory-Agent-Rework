@@ -1174,60 +1174,60 @@
       }
     },
     {
-			"name": "GRAPHICS/DISPLAYS",
-			"retrival_method": "BASH",
-			"retrival_output": "GREP",
-			"target": "system_profiler SPDisplaysDataType",
-			"fields": [
-				{
-					"name": "Name",
-					"retrival_value": "Chipset Model",
-					"override_target": false,
-					"new_target": null,
-					"retrival_method": null,
-					"retrival_output": null,
-					"options": null
-				},
-				{
-					"name": "Type",
-					"retrival_value": "Type",
-					"override_target": false,
-					"new_target": null,
-					"retrival_method": null,
-					"retrival_output": null,
-					"options": null
-				},
-				{
-					"name": "Total Number of Cores",
-					"retrival_value": "Total Number of Cores",
-					"override_target": false,
-					"new_target": null,
-					"retrival_method": null,
-					"retrival_output": null,
-					"options": null
-				},
-				{
-					"name": "Resolution:",
-					"retrival_value": "Resolution:",
-					"override_target": false,
-					"new_target": null,
-					"retrival_method": null,
-					"retrival_output": null,
-					"options": null
-				},
-				{
-					"name": "Vendor",
-					"retrival_value": "Vendor",
-					"override_target": false,
-					"new_target": null,
-					"retrival_method": null,
-					"retrival_output": null,
-					"options": null
-				}
-			],
-			"options": {
-				"need_format": false
-			}
-		}
+      "name": "GRAPHICS/DISPLAYS",
+      "retrival_method": "BASH",
+      "retrival_output": "GREP",
+      "target": "system_profiler SPDisplaysDataType",
+      "fields": [
+        {
+          "name": "Name",
+          "retrival_value": "Chipset Model",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Type",
+          "retrival_value": "Type",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Total Number of Cores",
+          "retrival_value": "Total Number of Cores",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Resolution:",
+          "retrival_value": "Resolution:",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Vendor",
+          "retrival_value": "Vendor",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
+    }
   ]
 }
