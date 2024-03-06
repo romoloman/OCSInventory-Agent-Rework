@@ -222,7 +222,7 @@ class Deployment {
         var command = new LinuxCommand();
         String result = await command.commandShell(actionCommand, true).timeout(
             Duration(
-                seconds: config.getCoreConfig(
+                days: config.getCoreConfig(
               "deployment",
               "execution_timeout",
             )), onTimeout: () {
@@ -239,7 +239,7 @@ class Deployment {
         var command = new MacOSCommand();
         String result = await command.commandShell(actionCommand, true).timeout(
             Duration(
-                seconds: config.getCoreConfig(
+                days: config.getCoreConfig(
               "deployment",
               "execution_timeout",
             )), onTimeout: () {
@@ -257,7 +257,7 @@ class Deployment {
         String result =
             await command.commandPowershell(actionCommand, true).timeout(
                 Duration(
-                    seconds: config.getCoreConfig(
+                    days: config.getCoreConfig(
                   "deployment",
                   "execution_timeout",
                 )), onTimeout: () {
@@ -301,7 +301,7 @@ class Deployment {
               .openWrite())
           .timeout(
               Duration(
-                  seconds: config.getCoreConfig(
+                  days: config.getCoreConfig(
                 "deployment",
                 "download_timeout",
               )), onTimeout: () {
