@@ -1421,6 +1421,62 @@
       "options": {
         "need_format": false
       }
+    },
+    {
+      "name": "POWER",
+      "retrival_method": "BASH",
+      "retrival_output": "GREP",
+      "target": "system_profiler SPPowerDataType",
+      "fields": [
+        {
+          "name": "System Sleep Timer (Minutes)",
+          "retrival_value": "System Sleep Timer (Minutes)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Disk Sleep Timer (Minutes)",
+          "retrival_value": "Disk Sleep Timer (Minutes)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Display Sleep Timer (Minutes)",
+          "retrival_value": "Display Sleep Timer (Minutes)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Wake on LAN",
+          "retrival_value": "Wake on LAN",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "UPS Installed",
+          "retrival_value": "UPS Installed",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
     }
   ]
 }
