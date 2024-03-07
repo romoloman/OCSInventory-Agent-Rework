@@ -217,6 +217,7 @@ class Deployment {
       actionCommand = actionCommand.replaceAll(key, variables[key]);
     });
     int status = 0;
+    logger.info("Executing action command...");
     switch (os) {
       case "LIN":
         var command = new LinuxCommand();
@@ -264,10 +265,11 @@ class Deployment {
           status = 1;
           return "TIMEOUT: Command execution time exceeded!";
         });
-        if (status == 1) {
-          logger.error(result);
-        } else {
+        if (status == 0) {
           logger.verbose(result);
+          logger.info("Action command executed successfully!");
+        } else {
+          logger.error(result);
         }
         break;
       default:
