@@ -1544,60 +1544,60 @@
       }
     },
     {
-			"name": "VOLUMES",
-			"retrival_method": "BASH",
-			"retrival_output": "JSON",
-			"target": "system_profiler SPNetworkVolumeDataType -json",
-			"fields": [
-				{
-					"name": "Automounted",
-					"retrival_value": "spnetworkvolume_automounted",
-					"override_target": false,
-					"new_target": null,
-					"retrival_method": null,
-					"retrival_output": null,
-					"options": null
-				},
-				{
-					"name": "Name",
-					"retrival_value": "_name",
-					"override_target": false,
-					"new_target": null,
-					"retrival_method": null,
-					"retrival_output": null,
-					"options": null
-				},
-				{
-					"name": "Mount Point",
-					"retrival_value": "spnetworkvolume_fsmtnonname",
-					"override_target": false,
-					"new_target": null,
-					"retrival_method": null,
-					"retrival_output": null,
-					"options": null
-				},
-				{
-					"name": "Mounted From",
-					"retrival_value": "spnetworkvolume_mntfromname",
-					"override_target": false,
-					"new_target": null,
-					"retrival_method": null,
-					"retrival_output": null,
-					"options": null
-				},
-				{
-					"name": "Type",
-					"retrival_value": "spnetworkvolume_fstypename",
-					"override_target": false,
-					"new_target": null,
-					"retrival_method": null,
-					"retrival_output": null,
-					"options": null
-				}
-			],
-			"options": {
-				"need_format": false
-			}
-		}
+      "name": "VOLUMES",
+      "retrival_method": "BASH",
+      "retrival_output": "JSON",
+      "target": "system_profiler SPNetworkVolumeDataType -json",
+      "fields": [
+        {
+          "name": "Automounted",
+          "retrival_value": "spnetworkvolume_automounted",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Name",
+          "retrival_value": "_name",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Mount Point",
+          "retrival_value": "spnetworkvolume_fsmtnonname",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Mounted From",
+          "retrival_value": "spnetworkvolume_mntfromname",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Type",
+          "retrival_value": "spnetworkvolume_fstypename",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
+    }
   ]
 }
