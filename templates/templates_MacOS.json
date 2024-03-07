@@ -1477,6 +1477,71 @@
       "options": {
         "need_format": false
       }
+    },
+    {
+      "name": "NVMe",
+      "retrival_method": "BASH",
+      "retrival_output": "JSON",
+      "target": "system_profiler SPNVMeDataType -json",
+      "fields": [
+        {
+          "name": "_items",
+          "retrival_value": "_items",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Name",
+          "retrival_value": "_name",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "BDS Name",
+          "retrival_value": "bsd_name",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Capacity",
+          "retrival_value": "size",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Model",
+          "retrival_value": "device_model",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Removable Media",
+          "retrival_value": "removable_media",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
     }
   ]
 }
