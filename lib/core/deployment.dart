@@ -28,11 +28,14 @@ import 'package:ocs_agent/core/inventory/macos/commands.dart';
 import 'package:ocs_agent/core/inventory/windows/commands.dart';
 
 class Deployment {
+  // Modules
   late Config config;
   late Logger logger;
 
+  // Utilities
   late HTTPUtils httpUtils;
 
+// Other variable used by the class
   late var url;
 
   late List<dynamic> results;
@@ -40,28 +43,37 @@ class Deployment {
 
   /// Constructor.
   Deployment() {
-    this.config = new Config();
-    this.logger = new Logger();
+    // Modules init
+    config = Config();
+    logger = Logger();
 
-    this.httpUtils = new HTTPUtils();
+    // Utilities init
+    httpUtils = HTTPUtils();
 
-    this.url = config.getInventoryConfig("url");
-
-    this.actions = new Map();
+    // Other variable init
+    url = config.getInventoryConfig("url");
   }
 
   /// Check if there is packages to download.
   Future<bool> checkDownload(int assetID) async {
     logger.info("Enabling deployment module...");
+
+    // API call: Check if there is assigned packages
     var response = await httpUtils.get(
         "checkDownload",
         Uri.parse(url + "/deployment/results/?asset=$assetID&status=0"),
         httpUtils.getHeader(config));
+    // VERBOSE: show result of the query in verbose mode
     logger.verbose(response["message"]);
+
     if (response["status_code"] == 200 &&
         jsonDecode(response["body"]).isNotEmpty) {
       logger.info("Assigned packages found!");
+
+      // Get the list of assigned packages
       results = jsonDecode(response["body"]);
+
+      // For each package, change state of the package to Notified
       for (var element in results) {
         var responseNotified = await httpUtils.patch(
             "executeActions",
@@ -81,17 +93,24 @@ class Deployment {
   /// Get actions from assigned packages.
   Future<bool> getActions(int assetID) async {
     logger.info("Collecting actions...");
+
+    // For each package, get the list of the package actions
     for (var element in results) {
       try {
+        // API call: get the list of actions
         var response = await httpUtils.get(
             "getActions",
             Uri.parse(url +
                 "/deployment/actions/?package=" +
                 element["package"].toString()),
             httpUtils.getHeader(config));
+        // VERBOSE: show result of the query in verbose mode
         logger.verbose(response["message"]);
+
         if (response["status_code"] == 200) {
+          // Add actions list of each package to the general actions list
           actions.putIfAbsent(element["package"], () => response["body"]);
+
           logger.serverLogger(
               assetID,
               7,
@@ -120,13 +139,19 @@ class Deployment {
   /// Execute actions from assigned packages.
   Future<void> executeActions(String os, int assetID) async {
     logger.info("Executing actions...");
+
     int id = 0;
     int status = 0;
-    logger.verbose(results.toString());
+    late bool success;
+
+    // For each action, try to execute the command in the action object
     for (var element in actions.values) {
-      bool success = false;
+      success = false;
+
+      // This for loop try the number of times of the parameter "max_retry" in the server config
       for (var _ in Iterable.generate(
           config.getCoreConfig("deployment", "max_retry"))) {
+        // Exit the loop if the package has been installed successfully
         if (success == true) {
           break;
         }
@@ -136,6 +161,7 @@ class Deployment {
               id = resultElement["id"];
             }
           });
+          // VERBOSE: show which action is processing
           logger.verbose(action.toString());
           switch (action["action_type"]) {
             case "EXEC":
@@ -159,14 +185,15 @@ class Deployment {
                       ".");
               break;
           }
+          // if process method don't send any error, the package has been installed successfully
           if (status == 0) {
             success = true;
           }
         }
       }
-      logger.verbose(results.toString());
       if (status == 0) {
         try {
+          // API call: send success to server if the package is installed
           var responseSuccess = await httpUtils.patch(
               "executeActions",
               Uri.parse(url + "/deployment/results/$id/"),
@@ -184,6 +211,7 @@ class Deployment {
         }
       } else {
         try {
+          // API call: send error to server if the package isn't installed
           var responseFail = await httpUtils.patch(
               "executeActions",
               Uri.parse(url + "/deployment/results/$id/"),
@@ -217,11 +245,12 @@ class Deployment {
       actionCommand = actionCommand.replaceAll(key, variables[key]);
     });
     int status = 0;
+    String result = "";
     logger.info("Executing action command...");
     switch (os) {
       case "LIN":
-        var command = new LinuxCommand();
-        String result = await command.commandShell(actionCommand, true).timeout(
+        var command = LinuxCommand();
+        result = await command.commandShell(actionCommand, true).timeout(
             Duration(
                 days: config.getCoreConfig(
               "deployment",
@@ -230,15 +259,10 @@ class Deployment {
           status = 1;
           return "TIMEOUT: Command execution time exceeded!";
         });
-        if (status == 1) {
-          logger.error(result);
-        } else {
-          logger.verbose(result);
-        }
         break;
       case "MAC":
-        var command = new MacOSCommand();
-        String result = await command.commandShell(actionCommand, true).timeout(
+        var command = MacOSCommand();
+        result = await command.commandShell(actionCommand, true).timeout(
             Duration(
                 days: config.getCoreConfig(
               "deployment",
@@ -247,35 +271,29 @@ class Deployment {
           status = 1;
           return "TIMEOUT: Command execution time exceeded!";
         });
-        if (status == 1) {
-          logger.error(result);
-        } else {
-          logger.verbose(result);
-        }
         break;
       case "WIN":
-        var command = new WindowsCommand();
-        String result =
-            await command.commandPowershell(actionCommand, true).timeout(
-                Duration(
-                    days: config.getCoreConfig(
-                  "deployment",
-                  "execution_timeout",
-                )), onTimeout: () {
+        var command = WindowsCommand();
+        result = await command.commandPowershell(actionCommand, true).timeout(
+            Duration(
+                days: config.getCoreConfig(
+              "deployment",
+              "execution_timeout",
+            )), onTimeout: () {
           status = 1;
           return "TIMEOUT: Command execution time exceeded!";
         });
-        if (status == 0) {
-          logger.verbose(result);
-          logger.info("Action command executed successfully!");
-        } else {
-          logger.error(result);
-        }
         break;
       default:
         logger.error(
             "OS does not match any of the supported OSs! (Check Plateform class return)");
         break;
+    }
+    if (status == 0) {
+      logger.verbose(result);
+      logger.info("Action command executed successfully!");
+    } else {
+      logger.error(result);
     }
     return status;
   }
