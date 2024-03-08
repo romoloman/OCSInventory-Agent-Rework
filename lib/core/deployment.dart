@@ -52,6 +52,7 @@ class Deployment {
 
     // Other variable init
     url = config.getInventoryConfig("url");
+    actions = Map();
   }
 
   /// Check if there is packages to download.
@@ -234,6 +235,9 @@ class Deployment {
   /// Execute the action command.
   Future<int> executeCommand(
       String os, int package, String actionCommand) async {
+    logger.info("Executing action command...");
+
+    // This variables will replace variable by dynamic path
     Map<String, dynamic> variables = {
       "\$AGENT_PATH":
           Directory.current.toString().substring(11, null).replaceAll("'", "") +
@@ -244,12 +248,15 @@ class Deployment {
     variables.keys.forEach((key) {
       actionCommand = actionCommand.replaceAll(key, variables[key]);
     });
+
     int status = 0;
     String result = "";
-    logger.info("Executing action command...");
+
+    // Depending of the plateform, execute a command with appropriate CLI
     switch (os) {
       case "LIN":
         var command = LinuxCommand();
+
         result = await command.commandShell(actionCommand, true).timeout(
             Duration(
                 days: config.getCoreConfig(
@@ -262,6 +269,7 @@ class Deployment {
         break;
       case "MAC":
         var command = MacOSCommand();
+
         result = await command.commandShell(actionCommand, true).timeout(
             Duration(
                 days: config.getCoreConfig(
@@ -274,6 +282,7 @@ class Deployment {
         break;
       case "WIN":
         var command = WindowsCommand();
+
         result = await command.commandPowershell(actionCommand, true).timeout(
             Duration(
                 days: config.getCoreConfig(
@@ -301,14 +310,18 @@ class Deployment {
   /// Only store the file without execution
   Future<int> storeFile(int package, String filePath) async {
     logger.info("Downloading and storing file...");
+
+    // Get the package directory or create one if not exist
     var packageDirectory = Directory(config.getInventoryConfig("data_dir") +
         "/deployment/" +
         package.toString());
     if (!packageDirectory.existsSync()) {
       packageDirectory.createSync(recursive: true);
     }
+
     int status = 0;
     var client = HttpClient();
+    // Try to download and store the file in the package folder
     try {
       HttpClientRequest request = await client.getUrl(Uri.parse(filePath));
       HttpClientResponse response = await request.close();
