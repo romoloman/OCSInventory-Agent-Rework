@@ -1600,42 +1600,42 @@
       }
     },
     {
-			"name": "Wi-fi",
-			"retrival_method": "BASH",
-			"retrival_output": "REGX",
-			"target": "system_profiler SPAirPortDataType",
-			"fields": [
-				{
-					"name": "Network Name",
-					"retrival_value": "^\\s{12}(\\w+)",
-					"override_target": false,
-					"new_target": null,
-					"retrival_method": null,
-					"retrival_output": null,
-					"options": null
-				},
-				{
-					"name": "Channel",
-					"retrival_value": "^\\s{14}Channel:\\s*(.*)",
-					"override_target": false,
-					"new_target": null,
-					"retrival_method": null,
-					"retrival_output": null,
-					"options": null
-				},
-				{
-					"name": "Security",
-					"retrival_value": "^\\s{14}Security:\\s*(.*)",
-					"override_target": false,
-					"new_target": null,
-					"retrival_method": null,
-					"retrival_output": null,
-					"options": null
-				}
-			],
-			"options": {
-				"need_format": false
-			}
-		}
+      "name": "Wi-fi",
+      "retrival_method": "BASH",
+      "retrival_output": "REGX",
+      "target": "system_profiler SPAirPortDataType",
+      "fields": [
+        {
+          "name": "Network Name",
+          "retrival_value": "^\\s{12}(\\w+)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Channel",
+          "retrival_value": "^\\s{14}Channel:\\s*(.*)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Security",
+          "retrival_value": "^\\s{14}Security:\\s*(.*)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
+    }
   ]
 }
