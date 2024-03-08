@@ -32,7 +32,6 @@ import 'package:ocs_agent/core/inventory/windows/baseWindows.dart'
 /// In this main section we send the [body] to the asset/bases endpoint
 Future<void> main(List<String> args) async {
   // Initiate modules
-  Deployment deployment = new Deployment();
   Inventory inventory = new Inventory();
   Config config = new Config();
   Logger logger = new Logger();
