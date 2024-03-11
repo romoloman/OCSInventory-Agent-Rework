@@ -203,15 +203,16 @@ class MacOSFormat {
   }
 
   /// get result of [resultCommand] for each [fields].
-  dynamic getByRegx(List<dynamic> fields, Map<String, dynamic> resultCommand) {
-    Map<String, dynamic> subInventory = new Map();
+  List<dynamic> getByRegx(
+      List<dynamic> fields, Map<String, dynamic> resultCommand) {
+    List<dynamic> subInventory = new List.empty(growable: true);
+    Map<String, dynamic> result = new Map();
     var lines = resultCommand['main']['result'].split("\n").toList();
 
-    int x = 1;
     for (var line in lines) {
       for (var field in fields) {
         if (resultCommand.containsKey(field['name'])) {
-          subInventory.putIfAbsent(
+          result.putIfAbsent(
               field['name'],
               () => this.getResult(
                   field['retrival_output'],
@@ -221,13 +222,14 @@ class MacOSFormat {
           var regex = RegExp(field['retrival_value']);
           if (regex.hasMatch(line)) {
             var match = regex.firstMatch(line);
-            subInventory.putIfAbsent(field['name'], () => match!.group(1));
+            result.putIfAbsent(field['name'], () => match!.group(1));
           }
         }
       }
-
-      return subInventory;
     }
+    subInventory.add(result);
+    logger.verbose(subInventory.toString());
+    return subInventory;
   }
 
   String? getResult(String type, String result, retrivalValue) {
