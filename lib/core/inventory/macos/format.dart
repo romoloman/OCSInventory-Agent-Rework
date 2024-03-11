@@ -226,8 +226,8 @@ class MacOSFormat {
         }
       }
 
-  
-    return subInventory;
+      return subInventory;
+    }
   }
 
   String? getResult(String type, String result, retrivalValue) {
