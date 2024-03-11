@@ -566,7 +566,7 @@
       }
     },
     {
-      "name": "DEVELOPER TOOLS",
+      "name": "DEVELOPER_TOOLS",
       "retrival_method": "BASH",
       "retrival_output": "GREP",
       "target": "system_profiler SPDeveloperToolsDataType",
@@ -1082,7 +1082,7 @@
       }
     },
     {
-      "name": "USB Devices",
+      "name": "USB_DEVICES",
       "retrival_method": "BASH",
       "retrival_output": "JSON",
       "target": "system_profiler SPUSBDataType -json",
@@ -1600,7 +1600,7 @@
       }
     },
     {
-      "name": "Wi-fi",
+      "name": "WI-FI",
       "retrival_method": "BASH",
       "retrival_output": "REGX",
       "target": "system_profiler SPAirPortDataType",
