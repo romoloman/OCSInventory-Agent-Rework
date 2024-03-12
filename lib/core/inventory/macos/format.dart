@@ -256,6 +256,33 @@ class MacOSFormat {
     return subInventory;
   }
 
+  /// get result of [resultCommand] for each [fields].
+  List<dynamic> getByPtxt(
+      List<dynamic> fields, Map<String, dynamic> resultCommand) {
+    List<dynamic> subInventory = new List.empty(growable: true);
+    Map<String, dynamic> result = new Map();
+    var txt = resultCommand['main']['result'].split("\n").toList();
+
+    for (var field in fields) {
+      if (resultCommand.containsKey(field['name'])) {
+        result.putIfAbsent(
+            field['name'],
+            () => this.getResult(
+                field['retrival_output'],
+                resultCommand[field['name']]['result'],
+                field['retrival_value']));
+      } else {
+        int line = int.parse(field['retrival_value']);
+        result.putIfAbsent(field['name'], () => txt[line - 1]);
+      }
+      
+    }
+    subInventory.add(result);
+
+    logger.verbose(subInventory.toString());
+    return subInventory;
+  }
+
   String? getResult(String type, String result, retrivalValue) {
     switch (type) {
       case "JSON":
