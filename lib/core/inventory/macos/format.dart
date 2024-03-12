@@ -275,12 +275,42 @@ class MacOSFormat {
         int line = int.parse(field['retrival_value']);
         result.putIfAbsent(field['name'], () => txt[line - 1]);
       }
-      
     }
     subInventory.add(result);
 
     logger.verbose(subInventory.toString());
     return subInventory;
+  }
+
+  /// get result of [resultCommand] for each [fields].
+  List<dynamic> getByArray(
+      List<dynamic> fields, Map<String, dynamic> resultCommand) {
+    List<Map<String, dynamic>> result = this.formatArray(
+        resultCommand['main']['result'], resultCommand['main']['options']);
+    List<dynamic> inventory = [];
+    result.forEach((element) {
+      Map<String, dynamic> subInventory = new Map();
+
+      for (var field in fields) {
+        if (resultCommand.containsKey(field['name'])) {
+          subInventory.putIfAbsent(
+              field['name'],
+              () => this.getResult(
+                  field['retrival_output'],
+                  resultCommand[field['name']]['result'],
+                  field['retrival_value']));
+        } else {
+          String index = field["retrival_value"];
+          if (element.containsKey(index)) {
+            subInventory.putIfAbsent(field['name'], () => element[index]);
+          } else {
+            subInventory.putIfAbsent(field['name'], () => "null");
+          }
+        }
+      }
+      inventory.add(subInventory);
+    });
+    return inventory;
   }
 
   String? getResult(String type, String result, retrivalValue) {
