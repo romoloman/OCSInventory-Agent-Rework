@@ -209,25 +209,49 @@ class MacOSFormat {
     Map<String, dynamic> result = new Map();
     var lines = resultCommand['main']['result'].split("\n").toList();
 
-    for (var line in lines) {
+    if (resultCommand['main']['options'] != null &&
+        resultCommand['main']['options'].containsKey('multiple') &&
+        resultCommand['main']['options']['multiple']) {
+      String regexSource = "";
       for (var field in fields) {
-        if (resultCommand.containsKey(field['name'])) {
+        regexSource = regexSource + field['retrival_value'];
+      }
+
+      var regex = RegExp(regexSource, multiLine: true);
+
+      var matches =
+          regex.allMatches(resultCommand['main']['result'].toString());
+
+      for (var match in matches) {
+        for (int i = 0; i < fields.length; i++) {
           result.putIfAbsent(
-              field['name'],
-              () => this.getResult(
-                  field['retrival_output'],
-                  resultCommand[field['name']]['result'],
-                  field['retrival_value']));
-        } else {
-          var regex = RegExp(field['retrival_value']);
-          if (regex.hasMatch(line)) {
-            var match = regex.firstMatch(line);
-            result.putIfAbsent(field['name'], () => match!.group(1));
+              fields.elementAt(i)['name'], () => match.group(i + 1));
+        }
+        subInventory.add(result);
+        result = new Map();
+      }
+    } else {
+      for (var line in lines) {
+        for (var field in fields) {
+          if (resultCommand.containsKey(field['name'])) {
+            result.putIfAbsent(
+                field['name'],
+                () => this.getResult(
+                    field['retrival_output'],
+                    resultCommand[field['name']]['result'],
+                    field['retrival_value']));
+          } else {
+            var regex = RegExp(field['retrival_value']);
+            if (regex.hasMatch(line)) {
+              var match = regex.firstMatch(line);
+              result.putIfAbsent(field['name'], () => match!.group(1));
+            }
           }
         }
       }
+      subInventory.add(result);
     }
-    subInventory.add(result);
+
     logger.verbose(subInventory.toString());
     return subInventory;
   }
