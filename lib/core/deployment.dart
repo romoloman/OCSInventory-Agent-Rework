@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:sprintf/sprintf.dart';
@@ -170,7 +171,8 @@ class Deployment {
                   os, action["package"], action["command"]);
               break;
             case "STORE":
-              status = await storeFile(action["package"], action["file"]);
+              status = await storeFile(
+                  action["package"], action["file"], action["command"]);
               break;
             case "LAUNCH":
               status = await launchFile(
@@ -308,7 +310,8 @@ class Deployment {
   }
 
   /// Only store the file without execution
-  Future<int> storeFile(int package, String filePath) async {
+  Future<int> storeFile(
+      int package, String filePath, String pathToStore) async {
     logger.info("Downloading and storing file...");
 
     // Get the package directory or create one if not exist
@@ -325,22 +328,27 @@ class Deployment {
     try {
       HttpClientRequest request = await client.getUrl(Uri.parse(filePath));
       HttpClientResponse response = await request.close();
-      await response
-          .pipe(File(config.getInventoryConfig("data_dir") +
-                  "/deployment/" +
-                  package.toString() +
-                  "/" +
-                  filePath.split("/").last)
-              .openWrite())
-          .timeout(
-              Duration(
-                  days: config.getCoreConfig(
-                "deployment",
-                "download_timeout",
-              )), onTimeout: () {
+
+      // Check if path exist
+      var pathToStoreDirectory = Directory(pathToStore);
+      if (pathToStoreDirectory.existsSync()) {
+        await response
+            .pipe(
+                File(pathToStore + "/" + filePath.split("/").last).openWrite())
+            .timeout(
+                Duration(
+                    days: config.getCoreConfig(
+                  "deployment",
+                  "download_timeout",
+                )), onTimeout: () {
+          status = 1;
+          logger.error("TIMEOUT: Download time exceeded!");
+        });
+      } else {
         status = 1;
-        logger.error("TIMEOUT: Download time exceeded!");
-      });
+        logger.error("Path to store the file does not exist!");
+        client.close();
+      }
     } finally {
       client.close();
     }
@@ -356,7 +364,7 @@ class Deployment {
   /// Store the specified file and execute it.
   Future<int> launchFile(
       String os, int package, String actionCommand, String filePath) async {
-    int storeStatus = await storeFile(package, filePath);
+    int storeStatus = await storeFile(package, filePath, actionCommand);
     int execStatus = await executeCommand(os, package, actionCommand);
     int status = 0;
     if (storeStatus != 0 || execStatus != 0) {
