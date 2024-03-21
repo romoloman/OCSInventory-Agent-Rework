@@ -323,32 +323,55 @@ class Deployment {
     }
 
     int status = 0;
-    var client = HttpClient();
+    HttpClient client = HttpClient();
     // Try to download and store the file in the package folder
     try {
-      HttpClientRequest request = await client.getUrl(Uri.parse(filePath));
-      HttpClientResponse response = await request.close();
+      List<int> _downloadData = [];
 
-      // Check if path exist
-      var pathToStoreDirectory = Directory(pathToStore);
-      if (pathToStoreDirectory.existsSync()) {
-        await response
-            .pipe(
-                File(pathToStore + "/" + filePath.split("/").last).openWrite())
-            .timeout(
-                Duration(
-                    days: config.getCoreConfig(
-                  "deployment",
-                  "download_timeout",
-                )), onTimeout: () {
+      // Store the file in the agent directory
+      String localPath = config.getInventoryConfig("data_dir") +
+          "/deployment/" +
+          package.toString() +
+          "/" +
+          filePath.split("/").last;
+      var fileSaveLocal = new File(localPath);
+
+      client.getUrl(Uri.parse(filePath)).then((HttpClientRequest request) {
+        return request.close();
+      }).then((HttpClientResponse response) {
+        if (response.statusCode == HttpStatus.ok) {
+          logger.verbose("File downloaded successfully !");
+          response.listen((data) {
+            _downloadData.addAll(data);
+          }, onDone: () async {
+            await fileSaveLocal
+                .writeAsBytes(_downloadData)
+                .then((_) => logger
+                    .verbose("File stored in the agent directory '$localPath'"))
+                .catchError((onError) {
+              status = 1;
+              logger.error(
+                  "Error while storing file in the agent directory: $onError");
+            });
+
+          }, onError: (error) {
+            status = 1;
+            logger.error("Error while downloading file: $error");
+          });
+        } else {
           status = 1;
-          logger.error("TIMEOUT: Download time exceeded!");
-        });
-      } else {
+          logger.error("Failed to download file: ${response.statusCode}");
+        }
+      }).catchError((error) {
         status = 1;
-        logger.error("Path to store the file does not exist!");
-        client.close();
-      }
+        logger.error("Error during HTTP request: $error");
+      }).timeout(
+          Duration(
+              days: config.getCoreConfig("deployment", "download_timeout")),
+          onTimeout: () {
+        status = 1;
+        logger.error("TIMEOUT: Download time exceeded for file $filePath !");
+      });
     } finally {
       client.close();
     }
