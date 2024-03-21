@@ -171,12 +171,12 @@ class Deployment {
                   os, action["package"], action["command"]);
               break;
             case "STORE":
-              status = await storeFile(
-                  action["package"], action["file"], action["command"]);
+              status = await storeFile(action["package"], action["file"],
+                  action["command"], action["action_type"]);
               break;
             case "LAUNCH":
-              status = await launchFile(
-                  os, action["package"], action["command"], action["file"]);
+              status = await launchFile(os, action["package"],
+                  action["command"], action["file"], action["action_type"]);
               break;
             default:
               logger.error("Canno't read correctly the action type!");
@@ -309,9 +309,14 @@ class Deployment {
     return status;
   }
 
-  /// Only store the file without execution
-  Future<int> storeFile(
-      int package, String filePath, String pathToStore) async {
+  /// This function downloads and stores the file in the agent directory and in the specified path.
+  /// package: The package ID
+  /// filePath: The file URL to download
+  /// pathToStore: The path to store the file
+  /// actionType: The action type (EXECUTE or STORE)
+  /// return: 0 if the file is downloaded and stored successfully, 1 otherwise
+  Future<int> storeFile(int package, String filePath, String pathToStore,
+      String actionType) async {
     logger.info("Downloading and storing file...");
 
     // Get the package directory or create one if not exist
@@ -336,6 +341,9 @@ class Deployment {
           filePath.split("/").last;
       var fileSaveLocal = new File(localPath);
 
+      String remotePath = pathToStore + "/" + filePath.split("/").last;
+      var fileSaveRemote = new File(remotePath);
+
       client.getUrl(Uri.parse(filePath)).then((HttpClientRequest request) {
         return request.close();
       }).then((HttpClientResponse response) {
@@ -354,6 +362,24 @@ class Deployment {
                   "Error while storing file in the agent directory: $onError");
             });
 
+            // Store the file in the specified path only if the action type is STORE
+            if (actionType == "STORE") {
+              var pathToStoreDirectory = Directory(pathToStore);
+              if (pathToStoreDirectory.existsSync()) {
+                await fileSaveRemote
+                    .writeAsBytes(_downloadData)
+                    .then((value) => logger.verbose(
+                        "File stored in the specified path '$remotePath'"))
+                    .catchError((onError) {
+                  status = 1;
+                  logger.error(
+                      "Error while storing file in the specified path: $onError");
+                });
+              } else {
+                status = 1;
+                logger.error("Path to store the file does not exist !");
+              }
+            }
           }, onError: (error) {
             status = 1;
             logger.error("Error while downloading file: $error");
@@ -385,9 +411,10 @@ class Deployment {
   }
 
   /// Store the specified file and execute it.
-  Future<int> launchFile(
-      String os, int package, String actionCommand, String filePath) async {
-    int storeStatus = await storeFile(package, filePath, actionCommand);
+  Future<int> launchFile(String os, int package, String actionCommand,
+      String filePath, String actionType) async {
+    int storeStatus =
+        await storeFile(package, filePath, actionCommand, actionType);
     int execStatus = await executeCommand(os, package, actionCommand);
     int status = 0;
     if (storeStatus != 0 || execStatus != 0) {
