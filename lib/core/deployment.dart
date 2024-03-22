@@ -17,6 +17,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:archive/archive_io.dart';
 import 'package:sprintf/sprintf.dart';
 
 import 'package:ocs_agent/core/config.dart';
@@ -337,12 +338,12 @@ class Deployment {
       String localPath = config.getInventoryConfig("data_dir") +
           "/deployment/" +
           package.toString() +
-          "/" +
-          filePath.split("/").last;
-      var fileSaveLocal = new File(localPath);
+          "/";
+      var fileSaveLocal = new File(localPath + filePath.split("/").last);
 
-      String remotePath = pathToStore + "/" + filePath.split("/").last;
-      var fileSaveRemote = new File(remotePath);
+      String remotePath = pathToStore;
+      var fileSaveRemote =
+          new File(remotePath + "/" + filePath.split("/").last);
 
       client.getUrl(Uri.parse(filePath)).then((HttpClientRequest request) {
         return request.close();
@@ -352,29 +353,80 @@ class Deployment {
           response.listen((data) {
             _downloadData.addAll(data);
           }, onDone: () async {
-            await fileSaveLocal
-                .writeAsBytes(_downloadData)
-                .then((_) => logger
-                    .verbose("File stored in the agent directory '$localPath'"))
-                .catchError((onError) {
-              status = 1;
-              logger.error(
-                  "Error while storing file in the agent directory: $onError");
-            });
+            if (filePath.endsWith('.zip')) {
+              // Decompress the zip archive
+              var archive = await ZipDecoder().decodeBytes(_downloadData);
+              await extractArchiveToDiskAsync(archive, localPath).then((value) {
+                logger
+                    .verbose("File stored in the agent directory '$localPath'");
+                // Determine the local path to th meta data directory
+                String metaDataPath = Directory.current
+                        .toString()
+                        .substring(11, null)
+                        .replaceAll("'", "") +
+                    "/" +
+                    config.getInventoryConfig("data_dir") +
+                    "/deployment/" +
+                    package.toString() +
+                    "/__MACOSX";
+                // Delete the __MACOSX directory if it exists
+                var metaDataDirectory = Directory(metaDataPath);
+                if (metaDataDirectory.existsSync()) {
+                  metaDataDirectory.delete(recursive: true);
+                }
+              }).catchError((onError) {
+                status = 1;
+                logger.error(
+                    "Error while storing file in the agent directory: $onError");
+              });
+            } else {
+              // Save the file directly if not zipped
+              await fileSaveLocal
+                  .writeAsBytes(_downloadData)
+                  .then((_) => logger.verbose(
+                      "File stored in the agent directory '$localPath'"))
+                  .catchError((onError) {
+                status = 1;
+                logger.error(
+                    "Error while storing file in the agent directory: $onError");
+              });
+            }
 
             // Store the file in the specified path only if the action type is STORE
             if (actionType == "STORE") {
-              var pathToStoreDirectory = Directory(pathToStore);
-              if (pathToStoreDirectory.existsSync()) {
-                await fileSaveRemote
-                    .writeAsBytes(_downloadData)
-                    .then((value) => logger.verbose(
-                        "File stored in the specified path '$remotePath'"))
-                    .catchError((onError) {
-                  status = 1;
-                  logger.error(
-                      "Error while storing file in the specified path: $onError");
-                });
+              var DirectoryToStore = Directory(pathToStore);
+              if (DirectoryToStore.existsSync()) {
+                if (filePath.endsWith('.zip')) {
+                  // Decompress the zip archive
+                    var archive = await ZipDecoder().decodeBytes(_downloadData);
+                    await extractArchiveToDiskAsync(archive, remotePath)
+                      .then((value) {
+                    logger.verbose(
+                        "File stored in the speccified path '$remotePath'");
+                    // Determine the local path to th meta data directory
+                    String metaDataPath = remotePath + "/__MACOSX";
+                    // Delete the __MACOSX directory if it exists
+                    var metaDataDirectory = Directory(metaDataPath);
+                    if (metaDataDirectory.existsSync()) {
+                      metaDataDirectory.delete(recursive: true);
+                    }
+                  }).catchError((onError) {
+                    status = 1;
+                    logger.error(
+                        "Error while storing file in the specified path: $onError");
+                  });
+                } else {
+                  // Save the file directly if not zipped
+                  await fileSaveRemote
+                      .writeAsBytes(_downloadData)
+                      .then((value) => logger.verbose(
+                          "File stored in the specified path '$remotePath'"))
+                      .catchError((onError) {
+                    status = 1;
+                    logger.error(
+                        "Error while storing file in the specified path: $onError");
+                  });
+                }
               } else {
                 status = 1;
                 logger.error("Path to store the file does not exist !");
