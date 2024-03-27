@@ -391,12 +391,24 @@ class Deployment {
     });
   }
 
-  /// This function downloads and stores the file in the agent directory and in the specified path.
-  /// package: The package ID
-  /// filePath: The file URL to download
-  /// pathToStore: The path to store the file
-  /// actionType: The action type (EXECUTE or STORE)
-  /// return: 0 if the file is downloaded and stored successfully, 1 otherwise
+  /// Downloads a file from a given URL and stores it locally.
+  ///
+  /// This function downloads a file from a specified URL and stores it locally
+  /// in the agent's directory. Optionally, it can also store the file in a
+  /// specified remote directory if the action type is "STORE". It supports
+  /// downloading and storing both regular files and compressed files (tar and zip).
+  ///
+  /// Parameters:
+  ///   - package: The package identifier.
+  ///   - filePath: The URL of the file to download.
+  ///   - pathToStore: The path where the file will be stored locally.
+  ///   - actionType: The action type, either "STORE" or another value.
+  ///   - os: The operating system of the agent.
+  ///
+  /// Returns:
+  ///   An integer status code indicating the success or failure of the operation.
+  ///   - 0: Success
+  ///   - 1: Failure
   Future<int> storeFile(int package, String filePath, String pathToStore,
       String actionType, String os) async {
     logger.info("Downloading and storing file...");
