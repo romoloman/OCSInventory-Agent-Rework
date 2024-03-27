@@ -434,44 +434,64 @@ class Deployment {
           response.listen((data) {
             _downloadData.addAll(data);
           }, onDone: () async {
-            if (filePath.endsWith('.zip')) {
-              // Decompress the zip archive
-              var archive = await ZipDecoder().decodeBytes(_downloadData);
-              await extractArchiveToDiskAsync(archive, localPath).then((value) {
-                logger
-                    .verbose("File stored in the agent directory '$localPath'");
-                // Determine the local path to th meta data directory
-                String metaDataPath = Directory.current
-                        .toString()
-                        .substring(11, null)
-                        .replaceAll("'", "") +
-                    "/" +
-                    config.getInventoryConfig("data_dir") +
-                    "/deployment/" +
-                    package.toString() +
-                    "/__MACOSX";
-                // Delete the __MACOSX directory if it exists
-                var metaDataDirectory = Directory(metaDataPath);
-                if (metaDataDirectory.existsSync()) {
-                  metaDataDirectory.delete(recursive: true);
-                }
-              }).catchError((onError) {
-                status = 1;
-                logger.error(
-                    "Error while storing file in the agent directory: $onError");
-              });
-            } else {
-              // Save the file directly if not zipped
-              await fileSaveLocal
-                  .writeAsBytes(_downloadData)
-                  .then((_) => logger.verbose(
-                      "File stored in the agent directory '$localPath'"))
-                  .catchError((onError) {
-                status = 1;
-                logger.error(
-                    "Error while storing file in the agent directory: $onError");
-              });
-            }
+            // Save the file directly if not zipped
+            await fileSaveLocal.writeAsBytes(_downloadData).then((_) async {
+              logger
+                  .verbose("File stored in the agent directory: '$localPath'");
+
+              switch (os) {
+                case "LIN":
+                  if ((filePath.endsWith('.tar') ||
+                          filePath.endsWith('.tar.gz')) &&
+                      status == 0) {
+                    // Decompress the tar archive
+                    await extractTarFile(localPath + filePath.split("/").last,
+                        localPath, fileSaveLocal, status);
+                  }
+                  if (filePath.endsWith('.zip')) {
+                    logger.error(
+                        "Extract zip file is not supported for Linux OS: $filePath");
+                  }
+                  break;
+
+                case "MAC":
+                  if ((filePath.endsWith('.tar') ||
+                          filePath.endsWith('.tar.gz')) &&
+                      status == 0) {
+                    // Decompress the tar archive
+                    await extractTarFile(localPath + filePath.split("/").last,
+                        localPath, fileSaveLocal, status);
+                  }
+                  if (filePath.endsWith('.zip')) {
+                    logger.error(
+                        "Extract zip file is not supported for Mac OS: $filePath");
+                  }
+                  break;
+
+                case "WIN":
+                  if ((filePath.endsWith('.zip')) && status == 0) {
+                    // Determine the local path to th meta data directory
+                    String metaDataPath = localPath + "/__MACOSX";
+
+                    // Decompress the zip archive
+                    await extractZipFile(_downloadData, localPath,
+                        fileSaveLocal, metaDataPath, status);
+                  }
+                  if (filePath.endsWith('.tar') ||
+                      filePath.endsWith('.tar.gz')) {
+                    logger.error(
+                        "Extract tar file is not supported for Windows OS: $filePath");
+                  }
+                  break;
+
+                default:
+                  logger.error("OS does not match any of the supported OSs!");
+              }
+            }).catchError((onError) {
+              status = 1;
+              logger.error(
+                  "Error while storing file in the agent directory: $onError");
+            });
 
             // Store the file in the specified path only if the action type is STORE
             if (actionType == "STORE") {
