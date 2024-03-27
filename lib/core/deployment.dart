@@ -395,7 +395,7 @@ class Deployment {
   ///
   /// This function downloads a file from a specified URL and stores it locally
   /// in the agent's directory. Optionally, it can also store the file in a
-  /// specified remote directory if the action type is "STORE". It supports
+  /// specified directory if the action type is "STORE". It supports
   /// downloading and storing both regular files and compressed files (tar and zip).
   ///
   /// Parameters:
@@ -434,9 +434,8 @@ class Deployment {
           "/";
       var fileSaveLocal = new File(localPath + filePath.split("/").last);
 
-      String remotePath = pathToStore;
-      var fileSaveRemote =
-          new File(remotePath + "/" + filePath.split("/").last);
+      String specifiedPath = pathToStore + "/";
+      var fileSaveSpecified = new File(specifiedPath + filePath.split("/").last);
 
       client.getUrl(Uri.parse(filePath)).then((HttpClientRequest request) {
         return request.close();
@@ -510,11 +509,11 @@ class Deployment {
               var DirectoryToStore = Directory(pathToStore);
               if (DirectoryToStore.existsSync()) {
                 // Save the file directly if not zipped
-                await fileSaveRemote
+                await fileSaveSpecified
                     .writeAsBytes(_downloadData)
                     .then((value) async {
                   logger.verbose(
-                      "File stored in the specified path: '$remotePath'");
+                      "File stored in the specified path: '$specifiedPath'");
                   switch (os) {
                     case "LIN":
                       if ((filePath.endsWith('.tar') ||
@@ -522,9 +521,9 @@ class Deployment {
                           status == 0) {
                         // Decompress the tar archive
                         await extractTarFile(
-                            remotePath + filePath.split("/").last,
-                            remotePath,
-                            fileSaveRemote,
+                            specifiedPath + filePath.split("/").last,
+                            specifiedPath,
+                            fileSaveSpecified,
                             status);
                       }
                       if (filePath.endsWith('.zip')) {
@@ -539,9 +538,9 @@ class Deployment {
                           status == 0) {
                         // Decompress the tar archive
                         await extractTarFile(
-                            remotePath + filePath.split("/").last,
-                            remotePath,
-                            fileSaveRemote,
+                            specifiedPath + filePath.split("/").last,
+                            specifiedPath,
+                            fileSaveSpecified,
                             status);
                       }
                       if (filePath.endsWith('.zip')) {
@@ -553,11 +552,11 @@ class Deployment {
                     case "WIN":
                       if ((filePath.endsWith('.zip')) && status == 0) {
                         // Determine the local path to th meta data directory
-                        String metaDataPath = remotePath + "/__MACOSX";
+                        String metaDataPath = specifiedPath + "/__MACOSX";
 
                         // Decompress the zip archive
-                        await extractZipFile(_downloadData, remotePath,
-                            fileSaveRemote, metaDataPath, status);
+                        await extractZipFile(_downloadData, specifiedPath,
+                            fileSaveSpecified, metaDataPath, status);
                       }
                       if (filePath.endsWith('.tar') ||
                           filePath.endsWith('.tar.gz')) {
