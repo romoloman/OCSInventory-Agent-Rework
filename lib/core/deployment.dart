@@ -173,7 +173,7 @@ class Deployment {
               break;
             case "STORE":
               status = await storeFile(action["package"], action["file"],
-                  action["command"], action["action_type"]);
+                  action["command"], action["action_type"], os);
               break;
             case "LAUNCH":
               status = await launchFile(os, action["package"],
@@ -398,7 +398,7 @@ class Deployment {
   /// actionType: The action type (EXECUTE or STORE)
   /// return: 0 if the file is downloaded and stored successfully, 1 otherwise
   Future<int> storeFile(int package, String filePath, String pathToStore,
-      String actionType) async {
+      String actionType, String os) async {
     logger.info("Downloading and storing file...");
 
     // Get the package directory or create one if not exist
@@ -547,7 +547,7 @@ class Deployment {
   Future<int> launchFile(String os, int package, String actionCommand,
       String filePath, String actionType) async {
     int storeStatus =
-        await storeFile(package, filePath, actionCommand, actionType);
+        await storeFile(package, filePath, actionCommand, actionType, os);
     int execStatus = await executeCommand(os, package, actionCommand);
     int status = 0;
     if (storeStatus != 0 || execStatus != 0) {
