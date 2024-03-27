@@ -310,6 +310,48 @@ class Deployment {
     return status;
   }
 
+  /// Extracts a zip file to the specified path and performs cleanup.
+  ///
+  /// This function decompresses the provided zip archive data and extracts its
+  /// contents to the specified path. After extraction, it deletes the metadata
+  /// directory if it exists.
+  ///
+  /// Parameters:
+  ///   - _downloadData: The byte data of the zip archive.
+  ///   - extractedPath: The path where the contents of the zip archive will be extracted.
+  ///   - metaDataPath: The path to the metadata directory to be deleted.
+  ///   - status: The status indicator. If an error occurs during extraction,
+  ///             status will be set to 1.
+  ///
+  /// Returns:
+  ///   A Future<void> representing the completion of the extraction process.
+  ///
+  /// Throws:
+  ///   Any error that occurs during the extraction process.
+  Future<void> extractZipFile(List<int> _downloadData, String extractedPath,
+      File savedFile, String metaDataPath, int status) async {
+    // Decompress the zip archive
+    var archive = await ZipDecoder().decodeBytes(_downloadData);
+    await extractArchiveToDiskAsync(archive, extractedPath).then((value) {
+      // Log verbose message indicating successful extraction
+      logger.verbose("File extracted in the path: '$extractedPath'");
+
+      // Delete the __MACOSX directory if it exists
+      var metaDataDirectory = Directory(metaDataPath);
+      if (metaDataDirectory.existsSync()) {
+        metaDataDirectory.delete(recursive: true);
+      }
+      // Delete the archive file after extracting it
+      if (savedFile.existsSync()) {
+        savedFile.deleteSync();
+      }
+    }).catchError((onError) {
+      // Handle extraction error
+      status = 1;
+      logger.error("Error while extracting file in the path: $onError");
+    });
+  }
+
   /// This function downloads and stores the file in the agent directory and in the specified path.
   /// package: The package ID
   /// filePath: The file URL to download
