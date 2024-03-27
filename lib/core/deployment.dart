@@ -352,6 +352,45 @@ class Deployment {
     });
   }
 
+  /// Extracts a tar file to the specified path and deletes the archive file.
+  ///
+  /// This function extracts the contents of a tar archive file to the specified
+  /// path using the `tar` command. After extraction, it deletes the archive file.
+  ///
+  /// Parameters:
+  ///   - filePath: The path to the tar archive file to be extracted.
+  ///   - extractedPath: The path where the contents of the tar archive will be extracted.
+  ///   - savedFile: The file object representing the tar archive file.
+  ///   - status: The status indicator. If an error occurs during extraction,
+  ///             status will be set to 1.
+  ///
+  /// Returns:
+  ///   A Future<void> representing the completion of the extraction process.
+  ///
+  /// Throws:
+  ///   Any error that occurs during the extraction process.
+  Future<void> extractTarFile(
+      String filePath, String extractedPath, File savedFile, int status) async {
+    var command = LinuxCommand();
+
+    // Execute the tar command to extract the archive file
+    await command
+        .commandShell("tar -xvf $filePath -C $extractedPath", true)
+        .then((value) {
+      // Log verbose message indicating successful extraction
+      logger.verbose("File extracted in the path: '$extractedPath'");
+
+      // Delete the archive file after extracting it
+      if (savedFile.existsSync()) {
+        savedFile.deleteSync();
+      }
+    }).catchError((onError) {
+      // Handle extraction error
+      logger.error("Error while extracting file in the path: $onError");
+      status = 1;
+    });
+  }
+
   /// This function downloads and stores the file in the agent directory and in the specified path.
   /// package: The package ID
   /// filePath: The file URL to download
@@ -440,8 +479,8 @@ class Deployment {
               if (DirectoryToStore.existsSync()) {
                 if (filePath.endsWith('.zip')) {
                   // Decompress the zip archive
-                    var archive = await ZipDecoder().decodeBytes(_downloadData);
-                    await extractArchiveToDiskAsync(archive, remotePath)
+                  var archive = await ZipDecoder().decodeBytes(_downloadData);
+                  await extractArchiveToDiskAsync(archive, remotePath)
                       .then((value) {
                     logger.verbose(
                         "File stored in the speccified path '$remotePath'");
