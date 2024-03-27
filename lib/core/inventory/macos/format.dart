@@ -190,8 +190,12 @@ class MacOSFormat {
         for (var field in fields) {
           String grep = field['retrival_value'];
           if (line.contains(grep)) {
-            result.putIfAbsent(field['name'],
-                () => line.substring(line.indexOf(grep) + grep.length + 1));
+            result.putIfAbsent(
+                field['name'],
+                () => line
+                    .substring(line.indexOf(grep) + grep.length + 1)
+                    .toString()
+                    .trimLeft());
           }
         }
       }
