@@ -497,37 +497,72 @@ class Deployment {
             if (actionType == "STORE") {
               var DirectoryToStore = Directory(pathToStore);
               if (DirectoryToStore.existsSync()) {
-                if (filePath.endsWith('.zip')) {
-                  // Decompress the zip archive
-                  var archive = await ZipDecoder().decodeBytes(_downloadData);
-                  await extractArchiveToDiskAsync(archive, remotePath)
-                      .then((value) {
-                    logger.verbose(
-                        "File stored in the speccified path '$remotePath'");
-                    // Determine the local path to th meta data directory
-                    String metaDataPath = remotePath + "/__MACOSX";
-                    // Delete the __MACOSX directory if it exists
-                    var metaDataDirectory = Directory(metaDataPath);
-                    if (metaDataDirectory.existsSync()) {
-                      metaDataDirectory.delete(recursive: true);
-                    }
-                  }).catchError((onError) {
-                    status = 1;
-                    logger.error(
-                        "Error while storing file in the specified path: $onError");
-                  });
-                } else {
-                  // Save the file directly if not zipped
-                  await fileSaveRemote
-                      .writeAsBytes(_downloadData)
-                      .then((value) => logger.verbose(
-                          "File stored in the specified path '$remotePath'"))
-                      .catchError((onError) {
-                    status = 1;
-                    logger.error(
-                        "Error while storing file in the specified path: $onError");
-                  });
-                }
+                // Save the file directly if not zipped
+                await fileSaveRemote
+                    .writeAsBytes(_downloadData)
+                    .then((value) async {
+                  logger.verbose(
+                      "File stored in the specified path: '$remotePath'");
+                  switch (os) {
+                    case "LIN":
+                      if ((filePath.endsWith('.tar') ||
+                              filePath.endsWith('.tar.gz')) &&
+                          status == 0) {
+                        // Decompress the tar archive
+                        await extractTarFile(
+                            remotePath + filePath.split("/").last,
+                            remotePath,
+                            fileSaveRemote,
+                            status);
+                      }
+                      if (filePath.endsWith('.zip')) {
+                        logger.error(
+                            "Extract zip file is not supported for Linux OS: $filePath");
+                      }
+                      break;
+
+                    case "MAC":
+                      if ((filePath.endsWith('.tar') ||
+                              filePath.endsWith('.tar.gz')) &&
+                          status == 0) {
+                        // Decompress the tar archive
+                        await extractTarFile(
+                            remotePath + filePath.split("/").last,
+                            remotePath,
+                            fileSaveRemote,
+                            status);
+                      }
+                      if (filePath.endsWith('.zip')) {
+                        logger.error(
+                            "Extract zip file is not supported for Mac OS: $filePath");
+                      }
+                      break;
+
+                    case "WIN":
+                      if ((filePath.endsWith('.zip')) && status == 0) {
+                        // Determine the local path to th meta data directory
+                        String metaDataPath = remotePath + "/__MACOSX";
+
+                        // Decompress the zip archive
+                        await extractZipFile(_downloadData, remotePath,
+                            fileSaveRemote, metaDataPath, status);
+                      }
+                      if (filePath.endsWith('.tar') ||
+                          filePath.endsWith('.tar.gz')) {
+                        logger.error(
+                            "Extract tar file is not supported for Windows OS: $filePath");
+                      }
+                      break;
+
+                    default:
+                      logger
+                          .error("OS does not match any of the supported OSs!");
+                  }
+                }).catchError((onError) {
+                  status = 1;
+                  logger.error(
+                      "Error while storing file in the specified path: $onError");
+                });
               } else {
                 status = 1;
                 logger.error("Path to store the file does not exist !");
