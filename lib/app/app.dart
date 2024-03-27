@@ -18,7 +18,6 @@ import 'dart:io' show Platform;
 
 import 'package:sprintf/sprintf.dart';
 
-import 'package:ocs_agent/core/deployment.dart';
 import 'package:ocs_agent/core/inventory.dart';
 import 'package:ocs_agent/core/log.dart';
 
@@ -30,7 +29,6 @@ import 'package:ocs_agent/core/inventory/windows/baseWindows.dart'
 /// In this main section we send the [body] to the asset/bases endpoint
 Future<void> main(List<String> args) async {
   // Initiate modules
-  Deployment deployment = new Deployment();
   Inventory inventory = new Inventory();
   Logger logger = new Logger();
 
