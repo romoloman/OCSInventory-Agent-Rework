@@ -42,6 +42,7 @@ class Deployment {
 
   late List<dynamic> results;
   late Map<int, dynamic> actions;
+  late List<dynamic> sortedActions;
 
   /// Constructor.
   Deployment() {
@@ -55,6 +56,7 @@ class Deployment {
     // Other variable init
     url = config.getInventoryConfig("url");
     actions = Map();
+    sortedActions = [];
   }
 
   /// Check if there is packages to download.
@@ -111,8 +113,12 @@ class Deployment {
         logger.verbose(response["message"]);
 
         if (response["status_code"] == 200) {
-          // Add actions list of each package to the general actions list
-          actions.putIfAbsent(element["package"], () => response["body"]);
+
+          // Sort the actions by priority
+          sortedActions = jsonDecode(response["body"]);
+          sortedActions.sort((a, b) => a["priority"].compareTo(b["priority"]));
+          // Add sorted actions list of each package to the general actions list
+          actions.putIfAbsent(element["package"], () => sortedActions);
 
           logger.serverLogger(
               assetID,
@@ -158,7 +164,7 @@ class Deployment {
         if (success == true) {
           break;
         }
-        for (var action in jsonDecode(element)) {
+        for (var action in element) {
           results.forEach((resultElement) {
             if (resultElement["package"] == action["package"]) {
               id = resultElement["id"];
@@ -435,20 +441,21 @@ class Deployment {
       var fileSaveLocal = new File(localPath + filePath.split("/").last);
 
       String specifiedPath = pathToStore + "/";
-      var fileSaveSpecified = new File(specifiedPath + filePath.split("/").last);
+      var fileSaveSpecified =
+          new File(specifiedPath + filePath.split("/").last);
 
       client.getUrl(Uri.parse(filePath)).then((HttpClientRequest request) {
         return request.close();
       }).then((HttpClientResponse response) {
         if (response.statusCode == HttpStatus.ok) {
-          logger.verbose("File downloaded successfully !");
+          logger.verbose("Downloaded file $filePath");
           response.listen((data) {
             _downloadData.addAll(data);
           }, onDone: () async {
             // Save the file directly if not zipped
             await fileSaveLocal.writeAsBytes(_downloadData).then((_) async {
-              logger
-                  .verbose("File stored in the agent directory: '$localPath'");
+              logger.verbose(
+                  "$filePath is stored in the agent directory: '$localPath'");
 
               switch (os) {
                 case "LIN":
@@ -513,7 +520,7 @@ class Deployment {
                     .writeAsBytes(_downloadData)
                     .then((value) async {
                   logger.verbose(
-                      "File stored in the specified path: '$specifiedPath'");
+                      "$filePath is stored in the specified path: '$specifiedPath'");
                   switch (os) {
                     case "LIN":
                       if ((filePath.endsWith('.tar') ||
