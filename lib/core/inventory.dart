@@ -208,21 +208,10 @@ class Inventory {
 
   /// Check if config file exists and save it if not
   Future<void> checkAndApplyConfig() async {
+    logger.info("Getting local config...");
     // Get data from core.json file
-    List<dynamic> confFile = config.getCoreConfigs();
+    List<dynamic> localConfig = config.getCoreConfigs();
 
-    logger.info("Checking local config...");
-    // If the config file is empty, we get an existing config from the API and save it locally
-    if (confFile.isEmpty) {
-      logger.info("local config not found ! Creating one...");
-      await getConfig();
-    } else {
-      logger.info("Local config found!");
-    }
-  }
-
-  /// Save the server configs in config/core.json
-  Future<void> getConfig() async {
     logger.info("Getting remote config...");
     // Try to get an existing config from the server
     // If a config is retrieved, it will be saved to core.json file
@@ -230,16 +219,22 @@ class Inventory {
     try {
       // API call
       var response = await httpUtils.get("API: getConfig method",
-          Uri.parse(url + "/config/"), httpUtils.getHeader(config));
+          Uri.parse(url + "/asset/config/"), httpUtils.getHeader(config));
       logger.verbose(response["message"]);
       if (response["status_code"] == 200) {
         logger.info("Remote config found!");
         // save the existing config locally
-        List<dynamic> config = json.decode(response["body"]);
+        List<dynamic> remoteConfig = json.decode(response["body"]);
         var encoder = new JsonEncoder.withIndent("\t");
-        this.config.setCore(encoder.convert(config));
-        logger.info("Remote config saved locally!");
-        logger.serverLogger(assetID, 9, "Remote config saved locally!");
+        if (localConfig.toString() != remoteConfig.toString()) {
+          this.config.setCore(encoder.convert(remoteConfig));
+          logger.info("Remote config saved locally!");
+          logger.serverLogger(assetID, 9, "Remote config saved locally!");
+        } else {
+          logger.info("Any changes applied on local config.");
+          logger.serverLogger(
+              assetID, 9, "Remote config is the same as locally!");
+        }
       } else {
         logger.error("Remote config not found!");
         logger.serverLogger(assetID, 10, "Remote config not found!");
