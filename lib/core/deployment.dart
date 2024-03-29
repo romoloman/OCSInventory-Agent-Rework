@@ -113,7 +113,6 @@ class Deployment {
         logger.verbose(response["message"]);
 
         if (response["status_code"] == 200) {
-
           // Sort the actions by priority
           sortedActions = jsonDecode(response["body"]);
           sortedActions.sort((a, b) => a["priority"].compareTo(b["priority"]));
@@ -178,10 +177,12 @@ class Deployment {
                   os, action["package"], action["command"]);
               break;
             case "STORE":
+              logger.info("Downloading and storing file...");
               status = await storeFile(action["package"], action["file"],
                   action["command"], action["action_type"], os);
               break;
             case "LAUNCH":
+              logger.info("Launching file...");
               status = await launchFile(os, action["package"],
                   action["command"], action["file"], action["action_type"]);
               break;
@@ -417,8 +418,6 @@ class Deployment {
   ///   - 1: Failure
   Future<int> storeFile(int package, String filePath, String pathToStore,
       String actionType, String os) async {
-    logger.info("Downloading and storing file...");
-
     // Get the package directory or create one if not exist
     var packageDirectory = Directory(config.getInventoryConfig("data_dir") +
         "/deployment/" +
@@ -427,186 +426,196 @@ class Deployment {
       packageDirectory.createSync(recursive: true);
     }
 
-    int status = 0;
-    HttpClient client = HttpClient();
-    // Try to download and store the file in the package folder
-    try {
-      List<int> _downloadData = [];
+    late int status;
+    late HttpClient client;
+    int retryCounter = 0;
+    do {
+      // Try to download and store the file in the package folder
+      try {
+        List<int> _downloadData = [];
+        client = HttpClient();
+        status = 0;
 
-      // Store the file in the agent directory
-      String localPath = config.getInventoryConfig("data_dir") +
-          "/deployment/" +
-          package.toString() +
-          "/";
-      var fileSaveLocal = new File(localPath + filePath.split("/").last);
+        // Store the file in the agent directory
+        String localPath = config.getInventoryConfig("data_dir") +
+            "/deployment/" +
+            package.toString() +
+            "/";
+        var fileSaveLocal = new File(localPath + filePath.split("/").last);
 
-      String specifiedPath = pathToStore + "/";
-      var fileSaveSpecified =
-          new File(specifiedPath + filePath.split("/").last);
+        String specifiedPath = pathToStore + "/";
+        var fileSaveSpecified =
+            new File(specifiedPath + filePath.split("/").last);
 
-      client.getUrl(Uri.parse(filePath)).then((HttpClientRequest request) {
-        return request.close();
-      }).then((HttpClientResponse response) {
-        if (response.statusCode == HttpStatus.ok) {
-          logger.verbose("Downloaded file $filePath");
-          response.listen((data) {
-            _downloadData.addAll(data);
-          }, onDone: () async {
-            // Save the file directly if not zipped
-            await fileSaveLocal.writeAsBytes(_downloadData).then((_) async {
-              logger.verbose(
-                  "$filePath is stored in the agent directory: '$localPath'");
+        await client
+            .getUrl(Uri.parse(filePath))
+            .then((HttpClientRequest request) {
+          return request.close();
+        }).then((HttpClientResponse response) {
+          if (response.statusCode == HttpStatus.ok) {
+            logger.verbose("Downloaded file $filePath");
+            response.listen((data) {
+              _downloadData.addAll(data);
+            }, onDone: () async {
+              // Save the file directly if not zipped
+              await fileSaveLocal.writeAsBytes(_downloadData).then((_) async {
+                logger.verbose(
+                    "$filePath is stored in the agent directory: '$localPath'");
 
-              switch (os) {
-                case "LIN":
-                  if ((filePath.endsWith('.tar') ||
-                          filePath.endsWith('.tar.gz')) &&
-                      status == 0) {
-                    // Decompress the tar archive
-                    await extractTarFile(localPath + filePath.split("/").last,
-                        localPath, fileSaveLocal, status);
-                  }
-                  if (filePath.endsWith('.zip')) {
-                    logger.error(
-                        "Extract zip file is not supported for Linux OS: $filePath");
-                  }
-                  break;
+                switch (os) {
+                  case "LIN":
+                    if ((filePath.endsWith('.tar') ||
+                            filePath.endsWith('.tar.gz')) &&
+                        status == 0) {
+                      // Decompress the tar archive
+                      await extractTarFile(localPath + filePath.split("/").last,
+                          localPath, fileSaveLocal, status);
+                    }
+                    if (filePath.endsWith('.zip')) {
+                      logger.error(
+                          "Extract zip file is not supported for Linux OS: $filePath");
+                    }
+                    break;
 
-                case "MAC":
-                  if ((filePath.endsWith('.tar') ||
-                          filePath.endsWith('.tar.gz')) &&
-                      status == 0) {
-                    // Decompress the tar archive
-                    await extractTarFile(localPath + filePath.split("/").last,
-                        localPath, fileSaveLocal, status);
-                  }
-                  if (filePath.endsWith('.zip')) {
-                    logger.error(
-                        "Extract zip file is not supported for Mac OS: $filePath");
-                  }
-                  break;
+                  case "MAC":
+                    if ((filePath.endsWith('.tar') ||
+                            filePath.endsWith('.tar.gz')) &&
+                        status == 0) {
+                      // Decompress the tar archive
+                      await extractTarFile(localPath + filePath.split("/").last,
+                          localPath, fileSaveLocal, status);
+                    }
+                    if (filePath.endsWith('.zip')) {
+                      logger.error(
+                          "Extract zip file is not supported for Mac OS: $filePath");
+                    }
+                    break;
 
-                case "WIN":
-                  if ((filePath.endsWith('.zip')) && status == 0) {
-                    // Determine the local path to th meta data directory
-                    String metaDataPath = localPath + "/__MACOSX";
+                  case "WIN":
+                    if ((filePath.endsWith('.zip')) && status == 0) {
+                      // Determine the local path to th meta data directory
+                      String metaDataPath = localPath + "/__MACOSX";
 
-                    // Decompress the zip archive
-                    await extractZipFile(_downloadData, localPath,
-                        fileSaveLocal, metaDataPath, status);
-                  }
-                  if (filePath.endsWith('.tar') ||
-                      filePath.endsWith('.tar.gz')) {
-                    logger.error(
-                        "Extract tar file is not supported for Windows OS: $filePath");
-                  }
-                  break;
+                      // Decompress the zip archive
+                      await extractZipFile(_downloadData, localPath,
+                          fileSaveLocal, metaDataPath, status);
+                    }
+                    if (filePath.endsWith('.tar') ||
+                        filePath.endsWith('.tar.gz')) {
+                      logger.error(
+                          "Extract tar file is not supported for Windows OS: $filePath");
+                    }
+                    break;
 
-                default:
-                  logger.error("OS does not match any of the supported OSs!");
-              }
-            }).catchError((onError) {
-              status = 1;
-              logger.error(
-                  "Error while storing file in the agent directory: $onError");
-            });
-
-            // Store the file in the specified path only if the action type is STORE
-            if (actionType == "STORE") {
-              var DirectoryToStore = Directory(pathToStore);
-              if (DirectoryToStore.existsSync()) {
-                // Save the file directly if not zipped
-                await fileSaveSpecified
-                    .writeAsBytes(_downloadData)
-                    .then((value) async {
-                  logger.verbose(
-                      "$filePath is stored in the specified path: '$specifiedPath'");
-                  switch (os) {
-                    case "LIN":
-                      if ((filePath.endsWith('.tar') ||
-                              filePath.endsWith('.tar.gz')) &&
-                          status == 0) {
-                        // Decompress the tar archive
-                        await extractTarFile(
-                            specifiedPath + filePath.split("/").last,
-                            specifiedPath,
-                            fileSaveSpecified,
-                            status);
-                      }
-                      if (filePath.endsWith('.zip')) {
-                        logger.error(
-                            "Extract zip file is not supported for Linux OS: $filePath");
-                      }
-                      break;
-
-                    case "MAC":
-                      if ((filePath.endsWith('.tar') ||
-                              filePath.endsWith('.tar.gz')) &&
-                          status == 0) {
-                        // Decompress the tar archive
-                        await extractTarFile(
-                            specifiedPath + filePath.split("/").last,
-                            specifiedPath,
-                            fileSaveSpecified,
-                            status);
-                      }
-                      if (filePath.endsWith('.zip')) {
-                        logger.error(
-                            "Extract zip file is not supported for Mac OS: $filePath");
-                      }
-                      break;
-
-                    case "WIN":
-                      if ((filePath.endsWith('.zip')) && status == 0) {
-                        // Determine the local path to th meta data directory
-                        String metaDataPath = specifiedPath + "/__MACOSX";
-
-                        // Decompress the zip archive
-                        await extractZipFile(_downloadData, specifiedPath,
-                            fileSaveSpecified, metaDataPath, status);
-                      }
-                      if (filePath.endsWith('.tar') ||
-                          filePath.endsWith('.tar.gz')) {
-                        logger.error(
-                            "Extract tar file is not supported for Windows OS: $filePath");
-                      }
-                      break;
-
-                    default:
-                      logger
-                          .error("OS does not match any of the supported OSs!");
-                  }
-                }).catchError((onError) {
-                  status = 1;
-                  logger.error(
-                      "Error while storing file in the specified path: $onError");
-                });
-              } else {
+                  default:
+                    logger.error("OS does not match any of the supported OSs!");
+                }
+              }).catchError((onError) {
                 status = 1;
-                logger.error("Path to store the file does not exist !");
+                logger.error(
+                    "Error while storing file in the agent directory: $onError");
+              });
+
+              // Store the file in the specified path only if the action type is STORE
+              if (actionType == "STORE") {
+                var DirectoryToStore = Directory(pathToStore);
+                if (DirectoryToStore.existsSync()) {
+                  // Save the file directly if not zipped
+                  await fileSaveSpecified
+                      .writeAsBytes(_downloadData)
+                      .then((value) async {
+                    logger.verbose(
+                        "$filePath is stored in the specified path: '$specifiedPath'");
+                    switch (os) {
+                      case "LIN":
+                        if ((filePath.endsWith('.tar') ||
+                                filePath.endsWith('.tar.gz')) &&
+                            status == 0) {
+                          // Decompress the tar archive
+                          await extractTarFile(
+                              specifiedPath + filePath.split("/").last,
+                              specifiedPath,
+                              fileSaveSpecified,
+                              status);
+                        }
+                        if (filePath.endsWith('.zip')) {
+                          logger.error(
+                              "Extract zip file is not supported for Linux OS: $filePath");
+                        }
+                        break;
+
+                      case "MAC":
+                        if ((filePath.endsWith('.tar') ||
+                                filePath.endsWith('.tar.gz')) &&
+                            status == 0) {
+                          // Decompress the tar archive
+                          await extractTarFile(
+                              specifiedPath + filePath.split("/").last,
+                              specifiedPath,
+                              fileSaveSpecified,
+                              status);
+                        }
+                        if (filePath.endsWith('.zip')) {
+                          logger.error(
+                              "Extract zip file is not supported for Mac OS: $filePath");
+                        }
+                        break;
+
+                      case "WIN":
+                        if ((filePath.endsWith('.zip')) && status == 0) {
+                          // Determine the local path to th meta data directory
+                          String metaDataPath = specifiedPath + "/__MACOSX";
+
+                          // Decompress the zip archive
+                          await extractZipFile(_downloadData, specifiedPath,
+                              fileSaveSpecified, metaDataPath, status);
+                        }
+                        if (filePath.endsWith('.tar') ||
+                            filePath.endsWith('.tar.gz')) {
+                          logger.error(
+                              "Extract tar file is not supported for Windows OS: $filePath");
+                        }
+                        break;
+
+                      default:
+                        logger.error(
+                            "OS does not match any of the supported OSs!");
+                    }
+                  }).catchError((onError) {
+                    status = 1;
+                    logger.error(
+                        "Error while storing file in the specified path: $onError");
+                  });
+                } else {
+                  status = 1;
+                  logger.error("Path to store the file does not exist !");
+                }
               }
-            }
-          }, onError: (error) {
+            }, onError: (error) {
+              status = 1;
+              logger.error("Error while downloading file: $error");
+            });
+          } else {
             status = 1;
-            logger.error("Error while downloading file: $error");
-          });
-        } else {
-          status = 1;
-          logger.error("Failed to download file: ${response.statusCode}");
-        }
-      }).catchError((error) {
-        status = 1;
-        logger.error("Error during HTTP request: $error");
-      }).timeout(
-          Duration(
-              days: config.getCoreConfig("deployment", "download_timeout")),
-          onTimeout: () {
-        status = 1;
-        logger.error("TIMEOUT: Download time exceeded for file $filePath !");
-      });
-    } finally {
-      client.close();
-    }
+            if (config.getCoreConfig("deployment", "max_retry") >
+                    retryCounter &&
+                config.getCoreConfig("deployment", "auto_retry") == 1) {
+              logger.error(
+                  "Failed to download file ${retryCounter + 1}: ${response.reasonPhrase} ${filePath}");
+            } else {
+              logger.error(
+                  "Failed to download file: ${response.reasonPhrase} ${filePath}");
+            }
+            return response.drain();
+          }
+        });
+      } finally {
+        client.close();
+      }
+      retryCounter++;
+    } while (status == 1 &&
+        config.getCoreConfig("deployment", "max_retry") > retryCounter &&
+        config.getCoreConfig("deployment", "auto_retry") == 1);
 
     if (status == 0) {
       logger.info("File downloaded and stored!");
