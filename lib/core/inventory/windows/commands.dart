@@ -17,8 +17,12 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:ocs_agent/core/log.dart';
+
 /// Class for execute command on Windows.
 class WindowsCommand {
+  Logger logger = Logger();
+
   /// Execute [commandLine] to cmd.
   Future<String> commandCmd(String commandLine, bool normalization) async {
     List<String> args = commandLine.split(" ");
@@ -47,33 +51,40 @@ class WindowsCommand {
     List<String> args = commandLine.split(" ");
     String command = "powershell.exe";
 
-    var process;
+    String processValue = "";
+    var process = await Process.run(command, args, stdoutEncoding: utf8);
     if (normalization) {
-      late String processNormalization;
-      await Process.run(command, args, stdoutEncoding: utf8)
-          .then((value) => processNormalization = value.stdout);
-      process = processNormalization.trim();
+      processValue = await process.stdout.toString().trim();
     } else {
-      await Process.run(command, args, stdoutEncoding: utf8)
-          .then((value) => process = value.stdout);
+      processValue = await process.stdout.toString();
     }
 
-    return process;
+    if (process.exitCode != 0) {
+      logger.error("Executing command $commandLine : $processValue");
+    } else {
+      logger.verbose("Command executed successfully: $commandLine");
+    }
+
+    return processValue;
   }
 
   /// Return [path] file content.
   Future<String> readFile(String path, bool normalization) async {
-    var process;
+    String processValue = "";
+    var process = await Process.run("type", [path]);
     if (normalization) {
-      late String processNormalization;
-      await Process.run("type", [path])
-          .then((value) => processNormalization = value.stdout);
-      process = processNormalization.trim();
+      processValue = await process.stdout.toString().trim();
     } else {
-      await Process.run("type", [path]).then((value) => process = value.stdout);
+      processValue = await process.stdout.toString();
     }
 
-    return process;
+    if (process.exitCode != 0) {
+      logger.error("Executing file $path : $processValue");
+    } else {
+      logger.verbose("File executed successfully: $path");
+    }
+
+    return processValue;
   }
 
   /// Execute or read [command] in terms of [type].

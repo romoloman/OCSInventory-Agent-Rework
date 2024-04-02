@@ -30,7 +30,7 @@ class MacOSCommand {
       args = [];
     }
 
-    var processValue;
+    String processValue = "";
     var process = await Process.run(command, args);
 
     if (normalization) {
