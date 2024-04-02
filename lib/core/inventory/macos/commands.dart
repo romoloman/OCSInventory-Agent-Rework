@@ -41,7 +41,8 @@ class MacOSCommand {
       }
 
       if (process.exitCode != 0) {
-        logger.error("Executing command $commandLine : $processValue");
+        processValue = "";
+        logger.error("Executing command '$commandLine' - ${process.stderr}");
       } else {
         logger.verbose("Command executed successfully: $commandLine");
       }

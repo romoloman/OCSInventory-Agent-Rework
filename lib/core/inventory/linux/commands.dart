@@ -48,7 +48,8 @@ class LinuxCommand {
       }
 
       if (process.exitCode != 0) {
-        logger.error("Executing command $commandLine : $processValue");
+        processValue = "";
+        logger.error("Executing command '$commandLine' - ${process.stderr}");
       } else {
         logger.verbose("Command executed successfully: $commandLine");
       }
@@ -76,7 +77,8 @@ class LinuxCommand {
       }
 
       if (process.exitCode != 0) {
-        logger.error("Executing file $path : $processValue");
+        processValue = "";
+        logger.error("Executing file '$path' - ${process.stderr}");
       } else {
         logger.verbose("File executed successfully: $path");
       }
