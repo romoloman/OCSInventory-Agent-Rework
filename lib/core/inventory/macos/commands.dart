@@ -31,18 +31,26 @@ class MacOSCommand {
     }
 
     String processValue = "";
-    var process = await Process.run(command, args);
+    try {
+      // Attempt to run the command
+      var process = await Process.run(command, args);
+      if (normalization) {
+        processValue = await process.stdout.toString().trim();
+      } else {
+        processValue = await process.stdout.toString();
+      }
 
-    if (normalization) {
-      processValue = await process.stdout.toString().trim();
-    } else {
-      processValue = await process.stdout.toString();
-    }
-
-    if (process.exitCode != 0) {
-      logger.error("Executing command $commandLine : $processValue");
-    } else {
-      logger.verbose("Command executed successfully: $commandLine");
+      if (process.exitCode != 0) {
+        logger.error("Executing command $commandLine : $processValue");
+      } else {
+        logger.verbose("Command executed successfully: $commandLine");
+      }
+    } on ProcessException catch (e) {
+      // Handle the specific error
+      logger.error("This command '$command' could not be found : ${e}");
+    } catch (e) {
+      // Handle other errors
+      logger.error('An error occurred : $e');
     }
 
     return processValue;
