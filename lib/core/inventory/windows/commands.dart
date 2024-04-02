@@ -32,17 +32,30 @@ class WindowsCommand {
       args = [];
     }
 
-    var process;
-    if (normalization) {
-      late String processNormalization;
-      await Process.run(command, args)
-          .then((value) => processNormalization = value.stdout);
-      process = processNormalization.trim();
-    } else {
-      await Process.run(command, args).then((value) => process = value.stdout);
+    String processValue = "";
+    try {
+      // Attempt to run the command
+      var process = await Process.run(command, args);
+      if (normalization) {
+        processValue = await process.stdout.toString().trim();
+      } else {
+        processValue = await process.stdout.toString();
+      }
+
+      if (process.exitCode != 0) {
+        logger.error("Executing command $commandLine : $processValue");
+      } else {
+        logger.verbose("Command executed successfully: $commandLine");
+      }
+    } on ProcessException catch (e) {
+      // Handle the specific error
+      logger.error("This command '$command' could not be found : $e");
+    } catch (e) {
+      // Handle other errors
+      logger.error('An error occurred : $e');
     }
 
-    return process;
+    return processValue;
   }
 
   /// Execute [commandLine] to powershell.
@@ -52,17 +65,26 @@ class WindowsCommand {
     String command = "powershell.exe";
 
     String processValue = "";
-    var process = await Process.run(command, args, stdoutEncoding: utf8);
-    if (normalization) {
-      processValue = await process.stdout.toString().trim();
-    } else {
-      processValue = await process.stdout.toString();
-    }
+    try {
+      // Attempt to run the command
+      var process = await Process.run(command, args, stdoutEncoding: utf8);
+      if (normalization) {
+        processValue = await process.stdout.toString().trim();
+      } else {
+        processValue = await process.stdout.toString();
+      }
 
-    if (process.exitCode != 0) {
-      logger.error("Executing command $commandLine : $processValue");
-    } else {
-      logger.verbose("Command executed successfully: $commandLine");
+      if (process.exitCode != 0) {
+        logger.error("Executing command $commandLine : $processValue");
+      } else {
+        logger.verbose("Command executed successfully: $commandLine");
+      }
+    } on ProcessException catch (e) {
+      // Handle the specific error
+      logger.error("This command '$command' could not be found : $e");
+    } catch (e) {
+      // Handle other errors
+      logger.error('An error occurred : $e');
     }
 
     return processValue;
@@ -71,17 +93,26 @@ class WindowsCommand {
   /// Return [path] file content.
   Future<String> readFile(String path, bool normalization) async {
     String processValue = "";
-    var process = await Process.run("type", [path]);
-    if (normalization) {
-      processValue = await process.stdout.toString().trim();
-    } else {
-      processValue = await process.stdout.toString();
-    }
+    try {
+      // Attempt to run the command
+      var process = await Process.run("type", [path]);
+      if (normalization) {
+        processValue = await process.stdout.toString().trim();
+      } else {
+        processValue = await process.stdout.toString();
+      }
 
-    if (process.exitCode != 0) {
-      logger.error("Executing file $path : $processValue");
-    } else {
-      logger.verbose("File executed successfully: $path");
+      if (process.exitCode != 0) {
+        logger.error("Executing file $path : $processValue");
+      } else {
+        logger.verbose("File executed successfully: $path");
+      }
+    } on ProcessException catch (e) {
+      // Handle the specific error
+      logger.error("This file '$path' could not be found : $e");
+    } catch (e) {
+      // Handle other errors
+      logger.error('An error occurred : $e');
     }
 
     return processValue;
