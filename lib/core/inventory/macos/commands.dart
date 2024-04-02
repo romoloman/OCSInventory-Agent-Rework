@@ -15,9 +15,12 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import 'dart:io';
+import 'package:ocs_agent/core/log.dart';
 
 /// Class for execute command on Mac.
 class MacOSCommand {
+  Logger logger = Logger();
+
   /// Execute [commandLine] to Shell.
   Future<String> commandShell(String commandLine, bool normalization) async {
     List<String> args = commandLine.split(" ");
@@ -27,17 +30,21 @@ class MacOSCommand {
       args = [];
     }
 
-    var process;
-    if (normalization) {
-      late String processNormalization;
-      await Process.run(command, args)
-          .then((value) => processNormalization = value.stdout);
+    var processValue;
+    var process = await Process.run(command, args);
 
-      process = processNormalization.trim();
+    if (normalization) {
+      processValue = await process.stdout.toString().trim();
     } else {
-      await Process.run(command, args).then((value) => process = value.stdout);
+      processValue = await process.stdout.toString();
     }
 
-    return process;
+    if (process.exitCode != 0) {
+      logger.error("Executing command $commandLine : $processValue");
+    } else {
+      logger.verbose("Command executed successfully: $commandLine");
+    }
+
+    return processValue;
   }
 }
