@@ -35,19 +35,29 @@ class LinuxCommand {
     ev.putIfAbsent("LANG", () => "C");
 
     String processValue = "";
-    late ProcessResult process;
-    if (normalization) {
-      process = await Process.run(command, args, environment: ev);
-      processValue = await process.stdout.toString().trim();
-    } else {
-      process = await Process.run(command, args);
-      processValue = await process.stdout.toString();
-    }
 
-    if (process.exitCode != 0) {
-      logger.error("Executing command $commandLine : $processValue");
-    } else {
-      logger.verbose("Command executed successfully: $commandLine");
+    try {
+      // Attempt to run the command
+      late ProcessResult process;
+      if (normalization) {
+        process = await Process.run(command, args, environment: ev);
+        processValue = await process.stdout.toString().trim();
+      } else {
+        process = await Process.run(command, args);
+        processValue = await process.stdout.toString();
+      }
+
+      if (process.exitCode != 0) {
+        logger.error("Executing command $commandLine : $processValue");
+      } else {
+        logger.verbose("Command executed successfully: $commandLine");
+      }
+    } on ProcessException catch (e) {
+      // Handle the specific error
+      logger.error("This command '$command' could not be found : $e");
+    } catch (e) {
+      // Handle other errors
+      logger.error('An error occurred : $e');
     }
 
     return processValue;
@@ -56,17 +66,26 @@ class LinuxCommand {
   /// Return [path] file content.
   Future<String> readFile(String path, bool normalization) async {
     String processValue = "";
-    var process = await Process.run("cat", [path]);
-    if (normalization) {
-      processValue = await process.stdout.toString().trim();
-    } else {
-      processValue = await process.stdout.toString();
-    }
+    try {
+      // Attempt to run the command
+      var process = await Process.run("cat", [path]);
+      if (normalization) {
+        processValue = await process.stdout.toString().trim();
+      } else {
+        processValue = await process.stdout.toString();
+      }
 
-    if (process.exitCode != 0) {
-      logger.error("Executing file $path : $processValue");
-    } else {
-      logger.verbose("File executed successfully: $path");
+      if (process.exitCode != 0) {
+        logger.error("Executing file $path : $processValue");
+      } else {
+        logger.verbose("File executed successfully: $path");
+      }
+    } on ProcessException catch (e) {
+      // Handle the specific error
+      logger.error("This file '$path' could not be found : $e");
+    } catch (e) {
+      // Handle other errors
+      logger.error('An error occurred : $e');
     }
 
     return processValue;
