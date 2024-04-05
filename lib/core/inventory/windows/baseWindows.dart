@@ -87,10 +87,12 @@ dynamic getBody() async {
 Future<String> _getUUID(String name, String macAdress) async {
   var windowsCommand = new command.WindowsCommand();
   JsonUtils jsonUtils = new JsonUtils();
+  Logger logger = new Logger();
   String uuid = await windowsCommand.commandPowershell(
       "(Get-WMIObject -Class Win32_ComputerSystemProduct).UUID", true);
 
   if (uuid == "") {
+    logger.info("UUID not found, generating a new one...");
     uuid = await windowsCommand.commandPowershell(
         "[guid]::NewGuid().ToString()", true);
     String containerFileName = sprintf('%s/%s.json', ["config/", "uuid"]);
@@ -116,7 +118,7 @@ Future<String> _getUUID(String name, String macAdress) async {
       String str = encoder.convert(baseAdded);
       FilesUtils filesUtils = new FilesUtils();
       filesUtils.rewriteFile(containerWindowsFile, str);
-      print(str);
+      logger.info("UUID has been generated and saved in the uuid file.");
     }
   }
   return uuid;

@@ -101,10 +101,12 @@ dynamic getBody() async {
 Future<String> _getUUID(String name, String macAdress) async {
   var linuxCommand = new command.LinuxCommand();
   JsonUtils jsonUtils = new JsonUtils();
-  String uuid =
-      await linuxCommand.commandShell("sudo dmidecode -s system-uuid", true);
-
+  Logger logger = new Logger();
+  // String uuid =
+  //     await linuxCommand.commandShell("sudo dmidecode -s system-uuid", true);
+  String uuid = "";
   if (uuid == "") {
+    logger.info("UUID not found, generating a new one...");
     uuid = await linuxCommand.commandShell("uuidgen", true);
     String containerFileName = sprintf('%s/%s.json', ["config/", "uuid"]);
     File containerLinuxFile = File(containerFileName);
@@ -129,7 +131,7 @@ Future<String> _getUUID(String name, String macAdress) async {
       String str = encoder.convert(baseAdded);
       FilesUtils filesUtils = new FilesUtils();
       filesUtils.rewriteFile(containerLinuxFile, str);
-      print(str);
+      logger.info("UUID has been generated and saved in the uuid file.");
     }
   }
   return uuid;
