@@ -101,9 +101,8 @@ dynamic getBody() async {
 Future<String> _getUUID(String name, String macAdress) async {
   var linuxCommand = new command.LinuxCommand();
   JsonUtils jsonUtils = new JsonUtils();
-  // String uuid =
-  //     await linuxCommand.commandShell("sudo dmidecode -s system-uuid", true);
-  String uuid = "";
+  String uuid =
+      await linuxCommand.commandShell("sudo dmidecode -s system-uuid", true);
 
   if (uuid == "") {
     uuid = await linuxCommand.commandShell("uuidgen", true);
