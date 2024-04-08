@@ -102,9 +102,9 @@ Future<String> _getUUID(String name, String macAdress) async {
   var linuxCommand = new command.LinuxCommand();
   JsonUtils jsonUtils = new JsonUtils();
   Logger logger = new Logger();
-  // String uuid =
-  //     await linuxCommand.commandShell("sudo dmidecode -s system-uuid", true);
-  String uuid = "";
+  String uuid =
+      await linuxCommand.commandShell("sudo dmidecode -s system-uuid", true);
+
   if (uuid == "") {
     logger.info("UUID not found, generating a new one...");
     uuid = await linuxCommand.commandShell("uuidgen", true);
@@ -121,6 +121,7 @@ Future<String> _getUUID(String name, String macAdress) async {
         containerLinux.containsValue(name) &&
         containerLinux.containsValue(macAdress)) {
       uuid = containerLinux["uuid"];
+      logger.info("UUID has been retrieved from the uuid file.");
     } else {
       dynamic baseAdded = {};
       baseAdded["name"] = name;

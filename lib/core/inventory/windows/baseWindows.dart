@@ -108,6 +108,7 @@ Future<String> _getUUID(String name, String macAdress) async {
         containerWindows.containsValue(name) &&
         containerWindows.containsValue(macAdress)) {
       uuid = containerWindows["uuid"];
+      logger.info("UUID has been retrieved from the uuid file.");
     } else {
       dynamic baseAdded = {};
       baseAdded["name"] = name;
