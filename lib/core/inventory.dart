@@ -218,11 +218,26 @@ class Inventory {
       await getConfig();
     } else {
       logger.info("Local config found!");
+      await checkAndApplyConfigUpdate();
     }
   }
 
   /// Save the server configs in config/core.json
   Future<void> getConfig() async {
+    // save the existing config locally
+    List<dynamic> config = await getRemoteConfig();
+    if (config.isEmpty) {
+      logger.error("Can't get remote config!");
+    } else {
+      var encoder = new JsonEncoder.withIndent("\t");
+      this.config.setCore(encoder.convert(config));
+      logger.info("Remote config saved locally!");
+      logger.serverLogger(assetID, 9, "Remote config saved locally!");
+    }
+  }
+
+  /// Get remote config
+  Future<List<dynamic>> getRemoteConfig() async {
     logger.info("Getting remote config...");
     // Try to get an existing config from the server
     // If a config is retrieved, it will be saved to core.json file
@@ -237,15 +252,41 @@ class Inventory {
         // save the existing config locally
         List<dynamic> config = json.decode(response["body"]);
         var encoder = new JsonEncoder.withIndent("\t");
-        this.config.setCore(encoder.convert(config));
-        logger.info("Remote config saved locally!");
-        logger.serverLogger(assetID, 9, "Remote config saved locally!");
+        return json.decode(encoder.convert(config));
       } else {
         logger.error("Remote config not found!");
         logger.serverLogger(assetID, 10, "Remote config not found!");
+        return [];
       }
     } catch (exception) {
       logger.error(sprintf("HTTP query: %s", [exception.toString().trim()]));
+      return [];
+    }
+  }
+
+  /// Check if the config file has been updated and save it if necessary
+  Future<void> checkAndApplyConfigUpdate() async {
+    // Get data from core.json file
+    List<dynamic> localConfig = config.getCoreConfigs();
+
+    // Get remote config
+    List<dynamic> remoteConfig = await getRemoteConfig();
+
+    // Compare both configs
+    if (localConfig.isNotEmpty || remoteConfig.isNotEmpty) {
+      logger.info(localConfig.toString());
+      logger.info(remoteConfig.toString());
+      if (localConfig.toString() != remoteConfig.toString()) {
+        logger.info("Local config is different from remote config!");
+        var encoder = new JsonEncoder.withIndent("\t");
+        config.setCore(encoder.convert(remoteConfig));
+        logger.info("Local config has been updated!");
+        logger.serverLogger(assetID, 9, "Local config has been updated!");
+      } else {
+        logger.info("Local config is up to date!");
+      }
+    } else {
+      logger.error("Can't get local or remote config!");
     }
   }
 
