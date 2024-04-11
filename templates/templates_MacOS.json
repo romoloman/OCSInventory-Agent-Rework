@@ -97,12 +97,12 @@
     {
       "name": "HARDWARE",
       "retrival_method": "BASH",
-      "retrival_output": "GREP",
+      "retrival_output": "REGX",
       "target": "system_profiler SPHardwareDataType",
       "fields": [
         {
           "name": "Model name",
-          "retrival_value": "Model Name",
+          "retrival_value": "\\s{6}Model Name:\\s(.*)",
           "override_target": false,
           "new_target": null,
           "retrival_method": null,
@@ -111,7 +111,7 @@
         },
         {
           "name": "Model identifier",
-          "retrival_value": "Model Identifier",
+          "retrival_value": "\\s{6}Model identifier :\\s(.*)",
           "override_target": false,
           "new_target": null,
           "retrival_method": null,
@@ -119,26 +119,8 @@
           "options": null
         },
         {
-          "name": "Chip",
-          "retrival_value": "Chip",
-          "override_target": false,
-          "new_target": null,
-          "retrival_method": null,
-          "retrival_output": null,
-          "options": null
-        },
-        {
-          "name": "Total Number of Cores",
-          "retrival_value": "Total Number of Cores",
-          "override_target": false,
-          "new_target": null,
-          "retrival_method": null,
-          "retrival_output": null,
-          "options": null
-        },
-        {
-          "name": "Memory",
-          "retrival_value": "Memory",
+          "name": "Model number",
+          "retrival_value": "\\s{6}Model Number :\\s(.*)",
           "override_target": false,
           "new_target": null,
           "retrival_method": null,
@@ -147,7 +129,7 @@
         },
         {
           "name": "System firmware version",
-          "retrival_value": "System Firmware Version",
+          "retrival_value": "\\s{6}System Firmware Version:\\s(.*)|\\s{6}Boot ROM Version:\\s(.*)",
           "override_target": false,
           "new_target": null,
           "retrival_method": null,
@@ -156,7 +138,7 @@
         },
         {
           "name": "OS Loader Version",
-          "retrival_value": "OS Loader Version",
+          "retrival_value": "\\s{6}OS Loader Version:\\s(.*)|\\s{6}SMC Version \\(system\\):\\s(.*)",
           "override_target": false,
           "new_target": null,
           "retrival_method": null,
@@ -165,7 +147,7 @@
         },
         {
           "name": "Serial Number (system)",
-          "retrival_value": "Serial Number (system)",
+          "retrival_value": "\\s{6}Serial Number \\(system\\):\\s(.*)",
           "override_target": false,
           "new_target": null,
           "retrival_method": null,
@@ -174,7 +156,7 @@
         },
         {
           "name": "Hardware UUID",
-          "retrival_value": "Hardware UUID",
+          "retrival_value": "\\s{6}Hardware UUID:\\s(.*)",
           "override_target": false,
           "new_target": null,
           "retrival_method": null,
@@ -183,7 +165,27 @@
         },
         {
           "name": "Provisioning UDID",
-          "retrival_value": "Provisioning UDID",
+          "retrival_value": "\\s{6}Provisioning UDID:\\s(.*)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
+    },
+    {
+      "name": "CPU",
+      "retrival_method": "BASH",
+      "retrival_output": "REGX",
+      "target": "system_profiler SPHardwareDataType",
+      "fields": [
+        {
+          "name": "Name",
+          "retrival_value": "\\s{6}Chip:\\s(.*)|\\s{6}Processor Name:\\s(.*)",
           "override_target": false,
           "new_target": null,
           "retrival_method": null,
@@ -191,8 +193,35 @@
           "options": null
         },
         {
-          "name": "Activation Lock Status",
-          "retrival_value": "Activation Lock Status",
+          "name": "Total Number of Cores",
+          "retrival_value": "\\s{6}Total Number of Cores:\\s(.*)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Memory",
+          "retrival_value": "\\s{6}Memory:\\s(.*)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "L2 Cache (per Core)",
+          "retrival_value": "\\s{6}L2 Cache \\(per Core\\):\\s(.*)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "L3 Cache",
+          "retrival_value": "\\s{6}L3 Cache:\\s(.*)",
           "override_target": false,
           "new_target": null,
           "retrival_method": null,
