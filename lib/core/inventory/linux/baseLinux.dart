@@ -106,8 +106,6 @@ Future<String> _getUUID(String name, String macAdress) async {
       await linuxCommand.commandShell("sudo dmidecode -s system-uuid", true);
 
   if (uuid == "") {
-    logger.info("UUID not found, generating a new one...");
-    uuid = await linuxCommand.commandShell("uuidgen", true);
     String containerFileName = sprintf('%s/%s.json', ["config/", "uuid"]);
     File containerLinuxFile = File(containerFileName);
     if (!containerLinuxFile.existsSync()) {
@@ -123,6 +121,8 @@ Future<String> _getUUID(String name, String macAdress) async {
       uuid = containerLinux["uuid"];
       logger.info("UUID has been retrieved from the uuid file.");
     } else {
+      logger.info("UUID not found, generating a new one...");
+      uuid = await linuxCommand.commandShell("uuidgen", true);
       dynamic baseAdded = {};
       baseAdded["name"] = name;
       baseAdded["uuid"] = uuid;
