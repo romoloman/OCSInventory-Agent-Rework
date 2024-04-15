@@ -35,7 +35,7 @@ dynamic getBody() async {
 
   /// Command get the mac address list
   dynamic macAddr;
-  macAddr = await windowsCommand.commandCmd("getmac", true);
+  macAddr = (await windowsCommand.commandCmd("getmac", true))["value"];
 
   /// RegExp to match mac address
   RegExp regexMacAddr;
@@ -47,7 +47,7 @@ dynamic getBody() async {
 
   /// Command get to get the IP
   String ip;
-  ip = await windowsCommand.commandCmd("ipconfig", true);
+  ip = (await windowsCommand.commandCmd("ipconfig", true))["value"].toString();
 
   /// RegExp to match IP
   RegExp regexIP;
@@ -58,24 +58,33 @@ dynamic getBody() async {
   getIP = regexIP.stringMatch(ip)!.trim();
 
   // Get the name of the computer
-  String name = await windowsCommand.commandCmd("hostname", true);
+  String name =
+      (await windowsCommand.commandCmd("hostname", true))["value"].toString();
 
   dynamic body = ({
     "name": name,
-    "description": await windowsCommand.commandPowershell(
-        "(Get-WMIObject -Class Win32_ComputerSystemProduct).Description", true),
-    "serial": await windowsCommand.commandPowershell(
-        "(Get-WMIObject win32_operatingsystem).SerialNumber", true),
+    "description": (await windowsCommand.commandPowershell(
+            "(Get-WMIObject -Class Win32_ComputerSystemProduct).Description",
+            true))["value"]
+        .toString(),
+    "serial": (await windowsCommand.commandPowershell(
+            "(Get-WMIObject win32_operatingsystem).SerialNumber",
+            true))["value"]
+        .toString(),
     "osname": (await windowsCommand.commandPowershell(
-            "(Get-WMIObject win32_operatingsystem).name", true))
+            "(Get-WMIObject win32_operatingsystem).name", true))["value"]
+        .toString()
         .split("|")[0],
-    "osversion": await windowsCommand.commandPowershell(
-        "(Get-WMIObject win32_operatingsystem).Version", true),
+    "osversion": (await windowsCommand.commandPowershell(
+            "(Get-WMIObject win32_operatingsystem).Version", true))["value"]
+        .toString(),
     "uuid": await _getUUID(name, getMacAddr),
     "srcip": await getIP,
     "srcmac": await getMacAddr,
-    "domain": await windowsCommand.commandPowershell(
-        "(Get-WMIObject -Class Win32_ComputerSystem).Domain", true),
+    "domain": (await windowsCommand.commandPowershell(
+            "(Get-WMIObject -Class Win32_ComputerSystem).Domain",
+            true))["value"]
+        .toString(),
   });
 
   logger.info("OS body has been retrieved!");
@@ -88,13 +97,16 @@ Future<String> _getUUID(String name, String macAdress) async {
   var windowsCommand = new command.WindowsCommand();
   JsonUtils jsonUtils = new JsonUtils();
   Logger logger = new Logger();
-  String uuid = await windowsCommand.commandPowershell(
-      "(Get-WMIObject -Class Win32_ComputerSystemProduct).UUID", true);
+  String uuid = (await windowsCommand.commandPowershell(
+          "(Get-WMIObject -Class Win32_ComputerSystemProduct).UUID",
+          true))["value"]
+      .toString();
 
   if (uuid == "") {
     logger.info("UUID not found, generating a new one...");
-    uuid = await windowsCommand.commandPowershell(
-        "[guid]::NewGuid().ToString()", true);
+    uuid = (await windowsCommand.commandPowershell(
+            "[guid]::NewGuid().ToString()", true))["value"]
+        .toString();
     String containerFileName = sprintf('%s/%s.json', ["config/", "uuid"]);
     File containerWindowsFile = File(containerFileName);
     if (!containerWindowsFile.existsSync()) {
