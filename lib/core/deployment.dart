@@ -151,98 +151,110 @@ class Deployment {
     int id = 0;
     int status = 0;
     late bool success;
+    int retryCounter = 0;
+    do {
+      // For each action, try to execute the command in the action object
+      for (var element in actions.values) {
+        success = false;
 
-    // For each action, try to execute the command in the action object
-    for (var element in actions.values) {
-      success = false;
-
-      // This for loop try the number of times of the parameter "max_retry" in the server config
-      for (var _ in Iterable.generate(
-          config.getCoreConfig("deployment", "max_retry"))) {
-        // Exit the loop if the package has been installed successfully
-        if (success == true) {
-          break;
-        }
-        for (var action in element) {
-          results.forEach((resultElement) {
-            if (resultElement["package"] == action["package"]) {
-              id = resultElement["id"];
+        // This for loop try the number of times of the parameter "max_retry" in the server config
+        for (var _ in Iterable.generate(
+            config.getCoreConfig("deployment", "max_retry"))) {
+          // Exit the loop if the package has been installed successfully
+          if (success == true) {
+            break;
+          }
+          for (var action in element) {
+            results.forEach((resultElement) {
+              if (resultElement["package"] == action["package"]) {
+                id = resultElement["id"];
+              }
+            });
+            // VERBOSE: show which action is processing
+            logger.verbose(action.toString());
+            switch (action["action_type"]) {
+              case "EXEC":
+                logger.info("Executing command...");
+                await executeCommand(
+                            os, action["package"], action["command"]) ==
+                        "true"
+                    ? status = 0
+                    : status = 1;
+                break;
+              case "STORE":
+                logger.info("Downloading and storing file...");
+                await storeFile(action["package"], action["file"],
+                    action["command"], action["action_type"], os);
+                break;
+              case "LAUNCH":
+                logger.info("Launching file...");
+                status = await launchFile(os, action["package"],
+                    action["command"], action["file"], action["action_type"]);
+                break;
+              default:
+                logger.error("Canno't read correctly the action type!");
+                logger.serverLogger(
+                    assetID,
+                    8,
+                    "Can't get type from the action " +
+                        action["name"].toString() +
+                        ".");
+                break;
             }
-          });
-          // VERBOSE: show which action is processing
-          logger.verbose(action.toString());
-          switch (action["action_type"]) {
-            case "EXEC":
-              logger.info("Executing command...");
-              await executeCommand(os, action["package"], action["command"]) ==
-                      "true"
-                  ? status = 0
-                  : status = 1;
-              break;
-            case "STORE":
-              logger.info("Downloading and storing file...");
-              await storeFile(action["package"], action["file"],
-                  action["command"], action["action_type"], os);
-              break;
-            case "LAUNCH":
-              logger.info("Launching file...");
-              status = await launchFile(os, action["package"],
-                  action["command"], action["file"], action["action_type"]);
-              break;
-            default:
-              logger.error("Canno't read correctly the action type!");
+            // if process method don't send any error, the package has been installed successfully
+            if (status == 0) {
+              success = true;
+            }
+          }
+        }
+        if (status == 0) {
+          try {
+            // API call: send success to server if the package is installed
+            var responseSuccess = await httpUtils.patch(
+                "executeActions",
+                Uri.parse(url + "/deployment/results/$id/"),
+                httpUtils.getHeader(config),
+                "{\"status\": 1, \"comment\": \"Success\"}");
+            logger.verbose(responseSuccess["message"]);
+            if (responseSuccess["status_code"] == 200) {
+              logger.info("Package $id was completed successfully!");
               logger.serverLogger(
-                  assetID,
-                  8,
-                  "Can't get type from the action " +
-                      action["name"].toString() +
-                      ".");
-              break;
+                  assetID, 7, "Package $id was completed successfully!");
+            }
+          } catch (exception) {
+            logger.error(
+                sprintf("HTTP query: %s", [exception.toString().trim()]));
           }
-          // if process method don't send any error, the package has been installed successfully
-          if (status == 0) {
-            success = true;
+        } else {
+          try {
+            // API call: send error to server if the package isn't installed
+            var responseFail = await httpUtils.patch(
+                "executeActions",
+                Uri.parse(url + "/deployment/results/$id/"),
+                httpUtils.getHeader(config),
+                "{\"status\": 2, \"comment\": \"Error\"}");
+            logger.verbose(responseFail["message"]);
+            if (responseFail["status_code"] == 200) {
+              logger.info("Package $id was not completed successfully!");
+              logger.serverLogger(
+                  assetID, 8, "Package $id was not completed successfully!");
+            }
+          } catch (exception) {
+            logger.error(
+                sprintf("HTTP query: %s", [exception.toString().trim()]));
           }
         }
       }
-      if (status == 0) {
-        try {
-          // API call: send success to server if the package is installed
-          var responseSuccess = await httpUtils.patch(
-              "executeActions",
-              Uri.parse(url + "/deployment/results/$id/"),
-              httpUtils.getHeader(config),
-              "{\"status\": 1, \"comment\": \"Success\"}");
-          logger.verbose(responseSuccess["message"]);
-          if (responseSuccess["status_code"] == 200) {
-            logger.info("Package $id was completed successfully!");
-            logger.serverLogger(
-                assetID, 7, "Package $id was completed successfully!");
-          }
-        } catch (exception) {
-          logger
-              .error(sprintf("HTTP query: %s", [exception.toString().trim()]));
-        }
-      } else {
-        try {
-          // API call: send error to server if the package isn't installed
-          var responseFail = await httpUtils.patch(
-              "executeActions",
-              Uri.parse(url + "/deployment/results/$id/"),
-              httpUtils.getHeader(config),
-              "{\"status\": 2, \"comment\": \"Error\"}");
-          logger.verbose(responseFail["message"]);
-          if (responseFail["status_code"] == 200) {
-            logger.info("Package $id was not completed successfully!");
-            logger.serverLogger(
-                assetID, 8, "Package $id was not completed successfully!");
-          }
-        } catch (exception) {
-          logger
-              .error(sprintf("HTTP query: %s", [exception.toString().trim()]));
-        }
+      retryCounter++;
+      if (status == 1 &&
+          config.getCoreConfig("deployment", "max_retry") > retryCounter &&
+          config.getCoreConfig("deployment", "auto_retry") == 1) {
+        logger
+            .error("Failed to execute action with retry: ${retryCounter + 1}");
       }
-    }
+    } while (status == 1 &&
+        config.getCoreConfig("deployment", "max_retry") > retryCounter &&
+        config.getCoreConfig("deployment", "auto_retry") == 1);
   }
 
   /// Execute the action command.
