@@ -173,12 +173,15 @@ class Deployment {
           logger.verbose(action.toString());
           switch (action["action_type"]) {
             case "EXEC":
-              status = await executeCommand(
-                  os, action["package"], action["command"]);
+              logger.info("Executing command...");
+              await executeCommand(os, action["package"], action["command"]) ==
+                      "true"
+                  ? status = 0
+                  : status = 1;
               break;
             case "STORE":
               logger.info("Downloading and storing file...");
-              status = await storeFile(action["package"], action["file"],
+              await storeFile(action["package"], action["file"],
                   action["command"], action["action_type"], os);
               break;
             case "LAUNCH":
@@ -243,7 +246,7 @@ class Deployment {
   }
 
   /// Execute the action command.
-  Future<int> executeCommand(
+  Future<String> executeCommand(
       String os, int package, String actionCommand) async {
     logger.info("Executing action command...");
 
@@ -259,48 +262,69 @@ class Deployment {
       actionCommand = actionCommand.replaceAll(key, variables[key]);
     });
 
-    int status = 0;
-    String result = "";
+    Map<String, String> result = {};
 
     // Depending of the plateform, execute a command with appropriate CLI
     switch (os) {
       case "LIN":
         var command = LinuxCommand();
 
-        result = await command.commandShell(actionCommand, true).timeout(
+        result = await command.commandShell(actionCommand, true).then((value) {
+          logger.verbose(value["value"].toString());
+          logger.info("Action command executed successfully!");
+          return value;
+        }).catchError((onError) {
+          logger.error("Error while executing action command: $onError");
+          return {"value": ""};
+        }).timeout(
             Duration(
                 days: config.getCoreConfig(
               "deployment",
               "execution_timeout",
             )), onTimeout: () {
-          status = 1;
-          return "TIMEOUT: Command execution time exceeded!";
+          logger.error("Error while executing action command: TIMEOUT");
+          return {"value": ""};
         });
         break;
       case "MAC":
         var command = MacOSCommand();
 
-        result = await command.commandShell(actionCommand, true).timeout(
+        result = await command.commandShell(actionCommand, true).then((value) {
+          logger.verbose(value["value"].toString());
+          logger.info("Action command executed successfully!");
+          return value;
+        }).catchError((onError) {
+          logger.error("Error while executing action command: $onError");
+          return {"value": ""};
+        }).timeout(
             Duration(
                 days: config.getCoreConfig(
               "deployment",
               "execution_timeout",
             )), onTimeout: () {
-          status = 1;
-          return "TIMEOUT: Command execution time exceeded!";
+          logger.error("Error while executing action command: TIMEOUT");
+          return {"value": ""};
         });
         break;
       case "WIN":
         var command = WindowsCommand();
 
-        result = await command.commandPowershell(actionCommand, true).timeout(
-            Duration(
-                days: config.getCoreConfig(
-              "deployment",
-              "execution_timeout",
-            )), onTimeout: () {
-          status = 1;
-          return "TIMEOUT: Command execution time exceeded!";
+        result =
+            await command.commandPowershell(actionCommand, true).then((value) {
+          logger.verbose(value["value"].toString());
+          logger.info("Action command executed successfully!");
+          return value;
+        }).catchError((onError) {
+          logger.error("Error while executing action command: $onError");
+          return {"value": ""};
+        }).timeout(
+                Duration(
+                    days: config.getCoreConfig(
+                  "deployment",
+                  "execution_timeout",
+                )), onTimeout: () {
+          logger.error("Error while executing action command: TIMEOUT");
+          return {"value": ""};
         });
         break;
       default:
@@ -308,13 +332,7 @@ class Deployment {
             "OS does not match any of the supported OSs! (Check Plateform class return)");
         break;
     }
-    if (status == 0) {
-      logger.verbose(result);
-      logger.info("Action command executed successfully!");
-    } else {
-      logger.error(result);
-    }
-    return status;
+    return result["status"].toString();
   }
 
   /// Extracts a zip file to the specified path and performs cleanup.
@@ -630,7 +648,7 @@ class Deployment {
       String filePath, String actionType) async {
     int storeStatus =
         await storeFile(package, filePath, actionCommand, actionType, os);
-    int execStatus = await executeCommand(os, package, actionCommand);
+    String execStatus = await executeCommand(os, package, actionCommand);
     int status = 0;
     if (storeStatus != 0 || execStatus != 0) {
       status = 1;
