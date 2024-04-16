@@ -80,7 +80,7 @@ dynamic getBody() async {
       match![0].toString().substring(11, match[0].toString().length).trim();
 
   // Get name
-  String name = (await linuxCommand.commandShell("hostnameeee", true))["value"]
+  String name = (await linuxCommand.commandShell("hostname", true))["value"]
       .toString()
       .trim();
 
