@@ -150,63 +150,48 @@ class Deployment {
 
     int id = 0;
     int status = 0;
-    late bool success;
     int retryCounter = 0;
     do {
       // For each action, try to execute the command in the action object
       for (var element in actions.values) {
-        success = false;
-
-        // This for loop try the number of times of the parameter "max_retry" in the server config
-        for (var _ in Iterable.generate(
-            config.getCoreConfig("deployment", "max_retry"))) {
-          // Exit the loop if the package has been installed successfully
-          if (success == true) {
-            break;
-          }
-          for (var action in element) {
-            results.forEach((resultElement) {
-              if (resultElement["package"] == action["package"]) {
-                id = resultElement["id"];
-              }
-            });
-            // VERBOSE: show which action is processing
-            logger.verbose(action.toString());
-            switch (action["action_type"]) {
-              case "EXEC":
-                logger.info("Executing command...");
-                await executeCommand(
-                            os, action["package"], action["command"]) ==
-                        "true"
-                    ? status = 0
-                    : status = 1;
-                break;
-              case "STORE":
-                logger.info("Downloading and storing file...");
-                await storeFile(action["package"], action["file"],
-                    action["command"], action["action_type"], os);
-                break;
-              case "LAUNCH":
-                logger.info("Launching file...");
-                status = await launchFile(os, action["package"],
-                    action["command"], action["file"], action["action_type"]);
-                break;
-              default:
-                logger.error("Canno't read correctly the action type!");
-                logger.serverLogger(
-                    assetID,
-                    8,
-                    "Can't get type from the action " +
-                        action["name"].toString() +
-                        ".");
-                break;
+        for (var action in element) {
+          results.forEach((resultElement) {
+            if (resultElement["package"] == action["package"]) {
+              id = resultElement["id"];
             }
-            // if process method don't send any error, the package has been installed successfully
-            if (status == 0) {
-              success = true;
-            }
+          });
+          // VERBOSE: show which action is processing
+          logger.verbose(action.toString());
+          switch (action["action_type"]) {
+            case "EXEC":
+              logger.info("Executing command...");
+              await executeCommand(os, action["package"], action["command"]) ==
+                      "true"
+                  ? status = 0
+                  : status = 1;
+              break;
+            case "STORE":
+              logger.info("Downloading and storing file...");
+              await storeFile(action["package"], action["file"],
+                  action["command"], action["action_type"], os);
+              break;
+            case "LAUNCH":
+              logger.info("Launching file...");
+              status = await launchFile(os, action["package"],
+                  action["command"], action["file"], action["action_type"]);
+              break;
+            default:
+              logger.error("Canno't read correctly the action type!");
+              logger.serverLogger(
+                  assetID,
+                  8,
+                  "Can't get type from the action " +
+                      action["name"].toString() +
+                      ".");
+              break;
           }
         }
+
         if (status == 0) {
           try {
             // API call: send success to server if the package is installed
@@ -247,13 +232,12 @@ class Deployment {
       }
       retryCounter++;
       if (status == 1 &&
-          config.getCoreConfig("deployment", "max_retry") > retryCounter &&
+          config.getCoreConfig("deployment", "max_retry") >= retryCounter &&
           config.getCoreConfig("deployment", "auto_retry") == 1) {
-        logger
-            .error("Failed to execute action with retry: ${retryCounter + 1}");
+        logger.error("Failed to execute action with retry: ${retryCounter}");
       }
     } while (status == 1 &&
-        config.getCoreConfig("deployment", "max_retry") > retryCounter &&
+        config.getCoreConfig("deployment", "max_retry") >= retryCounter &&
         config.getCoreConfig("deployment", "auto_retry") == 1);
   }
 
@@ -282,8 +266,6 @@ class Deployment {
         var command = LinuxCommand();
 
         result = await command.commandShell(actionCommand, true).then((value) {
-          logger.verbose(value["value"].toString());
-          logger.info("Action command executed successfully!");
           return value;
         }).catchError((onError) {
           logger.error("Error while executing action command: $onError");
@@ -302,8 +284,6 @@ class Deployment {
         var command = MacOSCommand();
 
         result = await command.commandShell(actionCommand, true).then((value) {
-          logger.verbose(value["value"].toString());
-          logger.info("Action command executed successfully!");
           return value;
         }).catchError((onError) {
           logger.error("Error while executing action command: $onError");
@@ -323,8 +303,6 @@ class Deployment {
 
         result =
             await command.commandPowershell(actionCommand, true).then((value) {
-          logger.verbose(value["value"].toString());
-          logger.info("Action command executed successfully!");
           return value;
         }).catchError((onError) {
           logger.error("Error while executing action command: $onError");
@@ -344,6 +322,13 @@ class Deployment {
             "OS does not match any of the supported OSs! (Check Plateform class return)");
         break;
     }
+    if (result["status"] == "true") {
+      logger.verbose(result["value"].toString());
+      logger.info("Action command executed successfully!");
+    } else {
+      logger.error("Action command executed with error!");
+    }
+
     return result["status"].toString();
   }
 
