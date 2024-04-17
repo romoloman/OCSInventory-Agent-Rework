@@ -150,99 +150,97 @@ class Deployment {
 
     int id = 0;
     int status = 0;
-    int retryCounter = 0;
-    do {
-      // For each action, try to execute the command in the action object
-      for (var element in actions.values) {
-        for (var action in element) {
-          results.forEach((resultElement) {
-            if (resultElement["package"] == action["package"]) {
-              id = resultElement["id"];
-            }
-          });
-          // VERBOSE: show which action is processing
-          logger.verbose(action.toString());
-          switch (action["action_type"]) {
-            case "EXEC":
-              logger.info("Executing command...");
-              await executeCommand(os, action["package"], action["command"]) ==
-                      "true"
-                  ? status = 0
-                  : status = 1;
-              break;
-            case "STORE":
-              logger.info("Downloading and storing file...");
-              await storeFile(action["package"], action["file"],
-                  action["command"], action["action_type"], os);
-              break;
-            case "LAUNCH":
-              logger.info("Launching file...");
-              status = await launchFile(os, action["package"],
-                  action["command"], action["file"], action["action_type"]);
-              break;
-            default:
-              logger.error("Canno't read correctly the action type!");
-              logger.serverLogger(
-                  assetID,
-                  8,
-                  "Can't get type from the action " +
-                      action["name"].toString() +
-                      ".");
-              break;
-          }
-        }
 
-        if (status == 0) {
-          try {
-            // API call: send success to server if the package is installed
-            var responseSuccess = await httpUtils.patch(
-                "executeActions",
-                Uri.parse(url + "/deployment/results/$id/"),
-                httpUtils.getHeader(config),
-                "{\"status\": 1, \"comment\": \"Success\"}");
-            logger.verbose(responseSuccess["message"]);
-            if (responseSuccess["status_code"] == 200) {
-              logger.info("Package $id was completed successfully!");
-              logger.serverLogger(
-                  assetID, 7, "Package $id was completed successfully!");
-            }
-          } catch (exception) {
-            logger.error(
-                sprintf("HTTP query: %s", [exception.toString().trim()]));
+    // For each action, try to execute the command in the action object
+    for (var element in actions.values) {
+      for (var action in element) {
+        results.forEach((resultElement) {
+          if (resultElement["package"] == action["package"]) {
+            id = resultElement["id"];
           }
-        } else {
-          try {
-            // API call: send error to server if the package isn't installed
-            var responseFail = await httpUtils.patch(
-                "executeActions",
-                Uri.parse(url + "/deployment/results/$id/"),
-                httpUtils.getHeader(config),
-                "{\"status\": 2, \"comment\": \"Error\"}");
-            logger.verbose(responseFail["message"]);
-            if (responseFail["status_code"] == 200) {
-              logger.info("Package $id was not completed successfully!");
-              logger.serverLogger(
-                  assetID, 8, "Package $id was not completed successfully!");
+        });
+        // VERBOSE: show which action is processing
+        logger.verbose(action.toString());
+        switch (action["action_type"]) {
+          case "EXEC":
+            logger.info("Executing command...");
+            await executeCommand(os, action["package"], action["command"]) ==
+                    true
+                ? status = 0
+                : status = 1;
+            break;
+          case "STORE":
+            logger.info("Downloading and storing file...");
+            await storeFile(action["package"], action["file"],
+                        action["command"], action["action_type"], os) ==
+                    true
+                ? status = 0
+                : status = 1;
+            if (status == 0) {
+              logger.info("File downloaded and stored successfully!");
+            } else {
+              logger.error("Error while downloading and storing file!");
             }
-          } catch (exception) {
-            logger.error(
-                sprintf("HTTP query: %s", [exception.toString().trim()]));
-          }
+            break;
+          case "LAUNCH":
+            logger.info("Launching file...");
+            status = await launchFile(os, action["package"], action["command"],
+                action["file"], action["action_type"]);
+            break;
+          default:
+            logger.error("Canno't read correctly the action type!");
+            logger.serverLogger(
+                assetID,
+                8,
+                "Can't get type from the action " +
+                    action["name"].toString() +
+                    ".");
+            break;
         }
       }
-      retryCounter++;
-      if (status == 1 &&
-          config.getCoreConfig("deployment", "max_retry") >= retryCounter &&
-          config.getCoreConfig("deployment", "auto_retry") == 1) {
-        logger.error("Failed to execute action with retry: ${retryCounter}");
+
+      if (status == 0) {
+        try {
+          // API call: send success to server if the package is installed
+          var responseSuccess = await httpUtils.patch(
+              "executeActions",
+              Uri.parse(url + "/deployment/results/$id/"),
+              httpUtils.getHeader(config),
+              "{\"status\": 1, \"comment\": \"Success\"}");
+          logger.verbose(responseSuccess["message"]);
+          if (responseSuccess["status_code"] == 200) {
+            logger.info("Package $id was completed successfully!");
+            logger.serverLogger(
+                assetID, 7, "Package $id was completed successfully!");
+          }
+        } catch (exception) {
+          logger
+              .error(sprintf("HTTP query: %s", [exception.toString().trim()]));
+        }
+      } else {
+        try {
+          // API call: send error to server if the package isn't installed
+          var responseFail = await httpUtils.patch(
+              "executeActions",
+              Uri.parse(url + "/deployment/results/$id/"),
+              httpUtils.getHeader(config),
+              "{\"status\": 2, \"comment\": \"Error\"}");
+          logger.verbose(responseFail["message"]);
+          if (responseFail["status_code"] == 200) {
+            logger.info("Package $id was not completed successfully!");
+            logger.serverLogger(
+                assetID, 8, "Package $id was not completed successfully!");
+          }
+        } catch (exception) {
+          logger
+              .error(sprintf("HTTP query: %s", [exception.toString().trim()]));
+        }
       }
-    } while (status == 1 &&
-        config.getCoreConfig("deployment", "max_retry") >= retryCounter &&
-        config.getCoreConfig("deployment", "auto_retry") == 1);
+    }
   }
 
   /// Execute the action command.
-  Future<String> executeCommand(
+  Future<bool> executeCommand(
       String os, int package, String actionCommand) async {
     logger.info("Executing action command...");
 
@@ -258,7 +256,7 @@ class Deployment {
       actionCommand = actionCommand.replaceAll(key, variables[key]);
     });
 
-    Map<String, String> result = {};
+    Map<String, Object> result = {"value": "", "status": false};
 
     // Depending of the plateform, execute a command with appropriate CLI
     switch (os) {
@@ -269,7 +267,7 @@ class Deployment {
           return value;
         }).catchError((onError) {
           logger.error("Error while executing action command: $onError");
-          return {"value": ""};
+          return {"value": "", "status": false};
         }).timeout(
             Duration(
                 days: config.getCoreConfig(
@@ -277,7 +275,7 @@ class Deployment {
               "execution_timeout",
             )), onTimeout: () {
           logger.error("Error while executing action command: TIMEOUT");
-          return {"value": ""};
+          return {"value": "", "status": false};
         });
         break;
       case "MAC":
@@ -287,7 +285,7 @@ class Deployment {
           return value;
         }).catchError((onError) {
           logger.error("Error while executing action command: $onError");
-          return {"value": ""};
+          return {"value": "", "status": false};
         }).timeout(
             Duration(
                 days: config.getCoreConfig(
@@ -295,7 +293,7 @@ class Deployment {
               "execution_timeout",
             )), onTimeout: () {
           logger.error("Error while executing action command: TIMEOUT");
-          return {"value": ""};
+          return {"value": "", "status": false};
         });
         break;
       case "WIN":
@@ -306,7 +304,7 @@ class Deployment {
           return value;
         }).catchError((onError) {
           logger.error("Error while executing action command: $onError");
-          return {"value": ""};
+          return {"value": "", "status": false};
         }).timeout(
                 Duration(
                     days: config.getCoreConfig(
@@ -314,22 +312,23 @@ class Deployment {
                   "execution_timeout",
                 )), onTimeout: () {
           logger.error("Error while executing action command: TIMEOUT");
-          return {"value": ""};
+          return {"value": "", "status": false};
         });
         break;
       default:
         logger.error(
             "OS does not match any of the supported OSs! (Check Plateform class return)");
+
         break;
     }
-    if (result["status"] == "true") {
+    if (result["status"] == true) {
       logger.verbose(result["value"].toString());
       logger.info("Action command executed successfully!");
     } else {
       logger.error("Action command executed with error!");
     }
-
-    return result["status"].toString();
+    bool status = result["status"] == true ? true : false;
+    return status;
   }
 
   /// Extracts a zip file to the specified path and performs cleanup.
@@ -405,20 +404,20 @@ class Deployment {
       if (savedFile.existsSync()) {
         // Log verbose message indicating successful extraction
         logger.verbose("File extracted in the path: '$extractedPath'");
-        status = true;
+
         savedFile.deleteSync();
         return value;
       } else {
-        status = false;
-        return {"value": "", "status": "false"};
+        return {"value": "", "status": false};
       }
     }).catchError((onError) {
       // Handle extraction error
       logger.error("Error while extracting file in the path: $onError");
-      status = false;
-      return {"value": "", "status": "false"};
+
+      return {"value": "", "status": false};
     });
-    return result["status"];
+    status = result["status"] == true ? true : false;
+    return status;
   }
 
   /// Downloads a file from a given URL and stores it locally.
@@ -454,6 +453,14 @@ class Deployment {
     int retryCounter = 0;
 
     Future<String> completerValue = Future.value("");
+    // Store the file in the agent directory
+    String localPath = config.getInventoryConfig("data_dir") +
+        "/deployment/" +
+        package.toString() +
+        "/";
+    var fileSaveLocal = new File(localPath + filePath.split("/").last);
+
+    String specifiedPath = pathToStore + "/";
 
     do {
       // Try to download and store the file in the package folder
@@ -464,18 +471,7 @@ class Deployment {
         client = HttpClient();
         status = true;
 
-        // Store the file in the agent directory
-        String localPath = config.getInventoryConfig("data_dir") +
-            "/deployment/" +
-            package.toString() +
-            "/";
-        var fileSaveLocal = new File(localPath + filePath.split("/").last);
-
-        String specifiedPath = pathToStore + "/";
-
-        responseStreamStatus = await client
-            .getUrl(Uri.parse(filePath))
-            .then((HttpClientRequest request) {
+        client.getUrl(Uri.parse(filePath)).then((HttpClientRequest request) {
           return request.close();
         }).then((HttpClientResponse response) {
           if (response.statusCode == HttpStatus.ok) {
@@ -484,17 +480,17 @@ class Deployment {
               _downloadData.addAll(data);
             }, onDone: () async {
               // Save the file directly if not zipped
-              responseStreamStatus = await fileSaveLocal
+              await fileSaveLocal
                   .writeAsBytes(_downloadData)
                   .then((fileAdded) async {
-                bool statusAdded = false;
                 if (fileAdded.existsSync()) {
+                  responseStreamStatus = true;
                   if (!filePath.endsWith('.tar') ||
                       !filePath.endsWith('.tar.gz') ||
                       !filePath.endsWith('.zip')) {
                     logger.verbose(
                         "$filePath is stored in the agent directory: '$localPath'");
-                    statusAdded = true;
+
                     if (actionType == "STORE") {
                       File remoteFile = await fileAdded
                           .copySync(specifiedPath + filePath.split("/").last);
@@ -502,33 +498,31 @@ class Deployment {
                           remoteFile.lengthSync() == fileAdded.lengthSync()) {
                         logger.verbose(
                             "$filePath is stored in the specified path: '$specifiedPath'");
-                        statusAdded = true;
+                        responseStreamStatus = true;
                       } else {
                         logger.error(
                             "Error while storing file in the specified path: $fileAdded");
-                        status = false;
-                        statusAdded = false;
+                        responseStreamStatus = false;
                       }
                     }
-                    return statusAdded;
                   } else {
                     switch (os) {
                       case "LIN":
                         if ((filePath.endsWith('.tar') ||
                                 filePath.endsWith('.tar.gz')) &&
-                            status == true) {
+                            responseStreamStatus == true) {
                           // Decompress the tar archive
                           await extractTarFile(
                                   localPath + filePath.split("/").last,
                                   localPath,
                                   fileSaveLocal,
-                                  status)
-                              .then((value) => statusAdded = value);
+                                  responseStreamStatus)
+                              .then((value) => responseStreamStatus = value);
                         }
                         if (filePath.endsWith('.zip')) {
                           logger.error(
                               "Extract zip file is not supported for Linux OS: $filePath");
-                          statusAdded = false;
+                          responseStreamStatus = false;
                         }
                         break;
 
@@ -541,13 +535,13 @@ class Deployment {
                                   localPath + filePath.split("/").last,
                                   localPath,
                                   fileSaveLocal,
-                                  status)
-                              .then((value) => statusAdded = value);
+                                  responseStreamStatus)
+                              .then((value) => responseStreamStatus = value);
                         }
                         if (filePath.endsWith('.zip')) {
                           logger.error(
                               "Extract zip file is not supported for Mac OS: $filePath");
-                          statusAdded = false;
+                          responseStreamStatus = false;
                         }
                         break;
 
@@ -559,60 +553,56 @@ class Deployment {
                           // Decompress the zip archive
                           await extractZipFile(_downloadData, localPath,
                                   fileSaveLocal, metaDataPath, status)
-                              .then((value) => statusAdded = value);
+                              .then((value) => responseStreamStatus = value);
                         }
                         if (filePath.endsWith('.tar') ||
                             filePath.endsWith('.tar.gz')) {
                           logger.error(
                               "Extract tar file is not supported for Windows OS: $filePath");
-                          statusAdded = false;
+                          responseStreamStatus = false;
                         }
                         break;
 
                       default:
                         logger.error(
                             "OS does not match any of the supported OSs!");
-                        statusAdded = false;
+                        responseStreamStatus = false;
                     }
                   }
-
-                  return statusAdded;
                 } else {
                   logger.error(
                       "Error while storing file in the agent directory: $fileAdded");
-                  status = false;
-                  return false;
+                  responseStreamStatus = false;
                 }
               }).catchError((onError) {
-                status = false;
-                logger.error(
-                    "Error while storing file in the agent directory: $onError");
-                return false;
+                responseStreamStatus = false;
+                logger.error("Error while storing file : $onError");
               });
 
               // Complete the completer with the final value of responseStreamStatus
               completer.complete(responseStreamStatus.toString());
             }, onError: (error) {
-              status = false;
               responseStreamStatus = false;
               logger.error("Error while downloading file: $error");
               // Complete the completer with error
               completer.completeError(error);
             });
-            return responseStreamStatus;
           } else {
-            status = false;
-            responseStreamStatus = false;
+            completer.complete(responseStreamStatus.toString());
             if (config.getCoreConfig("deployment", "max_retry") >
                     retryCounter &&
-                config.getCoreConfig("deployment", "auto_retry") == 1) {
+                config.getCoreConfig("deployment", "auto_retry") == 1 &&
+                responseStreamStatus == false) {
               logger.error(
-                  "Failed to download file ${retryCounter + 1}: ${response.reasonPhrase} ${filePath}");
+                  "Failed to store file with retry ${retryCounter + 1}: ${response.reasonPhrase} ${filePath}");
+              responseStreamStatus = false;
+              return response.drain();
             } else {
               logger.error(
                   "Failed to download file: ${response.reasonPhrase} ${filePath}");
+              responseStreamStatus = false;
+              return response.drain();
             }
-            return responseStreamStatus;
           }
         });
       } finally {
@@ -621,12 +611,16 @@ class Deployment {
         client.close();
       }
 
-      await completerValue.then((value) {
+      await completerValue.then((value) async {
         if (value == "true") {
-          logger.info("File downloaded and stored!");
           status = true;
+          // Delete the package directory after storing the file
+          var packageDirectory = Directory(localPath);
+          if (packageDirectory.existsSync()) {
+            await packageDirectory.delete(recursive: true);
+            logger.verbose("Package directory deleted: '$localPath'");
+          }
         } else {
-          logger.error("Failed to download and store the file!");
           status = false;
         }
       }).catchError((error) {
@@ -646,7 +640,7 @@ class Deployment {
       String filePath, String actionType) async {
     bool storeStatus =
         await storeFile(package, filePath, actionCommand, actionType, os);
-    String execStatus = await executeCommand(os, package, actionCommand);
+    bool execStatus = await executeCommand(os, package, actionCommand);
     int status = 0;
     if (storeStatus != 0 || execStatus != 0) {
       status = 1;
