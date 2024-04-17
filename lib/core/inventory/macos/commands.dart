@@ -22,7 +22,8 @@ class MacOSCommand {
   Logger logger = Logger();
 
   /// Execute [commandLine] to Shell.
-  Future<Map<String, String>> commandShell(String commandLine, bool normalization) async {
+  Future<Map<String, Object>> commandShell(
+      String commandLine, bool normalization) async {
     List<String> args = commandLine.split(" ");
     String command = args[0];
     args.removeAt(0);
@@ -30,7 +31,7 @@ class MacOSCommand {
       args = [];
     }
 
-    Map<String, String> processData = {};
+    Map<String, Object> processData = {};
     try {
       // Attempt to run the command
       var process = await Process.run(command, args);
@@ -42,20 +43,20 @@ class MacOSCommand {
 
       if (process.exitCode != 0) {
         processData["value"] = "";
-        processData["status"] = "false";
+        processData["status"] = false;
         logger.error("Executing command '$commandLine' - ${process.stderr}");
       } else {
-        processData["status"] = "true";
+        processData["status"] = true;
         logger.verbose("Command executed successfully: $commandLine");
       }
     } on ProcessException catch (e) {
       processData["value"] = "";
-      processData["status"] = "false";
+      processData["status"] = false;
       // Handle the specific error
       logger.error("This command '$command' could not be found : ${e}");
     } catch (e) {
       processData["value"] = "";
-      processData["status"] = "false";
+      processData["status"] = false;
       // Handle other errors
       logger.error('An error occurred : $e');
     }
