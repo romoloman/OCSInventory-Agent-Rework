@@ -23,7 +23,7 @@ class LinuxCommand {
   Logger logger = Logger();
 
   /// Execute [commandLine] to Shell.
-  Future<Map<String, String>> commandShell(
+  Future<Map<String, Object>> commandShell(
       String commandLine, bool normalization) async {
     List<String> args = commandLine.split(" ");
     String command = args[0];
@@ -35,7 +35,7 @@ class LinuxCommand {
     Map<String, String> ev = new Map<String, String>();
     ev.putIfAbsent("LANG", () => "C");
 
-    Map<String, String> processData = {};
+    Map<String, Object> processData = {};
 
     try {
       // Attempt to run the command
@@ -50,20 +50,20 @@ class LinuxCommand {
 
       if (process.exitCode != 0) {
         processData["value"] = "";
-        processData["status"] = "false";
+        processData["status"] = false;
         logger.error("Executing command '$commandLine' - ${process.stderr}");
       } else {
-        processData["status"] = "true";
+        processData["status"] = true;
         logger.verbose("Command executed successfully: $commandLine");
       }
     } on ProcessException catch (e) {
       processData["value"] = "";
-      processData["status"] = "false";
+      processData["status"] = false;
       // Handle the specific error
       logger.error("This command '$command' could not be found : $e");
     } catch (e) {
       processData["value"] = "";
-      processData["status"] = "false";
+      processData["status"] = false;
       // Handle other errors
       logger.error('An error occurred : $e');
     }
@@ -72,8 +72,8 @@ class LinuxCommand {
   }
 
   /// Return [path] file content.
-  Future<Map<String, String>> readFile(String path, bool normalization) async {
-    Map<String, String> processData = {};
+  Future<Map<String, Object>> readFile(String path, bool normalization) async {
+    Map<String, Object> processData = {};
     try {
       // Attempt to run the command
       var process = await Process.run("cat", [path]);
@@ -85,20 +85,20 @@ class LinuxCommand {
 
       if (process.exitCode != 0) {
         processData["value"] = "";
-        processData["status"] = "false";
+        processData["status"] = false;
         logger.error("Executing file '$path' - ${process.stderr}");
       } else {
-        processData["status"] = "true";
+        processData["status"] = true;
         logger.verbose("File executed successfully: $path");
       }
     } on ProcessException catch (e) {
       processData["value"] = "";
-      processData["status"] = "false";
+      processData["status"] = false;
       // Handle the specific error
       logger.error("This file '$path' could not be found : $e");
     } catch (e) {
       processData["value"] = "";
-      processData["status"] = "false";
+      processData["status"] = false;
       // Handle other errors
       logger.error('An error occurred : $e');
     }
@@ -111,11 +111,11 @@ class LinuxCommand {
   Future<String?> getResult(String command, String type) async {
     switch (type) {
       case "FILE":
-        return (await this.readFile(command, true))["value"];
+        return (await this.readFile(command, true))["value"].toString();
       case "CMD":
-        return (await this.commandShell(command, true))["value"];
+        return (await this.commandShell(command, true))["value"].toString();
       case "BASH":
-        return (await this.commandShell(command, false))["value"];
+        return (await this.commandShell(command, false))["value"].toString();
     }
     return null;
   }
