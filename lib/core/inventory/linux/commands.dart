@@ -54,7 +54,7 @@ class LinuxCommand {
         logger.error("Executing command '$commandLine' - ${process.stderr}");
       } else {
         processData["status"] = true;
-        logger.verbose("Command executed successfully: $commandLine");
+        logger.verbose("Executed command: '$commandLine'");
       }
     } on ProcessException catch (e) {
       processData["value"] = "";

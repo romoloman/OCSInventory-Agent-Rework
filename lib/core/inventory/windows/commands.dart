@@ -49,7 +49,7 @@ class WindowsCommand {
         logger.error("Executing command $commandLine : ${process.stderr}");
       } else {
         processData["status"] = true;
-        logger.verbose("Command executed successfully: $commandLine");
+        logger.verbose("Command executed: $commandLine");
       }
     } on ProcessException catch (e) {
       processData["value"] = "";
@@ -88,7 +88,7 @@ class WindowsCommand {
         logger.error("Executing command '$commandLine' - ${process.stderr}");
       } else {
         processData["status"] = true;
-        logger.verbose("Command executed successfully: $commandLine");
+        logger.verbose("Command executed: $commandLine");
       }
     } on ProcessException catch (e) {
       processData["value"] = "";

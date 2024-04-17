@@ -163,14 +163,17 @@ class Deployment {
         logger.verbose(action.toString());
         switch (action["action_type"]) {
           case "EXEC":
-            logger.info("Executing command...");
             await executeCommand(os, action["package"], action["command"]) ==
                     true
                 ? status = 0
                 : status = 1;
+            if (status == 0) {
+              logger.info("Command executed successfully!");
+            } else {
+              logger.error("Error while executing command!");
+            }
             break;
           case "STORE":
-            logger.info("Downloading and storing file...");
             await storeFile(action["package"], action["file"],
                         action["command"], action["action_type"], os) ==
                     true
@@ -183,7 +186,6 @@ class Deployment {
             }
             break;
           case "LAUNCH":
-            logger.info("Launching file...");
             status = await launchFile(os, action["package"], action["command"],
                 action["file"], action["action_type"]);
             break;
@@ -227,7 +229,7 @@ class Deployment {
               "{\"status\": 2, \"comment\": \"Error\"}");
           logger.verbose(responseFail["message"]);
           if (responseFail["status_code"] == 200) {
-            logger.info("Package $id was not completed successfully!");
+            logger.error("Package $id was not completed successfully!");
             logger.serverLogger(
                 assetID, 8, "Package $id was not completed successfully!");
           }
@@ -255,77 +257,91 @@ class Deployment {
     variables.keys.forEach((key) {
       actionCommand = actionCommand.replaceAll(key, variables[key]);
     });
+    late Map<String, Object> result;
+    int retryCounter = 0;
+    do {
+      result = {"value": "", "status": false};
 
-    Map<String, Object> result = {"value": "", "status": false};
+      // Depending of the plateform, execute a command with appropriate CLI
+      switch (os) {
+        case "LIN":
+          var command = LinuxCommand();
 
-    // Depending of the plateform, execute a command with appropriate CLI
-    switch (os) {
-      case "LIN":
-        var command = LinuxCommand();
+          result =
+              await command.commandShell(actionCommand, true).then((value) {
+            return value;
+          }).catchError((onError) {
+            logger.error("Error while executing action command: $onError");
+            return {"value": "", "status": false};
+          }).timeout(
+                  Duration(
+                      days: config.getCoreConfig(
+                    "deployment",
+                    "execution_timeout",
+                  )), onTimeout: () {
+            logger.error("Error while executing action command: TIMEOUT");
+            return {"value": "", "status": false};
+          });
+          break;
+        case "MAC":
+          var command = MacOSCommand();
 
-        result = await command.commandShell(actionCommand, true).then((value) {
-          return value;
-        }).catchError((onError) {
-          logger.error("Error while executing action command: $onError");
-          return {"value": "", "status": false};
-        }).timeout(
-            Duration(
-                days: config.getCoreConfig(
-              "deployment",
-              "execution_timeout",
-            )), onTimeout: () {
-          logger.error("Error while executing action command: TIMEOUT");
-          return {"value": "", "status": false};
-        });
-        break;
-      case "MAC":
-        var command = MacOSCommand();
+          result =
+              await command.commandShell(actionCommand, true).then((value) {
+            return value;
+          }).catchError((onError) {
+            logger.error("Error while executing action command: $onError");
+            return {"value": "", "status": false};
+          }).timeout(
+                  Duration(
+                      days: config.getCoreConfig(
+                    "deployment",
+                    "execution_timeout",
+                  )), onTimeout: () {
+            logger.error("Error while executing action command: TIMEOUT");
+            return {"value": "", "status": false};
+          });
+          break;
+        case "WIN":
+          var command = WindowsCommand();
 
-        result = await command.commandShell(actionCommand, true).then((value) {
-          return value;
-        }).catchError((onError) {
-          logger.error("Error while executing action command: $onError");
-          return {"value": "", "status": false};
-        }).timeout(
-            Duration(
-                days: config.getCoreConfig(
-              "deployment",
-              "execution_timeout",
-            )), onTimeout: () {
-          logger.error("Error while executing action command: TIMEOUT");
-          return {"value": "", "status": false};
-        });
-        break;
-      case "WIN":
-        var command = WindowsCommand();
+          result = await command
+              .commandPowershell(actionCommand, true)
+              .then((value) {
+            return value;
+          }).catchError((onError) {
+            logger.error("Error while executing action command: $onError");
+            return {"value": "", "status": false};
+          }).timeout(
+                  Duration(
+                      days: config.getCoreConfig(
+                    "deployment",
+                    "execution_timeout",
+                  )), onTimeout: () {
+            logger.error("Error while executing action command: TIMEOUT");
+            return {"value": "", "status": false};
+          });
+          break;
+        default:
+          logger.error(
+              "OS does not match any of the supported OSs! (Check Plateform class return)");
 
-        result =
-            await command.commandPowershell(actionCommand, true).then((value) {
-          return value;
-        }).catchError((onError) {
-          logger.error("Error while executing action command: $onError");
-          return {"value": "", "status": false};
-        }).timeout(
-                Duration(
-                    days: config.getCoreConfig(
-                  "deployment",
-                  "execution_timeout",
-                )), onTimeout: () {
-          logger.error("Error while executing action command: TIMEOUT");
-          return {"value": "", "status": false};
-        });
-        break;
-      default:
+          break;
+      }
+      if (config.getCoreConfig("deployment", "max_retry") >= retryCounter &&
+          config.getCoreConfig("deployment", "auto_retry") == 1 &&
+          result["status"] == false &&
+          retryCounter > 0) {
         logger.error(
-            "OS does not match any of the supported OSs! (Check Plateform class return)");
+            "Failed to execute command with retry ${retryCounter}: ${result["value"].toString()}");
+      } 
+      retryCounter++;
+    } while (result["status"] == false &&
+        config.getCoreConfig("deployment", "max_retry") >= retryCounter &&
+        config.getCoreConfig("deployment", "auto_retry") == 1);
 
-        break;
-    }
     if (result["status"] == true) {
       logger.verbose(result["value"].toString());
-      logger.info("Action command executed successfully!");
-    } else {
-      logger.error("Action command executed with error!");
     }
     bool status = result["status"] == true ? true : false;
     return status;
@@ -440,6 +456,8 @@ class Deployment {
   ///   - 1: Failure
   Future<bool> storeFile(int package, String filePath, String pathToStore,
       String actionType, String os) async {
+    logger.info("Downloading and storing file...");
+
     // Get the package directory or create one if not exist
     var packageDirectory = Directory(config.getInventoryConfig("data_dir") +
         "/deployment/" +
@@ -469,7 +487,7 @@ class Deployment {
       try {
         List<int> _downloadData = [];
         client = HttpClient();
-        status = true;
+        status = false;
 
         client.getUrl(Uri.parse(filePath)).then((HttpClientRequest request) {
           return request.close();
@@ -529,7 +547,7 @@ class Deployment {
                       case "MAC":
                         if ((filePath.endsWith('.tar') ||
                                 filePath.endsWith('.tar.gz')) &&
-                            status == true) {
+                            responseStreamStatus == true) {
                           // Decompress the tar archive
                           await extractTarFile(
                                   localPath + filePath.split("/").last,
@@ -546,13 +564,18 @@ class Deployment {
                         break;
 
                       case "WIN":
-                        if ((filePath.endsWith('.zip')) && status == true) {
+                        if ((filePath.endsWith('.zip')) &&
+                            responseStreamStatus == true) {
                           // Determine the local path to th meta data directory
                           String metaDataPath = localPath + "/__MACOSX";
 
                           // Decompress the zip archive
-                          await extractZipFile(_downloadData, localPath,
-                                  fileSaveLocal, metaDataPath, status)
+                          await extractZipFile(
+                                  _downloadData,
+                                  localPath,
+                                  fileSaveLocal,
+                                  metaDataPath,
+                                  responseStreamStatus)
                               .then((value) => responseStreamStatus = value);
                         }
                         if (filePath.endsWith('.tar') ||
@@ -589,12 +612,13 @@ class Deployment {
             });
           } else {
             completer.complete(responseStreamStatus.toString());
-            if (config.getCoreConfig("deployment", "max_retry") >
+            if (config.getCoreConfig("deployment", "max_retry") >=
                     retryCounter &&
                 config.getCoreConfig("deployment", "auto_retry") == 1 &&
-                responseStreamStatus == false) {
+                responseStreamStatus == false &&
+                retryCounter > 0) {
               logger.error(
-                  "Failed to store file with retry ${retryCounter + 1}: ${response.reasonPhrase} ${filePath}");
+                  "Failed to store file with retry ${retryCounter}: ${response.reasonPhrase} ${filePath}");
               responseStreamStatus = false;
               return response.drain();
             } else {
@@ -630,7 +654,7 @@ class Deployment {
 
       retryCounter++;
     } while (status == false &&
-        config.getCoreConfig("deployment", "max_retry") > retryCounter &&
+        config.getCoreConfig("deployment", "max_retry") >= retryCounter &&
         config.getCoreConfig("deployment", "auto_retry") == 1);
     return status;
   }
@@ -638,6 +662,7 @@ class Deployment {
   /// Store the specified file and execute it.
   Future<int> launchFile(String os, int package, String actionCommand,
       String filePath, String actionType) async {
+    logger.info("Launching file...");
     bool storeStatus =
         await storeFile(package, filePath, actionCommand, actionType, os);
     bool execStatus = await executeCommand(os, package, actionCommand);
