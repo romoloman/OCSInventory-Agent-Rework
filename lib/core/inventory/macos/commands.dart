@@ -35,9 +35,9 @@ class MacOSCommand {
       // Attempt to run the command
       var process = await Process.run(command, args);
       if (normalization) {
-        processValue = await process.stdout.toString().trim();
+        processValue = process.stdout.toString().trim();
       } else {
-        processValue = await process.stdout.toString();
+        processValue = process.stdout.toString();
       }
 
       if (process.exitCode != 0) {
@@ -48,7 +48,7 @@ class MacOSCommand {
       }
     } on ProcessException catch (e) {
       // Handle the specific error
-      logger.error("This command '$command' could not be found : ${e}");
+      logger.error("This command '$command' could not be found : $e");
     } catch (e) {
       // Handle other errors
       logger.error('An error occurred : $e');

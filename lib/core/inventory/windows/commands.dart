@@ -37,9 +37,9 @@ class WindowsCommand {
       // Attempt to run the command
       var process = await Process.run(command, args);
       if (normalization) {
-        processValue = await process.stdout.toString().trim();
+        processValue = process.stdout.toString().trim();
       } else {
-        processValue = await process.stdout.toString();
+        processValue = process.stdout.toString();
       }
 
       if (process.exitCode != 0) {
@@ -69,9 +69,9 @@ class WindowsCommand {
       // Attempt to run the command
       var process = await Process.run(command, args, stdoutEncoding: utf8);
       if (normalization) {
-        processValue = await process.stdout.toString().trim();
+        processValue = process.stdout.toString().trim();
       } else {
-        processValue = await process.stdout.toString();
+        processValue = process.stdout.toString();
       }
 
       if (process.exitCode != 0) {
@@ -98,9 +98,9 @@ class WindowsCommand {
       // Attempt to run the command
       var process = await Process.run("type", [path]);
       if (normalization) {
-        processValue = await process.stdout.toString().trim();
+        processValue = process.stdout.toString().trim();
       } else {
-        processValue = await process.stdout.toString();
+        processValue = process.stdout.toString();
       }
 
       if (process.exitCode != 0) {
