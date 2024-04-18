@@ -340,7 +340,6 @@ class Inventory {
   /// Get the remote template id and last update.
   Future<Map<String, String>> getRemoteTemplateInfo(
       Map<String, dynamic> body) async {
-    Map<String, String> info;
     String uuid = await body['uuid'];
     uuid = uuid.isEmpty ? 'none' : uuid;
     logger.info("Getting remote template info...");
@@ -369,7 +368,7 @@ class Inventory {
       if (responseTemplate["status_code"] == 200) {
         // Create info object
         logger.info("Remote template info found!");
-        info = {
+        return {
           "id": jsonDecode(responseTemplate["body"])['id'].toString(),
           "last_update":
               jsonDecode(responseTemplate["body"])['last_update'].toString(),
@@ -420,7 +419,7 @@ class Inventory {
             if (responseTemplate["status_code"] == 200) {
               // Create info object
               logger.info("Remote template info found!");
-              info = {
+              return {
                 "id": jsonDecode(responseTemplate["body"])['id'].toString(),
                 "last_update":
                     jsonDecode(responseTemplate["body"])['last_update']
@@ -429,35 +428,34 @@ class Inventory {
               };
             } else {
               logger.error("Remote template not found!");
-              info = {
+              return {
                 "return": "false",
               };
             }
           } else {
             logger.error("Failed to update remote template info!");
-            info = {
+            return {
               "return": "false",
             };
           }
         } else {
           logger.error("Remote template info filtered per OS not found!");
-          info = {
+          return {
             "return": "false",
           };
         }
       } else {
         logger.error("Remote template not found!");
-        info = {
+        return {
           "return": "false",
         };
       }
     } else {
       logger.error("Asset base not found!");
-      info = {
+      return {
         "return": "false",
       };
     }
-    return info;
   }
 
   /// Get the local template id and last update.
