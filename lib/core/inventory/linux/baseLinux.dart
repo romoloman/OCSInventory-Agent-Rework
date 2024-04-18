@@ -34,7 +34,9 @@ dynamic getBody() async {
   logger.info("Getting OS body...");
 
   dynamic getOSRelease =
-      (await linuxCommand.readFile("/etc/os-release", true)).split("\n");
+      (await linuxCommand.readFile("/etc/os-release", true))["value"]
+          .toString()
+          .split("\n");
   Map<String, String> osRelease = {};
   for (final info in getOSRelease) {
     RegExp exp = RegExp(r'(?<key>[\S]+?)="(?<value>[\S\s]+?)"');
@@ -48,7 +50,9 @@ dynamic getBody() async {
   }
 
   dynamic getHostnamectl =
-      (await linuxCommand.commandShell("hostnamectl", true)).split("\n");
+      (await linuxCommand.commandShell("hostnamectl", true))["value"]
+          .toString()
+          .split("\n");
   Map<String, String> hostnamectl = {};
   for (final info in getHostnamectl) {
     RegExp exp = RegExp(r'(?<key>[^\n][\S\s]+?): (?<value>[\S\s][^\n]+)');
@@ -63,33 +67,40 @@ dynamic getBody() async {
   }
 
   dynamic interface =
-      (await linuxCommand.commandShell("ip route show default", true))
+      (await linuxCommand.commandShell("ip route show default", true))["value"]
+          .toString()
           .split(" ")[4];
 
-  dynamic getmacAdress = await linuxCommand.commandShell(
-      "ip link show " + interface.toString(), true);
+  dynamic getmacAdress = (await linuxCommand.commandShell(
+          "ip link show " + interface.toString(), true))["value"]
+      .toString();
   RegExp exp = RegExp(r'link\/ether (?<mac>[\S\s]+?) ');
   RegExpMatch? match = exp.firstMatch(getmacAdress);
   String macAdress =
       match![0].toString().substring(11, match[0].toString().length).trim();
 
   // Get name
-  String name = await linuxCommand.commandShell("hostname", true);
+  String name = (await linuxCommand.commandShell("hostnameeee", true))["value"]
+      .toString()
+      .trim();
 
   dynamic body = ({
     "name": name,
     "description": osRelease["PRETTY_NAME"].toString() +
         " " +
         hostnamectl["Architecture"].toString(),
-    "serial": await linuxCommand.commandShell(
-        "sudo dmidecode -s system-serial-number", true),
+    "serial": (await linuxCommand.commandShell(
+            "sudo dmidecode -s system-serial-number", true))["value"]
+        .toString(),
     "osname": osRelease["NAME"].toString(),
     "osversion": osRelease["VERSION_ID"].toString(),
     "uuid": await _getUUID(name, macAdress),
-    "srcip":
-        (await linuxCommand.commandShell("hostname -I", true)).split(" ")[0],
+    "srcip": (await linuxCommand.commandShell("hostname -I", true))["value"]
+        .toString()
+        .split(" ")[0],
     "srcmac": macAdress,
-    "domain": await linuxCommand.commandShell("hostname -d", true)
+    "domain": (await linuxCommand.commandShell("hostname -d", true))["value"]
+        .toString(),
   });
 
   logger.info("OS body has been retrieved!");
@@ -102,8 +113,9 @@ Future<String> _getUUID(String name, String macAdress) async {
   var linuxCommand = new command.LinuxCommand();
   JsonUtils jsonUtils = new JsonUtils();
   Logger logger = new Logger();
-  String uuid =
-      await linuxCommand.commandShell("sudo dmidecode -s system-uuid", true);
+  String uuid = (await linuxCommand.commandShell(
+          "sudo dmidecode -s system-uuid", true))["value"]
+      .toString();
 
   if (uuid == "") {
     String containerFileName = sprintf('%s/%s.json', ["config/", "uuid"]);
@@ -122,7 +134,8 @@ Future<String> _getUUID(String name, String macAdress) async {
       logger.info("UUID has been retrieved from the uuid file.");
     } else {
       logger.info("UUID not found, generating a new one...");
-      uuid = await linuxCommand.commandShell("uuidgen", true);
+      uuid = (await linuxCommand.commandShell("uuidgen", true))["value"]
+          .toString();
       dynamic baseAdded = {};
       baseAdded["name"] = name;
       baseAdded["uuid"] = uuid;
