@@ -18,9 +18,11 @@ import 'dart:io' show Platform;
 
 import 'package:sprintf/sprintf.dart';
 
-import 'package:ocs_agent/core/inventory.dart';
 import 'package:ocs_agent/core/config.dart';
 import 'package:ocs_agent/core/log.dart';
+
+import 'package:ocs_agent/core/deployment.dart';
+import 'package:ocs_agent/core/inventory.dart';
 
 import 'package:ocs_agent/core/inventory/linux/baseLinux.dart' as baseLinux;
 import 'package:ocs_agent/core/inventory/macos/baseMacOS.dart' as baseMacOS;
