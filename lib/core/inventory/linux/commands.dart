@@ -41,10 +41,10 @@ class LinuxCommand {
       late ProcessResult process;
       if (normalization) {
         process = await Process.run(command, args, environment: ev);
-        processValue = await process.stdout.toString().trim();
+        processValue = process.stdout.toString().trim();
       } else {
         process = await Process.run(command, args);
-        processValue = await process.stdout.toString();
+        processValue = process.stdout.toString();
       }
 
       if (process.exitCode != 0) {
@@ -71,9 +71,9 @@ class LinuxCommand {
       // Attempt to run the command
       var process = await Process.run("cat", [path]);
       if (normalization) {
-        processValue = await process.stdout.toString().trim();
+        processValue = process.stdout.toString().trim();
       } else {
-        processValue = await process.stdout.toString();
+        processValue = process.stdout.toString();
       }
 
       if (process.exitCode != 0) {
