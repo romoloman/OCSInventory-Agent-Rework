@@ -50,6 +50,9 @@ class WindowsCommand {
       } else {
         processData["status"] = true;
         logger.verbose("Command executed: $commandLine");
+        if (processData["value"] == "") {
+          processData["value"] = "Command '$commandLine' has no output.";
+        }
       }
     } on ProcessException catch (e) {
       processData["value"] = "";
@@ -89,6 +92,9 @@ class WindowsCommand {
       } else {
         processData["status"] = true;
         logger.verbose("Command executed: $commandLine");
+        if (processData["value"] == "") {
+          processData["value"] = "Command '$commandLine' has no output.";
+        }
       }
     } on ProcessException catch (e) {
       processData["value"] = "";
@@ -124,6 +130,9 @@ class WindowsCommand {
       } else {
         processData["status"] = true;
         logger.verbose("File executed successfully: $path");
+        if (processData["value"] == "") {
+          processData["value"] = "File '$path' has no output.";
+        }
       }
     } on ProcessException catch (e) {
       processData["value"] = "";

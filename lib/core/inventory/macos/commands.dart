@@ -48,6 +48,9 @@ class MacOSCommand {
       } else {
         processData["status"] = true;
         logger.verbose("Command executed: $commandLine");
+        if (processData["value"] == "") {
+          processData["value"] = "Command '$commandLine' has no output.";
+        }
       }
     } on ProcessException catch (e) {
       processData["value"] = "";

@@ -55,6 +55,9 @@ class LinuxCommand {
       } else {
         processData["status"] = true;
         logger.verbose("Executed command: '$commandLine'");
+        if (processData["value"] == "") {
+          processData["value"] = "Command '$commandLine' has no output.";
+        }
       }
     } on ProcessException catch (e) {
       processData["value"] = "";
@@ -90,6 +93,9 @@ class LinuxCommand {
       } else {
         processData["status"] = true;
         logger.verbose("File executed successfully: $path");
+        if (processData["value"] == "") {
+          processData["value"] = "File '$path' has no output.";
+        }
       }
     } on ProcessException catch (e) {
       processData["value"] = "";
