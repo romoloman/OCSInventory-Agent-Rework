@@ -159,6 +159,10 @@ class Deployment {
             id = resultElement["id"];
           }
         });
+        String packagePath = config.getInventoryConfig("data_dir") +
+            "/deployment/" +
+            action["package"].toString() +
+            "/";
         // VERBOSE: show which action is processing
         logger.verbose(action.toString());
         switch (action["action_type"]) {
@@ -181,6 +185,12 @@ class Deployment {
                 : status = 1;
             if (status == 0) {
               logger.info("File downloaded and stored successfully!");
+              // Delete the package directory after storing the file
+              var packageDirectory = Directory(packagePath);
+              if (packageDirectory.existsSync()) {
+                await packageDirectory.delete(recursive: true);
+                logger.verbose("Package directory deleted: '$packagePath'");
+              }
             } else {
               logger.error("Error while downloading and storing file!");
             }
@@ -188,6 +198,17 @@ class Deployment {
           case "LAUNCH":
             status = await launchFile(os, action["package"], action["command"],
                 action["file"], action["action_type"]);
+            if (status == 0) {
+              logger.info("File launched successfully!");
+            } else {
+              logger.error("Error while launching file!");
+            }
+            // Delete the package directory after launching the file
+            var packageDirectory = Directory(packagePath);
+            if (packageDirectory.existsSync()) {
+              await packageDirectory.delete(recursive: true);
+              logger.verbose("Package directory deleted: '$packagePath'");
+            }
             break;
           default:
             logger.error("Canno't read correctly the action type!");
@@ -248,11 +269,11 @@ class Deployment {
 
     // This variables will replace variable by dynamic path
     Map<String, dynamic> variables = {
-      "\$AGENT_PATH":
+      "AGENT_PATH":
           Directory.current.toString().substring(11, null).replaceAll("'", "") +
               "/" +
               config.getInventoryConfig("data_dir"),
-      "\$PACKAGE": "deployment/" + package.toString()
+      "PACKAGE": "/deployment/" + package.toString()
     };
     variables.keys.forEach((key) {
       actionCommand = actionCommand.replaceAll(key, variables[key]);
@@ -508,6 +529,11 @@ class Deployment {
                       !filePath.endsWith('.zip')) {
                     logger.verbose(
                         "$filePath is stored in the agent directory: '$localPath'");
+                    if (actionType == "LAUNCH") {
+                      // Make the file executable
+                      String chmodCommand = "chmod +x ${fileAdded.path}";
+                      await executeCommand(os, package, chmodCommand);
+                    }
 
                     if (actionType == "STORE") {
                       File remoteFile = await fileAdded
@@ -638,12 +664,6 @@ class Deployment {
       await completerValue.then((value) async {
         if (value == "true") {
           status = true;
-          // Delete the package directory after storing the file
-          var packageDirectory = Directory(localPath);
-          if (packageDirectory.existsSync()) {
-            await packageDirectory.delete(recursive: true);
-            logger.verbose("Package directory deleted: '$localPath'");
-          }
         } else {
           status = false;
         }
@@ -667,7 +687,13 @@ class Deployment {
         await storeFile(package, filePath, actionCommand, actionType, os);
     bool execStatus = await executeCommand(os, package, actionCommand);
     int status = 0;
-    if (storeStatus != 0 || execStatus != 0) {
+    if (storeStatus) {
+      if (execStatus) {
+        status = 0;
+      } else {
+        status = 1;
+      }
+    } else {
       status = 1;
     }
     return status;
