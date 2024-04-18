@@ -64,6 +64,13 @@ Future<void> main(List<String> args) async {
       if (inventory.getMode() == 0) {
         await inventory.sendRemoteTemplateInventory(body);
       }
+
+      // Deployment process
+      // if (await deployment.checkDownload(inventory.assetID)) {
+      //   if (await deployment.getActions(inventory.assetID)) {
+      //     deployment.executeActions();
+      //   }
+      // }
     }
   } else if (inventory.getMode() == 2 || inventory.getMode() == 3) {
     inventory.sendLocalBaseInventory(body);
