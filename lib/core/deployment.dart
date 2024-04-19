@@ -59,10 +59,36 @@ class Deployment {
     sortedActions = [];
   }
 
+  /// Check the configuration of the deployment module.
+  Future<bool> checkConfig() async {
+    logger.info("Enabling and Checking deployment module configuration...");
+
+    // Check if the URL is set
+    if (url == null) {
+      logger.error("URL is not set in the configuration file!");
+      return false;
+    }
+
+    // Check if the URL is valid
+    if (!Uri.parse(url).isAbsolute) {
+      logger.error("URL is not valid in the configuration file!");
+      return false;
+    }
+
+    // Check if the URL is reachable
+    var response = await httpUtils.get("checkConfig",
+        Uri.parse(url + "/deployment/results/"), httpUtils.getHeader(config));
+    if (response["status_code"] == 200) {
+      logger.info("Deployment module configuration is valid!");
+      return true;
+    } else {
+      logger.error("Deployment module configuration is not valid!");
+      return false;
+    }
+  }
+
   /// Check if there is packages to download.
   Future<bool> checkDownload(int assetID) async {
-    logger.info("Enabling deployment module...");
-
     // API call: Check if there is assigned packages
     var response = await httpUtils.get(
         "checkDownload",
@@ -267,17 +293,14 @@ class Deployment {
       String os, int package, String actionCommand) async {
     logger.info("Executing action command...");
 
-    // This variables will replace variable by dynamic path
-    Map<String, dynamic> variables = {
-      "AGENT_PATH":
-          Directory.current.toString().substring(11, null).replaceAll("'", "") +
-              "/" +
-              config.getInventoryConfig("data_dir"),
-      "PACKAGE": "/deployment/" + package.toString()
-    };
-    variables.keys.forEach((key) {
-      actionCommand = actionCommand.replaceAll(key, variables[key]);
-    });
+    // This variables will replace variable by dynamic pat
+    String agentPath =
+        Directory.current.toString().substring(11, null).replaceAll("'", "") +
+            "/" +
+            config.getInventoryConfig("data_dir") +
+            "/deployment/" +
+            package.toString();
+    actionCommand = actionCommand.replaceAll("AGENT_PATH", agentPath);
     late Map<String, Object> result;
     int retryCounter = 0;
     do {
@@ -538,13 +561,15 @@ class Deployment {
                     filePath.endsWith('.tar.gz') ||
                     filePath.endsWith('.zip') ||
                     filePath.endsWith('.tar.xz') ||
-                    filePath.endsWith('.tgz')) {
+                    filePath.endsWith('.tgz') ||
+                    filePath.endsWith('.tar.bz2')) {
                   switch (os) {
                     case "LIN":
                       if ((filePath.endsWith('.tar') ||
                               filePath.endsWith('.tar.gz') ||
                               filePath.endsWith('.tar.xz') ||
-                              filePath.endsWith('.tgz')) &&
+                              filePath.endsWith('.tgz') ||
+                              filePath.endsWith('.tar.bz2')) &&
                           responseStreamStatus == true) {
                         // Decompress the tar archive
                         await extractTarFile(
@@ -566,7 +591,8 @@ class Deployment {
                       if ((filePath.endsWith('.tar') ||
                               filePath.endsWith('.tar.gz') ||
                               filePath.endsWith('.tar.xz') ||
-                              filePath.endsWith('.tgz')) &&
+                              filePath.endsWith('.tgz') ||
+                              filePath.endsWith('.tar.bz2')) &&
                           responseStreamStatus == true) {
                         // Decompress the tar archive
                         await extractTarFile(

@@ -76,9 +76,11 @@ Future<void> main(List<String> args) async {
       // Deployment process
       dynamic deploymentMode = config.getCoreConfig("deployment", "enabled");
       if (deploymentMode == 1) {
-        if (await deployment.checkDownload(inventory.assetID)) {
-          if (await deployment.getActions(inventory.assetID)) {
-            await deployment.executeActions(os, inventory.assetID);
+        if (await deployment.checkConfig()) {
+          if (await deployment.checkDownload(inventory.assetID)) {
+            if (await deployment.getActions(inventory.assetID)) {
+              await deployment.executeActions(os, inventory.assetID);
+            }
           }
         }
       }
