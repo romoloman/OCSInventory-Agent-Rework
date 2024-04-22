@@ -229,8 +229,8 @@ class Inventory {
 
     // API call
     var response = await httpUtils.get("API: getConfig method",
-          Uri.parse(url + "/asset/configs/"), httpUtils.getHeader(config));
-      logger.verbose(response["message"]);
+        Uri.parse(url + "/asset/configs/"), httpUtils.getHeader(config));
+    logger.verbose(response["message"]);
     if (response["status_code"] == 200) {
       logger.info("Remote config found!");
       // save the existing config locally
