@@ -534,7 +534,8 @@ class Deployment {
         "/";
     var fileSaveLocal = new File(localPath + filePath.split("/").last);
 
-    String specifiedPath = pathToStore;
+    String specifiedPath =
+        pathToStore.endsWith("/") ? pathToStore : pathToStore + "/";
 
     do {
       // Try to download and store the file in the package folder
@@ -555,8 +556,6 @@ class Deployment {
 
               if (fileAdded.existsSync()) {
                 responseStreamStatus = true;
-                print(filePath);
-                print(filePath.endsWith('.tar.xz'));
                 if (filePath.endsWith('.tar') ||
                     filePath.endsWith('.tar.gz') ||
                     filePath.endsWith('.zip') ||
