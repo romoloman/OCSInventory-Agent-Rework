@@ -19,8 +19,12 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:sprintf/sprintf.dart';
 
+import 'package:ocs_agent/core/log.dart';
+
 /// This class will execute and log the status of the query
 class HTTPUtils {
+  Logger logger = new Logger();
+
   /// Return header in json format.
   Map<String, String> getHeader(dynamic config) {
     // Get data from inventory.json file
@@ -57,11 +61,16 @@ class HTTPUtils {
   Future<Map<String, dynamic>> delete(
       String currentMethod, Uri uri, Map<String, String>? headers) async {
     var returnObject = new Map<String, dynamic>();
-    var query = await http.delete(uri, headers: headers);
-    returnObject["body"] = query.body;
-    returnObject["status_code"] = query.statusCode;
-    returnObject["message"] = statusCodeMessage(
-        "DELETE", query.statusCode, query.body, currentMethod);
+    try {
+      var query = await http.delete(uri, headers: headers);
+      returnObject["body"] = query.body;
+      returnObject["status_code"] = query.statusCode;
+      returnObject["message"] = statusCodeMessage(
+          "DELETE", query.statusCode, query.body, currentMethod);
+    } catch (exception) {
+      logger.error(sprintf("HTTP query: %s", [exception.toString().trim()]));
+      returnObject["error"] = true;
+    }
     return returnObject;
   }
 
@@ -69,11 +78,16 @@ class HTTPUtils {
   Future<Map<String, dynamic>> get(
       String currentMethod, Uri uri, Map<String, String>? headers) async {
     var returnObject = new Map<String, dynamic>();
-    var query = await http.get(uri, headers: headers);
-    returnObject["body"] = query.body;
-    returnObject["status_code"] = query.statusCode;
-    returnObject["message"] =
-        statusCodeMessage("GET", query.statusCode, query.body, currentMethod);
+    try {
+      var query = await http.get(uri, headers: headers);
+      returnObject["body"] = query.body;
+      returnObject["status_code"] = query.statusCode;
+      returnObject["message"] =
+          statusCodeMessage("GET", query.statusCode, query.body, currentMethod);
+    } catch (exception) {
+      logger.error(sprintf("HTTP query: %s", [exception.toString().trim()]));
+      returnObject["error"] = true;
+    }
     return returnObject;
   }
 
@@ -81,11 +95,16 @@ class HTTPUtils {
   Future<Map<String, dynamic>> patch(String currentMethod, Uri uri,
       Map<String, String>? headers, Object? body) async {
     var returnObject = new Map<String, dynamic>();
-    var query = await http.patch(uri, headers: headers, body: body);
-    returnObject["body"] = query.body;
-    returnObject["status_code"] = query.statusCode;
-    returnObject["message"] =
-        statusCodeMessage("PATCH", query.statusCode, query.body, currentMethod);
+    try {
+      var query = await http.patch(uri, headers: headers, body: body);
+      returnObject["body"] = query.body;
+      returnObject["status_code"] = query.statusCode;
+      returnObject["message"] = statusCodeMessage(
+          "PATCH", query.statusCode, query.body, currentMethod);
+    } catch (exception) {
+      logger.error(sprintf("HTTP query: %s", [exception.toString().trim()]));
+      returnObject["error"] = true;
+    }
     return returnObject;
   }
 
@@ -93,11 +112,16 @@ class HTTPUtils {
   Future<Map<String, dynamic>> post(String currentMethod, Uri uri,
       Map<String, String>? headers, Object? body) async {
     var returnObject = new Map<String, dynamic>();
-    var query = await http.post(uri, headers: headers, body: body);
-    returnObject["body"] = query.body;
-    returnObject["status_code"] = query.statusCode;
-    returnObject["message"] =
-        statusCodeMessage("POST", query.statusCode, query.body, currentMethod);
+    try {
+      var query = await http.post(uri, headers: headers, body: body);
+      returnObject["body"] = query.body;
+      returnObject["status_code"] = query.statusCode;
+      returnObject["message"] = statusCodeMessage(
+          "POST", query.statusCode, query.body, currentMethod);
+    } catch (exception) {
+      logger.error(sprintf("HTTP query: %s", [exception.toString().trim()]));
+      returnObject["error"] = true;
+    }
     return returnObject;
   }
 
@@ -105,11 +129,16 @@ class HTTPUtils {
   Future<Map<String, dynamic>> put(String currentMethod, Uri uri,
       Map<String, String>? headers, Object? body) async {
     var returnObject = new Map<String, dynamic>();
-    var query = await http.put(uri, headers: headers, body: body);
-    returnObject["body"] = query.body;
-    returnObject["status_code"] = query.statusCode;
-    returnObject["message"] =
-        statusCodeMessage("PUT", query.statusCode, query.body, currentMethod);
+    try {
+      var query = await http.put(uri, headers: headers, body: body);
+      returnObject["body"] = query.body;
+      returnObject["status_code"] = query.statusCode;
+      returnObject["message"] =
+          statusCodeMessage("PUT", query.statusCode, query.body, currentMethod);
+    } catch (exception) {
+      logger.error(sprintf("HTTP query: %s", [exception.toString().trim()]));
+      returnObject["error"] = true;
+    }
     return returnObject;
   }
 }
