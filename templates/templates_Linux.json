@@ -1009,6 +1009,53 @@
       "options": {
         "multiple": true
       }
+    },
+    {
+      "name": "USB_DEVICES",
+      "retrival_method": "BASH",
+      "retrival_output": "REGX",
+      "target": "lsusb",
+      "fields": [
+        {
+          "name": "Name",
+          "retrival_value": "Bus\\s\\w+\\sDevice\\s\\w+:\\sID\\s\\w+:\\w+\\s(.*)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "BUS",
+          "retrival_value": "Bus\\s(\\w+)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "DEVICE",
+          "retrival_value": "Bus\\s\\w+\\sDevice\\s(\\w+)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "ID",
+          "retrival_value": "Bus\\s\\w+\\sDevice\\s\\w+:\\sID\\s(\\w+:\\w+)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "multiple": true
+      }
     }
   ]
 }
