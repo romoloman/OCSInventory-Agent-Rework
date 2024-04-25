@@ -856,6 +856,62 @@
       "options": {
         "need_format": false
       }
+    },
+    {
+      "name": "ETHERNET",
+      "retrival_method": "PW",
+      "retrival_output": "JSON",
+      "target": "Get-NetAdapter | ConvertTo-Json",
+      "fields": [
+        {
+          "name": "NAME",
+          "retrival_value": "Name",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "DESCRIPTION",
+          "retrival_value": "InterfaceDescription",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "MAC ADDRESS",
+          "retrival_value": "MacAddress",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "STATUS",
+          "retrival_value": "Status",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "SPEED",
+          "retrival_value": "LinkSpeed",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
     }
   ]
 }
