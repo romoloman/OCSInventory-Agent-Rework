@@ -1320,7 +1320,8 @@
       "options": {
         "multiple": true
       }
-    },{
+    },
+    {
       "id": 79,
       "name": "SYSTEM",
       "retrival_method": "BASH",
