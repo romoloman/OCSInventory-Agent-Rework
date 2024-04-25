@@ -912,6 +912,53 @@
       "options": {
         "need_format": false
       }
+    },
+    {
+      "name": "GRAPHICS/DISPLAYS",
+      "retrival_method": "PW",
+      "retrival_output": "JSON",
+      "target": "Get-WmiObject -Class Win32_VideoController | ConvertTo-Json",
+      "fields": [
+        {
+          "name": "NAME",
+          "retrival_value": "Name",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "COMPATIBILITY",
+          "retrival_value": "AdapterCompatibility",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "RAM",
+          "retrival_value": "AdapterRAM",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "MODE",
+          "retrival_value": "VideoModeDescription",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
     }
   ]
 }
