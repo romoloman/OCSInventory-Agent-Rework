@@ -1058,77 +1058,63 @@
       }
     },
     {
-      "id": 79,
       "name": "PRINTERS",
       "retrival_method": "BASH",
       "retrival_output": "REGX",
       "target": "sudo lpstat -l -e",
-      "template": 11,
       "fields": [
         {
-          "id": 540,
           "name": "Name",
           "retrival_value": "^([A-Za-z0-9-]+)",
           "override_target": false,
           "new_target": null,
           "retrival_method": null,
           "retrival_output": null,
-          "section": 79,
           "options": null
         },
         {
-          "id": 541,
           "name": "Connection Type",
           "retrival_value": "^[A-Za-z0-9-]+\\s(\\w+)",
           "override_target": false,
           "new_target": null,
           "retrival_method": null,
           "retrival_output": null,
-          "section": 79,
           "options": null
         },
         {
-          "id": 542,
           "name": "URI",
           "retrival_value": "ipp:(\/\/[a-zA-Z0-9\\-\\.]\\S+)",
           "override_target": false,
           "new_target": null,
           "retrival_method": null,
           "retrival_output": null,
-          "section": 79,
           "options": null
         },
         {
-          "id": 543,
           "name": "DNS-SD URI",
           "retrival_value": "dnssd:(\/\/[a-zA-Z0-9\\-\\.]\\S+)",
           "override_target": false,
           "new_target": null,
           "retrival_method": null,
           "retrival_output": null,
-          "section": 79,
           "options": null
         },
         {
-          "id": 544,
           "name": "UUID",
           "retrival_value": "uuid=([a-fA-F0-9\\-]+)",
           "override_target": false,
           "new_target": null,
           "retrival_method": null,
           "retrival_output": null,
-          "section": 79,
           "options": null
         },
         {
-          "id": 545,
           "name": "HOSTNAME",
           "retrival_value": "dnssd:\/\/([a-zA-Z0-9\\-\\.%()_\/]+)",
           "override_target": false,
           "new_target": null,
           "retrival_method": null,
           "retrival_output": null,
-          "section": 79,
           "options": null
         }
       ],
@@ -1191,6 +1177,54 @@
       "options": {
         "multiple": true,
         "separator": "collisions \\d"
+      }
+    },
+    {
+      "name": "GRAPHICS/DISPLAYS",
+      "retrival_method": "BASH",
+      "retrival_output": "REGX",
+      "target": "sudo lshw -class display",
+      "fields": [
+        {
+          "name": "Description",
+          "retrival_value": "^\\s{7}description:\\s(.*)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "PROCUCT",
+          "retrival_value": "^\\s{7}product:\\s(.*)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Vendor",
+          "retrival_value": "^\\s{7}vendor:\\s(.*)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Configuration",
+          "retrival_value": "^\\s{7}configuration:\\s(.*)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "multiple": true,
+        "separator": ".*display"
       }
     }
   ]
