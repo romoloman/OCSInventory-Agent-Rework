@@ -809,6 +809,53 @@
       "options": {
         "need_format": false
       }
+    },
+    {
+      "name": "PRINTERS",
+      "retrival_method": "PW",
+      "retrival_output": "JSON",
+      "target": "Get-WmiObject -Class Win32_Printer | Select-Object Name, PortName, DriverName, Shared | ConvertTo-Json",
+      "fields": [
+        {
+          "name": "NAME",
+          "retrival_value": "Name",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Port Name",
+          "retrival_value": "PortName",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Driver name",
+          "retrival_value": "DriverName",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Shared",
+          "retrival_value": "Shared",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
     }
   ]
 }
