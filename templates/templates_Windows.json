@@ -1062,6 +1062,53 @@
       "options": {
         "need_format": false
       }
+    },
+    {
+      "name": "SOFTWARE",
+      "retrival_method": "PW",
+      "retrival_output": "JSON",
+      "target": "Get-ItemProperty HKLM:\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\* | ConvertTo-Json",
+      "fields": [
+        {
+          "name": "NAME",
+          "retrival_value": "DisplayName",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "PUBLISHER",
+          "retrival_value": "Publisher",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "INSTALL DATE",
+          "retrival_value": "InstallDate",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "VERSION",
+          "retrival_value": "DisplayVersion",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
     }
   ]
 }
