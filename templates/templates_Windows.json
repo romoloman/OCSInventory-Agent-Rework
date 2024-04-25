@@ -688,7 +688,7 @@
       }
     },
     {
-      "name": "USER",
+      "name": "USERS",
       "retrival_method": "PW",
       "retrival_output": "JSON",
       "target": "Get-WmiObject -ClassName Win32_UserAccount -Property * | ConvertTo-Json",
@@ -705,6 +705,53 @@
         {
           "name": "LOGGED_USER",
           "retrival_value": "Name",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "USER_ID",
+          "retrival_value": "SID",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
+    },
+    {
+      "name": "USER",
+      "retrival_method": "PW",
+      "retrival_output": "JSON",
+      "target": "Get-WmiObject -Class Win32_UserAccount -Property * | Where-Object { $_.Name -eq $env:USERNAME } | ConvertTo-Json",
+      "fields": [
+        {
+          "name": "NAME",
+          "retrival_value": "Name",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "DOMAIN",
+          "retrival_value": "Domain",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "STATUS",
+          "retrival_value": "Status",
           "override_target": false,
           "new_target": null,
           "retrival_method": null,
