@@ -959,6 +959,62 @@
       "options": {
         "need_format": false
       }
+    },
+    {
+      "name": "CURRENT_WIFI",
+      "retrival_method": "PW",
+      "retrival_output": "JSON",
+      "target": "netsh wlan show interfaces | ConvertTo-Json",
+      "fields": [
+        {
+          "name": "SSID",
+          "retrival_value": "SSID",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Authentication",
+          "retrival_value": "Authentication",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "State",
+          "retrival_value": "State",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "SIGNAL",
+          "retrival_value": "Signal",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "PROFILE",
+          "retrival_value": "Profile",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
     }
   ]
 }
