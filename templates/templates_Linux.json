@@ -1135,6 +1135,63 @@
       "options": {
         "multiple": true
       }
+    },
+    {
+      "name": "ETHERNET",
+      "retrival_method": "BASH",
+      "retrival_output": "REGX",
+      "target": "/sbin/ifconfig -a",
+      "fields": [
+        {
+          "name": "Name",
+          "retrival_value": "^([a-zA-Z0-9\\_\\-]+)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "IP Address v4",
+          "retrival_value": "inet\\s([0-9.]+)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "IP Address v6",
+          "retrival_value": "inet6\\s([0-9a-fA-F:]+)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Broadcast",
+          "retrival_value": "broadcast\\s([0-9.]+)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Netmask",
+          "retrival_value": "netmask\\s([0-9.]+)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "multiple": true,
+        "separator": "collisions \\d"
+      }
     }
   ]
 }
