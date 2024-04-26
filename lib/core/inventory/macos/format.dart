@@ -225,15 +225,24 @@ class MacOSFormat {
         haveSeparator = true;
       }
       int x = 1;
-      for (var line in lines) {
+      for (int i = 0; i < lines.length; i++) {
+        // if we have a line that the value is on the next line
+        if (i + 1 < lines.length) {
+          if (lines[i].toString().endsWith(":")) {
+            if (lines[i + 1].toString().startsWith(" ")) {
+              lines[i] = lines[i] + lines[i + 1];
+            }
+          }
+        }
+
         for (var field in fields) {
           var regex = RegExp(field['retrival_value']);
-          if (regex.hasMatch(line)) {
-            var match = regex.firstMatch(line);
+          if (regex.hasMatch(lines[i])) {
+            var match = regex.firstMatch(lines[i]);
             result.putIfAbsent(field['name'], () => match!.group(1));
           }
         }
-        if ((separator != null && separator.hasMatch(line)) ||
+        if ((separator != null && separator.hasMatch(lines[i])) ||
             x == lines.length) {
           separate = true;
         }
