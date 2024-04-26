@@ -1629,14 +1629,23 @@
       }
     },
     {
-      "name": "CURRENT_WIFI",
+      "name": "Wi-Fi",
       "retrival_method": "BASH",
       "retrival_output": "REGX",
       "target": "system_profiler SPAirPortDataType",
       "fields": [
         {
           "name": "Network Name",
-          "retrival_value": "^\\s{12}(\\w+):\\n",
+          "retrival_value": "^\\s{12}(\\w+)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Status",
+          "retrival_value": "^\\s{10}(Current)",
           "override_target": false,
           "new_target": null,
           "retrival_method": null,
@@ -1645,7 +1654,7 @@
         },
         {
           "name": "PHY Mode",
-          "retrival_value": "\\s{14}PHY Mode:\\s(.*)\\n",
+          "retrival_value": "\\s{14}PHY Mode:\\s(.*)",
           "override_target": false,
           "new_target": null,
           "retrival_method": null,
@@ -1654,16 +1663,7 @@
         },
         {
           "name": "Channel",
-          "retrival_value": "\\s{14}Channel:\\s(.*)\\n",
-          "override_target": false,
-          "new_target": null,
-          "retrival_method": null,
-          "retrival_output": null,
-          "options": null
-        },
-        {
-          "name": "Country Code",
-          "retrival_value": "\\s{14}Country Code:\\s(.*)\\n",
+          "retrival_value": "\\s{14}Channel:\\s(.*)",
           "override_target": false,
           "new_target": null,
           "retrival_method": null,
@@ -1672,7 +1672,7 @@
         },
         {
           "name": "Network Type",
-          "retrival_value": "\\s{14}Network Type:\\s(.*)\\n",
+          "retrival_value": "\\s{14}Network Type:\\s(.*)",
           "override_target": false,
           "new_target": null,
           "retrival_method": null,
@@ -1691,64 +1691,8 @@
       ],
       "options": {
         "need_format": false,
-        "multiple": true
-      }
-    },
-    {
-      "name": "OTHER_WIFI",
-      "retrival_method": "BASH",
-      "retrival_output": "REGX",
-      "target": "system_profiler SPAirPortDataType",
-      "fields": [
-        {
-          "name": "Network Name",
-          "retrival_value": "^\\s{12}(\\w+):\\n",
-          "override_target": false,
-          "new_target": null,
-          "retrival_method": null,
-          "retrival_output": null,
-          "options": null
-        },
-        {
-          "name": "PHY Mode",
-          "retrival_value": "\\s{14}PHY Mode:\\s(.*)\\n",
-          "override_target": false,
-          "new_target": null,
-          "retrival_method": null,
-          "retrival_output": null,
-          "options": null
-        },
-        {
-          "name": "Channel",
-          "retrival_value": "\\s{14}Channel:\\s(.*)\\n",
-          "override_target": false,
-          "new_target": null,
-          "retrival_method": null,
-          "retrival_output": null,
-          "options": null
-        },
-        {
-          "name": "Network Type",
-          "retrival_value": "\\s{14}Network Type:\\s(.*)\\n",
-          "override_target": false,
-          "new_target": null,
-          "retrival_method": null,
-          "retrival_output": null,
-          "options": null
-        },
-        {
-          "name": "Security",
-          "retrival_value": "\\s{14}Security:\\s(.*)",
-          "override_target": false,
-          "new_target": null,
-          "retrival_method": null,
-          "retrival_output": null,
-          "options": null
-        }
-      ],
-      "options": {
-        "need_format": false,
-        "multiple": true
+        "multiple": true,
+        "separator": "\\s{14}Security:"
       }
     }
   ]
