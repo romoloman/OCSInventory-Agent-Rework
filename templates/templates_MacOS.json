@@ -1793,6 +1793,87 @@
         "multiple": true,
         "separator": "-"
       }
+    },
+    {
+      "id": 52,
+      "name": "USERS",
+      "retrival_method": "BASH",
+      "retrival_output": "REGX",
+      "target": "dscl . readall /groups",
+      "template": 8,
+      "fields": [
+        {
+          "id": 343,
+          "name": "Real Name",
+          "retrival_value": "^RealName:\\s*(.*)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "section": 52,
+          "options": null
+        },
+        {
+          "id": 344,
+          "name": "Record name",
+          "retrival_value": "^RecordName:\\s(.*)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "section": 52,
+          "options": null
+        },
+        {
+          "id": 345,
+          "name": "Record type",
+          "retrival_value": "^RecordType:\\s(.*)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "section": 52,
+          "options": null
+        },
+        {
+          "id": 346,
+          "name": "PrimaryGroupID",
+          "retrival_value": "^PrimaryGroupID:\\s(.*)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "section": 52,
+          "options": null
+        },
+        {
+          "id": 347,
+          "name": "Unique ID",
+          "retrival_value": "^UniqueID:\\s(.*)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "section": 52,
+          "options": null
+        },
+        {
+          "id": 347,
+          "name": "User Shell",
+          "retrival_value": "^UserShell:\\s(.*)",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "section": 52,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false,
+        "multiple": true,
+        "separator": "-"
+      }
     }
   ]
 }
