@@ -1109,6 +1109,80 @@
       "options": {
         "need_format": false
       }
+    },
+    {
+      "name": "CONTROLLER",
+      "retrival_method": "PW",
+      "retrival_output": "JSON",
+      "target": "Get-WmiObject -Class Win32_ComputerSystem | ConvertTo-Json",
+      "fields": [
+        {
+          "name": "BOOT DEVICE",
+          "retrival_value": "BootDevice",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "MODEL",
+          "retrival_value": "Model",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "MANUFACTURER",
+          "retrival_value": "Manufacturer",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "SYSTEM TYPE",
+          "retrival_value": "SystemType",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "STATUS",
+          "retrival_value": "Status",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "INSTALL DATE",
+          "retrival_value": "InstallDate",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "BOOTUP STATE",
+          "retrival_value": "BootupState",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
     }
   ]
 }
