@@ -1694,6 +1694,35 @@
         "multiple": true,
         "separator": "\\s{14}Security:"
       }
+    },
+    {
+      "name": "USER",
+      "retrival_method": "BASH",
+      "retrival_output": "GREP",
+      "target": "system_profiler SPSoftwareDataType",
+      "fields": [
+        {
+          "name": "Name",
+          "retrival_value": "User Name",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        },
+        {
+          "name": "Time since boot",
+          "retrival_value": "Time since boot",
+          "override_target": false,
+          "new_target": null,
+          "retrival_method": null,
+          "retrival_output": null,
+          "options": null
+        }
+      ],
+      "options": {
+        "need_format": false
+      }
     }
   ]
 }
