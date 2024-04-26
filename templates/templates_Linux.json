@@ -1083,7 +1083,7 @@
         },
         {
           "name": "URI",
-          "retrival_value": "ipp:(\/\/[a-zA-Z0-9\\-\\.]\\S+)",
+          "retrival_value": "ipp:(//[a-zA-Z0-9\\-\\.]\\S+)",
           "override_target": false,
           "new_target": null,
           "retrival_method": null,
@@ -1092,7 +1092,7 @@
         },
         {
           "name": "DNS-SD URI",
-          "retrival_value": "dnssd:(\/\/[a-zA-Z0-9\\-\\.]\\S+)",
+          "retrival_value": "dnssd:(//[a-zA-Z0-9\\-\\.]\\S+)",
           "override_target": false,
           "new_target": null,
           "retrival_method": null,
@@ -1110,7 +1110,7 @@
         },
         {
           "name": "HOSTNAME",
-          "retrival_value": "dnssd:\/\/([a-zA-Z0-9\\-\\.%()_\/]+)",
+          "retrival_value": "dnssd://([a-zA-Z0-9\\-\\.%()_/]+)",
           "override_target": false,
           "new_target": null,
           "retrival_method": null,
