@@ -216,23 +216,42 @@ class MacOSFormat {
     if (resultCommand['main']['options'] != null &&
         resultCommand['main']['options'].containsKey('multiple') &&
         resultCommand['main']['options']['multiple']) {
-      String regexSource = "";
-      for (var field in fields) {
-        regexSource = regexSource + field['retrival_value'];
+      var separator;
+      bool haveSeparator = false;
+      bool separate = false;
+      if (resultCommand['main']['options'] != null &&
+          resultCommand['main']['options'].containsKey('separator')) {
+        separator = RegExp(resultCommand['main']['options']['separator']);
+        haveSeparator = true;
       }
-
-      var regex = RegExp(regexSource, multiLine: true);
-
-      var matches =
-          regex.allMatches(resultCommand['main']['result'].toString());
-
-      for (var match in matches) {
-        for (int i = 0; i < fields.length; i++) {
-          result.putIfAbsent(
-              fields.elementAt(i)['name'], () => match.group(i + 1));
+      int x = 1;
+      for (var line in lines) {
+        for (var field in fields) {
+          var regex = RegExp(field['retrival_value']);
+          if (regex.hasMatch(line)) {
+            var match = regex.firstMatch(line);
+            result.putIfAbsent(field['name'], () => match!.group(1));
+          }
         }
-        subInventory.add(result);
-        result = new Map();
+        if ((separator != null && separator.hasMatch(line)) ||
+            x == lines.length) {
+          separate = true;
+        }
+        if (haveSeparator) {
+          if (separate) {
+            if (result.isNotEmpty) {
+              subInventory.add(result);
+              result = new Map();
+            }
+            separate = false;
+          }
+        } else {
+          if (result.isNotEmpty) {
+            subInventory.add(result);
+            result = new Map();
+          }
+        }
+        x++;
       }
     } else {
       for (var line in lines) {
