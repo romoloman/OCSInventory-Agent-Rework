@@ -1228,14 +1228,14 @@
       }
     },
     {
-      "name": "CURRENT-WIFI",
+      "name": "Wi-Fi",
       "retrival_method": "BASH",
       "retrival_output": "REGX",
-      "target": "nmcli connection show --active",
+      "target": "nmcli connection show",
       "fields": [
         {
           "name": "Name",
-          "retrival_value": "^(\\S+)",
+          "retrival_value": "^(\\S+\\s+)[a-fA-F0-9\\-]{36}",
           "override_target": false,
           "new_target": null,
           "retrival_method": null,
@@ -1263,53 +1263,6 @@
         {
           "name": "Device",
           "retrival_value": "[\\S\\s]+?\\s+[a-fA-F0-9\\-]{36}\\s+\\S+\\s+(\\S+)",
-          "override_target": false,
-          "new_target": null,
-          "retrival_method": null,
-          "retrival_output": null,
-          "options": null
-        }
-      ],
-      "options": {
-        "multiple": true
-      }
-    },
-    {
-      "name": "OTHERS-WIFI",
-      "retrival_method": "BASH",
-      "retrival_output": "REGX",
-      "target": "nmcli connection show",
-      "fields": [
-        {
-          "name": "Name",
-          "retrival_value": "^([a-zA-Z0-9\\_\\-\\ ]+)\\s+[a-fA-F0-9\\-]{36}\\s+\\S+\\s+--",
-          "override_target": false,
-          "new_target": null,
-          "retrival_method": null,
-          "retrival_output": null,
-          "options": null
-        },
-        {
-          "name": "UUID",
-          "retrival_value": "^[a-zA-Z0-9\\_\\-\\ ]+\\s+([a-fA-F0-9\\-]{36})\\s+\\S+\\s+--",
-          "override_target": false,
-          "new_target": null,
-          "retrival_method": null,
-          "retrival_output": null,
-          "options": null
-        },
-        {
-          "name": "Type",
-          "retrival_value": "^[a-zA-Z0-9\\_\\-\\ ]+\\s+[a-fA-F0-9\\-]{36}\\s+(\\S+)\\s+--",
-          "override_target": false,
-          "new_target": null,
-          "retrival_method": null,
-          "retrival_output": null,
-          "options": null
-        },
-        {
-          "name": "Device",
-          "retrival_value": "^[a-zA-Z0-9\\_\\-\\ ]+\\s+[a-fA-F0-9\\-]{36}\\s+\\S+\\s+(--)",
           "override_target": false,
           "new_target": null,
           "retrival_method": null,
