@@ -192,7 +192,7 @@
       }
     },
     {
-      "name": "GROUP",
+      "name": "GROUPS",
       "retrival_method": "PW",
       "retrival_output": "JSON",
       "target": "Get-WmiObject -ClassName Win32_Group -Property * | ConvertTo-Json",
@@ -277,7 +277,7 @@
       }
     },
     {
-      "name": "MOTHERBOARD",
+      "name": "HARDWARE",
       "retrival_method": "PW",
       "retrival_output": "JSON",
       "target": "Get-WmiObject -ClassName Win32_SystemEnclosure -Property * | ConvertTo-Json",
@@ -458,7 +458,7 @@
       }
     },
     {
-      "name": "OPERATING_SYSTEM",
+      "name": "OPERATING-SYSTEM",
       "retrival_method": "PW",
       "retrival_output": "JSON",
       "target": "Get-WmiObject -ClassName Win32_OperatingSystem -Property * | ConvertTo-Json",
@@ -538,7 +538,7 @@
       }
     },
     {
-      "name": "RAM",
+      "name": "MEMORY",
       "retrival_method": "PW",
       "retrival_output": "JSON",
       "target": "Get-WmiObject -ClassName Win32_PhysicalMemory -Property * | ConvertTo-Json",
@@ -594,7 +594,7 @@
       }
     },
     {
-      "name": "ROM",
+      "name": "STORAGE",
       "retrival_method": "PW",
       "retrival_output": "JSON",
       "target": "Get-WmiObject -className Win32_LogicalDisk -Property * | ConvertTo-Json",
@@ -773,7 +773,7 @@
       }
     },
     {
-      "name": "USB_DEVICES",
+      "name": "USB",
       "retrival_method": "PW",
       "retrival_output": "JSON",
       "target": "Get-WmiObject -Class Win32_USBControllerDevice | ForEach-Object { $usbDevice = [WMI]$_; $usbDevice.GetRelated('Win32_PnPEntity') | Select-Object Name, Description, DeviceID } | ConvertTo-Json",
@@ -811,7 +811,7 @@
       }
     },
     {
-      "name": "PRINTERS",
+      "name": "PRINTER",
       "retrival_method": "PW",
       "retrival_output": "JSON",
       "target": "Get-WmiObject -Class Win32_Printer | Select-Object Name, PortName, DriverName, Shared | ConvertTo-Json",
@@ -914,7 +914,7 @@
       }
     },
     {
-      "name": "GRAPHICS/DISPLAYS",
+      "name": "GRAPHIC/DISPLAY",
       "retrival_method": "PW",
       "retrival_output": "JSON",
       "target": "Get-WmiObject -Class Win32_VideoController | ConvertTo-Json",
@@ -961,7 +961,7 @@
       }
     },
     {
-      "name": "CURRENT_WIFI",
+      "name": "Wi-Fi",
       "retrival_method": "PW",
       "retrival_output": "JSON",
       "target": "netsh wlan show interfaces | ConvertTo-Json",

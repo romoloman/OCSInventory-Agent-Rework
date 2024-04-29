@@ -1276,7 +1276,7 @@
     },
     {
       "id": 79,
-      "name": "SYSTEM",
+      "name": "OPERATING-SYSTEM",
       "retrival_method": "BASH",
       "retrival_output": "REGX",
       "target": "hostnamectl",
