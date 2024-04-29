@@ -112,7 +112,7 @@
       "options": null
     },
     {
-      "name": "BIOS",
+      "name": "HARDWARE",
       "retrival_method": "BASH",
       "retrival_output": "PTXT",
       "target": "echo BIOS",
@@ -328,7 +328,7 @@
       "options": null
     },
     {
-      "name": "DRIVE",
+      "name": "STORAGE",
       "retrival_method": "BASH",
       "retrival_output": "TBLE",
       "target": "df -TP",
@@ -384,7 +384,7 @@
       }
     },
     {
-      "name": "HARDWARE",
+      "name": "NETWORK",
       "retrival_method": "BASH",
       "retrival_output": "PTXT",
       "target": "echo HARDWARE",
@@ -644,7 +644,7 @@
       }
     },
     {
-      "name": "REPOSITORY",
+      "name": "PACKAGES",
       "retrival_method": "BASH",
       "retrival_output": "REGX",
       "target": "apt-cache policy",
@@ -852,7 +852,7 @@
       }
     },
     {
-      "name": "LOCAL_GROUPS",
+      "name": "GROUPS",
       "retrival_method": "BASH",
       "retrival_output": "REGX",
       "target": "cat /etc/group",
@@ -890,7 +890,7 @@
       }
     },
     {
-      "name": "LOCAL_USERS",
+      "name": "USERS",
       "retrival_method": "BASH",
       "retrival_output": "REGX",
       "target": "cat /etc/passwd",
@@ -1011,7 +1011,7 @@
       }
     },
     {
-      "name": "USB_DEVICES",
+      "name": "USB",
       "retrival_method": "BASH",
       "retrival_output": "REGX",
       "target": "lsusb",
@@ -1058,7 +1058,7 @@
       }
     },
     {
-      "name": "PRINTERS",
+      "name": "PRINTER",
       "retrival_method": "BASH",
       "retrival_output": "REGX",
       "target": "sudo lpstat -l -e",
@@ -1180,7 +1180,7 @@
       }
     },
     {
-      "name": "GRAPHICS/DISPLAYS",
+      "name": "GRAPHIC/DISPLAY",
       "retrival_method": "BASH",
       "retrival_output": "REGX",
       "target": "sudo lshw -class display",
