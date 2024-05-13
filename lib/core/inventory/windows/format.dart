@@ -14,23 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+// External package imports
 import 'dart:convert';
 
+// Core imports
 import 'package:ocs_agent/core/log.dart';
-
 import 'package:ocs_agent/core/inventory/windows/commands.dart';
 
 /// Format command result by type for Windows.
 class WindowsFormat {
   late Logger logger;
-
   late WindowsCommand windowsCommand;
 
   /// Constructor.
-  WindowsFormat() {
-    this.logger = new Logger();
-
-    this.windowsCommand = new WindowsCommand();
+  WindowsFormat(Logger logger, WindowsCommand windowsCommand) {
+    this.logger = logger;
+    this.windowsCommand = windowsCommand;
   }
 
   /// get result of [resultCommand] for each [fields].

@@ -14,19 +14,21 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+// External package imports
 import 'dart:io';
 
-import 'package:ocs_agent/core/common/json_utils.dart';
+// Common imports
 import 'package:ocs_agent/core/common/files_utils.dart';
+import 'package:ocs_agent/core/common/json_utils.dart';
 
 /// Class to get config in config folder.
 class Config {
-  final String inventoryFilename = "config/inventory.json";
-  final String coreFilename = "config/core.json";
-  final String templateFilename = "config/template.json";
+  late FilesUtils filesUtils = new FilesUtils();
+  late JsonUtils jsonUtils = new JsonUtils();
 
-  late JsonUtils jsonUtils;
-  late FilesUtils filesUtils;
+  final String coreFilename = "config/core.json";
+  final String inventoryFilename = "config/inventory.json";
+  final String templateFilename = "config/template.json";
 
   late File inventory;
   late File core;
@@ -34,8 +36,6 @@ class Config {
 
   /// Constructor.
   Config() {
-    this.jsonUtils = JsonUtils();
-    this.filesUtils = FilesUtils();
     this.inventory = File(inventoryFilename);
     this.core = File(coreFilename);
     this.template = File(templateFilename);
@@ -43,7 +43,7 @@ class Config {
 
   /// Return all content in inventory config file.
   String getInventoryConfigs() {
-    return jsonUtils.getContentFromFile(inventory).toString();
+    return this.jsonUtils.getContentFromFile(inventory).toString();
   }
 
   /// return [key] content in inventory file.

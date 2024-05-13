@@ -14,23 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+// External package imports
 import 'dart:convert';
 
+// Core imports
 import 'package:ocs_agent/core/log.dart';
-
 import 'package:ocs_agent/core/inventory/linux/commands.dart';
 
 /// Format command result by type for Linux.
 class LinuxFormat {
   late Logger logger;
-
   late LinuxCommand linuxCommand;
 
   /// Constructor.
-  LinuxFormat() {
-    this.logger = new Logger();
-
-    this.linuxCommand = new LinuxCommand();
+  LinuxFormat(Logger logger, LinuxCommand linuxCommand) {
+    this.logger = logger;
+    this.linuxCommand = linuxCommand;
   }
 
   /// get result of [resultCommand] for each [fields].

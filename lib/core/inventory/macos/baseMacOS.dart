@@ -14,78 +14,92 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+// External package imports
 import 'package:ocs_agent/core/log.dart';
 
-import 'package:ocs_agent/core/inventory/macos/commands.dart' as command;
+// Core imports
+import 'package:ocs_agent/core/inventory/macos/commands.dart';
 
-///This fonction return the body for to asset/bases
-dynamic getBody() async {
-  var macOsCommand = new command.MacOSCommand();
-  var logger = new Logger();
+class BaseMacOS {
+  late Logger logger;
+  late MacOSCommand macOSCommand;
 
-  logger.info("Plateform: MACOS");
+  /// Constructor
+  BaseMacOS(Logger logger, MacOSCommand macOSCommand) {
+    this.logger = logger;
+    this.macOSCommand = macOSCommand;
+  }
 
-  logger.info("Getting OS body...");
+  ///This fonction return the body for to asset/bases
+  dynamic getBody() async {
+    logger.info("Plateform: MACOS");
 
-  /// This command [commandSerialUUID] display list Serial and UUID
-  String commandSerialUUID;
-  commandSerialUUID = (await macOsCommand.commandShell(
-          "system_profiler SPHardwareDataType", true))["value"]
-      .toString();
+    logger.info("Getting OS body...");
 
-  /// Regex to get [Serial]
-  RegExp regexpSerial;
-  regexpSerial = RegExp(r"(?<=Serial\sNumber\s\(system\):\s)\w+");
-  String getSerial;
-  getSerial = regexpSerial.stringMatch(commandSerialUUID)!.trim();
+    /// This command [commandSerialUUID] display list Serial and UUID
+    String commandSerialUUID;
+    commandSerialUUID = await macOSCommand
+        .commandShell("system_profiler SPHardwareDataType", true)
+        .toString();
 
-  /// Regex to get [UUID]
-  RegExp regexpUUID;
-  regexpUUID = RegExp(r"(?<=Hardware\sUUID:\s)(\w*-\w*-\w*-\w*-\w*)?\n");
-  String getUUID;
-  getUUID = regexpUUID.stringMatch(commandSerialUUID)!.trim();
+    /// Regex to get [Serial]
+    RegExp regexpSerial;
+    regexpSerial = RegExp(r"(?<=Serial\sNumber\s\(system\):\s)\w+");
+    String getSerial;
+    getSerial = regexpSerial.stringMatch(commandSerialUUID)!.trim();
 
-  /// Get default route, regExp to Interface for [srcip] and [srcmac]
-  String getDefaultRoute;
-  getDefaultRoute =
-      (await macOsCommand.commandShell("route get default", true))["value"]
-          .toString();
-  RegExp regexpInterface;
-  regexpInterface = RegExp(r"(?<=interface:\s)\w*");
-  String? getInterface;
-  getInterface = regexpInterface.stringMatch(getDefaultRoute);
+    /// Regex to get [UUID]
+    RegExp regexpUUID;
+    regexpUUID = RegExp(r"(?<=Hardware\sUUID:\s)(\w*-\w*-\w*-\w*-\w*)?\n");
+    String getUUID;
+    getUUID = regexpUUID.stringMatch(commandSerialUUID)!.trim();
 
-  /// Get domains list and apply this Regex to get domain
-  String listDomains;
-  listDomains = (await macOsCommand.commandShell("scutil --dns", true))["value"]
-      .toString();
-  RegExp regexpDomain;
-  regexpDomain = RegExp(r'(?<=search\sdomain\[0\]\s:\s)\w*.[a-z]{0,4}');
-  String? getDomain;
-  getDomain = regexpDomain.stringMatch(listDomains)!.trim();
+    /// Get default route, regExp to Interface for [srcip] and [srcmac]
+    String getDefaultRoute;
+    getDefaultRoute =
+        (await macOSCommand.commandShell("route get default", true))["value"]
+            .toString();
+    RegExp regexpInterface;
+    regexpInterface = RegExp(r"(?<=interface:\s)\w*");
+    String? getInterface;
+    getInterface = regexpInterface.stringMatch(getDefaultRoute);
 
-  dynamic body = ({
-    "name":
-        (await macOsCommand.commandShell("hostname", true))["value"].toString(),
-    "description":
-        (await macOsCommand.commandShell("uname -m", true))["value"].toString(),
-    "serial": getSerial,
-    "osname":
-        (await macOsCommand.commandShell("sw_vers -productName", true))["value"]
-            .toString(),
-    "osversion": (await macOsCommand.commandShell(
-            "sw_vers -productVersion", true))["value"]
-        .toString(),
-    "uuid": getUUID,
-    "srcip": (await macOsCommand.commandShell(
-        "ipconfig getifaddr $getInterface", true))["value"].toString(),
-    "srcmac": (await macOsCommand.commandShell(
-            "networksetup -getmacaddress $getInterface", true))["value"].toString()
-        .split(" ")[2],
-    "domain": getDomain
-  });
+    /// Get domains list and apply this Regex to get domain
+    String listDomains;
+    listDomains =
+        (await macOSCommand.commandShell("scutil --dns", true))["value"]
+            .toString();
+    RegExp regexpDomain;
+    regexpDomain = RegExp(r'(?<=search\sdomain\[0\]\s:\s)\w*.[a-z]{0,4}');
+    String? getDomain;
+    getDomain = regexpDomain.stringMatch(listDomains)!.trim();
 
-  logger.info("OS body has been retrieved!");
+    dynamic body = ({
+      "name": (await macOSCommand.commandShell("hostname", true))["value"]
+          .toString(),
+      "description":
+          (await macOSCommand.commandShell("uname -m", true))["value"]
+              .toString(),
+      "serial": getSerial,
+      "osname": (await macOSCommand.commandShell(
+              "sw_vers -productName", true))["value"]
+          .toString(),
+      "osversion": (await macOSCommand.commandShell(
+              "sw_vers -productVersion", true))["value"]
+          .toString(),
+      "uuid": getUUID,
+      "srcip": (await macOSCommand.commandShell(
+              "ipconfig getifaddr $getInterface", true))["value"]
+          .toString(),
+      "srcmac": (await macOSCommand.commandShell(
+              "networksetup -getmacaddress $getInterface", true))["value"]
+          .toString()
+          .split(" ")[2],
+      "domain": getDomain
+    });
 
-  return body;
+    logger.info("OS body has been retrieved!");
+
+    return body;
+  }
 }

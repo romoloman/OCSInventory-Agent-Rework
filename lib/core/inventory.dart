@@ -14,38 +14,41 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+// External package imports
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:intl/intl.dart';
-import 'package:ocs_agent/core/common/files_utils.dart';
-import 'package:ocs_agent/core/common/http_utils.dart';
-import 'package:ocs_agent/core/common/json_utils.dart';
 import 'package:sprintf/sprintf.dart';
 
-import 'package:ocs_agent/core/config.dart';
+// Core imports
 import 'package:ocs_agent/core/log.dart';
+import 'package:ocs_agent/core/config.dart';
 
 import 'package:ocs_agent/core/inventory/linux/commands.dart';
 import 'package:ocs_agent/core/inventory/linux/format.dart';
+
 import 'package:ocs_agent/core/inventory/macos/commands.dart';
 import 'package:ocs_agent/core/inventory/macos/format.dart';
+
 import 'package:ocs_agent/core/inventory/windows/commands.dart';
 import 'package:ocs_agent/core/inventory/windows/format.dart';
 
-class Inventory {
-  late Config config;
-  late Logger logger;
+// Common imports
+import 'package:ocs_agent/core/common/files_utils.dart';
+import 'package:ocs_agent/core/common/http_utils.dart';
+import 'package:ocs_agent/core/common/json_utils.dart';
 
+class Inventory {
+  late Logger logger;
+  late Config config;
   late FilesUtils filesUtils;
   late HTTPUtils httpUtils;
   late JsonUtils jsonUtils;
-
   late LinuxCommand linuxCommand;
-  late MacOSCommand macosCommand;
-  late WindowsCommand windowsCommand;
   late LinuxFormat linuxFormat;
-  late MacOSFormat macosFormat;
+  late MacOSCommand macOSCommand;
+  late MacOSFormat macOSFormat;
+  late WindowsCommand windowsCommand;
   late WindowsFormat windowsFormat;
 
   late var url;
@@ -59,20 +62,30 @@ class Inventory {
   late Map<int, String> errorCodes;
 
   /// Constructor.
-  Inventory() {
-    this.config = new Config();
-    this.logger = new Logger();
-
-    this.filesUtils = new FilesUtils();
-    this.httpUtils = new HTTPUtils();
-    this.jsonUtils = new JsonUtils();
-
-    this.linuxCommand = new LinuxCommand();
-    this.macosCommand = new MacOSCommand();
-    this.windowsCommand = new WindowsCommand();
-    this.linuxFormat = new LinuxFormat();
-    this.macosFormat = new MacOSFormat();
-    this.windowsFormat = new WindowsFormat();
+  Inventory(
+    Logger logger,
+    Config config,
+    FilesUtils filesUtils,
+    HTTPUtils httpUtils,
+    JsonUtils jsonUtils,
+    LinuxCommand linuxCommand,
+    LinuxFormat linuxFormat,
+    MacOSCommand macOSCommand,
+    MacOSFormat macOSFormat,
+    WindowsCommand windowsCommand,
+    WindowsFormat windowsFormat,
+  ) {
+    this.logger = logger;
+    this.config = config;
+    this.filesUtils = filesUtils;
+    this.httpUtils = httpUtils;
+    this.jsonUtils = jsonUtils;
+    this.linuxCommand = linuxCommand;
+    this.linuxFormat = linuxFormat;
+    this.macOSCommand = macOSCommand;
+    this.macOSFormat = macOSFormat;
+    this.windowsCommand = windowsCommand;
+    this.windowsFormat = windowsFormat;
 
     this.url = config.getInventoryConfig("url");
     this.inventoryCheck = false;
@@ -534,7 +547,7 @@ class Inventory {
     } else if (template["os"] == "WIN" && Platform.isWindows) {
       format = windowsFormat;
     } else if (template["os"] == "MAC" && Platform.isMacOS) {
-      format = macosFormat;
+      format = macOSFormat;
     } else {
       logger.error("OS does not match any of the supported OSs");
     }
@@ -591,7 +604,7 @@ class Inventory {
     } else if (template["os"] == "WIN" && Platform.isWindows) {
       command = this.windowsCommand;
     } else if (template["os"] == "MAC" && Platform.isMacOS) {
-      command = this.macosCommand;
+      command = this.macOSCommand;
     } else {
       logger.error("OS does not match any of the supported OSs");
     }

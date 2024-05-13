@@ -14,27 +14,34 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+// External package imports
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:intl/intl.dart';
-import 'package:ocs_agent/core/config.dart';
-import 'package:ocs_agent/core/common/http_utils.dart';
-
 import 'package:sprintf/sprintf.dart';
+
+// Core imports
+import 'package:ocs_agent/core/config.dart';
+
+// Common imports
+import 'package:ocs_agent/core/common/http_utils.dart';
 
 /// Insert log in console or file if configured in inventory.json.
 class Logger {
   late Config config;
+
   late bool _isFile;
   late String _logLevel;
   late String _url;
+
   late File file;
+
   late DateFormat dateFormat;
 
   /// Constructor.
-  Logger() {
-    config = new Config();
+  Logger(Config config) {
+    this.config = config;
+
     _logLevel = config.getInventoryConfig("log_level");
     _isFile = (config.getInventoryConfig("log_file").toLowerCase() == 'true');
     _url = config.getInventoryConfig("url");
@@ -99,7 +106,7 @@ class Logger {
   /// Send formated logs to the server
   void serverLogger(int assetID, int errorCode, String comment) async {
     if (assetID != -1) {
-      HTTPUtils query = new HTTPUtils();
+      HTTPUtils query = new HTTPUtils(this);
       Map<int, String> errorCodes = {
         0: "UNKNOWN",
         1: "INVENTORY_BASE_INSERT",

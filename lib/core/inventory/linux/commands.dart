@@ -14,13 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+// External package imports
 import 'dart:io';
 
+// Core imports
 import 'package:ocs_agent/core/log.dart';
 
 /// Class for execute command on linux.
 class LinuxCommand {
-  Logger logger = Logger();
+  late Logger logger;
+
+  /// Constructor
+  LinuxCommand(Logger logger) {
+    this.logger = logger;
+  }
 
   /// Execute [commandLine] to Shell.
   Future<Map<String, Object>> commandShell(
