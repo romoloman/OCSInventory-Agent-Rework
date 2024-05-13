@@ -720,52 +720,57 @@ class Inventory {
             var content = jsonDecode(response["body"])[0];
             var encoder = new JsonEncoder.withIndent("\t");
             content["template_inventory"] = templateInventory["values"];
-            late var sectionBase64, sectionBytes, sectionJson;
             var updatedInventory = new Map();
-            sectionJson = new Map();
-            content["template_inventory"].keys.forEach((element) {
-              sectionBytes = utf8
-                  .encode(content["template_inventory"][element].toString());
-              sectionBase64 = base64.encode(sectionBytes);
-              sectionJson[element] = sectionBase64;
-            });
-            if (!inventoryBase64.existsSync()) {
-              logger.error("Can't find base64 file, creating one...");
-              inventoryBase64.createSync(recursive: true);
-              filesUtils.writeFile(inventoryBase64, "{}");
-            }
-            logger.info("Base64 file found!");
-            var fileBase64 = jsonDecode(inventoryBase64.readAsStringSync());
-            sectionJson.keys.forEach((newKey) {
-              fileBase64.keys.forEach((oldKey) {
-                if (newKey == oldKey) {
-                  if (sectionJson[newKey] == fileBase64[oldKey]) {
-                    logger.verbose(sprintf(
-                        "%s section hasn't changed since last inventory.",
-                        [newKey.toString()]));
-                  } else {
-                    logger.verbose(sprintf(
-                        "%s section will be sent and updated.",
-                        [newKey.toString()]));
-                    updatedInventory[newKey] =
-                        content["template_inventory"][newKey];
+            if (config.getCoreConfig("agent", "inventory_checksum")) {
+              late var sectionBase64, sectionBytes, sectionJson;
+              sectionJson = new Map();
+              content["template_inventory"].keys.forEach((element) {
+                sectionBytes = utf8
+                    .encode(content["template_inventory"][element].toString());
+                sectionBase64 = base64.encode(sectionBytes);
+                sectionJson[element] = sectionBase64;
+              });
+              if (!inventoryBase64.existsSync()) {
+                logger.error("Can't find base64 file, creating one...");
+                inventoryBase64.createSync(recursive: true);
+                filesUtils.writeFile(inventoryBase64, "{}");
+              }
+              logger.info("Base64 file found!");
+              var fileBase64 = jsonDecode(inventoryBase64.readAsStringSync());
+              sectionJson.keys.forEach((newKey) {
+                fileBase64.keys.forEach((oldKey) {
+                  if (newKey == oldKey) {
+                    if (sectionJson[newKey] == fileBase64[oldKey]) {
+                      logger.verbose(sprintf(
+                          "%s section hasn't changed since last inventory.",
+                          [newKey.toString()]));
+                    } else {
+                      logger.verbose(sprintf(
+                          "%s section will be sent and updated.",
+                          [newKey.toString()]));
+                      updatedInventory[newKey] =
+                          content["template_inventory"][newKey];
+                    }
                   }
+                });
+                if (!fileBase64.containsKey(newKey)) {
+                  logger.verbose(sprintf("%s section added to the inventory.",
+                      [newKey.toString()]));
+                  updatedInventory[newKey] =
+                      content["template_inventory"][newKey];
                 }
               });
-              if (!fileBase64.containsKey(newKey)) {
-                logger.verbose(sprintf(
-                    "%s section added to the inventory.", [newKey.toString()]));
-                updatedInventory[newKey] =
-                    content["template_inventory"][newKey];
-              }
-            });
-            filesUtils.writeFile(inventoryBase64, encoder.convert(sectionJson));
+              filesUtils.writeFile(
+                  inventoryBase64, encoder.convert(sectionJson));
+            }
             var inventoryExist = await httpUtils.get(
                 "API: sendRemoteTemplateInventory method",
                 Uri.parse(url + "/asset/sections/?base=$assetID"),
                 httpUtils.getHeader(config));
             if (inventoryExist["status_code"] == 200) {
-              content["template_inventory"] = updatedInventory;
+              if (config.getCoreConfig("agent", "inventory_checksum")) {
+                content["template_inventory"] = updatedInventory;
+              }
               var responsePatch = await httpUtils.patch(
                   "API: sendRemoteTemplateInventory method",
                   Uri.parse("$url/asset/collection/"),
