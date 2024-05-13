@@ -56,4 +56,35 @@ class MacOSCommand {
 
     return processValue;
   }
+
+  /// Return [path] file content.
+  Future<String> readFile(String path, bool normalization) async {
+    var process;
+    if (normalization) {
+      late String processNormalization;
+      await Process.run("cat", [path])
+          .then((value) => processNormalization = value.stdout);
+      process = processNormalization.trim();
+    } else {
+      await Process.run("cat", [path]).then((value) => process = value.stdout);
+    }
+
+    return process;
+  }
+
+  /// Execute or read [command] in terms of [type].
+  // ignore: missing_return
+  Future<String?> getResult(String command, String type) async {
+    switch (type) {
+      case "FILE":
+        return await this.readFile(command, true);
+      case "CMD":
+        return await this.commandShell(command, true);
+      case "BASH":
+        return await this.commandShell(command, true);
+      case "ZSH":
+        return await this.commandShell(command, true);
+    }
+    return null;
+  }
 }

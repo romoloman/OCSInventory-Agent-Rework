@@ -552,7 +552,12 @@ class Inventory {
           valueTarget = format.getByArray(section["fields"], result);
           break;
         case "JSON":
-          valueTarget = format.getByJson(section["fields"], result);
+          if (os == "MAC") {
+            valueTarget =
+                format.getByJson(section["fields"], result, section["target"]);
+          } else {
+            valueTarget = format.getByJson(section["fields"], result);
+          }
           break;
         case "PTXT":
           valueTarget = await format.getByPtxt(section["fields"], result);
