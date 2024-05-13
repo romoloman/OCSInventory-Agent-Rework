@@ -191,12 +191,13 @@ class Inventory {
 
   /// Check if config file exists and save it if not
   Future<void> checkAndApplyConfig() async {
+    logger.info("Getting local config...");
     // Get data from core.json file
-    List<dynamic> confFile = config.getCoreConfigs();
+    List<dynamic> localConfig = config.getCoreConfigs();
 
     logger.info("Checking local config...");
     // If the config file is empty, we get an existing config from the API and save it locally
-    if (confFile.isEmpty) {
+    if (localConfig.isEmpty) {
       logger.info("local config not found ! Creating one...");
       await getConfig();
     } else {
@@ -228,7 +229,7 @@ class Inventory {
 
     // API call
     var response = await httpUtils.get("API: getConfig method",
-        Uri.parse(url + "/config/"), httpUtils.getHeader(config));
+        Uri.parse(url + "/asset/configs/"), httpUtils.getHeader(config));
     logger.verbose(response["message"]);
     if (response["status_code"] == 200) {
       logger.info("Remote config found!");
