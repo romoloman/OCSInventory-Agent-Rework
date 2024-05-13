@@ -29,8 +29,9 @@ dynamic getBody() async {
 
   /// This command [commandSerialUUID] display list Serial and UUID
   String commandSerialUUID;
-  commandSerialUUID = await macOsCommand.commandShell(
-      "system_profiler SPHardwareDataType", true);
+  commandSerialUUID = (await macOsCommand.commandShell(
+          "system_profiler SPHardwareDataType", true))["value"]
+      .toString();
 
   /// Regex to get [Serial]
   RegExp regexpSerial;
@@ -46,7 +47,9 @@ dynamic getBody() async {
 
   /// Get default route, regExp to Interface for [srcip] and [srcmac]
   String getDefaultRoute;
-  getDefaultRoute = await macOsCommand.commandShell("route get default", true);
+  getDefaultRoute =
+      (await macOsCommand.commandShell("route get default", true))["value"]
+          .toString();
   RegExp regexpInterface;
   regexpInterface = RegExp(r"(?<=interface:\s)\w*");
   String? getInterface;
@@ -54,24 +57,30 @@ dynamic getBody() async {
 
   /// Get domains list and apply this Regex to get domain
   String listDomains;
-  listDomains = await macOsCommand.commandShell("scutil --dns", true);
+  listDomains = (await macOsCommand.commandShell("scutil --dns", true))["value"]
+      .toString();
   RegExp regexpDomain;
   regexpDomain = RegExp(r'(?<=search\sdomain\[0\]\s:\s)\w*.[a-z]{0,4}');
   String? getDomain;
   getDomain = regexpDomain.stringMatch(listDomains)!.trim();
 
   dynamic body = ({
-    "name": await macOsCommand.commandShell("hostname", true),
-    "description": await macOsCommand.commandShell("uname -m", true),
+    "name":
+        (await macOsCommand.commandShell("hostname", true))["value"].toString(),
+    "description":
+        (await macOsCommand.commandShell("uname -m", true))["value"].toString(),
     "serial": getSerial,
-    "osname": await macOsCommand.commandShell("sw_vers -productName", true),
-    "osversion":
-        await macOsCommand.commandShell("sw_vers -productVersion", true),
+    "osname":
+        (await macOsCommand.commandShell("sw_vers -productName", true))["value"]
+            .toString(),
+    "osversion": (await macOsCommand.commandShell(
+            "sw_vers -productVersion", true))["value"]
+        .toString(),
     "uuid": getUUID,
-    "srcip": await macOsCommand.commandShell(
-        "ipconfig getifaddr $getInterface", true),
+    "srcip": (await macOsCommand.commandShell(
+        "ipconfig getifaddr $getInterface", true))["value"].toString(),
     "srcmac": (await macOsCommand.commandShell(
-            "networksetup -getmacaddress $getInterface", true))
+            "networksetup -getmacaddress $getInterface", true))["value"].toString()
         .split(" ")[2],
     "domain": getDomain
   });

@@ -24,7 +24,8 @@ class WindowsCommand {
   Logger logger = Logger();
 
   /// Execute [commandLine] to cmd.
-  Future<String> commandCmd(String commandLine, bool normalization) async {
+  Future<Map<String, Object>> commandCmd(
+      String commandLine, bool normalization) async {
     List<String> args = commandLine.split(" ");
     String command = args[0];
     args.removeAt(0);
@@ -32,92 +33,120 @@ class WindowsCommand {
       args = [];
     }
 
-    String processValue = "";
+    Map<String, Object> processData = {};
     try {
       // Attempt to run the command
       var process = await Process.run(command, args);
       if (normalization) {
-        processValue = process.stdout.toString().trim();
+        processData["value"] = await process.stdout.toString().trim();
       } else {
-        processValue = process.stdout.toString();
+        processData["value"] = await process.stdout.toString();
       }
 
       if (process.exitCode != 0) {
-        logger.error("Executing command $commandLine : $processValue");
+        processData["value"] = "";
+        processData["status"] = false;
+        logger.error("Executing command $commandLine : ${process.stderr}");
       } else {
-        logger.verbose("Command executed successfully: $commandLine");
+        processData["status"] = true;
+        logger.verbose("Command executed: $commandLine");
+        if (processData["value"] == "") {
+          processData["value"] = "Command '$commandLine' has no output.";
+        }
       }
     } on ProcessException catch (e) {
+      processData["value"] = "";
+      processData["status"] = false;
       // Handle the specific error
       logger.error("This command '$command' could not be found : $e");
     } catch (e) {
+      processData["value"] = "";
+      processData["status"] = false;
       // Handle other errors
       logger.error('An error occurred : $e');
     }
 
-    return processValue;
+    return processData;
   }
 
   /// Execute [commandLine] to powershell.
-  Future<String> commandPowershell(
+  Future<Map<String, Object>> commandPowershell(
       String commandLine, bool normalization) async {
     List<String> args = commandLine.split(" ");
     String command = "powershell.exe";
 
-    String processValue = "";
+    Map<String, Object> processData = {};
     try {
       // Attempt to run the command
       var process = await Process.run(command, args, stdoutEncoding: utf8);
       if (normalization) {
-        processValue = process.stdout.toString().trim();
+        processData["value"] = await process.stdout.toString().trim();
       } else {
-        processValue = process.stdout.toString();
+        processData["value"] = await process.stdout.toString();
       }
 
       if (process.exitCode != 0) {
-        processValue = "";
+        processData["value"] = "";
+        processData["status"] = false;
         logger.error("Executing command '$commandLine' - ${process.stderr}");
       } else {
-        logger.verbose("Command executed successfully: $commandLine");
+        processData["status"] = true;
+        logger.verbose("Command executed: $commandLine");
+        if (processData["value"] == "") {
+          processData["value"] = "Command '$commandLine' has no output.";
+        }
       }
     } on ProcessException catch (e) {
+      processData["value"] = "";
+      processData["status"] = false;
       // Handle the specific error
       logger.error("This command '$command' could not be found : $e");
     } catch (e) {
+      processData["value"] = "";
+      processData["status"] = false;
       // Handle other errors
       logger.error('An error occurred : $e');
     }
 
-    return processValue;
+    return processData;
   }
 
   /// Return [path] file content.
-  Future<String> readFile(String path, bool normalization) async {
-    String processValue = "";
+  Future<Map<String, Object>> readFile(String path, bool normalization) async {
+    Map<String, Object> processData = {};
     try {
       // Attempt to run the command
       var process = await Process.run("type", [path]);
       if (normalization) {
-        processValue = process.stdout.toString().trim();
+        processData["value"] = await process.stdout.toString().trim();
       } else {
-        processValue = process.stdout.toString();
+        processData["value"] = await process.stdout.toString();
       }
 
       if (process.exitCode != 0) {
-        processValue = "";
+        processData["value"] = "";
+        processData["status"] = false;
         logger.error("Executing file '$path' - ${process.stderr}");
       } else {
+        processData["status"] = true;
         logger.verbose("File executed successfully: $path");
+        if (processData["value"] == "") {
+          processData["value"] = "File '$path' has no output.";
+        }
       }
     } on ProcessException catch (e) {
+      processData["value"] = "";
+      processData["status"] = false;
       // Handle the specific error
       logger.error("This file '$path' could not be found : $e");
     } catch (e) {
+      processData["value"] = "";
+      processData["status"] = false;
       // Handle other errors
       logger.error('An error occurred : $e');
     }
 
-    return processValue;
+    return processData;
   }
 
   /// Execute or read [command] in terms of [type].
@@ -125,11 +154,12 @@ class WindowsCommand {
   Future<String?> getResult(String command, String type) async {
     switch (type) {
       case "FILE":
-        return await this.readFile(command, true);
+        return (await this.readFile(command, true))["value"].toString();
       case "CMD":
-        return await this.commandCmd(command, true);
+        return (await this.commandCmd(command, true))["value"].toString();
       case "PW":
-        return await this.commandPowershell(command, true);
+        return (await this.commandPowershell(command, true))["value"]
+            .toString();
     }
     return null;
   }

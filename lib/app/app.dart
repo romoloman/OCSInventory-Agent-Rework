@@ -18,8 +18,11 @@ import 'dart:io' show Platform;
 
 import 'package:sprintf/sprintf.dart';
 
-import 'package:ocs_agent/core/inventory.dart';
+import 'package:ocs_agent/core/config.dart';
 import 'package:ocs_agent/core/log.dart';
+
+import 'package:ocs_agent/core/deployment.dart';
+import 'package:ocs_agent/core/inventory.dart';
 
 import 'package:ocs_agent/core/inventory/linux/baseLinux.dart' as baseLinux;
 import 'package:ocs_agent/core/inventory/macos/baseMacOS.dart' as baseMacOS;
@@ -29,7 +32,9 @@ import 'package:ocs_agent/core/inventory/windows/baseWindows.dart'
 /// In this main section we send the [body] to the asset/bases endpoint
 Future<void> main(List<String> args) async {
   // Initiate modules
+  Deployment deployment = new Deployment();
   Inventory inventory = new Inventory();
+  Config config = new Config();
   Logger logger = new Logger();
 
   // Get the agent execution mode
@@ -43,13 +48,16 @@ Future<void> main(List<String> args) async {
       sprintf("Starting agent in %s mode...", [enumMode[inventory.getMode()]]));
 
   // Get the OS body
-  var body;
+  var body, os;
   if (Platform.isLinux) {
     body = await baseLinux.getBody();
+    os = "LIN";
   } else if (Platform.isMacOS) {
     body = await baseMacOS.getBody();
+    os = "MAC";
   } else if (Platform.isWindows) {
     body = await baseWindows.getBody();
+    os = "WIN";
   } else {
     logger.error(
         "OS does not match any of the supported OSs! (Check Plateform class return)");
@@ -63,6 +71,18 @@ Future<void> main(List<String> args) async {
       await inventory.sendRemoteBaseInventory(body);
       if (inventory.getMode() == 0) {
         await inventory.sendRemoteTemplateInventory(body);
+      }
+
+      // Deployment process
+      dynamic deploymentMode = config.getCoreConfig("deployment", "enabled");
+      if (deploymentMode == 1) {
+        if (await deployment.checkConfig()) {
+          if (await deployment.checkDownload(inventory.assetID)) {
+            if (await deployment.getActions(inventory.assetID)) {
+              await deployment.executeActions(os, inventory.assetID);
+            }
+          }
+        }
       }
     }
   } else if (inventory.getMode() == 2 || inventory.getMode() == 3) {

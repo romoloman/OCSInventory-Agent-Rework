@@ -76,7 +76,7 @@ class Inventory {
 
     this.url = config.getInventoryConfig("url");
     this.inventoryCheck = false;
-    this.assetID = 1;
+    this.assetID = 0;
 
     this.inventoryFileName = sprintf('%s/%s.json', [
       config.getInventoryConfig("data_dir"),

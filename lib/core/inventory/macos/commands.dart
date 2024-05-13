@@ -22,7 +22,8 @@ class MacOSCommand {
   Logger logger = Logger();
 
   /// Execute [commandLine] to Shell.
-  Future<String> commandShell(String commandLine, bool normalization) async {
+  Future<Map<String, Object>> commandShell(
+      String commandLine, bool normalization) async {
     List<String> args = commandLine.split(" ");
     String command = args[0];
     args.removeAt(0);
@@ -30,31 +31,40 @@ class MacOSCommand {
       args = [];
     }
 
-    String processValue = "";
+    Map<String, Object> processData = {};
     try {
       // Attempt to run the command
       var process = await Process.run(command, args);
       if (normalization) {
-        processValue = process.stdout.toString().trim();
+        processData["value"] = await process.stdout.toString().trim();
       } else {
-        processValue = process.stdout.toString();
+        processData["value"] = await process.stdout.toString();
       }
 
       if (process.exitCode != 0) {
-        processValue = "";
+        processData["value"] = "";
+        processData["status"] = false;
         logger.error("Executing command '$commandLine' - ${process.stderr}");
       } else {
-        logger.verbose("Command executed successfully: $commandLine");
+        processData["status"] = true;
+        logger.verbose("Command executed: $commandLine");
+        if (processData["value"] == "") {
+          processData["value"] = "Command '$commandLine' has no output.";
+        }
       }
     } on ProcessException catch (e) {
+      processData["value"] = "";
+      processData["status"] = false;
       // Handle the specific error
       logger.error("This command '$command' could not be found : $e");
     } catch (e) {
+      processData["value"] = "";
+      processData["status"] = false;
       // Handle other errors
       logger.error('An error occurred : $e');
     }
 
-    return processValue;
+    return processData;
   }
 
   /// Return [path] file content.
