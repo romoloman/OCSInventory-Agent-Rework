@@ -69,7 +69,7 @@ class Config {
 
   /// return [key] content in core file.
   dynamic getCoreConfig(String module, String key) {
-    dynamic result = "No result";
+    dynamic result = false;
     getCoreConfigs().forEach((element) {
       if (element["name"] == module) {
         element["value"].forEach((value) {
