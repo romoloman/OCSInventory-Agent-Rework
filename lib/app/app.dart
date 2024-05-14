@@ -80,7 +80,8 @@ Future<void> main(List<String> args) async {
       macOSFormat,
       windowsCommand,
       windowsFormat);
-  Deployment deployment = new Deployment();
+  Deployment deployment = new Deployment(
+      logger, config, httpUtils, linuxCommand, macOSCommand, windowsCommand);
 
   // Get the agent execution mode
   Map<int, String> enumMode = {
@@ -119,8 +120,7 @@ Future<void> main(List<String> args) async {
       }
 
       // Deployment process
-      dynamic deploymentMode = config.getCoreConfig("deployment", "enabled");
-      if (deploymentMode == 1) {
+      if (config.getCoreConfig("deployment", "enabled")) {
         if (await deployment.checkConfig()) {
           if (await deployment.checkDownload(inventory.assetID)) {
             if (await deployment.getActions(inventory.assetID)) {
