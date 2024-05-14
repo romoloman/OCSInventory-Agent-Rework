@@ -14,30 +14,32 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+// External package imports
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:archive/archive_io.dart';
 import 'package:sprintf/sprintf.dart';
 
-import 'package:ocs_agent/core/config.dart';
+// Core imports
 import 'package:ocs_agent/core/log.dart';
-
-import 'package:ocs_agent/core/common/http_utils.dart';
+import 'package:ocs_agent/core/config.dart';
 
 import 'package:ocs_agent/core/inventory/linux/commands.dart';
 import 'package:ocs_agent/core/inventory/macos/commands.dart';
 import 'package:ocs_agent/core/inventory/windows/commands.dart';
 
+// Common imports
+import 'package:ocs_agent/core/common/http_utils.dart';
+
 class Deployment {
-  // Modules
   late Config config;
   late Logger logger;
-
-  // Utilities
   late HTTPUtils httpUtils;
+  late LinuxCommand linuxCommand;
+  late MacOSCommand macOSCommand;
+  late WindowsCommand windowsCommand;
 
-// Other variable used by the class
   late var url;
 
   late List<dynamic> results;
@@ -45,15 +47,20 @@ class Deployment {
   late List<dynamic> sortedActions;
 
   /// Constructor.
-  Deployment() {
-    // Modules init
-    config = Config();
-    logger = Logger();
+  Deployment(
+      Logger logger,
+      Config config,
+      HTTPUtils httpUtils,
+      LinuxCommand linuxCommand,
+      MacOSCommand macOSCommand,
+      WindowsCommand windowsCommand) {
+    this.logger = logger;
+    this.config = config;
+    this.httpUtils = httpUtils;
+    this.linuxCommand = linuxCommand;
+    this.macOSCommand = macOSCommand;
+    this.windowsCommand = windowsCommand;
 
-    // Utilities init
-    httpUtils = HTTPUtils();
-
-    // Other variable init
     url = config.getInventoryConfig("url");
     actions = Map();
     sortedActions = [];
@@ -293,14 +300,17 @@ class Deployment {
       String os, int package, String actionCommand) async {
     logger.info("Executing action command...");
 
-    // This variables will replace variable by dynamic pat
-    String agentPath =
-        Directory.current.toString().substring(11, null).replaceAll("'", "") +
-            "/" +
-            config.getInventoryConfig("data_dir") +
-            "/deployment/" +
-            package.toString();
-    actionCommand = actionCommand.replaceAll("AGENT_PATH", agentPath);
+    // This variables will replace variable by dynamic path
+    Map<String, dynamic> variables = {
+      "\$AGENT_PATH":
+          Directory.current.toString().substring(11, null).replaceAll("'", "") +
+              "/" +
+              config.getInventoryConfig("data_dir"),
+      "\$PACKAGE": "deployment/" + package.toString()
+    };
+    variables.keys.forEach((key) {
+      actionCommand = actionCommand.replaceAll(key, variables[key]);
+    });
     late Map<String, Object> result;
     int retryCounter = 0;
     do {
@@ -309,10 +319,9 @@ class Deployment {
       // Depending of the plateform, execute a command with appropriate CLI
       switch (os) {
         case "LIN":
-          var command = LinuxCommand();
-
-          result =
-              await command.commandShell(actionCommand, true).then((value) {
+          result = await linuxCommand
+              .commandShell(actionCommand, true)
+              .then((value) {
             return value;
           }).catchError((onError) {
             logger.error("Error while executing action command: $onError");
@@ -328,10 +337,9 @@ class Deployment {
           });
           break;
         case "MAC":
-          var command = MacOSCommand();
-
-          result =
-              await command.commandShell(actionCommand, true).then((value) {
+          result = await macOSCommand
+              .commandShell(actionCommand, true)
+              .then((value) {
             return value;
           }).catchError((onError) {
             logger.error("Error while executing action command: $onError");
@@ -347,9 +355,7 @@ class Deployment {
           });
           break;
         case "WIN":
-          var command = WindowsCommand();
-
-          result = await command
+          result = await windowsCommand
               .commandPowershell(actionCommand, true)
               .then((value) {
             return value;
@@ -373,7 +379,7 @@ class Deployment {
           break;
       }
       if (config.getCoreConfig("deployment", "max_retry") >= retryCounter &&
-          config.getCoreConfig("deployment", "auto_retry") == 1 &&
+          config.getCoreConfig("deployment", "auto_retry") &&
           result["status"] == false &&
           retryCounter > 0) {
         logger.error(
@@ -382,7 +388,7 @@ class Deployment {
       retryCounter++;
     } while (result["status"] == false &&
         config.getCoreConfig("deployment", "max_retry") >= retryCounter &&
-        config.getCoreConfig("deployment", "auto_retry") == 1);
+        config.getCoreConfig("deployment", "auto_retry"));
 
     if (result["status"] == true) {
       logger.verbose(result["value"].toString());
@@ -457,10 +463,10 @@ class Deployment {
     late var command;
     switch (os) {
       case "LIN":
-        command = LinuxCommand();
+        command = linuxCommand;
         break;
       case "MAC":
-        command = MacOSCommand();
+        command = macOSCommand;
         break;
       default:
         logger.error(
@@ -687,7 +693,7 @@ class Deployment {
             completer.complete(responseStreamStatus.toString());
             if (config.getCoreConfig("deployment", "max_retry") >=
                     retryCounter &&
-                config.getCoreConfig("deployment", "auto_retry") == 1 &&
+                config.getCoreConfig("deployment", "auto_retry") &&
                 responseStreamStatus == false &&
                 retryCounter > 0) {
               logger.error(
@@ -722,7 +728,7 @@ class Deployment {
       retryCounter++;
     } while (status == false &&
         config.getCoreConfig("deployment", "max_retry") >= retryCounter &&
-        config.getCoreConfig("deployment", "auto_retry") == 1);
+        config.getCoreConfig("deployment", "auto_retry"));
     return status;
   }
 

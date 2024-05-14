@@ -14,16 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+// External packages imports
 import 'dart:convert';
 
+// Core imports
 import 'package:ocs_agent/core/log.dart';
-
 import 'package:ocs_agent/core/inventory/macos/commands.dart';
 
 class MacOSFormat {
   late Logger logger;
-
-  late MacOSCommand macosCommand;
+  late MacOSCommand macOSCommand;
 
   final Map<String, String> transcriptVariables = {
     "spext_incomplete": "incomplete",
@@ -34,10 +34,9 @@ class MacOSFormat {
     "spext_signed": "Signed",
   };
 
-  MacOSFormat() {
-    this.logger = new Logger();
-
-    this.macosCommand = new MacOSCommand();
+  MacOSFormat(Logger logger, MacOSCommand macOSCommand) {
+    this.logger = logger;
+    this.macOSCommand = macOSCommand;
   }
 
   /// get result of [resultCommand] for each [fields].

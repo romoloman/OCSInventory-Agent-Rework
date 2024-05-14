@@ -14,28 +14,74 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+// External package imports
 import 'dart:io' show Platform;
-
 import 'package:sprintf/sprintf.dart';
 
+// Common imports
+import 'package:ocs_agent/core/common/files_utils.dart';
+import 'package:ocs_agent/core/common/http_utils.dart';
+import 'package:ocs_agent/core/common/json_utils.dart';
+
+// Core imports
 import 'package:ocs_agent/core/config.dart';
 import 'package:ocs_agent/core/log.dart';
 
-import 'package:ocs_agent/core/deployment.dart';
-import 'package:ocs_agent/core/inventory.dart';
+import 'package:ocs_agent/core/inventory/linux/baseLinux.dart';
+import 'package:ocs_agent/core/inventory/linux/commands.dart';
+import 'package:ocs_agent/core/inventory/linux/format.dart';
 
-import 'package:ocs_agent/core/inventory/linux/baseLinux.dart' as baseLinux;
-import 'package:ocs_agent/core/inventory/macos/baseMacOS.dart' as baseMacOS;
-import 'package:ocs_agent/core/inventory/windows/baseWindows.dart'
-    as baseWindows;
+import 'package:ocs_agent/core/inventory/macos/baseMacOS.dart';
+import 'package:ocs_agent/core/inventory/macos/commands.dart';
+import 'package:ocs_agent/core/inventory/macos/format.dart';
+
+import 'package:ocs_agent/core/inventory/windows/baseWindows.dart';
+import 'package:ocs_agent/core/inventory/windows/commands.dart';
+import 'package:ocs_agent/core/inventory/windows/format.dart';
+
+// Modules imports
+import 'package:ocs_agent/core/inventory.dart';
+import 'package:ocs_agent/core/deployment.dart';
 
 /// In this main section we send the [body] to the asset/bases endpoint
 Future<void> main(List<String> args) async {
-  // Initiate modules
-  Deployment deployment = new Deployment();
-  Inventory inventory = new Inventory();
+  // Initiate main core
   Config config = new Config();
-  Logger logger = new Logger();
+  Logger logger = new Logger(config);
+
+  // Initiate common
+  FilesUtils filesUtils = new FilesUtils();
+  HTTPUtils httpUtils = new HTTPUtils(logger);
+  JsonUtils jsonUtils = new JsonUtils();
+
+  // Initiate core
+  LinuxCommand linuxCommand = new LinuxCommand(logger);
+  LinuxFormat linuxFormat = new LinuxFormat(logger, linuxCommand);
+  BaseLinux baseLinux =
+      new BaseLinux(logger, linuxCommand, filesUtils, jsonUtils);
+  MacOSCommand macOSCommand = new MacOSCommand(logger);
+  MacOSFormat macOSFormat = new MacOSFormat(logger, macOSCommand);
+  BaseMacOS baseMacOS = new BaseMacOS(logger, macOSCommand);
+  WindowsCommand windowsCommand = new WindowsCommand(logger);
+  WindowsFormat windowsFormat = new WindowsFormat(logger, windowsCommand);
+  BaseWindows baseWindows =
+      new BaseWindows(logger, windowsCommand, filesUtils, jsonUtils);
+
+  // Initiate modules
+  Inventory inventory = new Inventory(
+      logger,
+      config,
+      filesUtils,
+      httpUtils,
+      jsonUtils,
+      linuxCommand,
+      linuxFormat,
+      macOSCommand,
+      macOSFormat,
+      windowsCommand,
+      windowsFormat);
+  Deployment deployment = new Deployment(
+      logger, config, httpUtils, linuxCommand, macOSCommand, windowsCommand);
 
   // Get the agent execution mode
   Map<int, String> enumMode = {
@@ -74,8 +120,7 @@ Future<void> main(List<String> args) async {
       }
 
       // Deployment process
-      dynamic deploymentMode = config.getCoreConfig("deployment", "enabled");
-      if (deploymentMode == 1) {
+      if (config.getCoreConfig("deployment", "enabled")) {
         if (await deployment.checkConfig()) {
           if (await deployment.checkDownload(inventory.assetID)) {
             if (await deployment.getActions(inventory.assetID)) {

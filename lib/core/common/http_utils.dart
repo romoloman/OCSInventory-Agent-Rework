@@ -14,16 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+// External packages imports
 import 'dart:io';
-
 import 'package:http/http.dart' as http;
 import 'package:sprintf/sprintf.dart';
 
+// Core imports
 import 'package:ocs_agent/core/log.dart';
 
 /// This class will execute and log the status of the query
 class HTTPUtils {
-  Logger logger = new Logger();
+  late Logger logger;
+
+  /// Constructor
+  HTTPUtils(Logger logger) {
+    this.logger = logger;
+  }
 
   /// Return header in json format.
   Map<String, String> getHeader(dynamic config) {

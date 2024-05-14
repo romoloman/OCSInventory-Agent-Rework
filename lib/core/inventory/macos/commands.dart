@@ -14,12 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+// External package imports
 import 'dart:io';
+
+// Core imports
 import 'package:ocs_agent/core/log.dart';
 
 /// Class for execute command on Mac.
 class MacOSCommand {
-  Logger logger = Logger();
+  late Logger logger;
+
+  /// Constructor
+  MacOSCommand(Logger logger) {
+    this.logger = logger;
+  }
 
   /// Execute [commandLine] to Shell.
   Future<Map<String, Object>> commandShell(
@@ -89,11 +97,11 @@ class MacOSCommand {
       case "FILE":
         return await this.readFile(command, true);
       case "CMD":
-        return await this.commandShell(command, true);
+        return await this.commandShell(command, true).toString();
       case "BASH":
-        return await this.commandShell(command, true);
+        return await this.commandShell(command, true).toString();
       case "ZSH":
-        return await this.commandShell(command, true);
+        return await this.commandShell(command, true).toString();
     }
     return null;
   }
