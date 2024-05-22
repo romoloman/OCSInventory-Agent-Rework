@@ -50,14 +50,14 @@ class Logger {
       file = File(config.getInventoryConfig("log_filename"));
     }
 
-    dateFormat = DateFormat('yyyy-MM-dd H:m:s');
+    dateFormat = DateFormat('EEE MMM dd HH:mm:ss yyyy');
   }
 
   /// Print info message.
   void info(String info) {
     var now = DateTime.now();
     String date = dateFormat.format(now);
-    String txt = "$date INFO: $info\n";
+    String txt = "[$date] [INFO] $info\n";
     if (_isFile) {
       file.writeAsStringSync(txt, mode: FileMode.append);
     } else {
@@ -69,7 +69,7 @@ class Logger {
   void warning(String warning) {
     var now = DateTime.now();
     String date = dateFormat.format(now);
-    String txt = "$date WARNING: $warning\n";
+    String txt = "[$date] [WARNING] $warning\n";
     if (_isFile) {
       file.writeAsStringSync(txt, mode: FileMode.append);
     } else {
@@ -81,7 +81,7 @@ class Logger {
   void error(String error) {
     var now = DateTime.now();
     String date = dateFormat.format(now);
-    String txt = "$date ERROR: $error\n";
+    String txt = "[$date] [ERROR] $error\n";
     if (_isFile) {
       file.writeAsStringSync(txt, mode: FileMode.append);
     } else {
@@ -93,7 +93,7 @@ class Logger {
   void verbose(String verbose) {
     var now = DateTime.now();
     String date = dateFormat.format(now);
-    String txt = "$date VERBOSE: $verbose\n";
+    String txt = "[$date] [VERBOSE] $verbose\n";
     if (_debug) {
       if (_isFile) {
         file.writeAsStringSync(txt, mode: FileMode.append);
