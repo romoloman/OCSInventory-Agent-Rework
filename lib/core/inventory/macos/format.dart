@@ -59,7 +59,8 @@ class MacOSFormat {
         }
       } catch (e) {
         json[element] = null;
-        logger.verbose("Next Json object won't be well formated!");
+        logger.verbose(this.runtimeType.toString(),
+            "Next Json object won't be well formated!");
       }
     });
 
@@ -162,7 +163,7 @@ class MacOSFormat {
       }
     });
 
-    logger.verbose(subInventory.toString());
+    logger.verbose(this.runtimeType.toString(), subInventory.toString());
 
     return subInventory;
   }
@@ -178,7 +179,8 @@ class MacOSFormat {
       try {
         json[element] = resultCommand[element]['result'];
       } catch (e) {
-        logger.verbose("Next Grep object won't be well formated!");
+        logger.verbose(this.runtimeType.toString(),
+            "Next Grep object won't be well formated!");
       }
     });
 
@@ -201,7 +203,7 @@ class MacOSFormat {
     });
     subInventory.add(result);
 
-    logger.verbose(subInventory.toString());
+    logger.verbose(this.runtimeType.toString(), subInventory.toString());
     return subInventory;
   }
 
@@ -283,7 +285,7 @@ class MacOSFormat {
       subInventory.add(result);
     }
 
-    logger.verbose(subInventory.toString());
+    logger.verbose(this.runtimeType.toString(), subInventory.toString());
     return subInventory;
   }
 
@@ -309,7 +311,7 @@ class MacOSFormat {
     }
     subInventory.add(result);
 
-    logger.verbose(subInventory.toString());
+    logger.verbose(this.runtimeType.toString(), subInventory.toString());
     return subInventory;
   }
 

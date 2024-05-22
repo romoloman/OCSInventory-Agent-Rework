@@ -54,10 +54,10 @@ class Logger {
   }
 
   /// Print info message.
-  void info(String info) {
+  void info(String className, String info) {
     var now = DateTime.now();
     String date = dateFormat.format(now);
-    String txt = "[$date] [INFO] $info\n";
+    String txt = "[$date] [INFO] [$className] $info\n";
     if (_isFile) {
       file.writeAsStringSync(txt, mode: FileMode.append);
     } else {
@@ -66,10 +66,10 @@ class Logger {
   }
 
   /// Print warning message.
-  void warning(String warning) {
+  void warning(String className, String warning) {
     var now = DateTime.now();
     String date = dateFormat.format(now);
-    String txt = "[$date] [WARNING] $warning\n";
+    String txt = "[$date] [WARNING] [$className] $warning\n";
     if (_isFile) {
       file.writeAsStringSync(txt, mode: FileMode.append);
     } else {
@@ -78,10 +78,10 @@ class Logger {
   }
 
   /// Print error message.
-  void error(String error) {
+  void error(String className, String error) {
     var now = DateTime.now();
     String date = dateFormat.format(now);
-    String txt = "[$date] [ERROR] $error\n";
+    String txt = "[$date] [ERROR] [$className] $error\n";
     if (_isFile) {
       file.writeAsStringSync(txt, mode: FileMode.append);
     } else {
@@ -90,10 +90,10 @@ class Logger {
   }
 
   /// Print verbose message.
-  void verbose(String verbose) {
+  void verbose(String className, String verbose) {
     var now = DateTime.now();
     String date = dateFormat.format(now);
-    String txt = "[$date] [VERBOSE] $verbose\n";
+    String txt = "[$date] [VERBOSE] [$className] $verbose\n";
     if (_debug) {
       if (_isFile) {
         file.writeAsStringSync(txt, mode: FileMode.append);
@@ -129,7 +129,6 @@ class Logger {
       content["comment"] = comment;
       try {
         await query.post(
-            "serverLogger",
             Uri.parse("$_url/asset/logs/"),
             {
               HttpHeaders.contentTypeHeader: 'application/json',
@@ -137,10 +136,11 @@ class Logger {
             },
             jsonEncode(content));
       } catch (exception) {
-        error(sprintf("HTTP query: %s", [exception.toString().trim()]));
+        error(this.runtimeType.toString(),
+            sprintf("HTTP query: %s", [exception.toString().trim()]));
       }
     } else {
-      error("Failed to send remote logs!");
+      error(this.runtimeType.toString(), "Failed to send remote logs!");
     }
   }
 }

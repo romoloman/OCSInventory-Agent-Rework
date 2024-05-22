@@ -90,7 +90,7 @@ Future<void> main(List<String> args) async {
     2: "Local with template",
     3: "Local without template",
   };
-  logger.info(
+  logger.info("APP",
       sprintf("Starting agent in %s mode...", [enumMode[inventory.getMode()]]));
 
   // Get the OS body
@@ -105,7 +105,7 @@ Future<void> main(List<String> args) async {
     body = await baseWindows.getBody();
     os = "WIN";
   } else {
-    logger.error(
+    logger.error("APP",
         "OS does not match any of the supported OSs! (Check Plateform class return)");
   }
 
@@ -137,5 +137,5 @@ Future<void> main(List<String> args) async {
     }
   }
 
-  logger.info("Agent's process has ended!\n");
+  logger.info("APP", "Agent's process has ended!\n");
 }

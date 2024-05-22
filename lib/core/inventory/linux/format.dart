@@ -63,7 +63,7 @@ class LinuxFormat {
       subinventory.add(result);
     });
 
-    logger.verbose(subinventory.toString());
+    logger.verbose(this.runtimeType.toString(), subinventory.toString());
 
     return subinventory;
   }
@@ -89,7 +89,7 @@ class LinuxFormat {
     }
     subInventory.add(result);
 
-    logger.verbose(subInventory.toString());
+    logger.verbose(this.runtimeType.toString(), subInventory.toString());
 
     return subInventory;
   }
@@ -116,7 +116,7 @@ class LinuxFormat {
     }
     subInventory.add(result);
 
-    logger.verbose(subInventory.toString());
+    logger.verbose(this.runtimeType.toString(), subInventory.toString());
 
     return subInventory;
   }
@@ -187,7 +187,7 @@ class LinuxFormat {
       x++;
     }
 
-    logger.verbose(subInventory.toString());
+    logger.verbose(this.runtimeType.toString(), subInventory.toString());
 
     return subInventory;
   }
@@ -219,7 +219,7 @@ class LinuxFormat {
     }
     subInventory.add(result);
 
-    logger.verbose(subInventory.toString());
+    logger.verbose(this.runtimeType.toString(), subInventory.toString());
 
     return subInventory;
   }

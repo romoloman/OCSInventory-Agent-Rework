@@ -32,9 +32,9 @@ class BaseMacOS {
 
   ///This fonction return the body for to asset/bases
   dynamic getBody() async {
-    logger.info("Plateform: MACOS");
+    logger.info(this.runtimeType.toString(), "Plateform: MACOS");
 
-    logger.info("Getting OS body...");
+    logger.info(this.runtimeType.toString(), "Getting OS body...");
 
     /// This command [commandSerialUUID] display list Serial and UUID
     String commandSerialUUID;
@@ -98,7 +98,7 @@ class BaseMacOS {
       "domain": getDomain
     });
 
-    logger.info("OS body has been retrieved!");
+    logger.info(this.runtimeType.toString(), "OS body has been retrieved!");
 
     return body;
   }
