@@ -84,7 +84,8 @@ class WindowsFormat {
         }
       } catch (e) {
         json[element] = null;
-        logger.verbose("Next Json object won't be well formated!");
+        logger.verbose(this.runtimeType.toString(),
+            "Next Json object won't be well formated!");
       }
     });
 
@@ -185,7 +186,7 @@ class WindowsFormat {
       }
     });
 
-    logger.verbose(subInventory.toString());
+    logger.verbose(this.runtimeType.toString(), subInventory.toString());
 
     return subInventory;
   }
@@ -202,7 +203,7 @@ class WindowsFormat {
     }
     subInventory.add(result);
 
-    logger.verbose(subInventory.toString());
+    logger.verbose(this.runtimeType.toString(), subInventory.toString());
 
     return subInventory;
   }
@@ -224,7 +225,7 @@ class WindowsFormat {
     }
     subInventory.add(result);
 
-    logger.verbose(subInventory.toString());
+    logger.verbose(this.runtimeType.toString(), subInventory.toString());
 
     return subInventory;
   }
@@ -246,7 +247,7 @@ class WindowsFormat {
     }
     subInventory.add(result);
 
-    logger.verbose(subInventory.toString());
+    logger.verbose(this.runtimeType.toString(), subInventory.toString());
 
     return subInventory;
   }

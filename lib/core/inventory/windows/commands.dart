@@ -53,10 +53,12 @@ class WindowsCommand {
       if (process.exitCode != 0) {
         processData["value"] = "";
         processData["status"] = false;
-        logger.error("Executing command $commandLine : ${process.stderr}");
+        logger.error(this.runtimeType.toString(),
+            "Executing command $commandLine : ${process.stderr}");
       } else {
         processData["status"] = true;
-        logger.verbose("Command executed: $commandLine");
+        logger.verbose(
+            this.runtimeType.toString(), "Command executed: $commandLine");
         if (processData["value"] == "") {
           processData["value"] = "Command '$commandLine' has no output.";
         }
@@ -65,12 +67,13 @@ class WindowsCommand {
       processData["value"] = "";
       processData["status"] = false;
       // Handle the specific error
-      logger.error("This command '$command' could not be found : $e");
+      logger.error(this.runtimeType.toString(),
+          "This command '$command' could not be found : $e");
     } catch (e) {
       processData["value"] = "";
       processData["status"] = false;
       // Handle other errors
-      logger.error('An error occurred : $e');
+      logger.error(this.runtimeType.toString(), 'An error occurred : $e');
     }
 
     return processData;
@@ -95,10 +98,12 @@ class WindowsCommand {
       if (process.exitCode != 0) {
         processData["value"] = "";
         processData["status"] = false;
-        logger.error("Executing command '$commandLine' - ${process.stderr}");
+        logger.error(this.runtimeType.toString(),
+            "Executing command '$commandLine' - ${process.stderr}");
       } else {
         processData["status"] = true;
-        logger.verbose("Command executed: $commandLine");
+        logger.verbose(
+            this.runtimeType.toString(), "Command executed: $commandLine");
         if (processData["value"] == "") {
           processData["value"] = "Command '$commandLine' has no output.";
         }
@@ -107,12 +112,13 @@ class WindowsCommand {
       processData["value"] = "";
       processData["status"] = false;
       // Handle the specific error
-      logger.error("This command '$command' could not be found : $e");
+      logger.error(this.runtimeType.toString(),
+          "This command '$command' could not be found : $e");
     } catch (e) {
       processData["value"] = "";
       processData["status"] = false;
       // Handle other errors
-      logger.error('An error occurred : $e');
+      logger.error(this.runtimeType.toString(), 'An error occurred : $e');
     }
 
     return processData;
@@ -133,10 +139,12 @@ class WindowsCommand {
       if (process.exitCode != 0) {
         processData["value"] = "";
         processData["status"] = false;
-        logger.error("Executing file '$path' - ${process.stderr}");
+        logger.error(this.runtimeType.toString(),
+            "Executing file '$path' - ${process.stderr}");
       } else {
         processData["status"] = true;
-        logger.verbose("File executed successfully: $path");
+        logger.verbose(
+            this.runtimeType.toString(), "File executed successfully: $path");
         if (processData["value"] == "") {
           processData["value"] = "File '$path' has no output.";
         }
@@ -145,12 +153,13 @@ class WindowsCommand {
       processData["value"] = "";
       processData["status"] = false;
       // Handle the specific error
-      logger.error("This file '$path' could not be found : $e");
+      logger.error(this.runtimeType.toString(),
+          "This file '$path' could not be found : $e");
     } catch (e) {
       processData["value"] = "";
       processData["status"] = false;
       // Handle other errors
-      logger.error('An error occurred : $e');
+      logger.error(this.runtimeType.toString(), 'An error occurred : $e');
     }
 
     return processData;

@@ -43,38 +43,31 @@ class HTTPUtils {
   }
 
   /// Return the statusCode message
-  String? statusCodeMessage(
-      String type, int statusCode, String detail, String currentMethod) {
+  String? statusCodeMessage(String type, int statusCode, String detail) {
     var statusMessage = new Map<int, String>();
-    statusMessage[200] =
-        sprintf("%s: 200: %s (From %s method)", [type, detail, currentMethod]);
-    statusMessage[201] =
-        sprintf("%s: 201: %s (From %s method)", [type, detail, currentMethod]);
-    statusMessage[400] =
-        sprintf("%s: 400: %s (From %s method)", [type, detail, currentMethod]);
-    statusMessage[401] =
-        sprintf("%s: 401: %s (From %s method)", [type, detail, currentMethod]);
-    statusMessage[403] =
-        sprintf("%s: 403: %s (From %s method)", [type, detail, currentMethod]);
-    statusMessage[404] =
-        sprintf("%s: 404: %s (From %s method)", [type, detail, currentMethod]);
-    statusMessage[500] =
-        sprintf("%s: 500: %s (From %s method)", [type, detail, currentMethod]);
+    statusMessage[200] = sprintf("[%s] [200] %s", [type, detail]);
+    statusMessage[201] = sprintf("[%s] [201] %s", [type, detail]);
+    statusMessage[400] = sprintf("[%s] [400] %s", [type, detail]);
+    statusMessage[401] = sprintf("[%s] [401] %s", [type, detail]);
+    statusMessage[403] = sprintf("[%s] [403] %s", [type, detail]);
+    statusMessage[404] = sprintf("[%s] [404] %s", [type, detail]);
+    statusMessage[500] = sprintf("[%s] [500] %s", [type, detail]);
     return statusMessage[statusCode];
   }
 
   /// Do a delete HTTP query
   Future<Map<String, dynamic>> delete(
-      String currentMethod, Uri uri, Map<String, String>? headers) async {
+      Uri uri, Map<String, String>? headers) async {
     var returnObject = new Map<String, dynamic>();
     try {
       var query = await http.delete(uri, headers: headers);
       returnObject["body"] = query.body;
       returnObject["status_code"] = query.statusCode;
-      returnObject["message"] = statusCodeMessage(
-          "DELETE", query.statusCode, query.body, currentMethod);
+      returnObject["message"] =
+          statusCodeMessage("DELETE", query.statusCode, query.body);
     } catch (exception) {
-      logger.error(sprintf("HTTP query: %s", [exception.toString().trim()]));
+      logger.error(this.runtimeType.toString(),
+          sprintf("HTTP query: %s", [exception.toString().trim()]));
       returnObject["error"] = true;
     }
     return returnObject;
@@ -82,67 +75,71 @@ class HTTPUtils {
 
   /// Do a get HTTP query
   Future<Map<String, dynamic>> get(
-      String currentMethod, Uri uri, Map<String, String>? headers) async {
+      Uri uri, Map<String, String>? headers) async {
     var returnObject = new Map<String, dynamic>();
     try {
       var query = await http.get(uri, headers: headers);
       returnObject["body"] = query.body;
       returnObject["status_code"] = query.statusCode;
       returnObject["message"] =
-          statusCodeMessage("GET", query.statusCode, query.body, currentMethod);
+          statusCodeMessage("GET", query.statusCode, query.body);
     } catch (exception) {
-      logger.error(sprintf("HTTP query: %s", [exception.toString().trim()]));
+      logger.error(this.runtimeType.toString(),
+          sprintf("HTTP query: %s", [exception.toString().trim()]));
       returnObject["error"] = true;
     }
     return returnObject;
   }
 
   /// Do a patch HTTP query
-  Future<Map<String, dynamic>> patch(String currentMethod, Uri uri,
-      Map<String, String>? headers, Object? body) async {
+  Future<Map<String, dynamic>> patch(
+      Uri uri, Map<String, String>? headers, Object? body) async {
     var returnObject = new Map<String, dynamic>();
     try {
       var query = await http.patch(uri, headers: headers, body: body);
       returnObject["body"] = query.body;
       returnObject["status_code"] = query.statusCode;
-      returnObject["message"] = statusCodeMessage(
-          "PATCH", query.statusCode, query.body, currentMethod);
+      returnObject["message"] =
+          statusCodeMessage("PATCH", query.statusCode, query.body);
     } catch (exception) {
-      logger.error(sprintf("HTTP query: %s", [exception.toString().trim()]));
+      logger.error(this.runtimeType.toString(),
+          sprintf("HTTP query: %s", [exception.toString().trim()]));
       returnObject["error"] = true;
     }
     return returnObject;
   }
 
   /// Do a post HTTP query
-  Future<Map<String, dynamic>> post(String currentMethod, Uri uri,
-      Map<String, String>? headers, Object? body) async {
+  Future<Map<String, dynamic>> post(
+      Uri uri, Map<String, String>? headers, Object? body) async {
     var returnObject = new Map<String, dynamic>();
     try {
       var query = await http.post(uri, headers: headers, body: body);
       returnObject["body"] = query.body;
       returnObject["status_code"] = query.statusCode;
-      returnObject["message"] = statusCodeMessage(
-          "POST", query.statusCode, query.body, currentMethod);
+      returnObject["message"] =
+          statusCodeMessage("POST", query.statusCode, query.body);
     } catch (exception) {
-      logger.error(sprintf("HTTP query: %s", [exception.toString().trim()]));
+      logger.error(this.runtimeType.toString(),
+          sprintf("HTTP query: %s", [exception.toString().trim()]));
       returnObject["error"] = true;
     }
     return returnObject;
   }
 
   /// Do a put HTTP query
-  Future<Map<String, dynamic>> put(String currentMethod, Uri uri,
-      Map<String, String>? headers, Object? body) async {
+  Future<Map<String, dynamic>> put(
+      Uri uri, Map<String, String>? headers, Object? body) async {
     var returnObject = new Map<String, dynamic>();
     try {
       var query = await http.put(uri, headers: headers, body: body);
       returnObject["body"] = query.body;
       returnObject["status_code"] = query.statusCode;
       returnObject["message"] =
-          statusCodeMessage("PUT", query.statusCode, query.body, currentMethod);
+          statusCodeMessage("PUT", query.statusCode, query.body);
     } catch (exception) {
-      logger.error(sprintf("HTTP query: %s", [exception.toString().trim()]));
+      logger.error(this.runtimeType.toString(),
+          sprintf("HTTP query: %s", [exception.toString().trim()]));
       returnObject["error"] = true;
     }
     return returnObject;

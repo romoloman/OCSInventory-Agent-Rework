@@ -44,9 +44,9 @@ class BaseWindows {
 
   ///This fonction return the body for the asset/bases
   dynamic getBody() async {
-    logger.info("Plateform: WINDOWS");
+    logger.info(this.runtimeType.toString(), "Plateform: WINDOWS");
 
-    logger.info("Getting OS body...");
+    logger.info(this.runtimeType.toString(), "Getting OS body...");
 
     /// Command get the mac address list
     dynamic macAddr;
@@ -103,7 +103,7 @@ class BaseWindows {
           .toString(),
     });
 
-    logger.info("OS body has been retrieved!");
+    logger.info(this.runtimeType.toString(), "OS body has been retrieved!");
 
     return body;
   }
@@ -116,7 +116,8 @@ class BaseWindows {
         .toString();
 
     if (uuid == "") {
-      logger.info("UUID not found, generating a new one...");
+      logger.info(this.runtimeType.toString(),
+          "UUID not found, generating a new one...");
       uuid = (await windowsCommand.commandPowershell(
               "[guid]::NewGuid().ToString()", true))["value"]
           .toString();
@@ -133,7 +134,8 @@ class BaseWindows {
           containerWindows.containsValue(name) &&
           containerWindows.containsValue(macAdress)) {
         uuid = containerWindows["uuid"];
-        logger.info("UUID has been retrieved from the uuid file.");
+        logger.info(this.runtimeType.toString(),
+            "UUID has been retrieved from the uuid file.");
       } else {
         dynamic baseAdded = {};
         baseAdded["name"] = name;
@@ -143,7 +145,8 @@ class BaseWindows {
         JsonEncoder encoder = new JsonEncoder.withIndent('  ');
         String str = encoder.convert(baseAdded);
         filesUtils.rewriteFile(containerWindowsFile, str);
-        logger.info("UUID has been generated and saved in the uuid file.");
+        logger.info(this.runtimeType.toString(),
+            "UUID has been generated and saved in the uuid file.");
       }
     }
     return uuid;

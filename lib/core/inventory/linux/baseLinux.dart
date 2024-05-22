@@ -44,9 +44,9 @@ class BaseLinux {
 
   ///This fonction return the body for to asset/bases
   dynamic getBody() async {
-    logger.info("Plateform: LINUX");
+    logger.info(this.runtimeType.toString(), "Plateform: LINUX");
 
-    logger.info("Getting OS body...");
+    logger.info(this.runtimeType.toString(), "Getting OS body...");
 
     dynamic getOSRelease =
         (await linuxCommand.readFile("/etc/os-release", true))["value"]
@@ -119,7 +119,7 @@ class BaseLinux {
           .toString(),
     });
 
-    logger.info("OS body has been retrieved!");
+    logger.info(this.runtimeType.toString(), "OS body has been retrieved!");
 
     return body;
   }
@@ -144,9 +144,11 @@ class BaseLinux {
           containerLinux.containsValue(name) &&
           containerLinux.containsValue(macAdress)) {
         uuid = containerLinux["uuid"];
-        logger.info("UUID has been retrieved from the uuid file.");
+        logger.info(this.runtimeType.toString(),
+            "UUID has been retrieved from the uuid file.");
       } else {
-        logger.info("UUID not found, generating a new one...");
+        logger.info(this.runtimeType.toString(),
+            "UUID not found, generating a new one...");
         uuid = (await linuxCommand.commandShell("uuidgen", true))["value"]
             .toString();
         dynamic baseAdded = {};
@@ -158,7 +160,8 @@ class BaseLinux {
         String str = encoder.convert(baseAdded);
         FilesUtils filesUtils = new FilesUtils();
         filesUtils.rewriteFile(containerLinuxFile, str);
-        logger.info("UUID has been generated and saved in the uuid file.");
+        logger.info(this.runtimeType.toString(),
+            "UUID has been generated and saved in the uuid file.");
       }
     }
     return uuid;

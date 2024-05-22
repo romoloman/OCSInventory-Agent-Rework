@@ -52,10 +52,12 @@ class MacOSCommand {
       if (process.exitCode != 0) {
         processData["value"] = "";
         processData["status"] = false;
-        logger.error("Executing command '$commandLine' - ${process.stderr}");
+        logger.error(this.runtimeType.toString(),
+            "Executing command '$commandLine' - ${process.stderr}");
       } else {
         processData["status"] = true;
-        logger.verbose("Command executed: $commandLine");
+        logger.verbose(
+            this.runtimeType.toString(), "Command executed: $commandLine");
         if (processData["value"] == "") {
           processData["value"] = "Command '$commandLine' has no output.";
         }
@@ -64,12 +66,13 @@ class MacOSCommand {
       processData["value"] = "";
       processData["status"] = false;
       // Handle the specific error
-      logger.error("This command '$command' could not be found : $e");
+      logger.error(this.runtimeType.toString(),
+          "This command '$command' could not be found : $e");
     } catch (e) {
       processData["value"] = "";
       processData["status"] = false;
       // Handle other errors
-      logger.error('An error occurred : $e');
+      logger.error(this.runtimeType.toString(), 'An error occurred : $e');
     }
 
     return processData;
