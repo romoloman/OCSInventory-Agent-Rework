@@ -124,8 +124,9 @@ class Inventory {
 
     var response =
         await httpUtils.get(Uri.parse(url), httpUtils.getHeader(config));
-    logger.verbose(this.runtimeType.toString(), response["message"]);
+    
     if (response["status_code"] == 200) {
+      logger.verbose(this.runtimeType.toString(), response["message"]);
       logger.info(this.runtimeType.toString(), "API status's up!");
       return true;
     } else {
@@ -150,8 +151,9 @@ class Inventory {
         Uri.parse(url + "/api-auth/token"),
         {HttpHeaders.contentTypeHeader: 'application/json'},
         jsonEncode({'username': username, 'password': password}));
-    logger.verbose(this.runtimeType.toString(), response["message"]);
+
     if (response["status_code"] == 200) {
+      logger.verbose(this.runtimeType.toString(), response["message"]);
       logger.info(
           this.runtimeType.toString(), "Token has been retrieved from server!");
       // Get the token from the response body and compare with the local token
