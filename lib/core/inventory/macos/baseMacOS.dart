@@ -38,8 +38,8 @@ class BaseMacOS {
 
     /// This command [commandSerialUUID] display list Serial and UUID
     String commandSerialUUID;
-    commandSerialUUID = await macOSCommand
-        .commandShell("system_profiler SPHardwareDataType", true)
+    commandSerialUUID = (await macOSCommand.commandShell(
+            "system_profiler SPHardwareDataType", true))["value"]
         .toString();
 
     /// Regex to get [Serial]
