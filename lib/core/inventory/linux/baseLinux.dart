@@ -131,7 +131,7 @@ class BaseLinux {
         .toString();
 
     if (uuid == "") {
-      String containerFileName = sprintf('%s/%s.json', ["config/", "uuid"]);
+      String containerFileName = sprintf('%s.json', ["generated_uuid"]);
       File containerLinuxFile = File(containerFileName);
       if (!containerLinuxFile.existsSync()) {
         containerLinuxFile.createSync(recursive: true);
