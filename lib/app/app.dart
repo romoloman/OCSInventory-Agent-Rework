@@ -15,8 +15,9 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // External package imports
-import 'dart:io' show Platform;
+import 'dart:io' show Platform, exit, stdout;
 import 'package:sprintf/sprintf.dart';
+import 'package:args/args.dart';
 
 // Common imports
 import 'package:ocs_agent/core/common/files_utils.dart';
@@ -47,6 +48,71 @@ import 'package:ocs_agent/core/deployment.dart';
 Future<void> main(List<String> args) async {
   // Initiate main core
   Config config = new Config();
+
+  // Initiate the parser for the arguments
+  ArgParser parser = ArgParser();
+  ArgResults allArgs;
+
+  // Add the arguments options
+  parser.addOption("log_file",
+      abbr: "f",
+      help: "Enalbe or disable the log file",
+      valueHelp: "true/false",
+      defaultsTo: "false");
+  parser.addOption("mode",
+      abbr: "m",
+      help: "Agent execution mode",
+      valueHelp:
+          "0: Remote with template 1: Remote without template 2: Local with template 3: Local without template",
+      defaultsTo: "1");
+  parser.addOption("password",
+      abbr: "p", help: "Password", valueHelp: "password", defaultsTo: "admin");
+  parser.addOption("token",
+      abbr: "t", help: "Token", valueHelp: "token", defaultsTo: "");
+  parser.addOption("username",
+      abbr: "u", help: "Username", valueHelp: "username", defaultsTo: "admin");
+  parser.addOption("url",
+      abbr: "s",
+      help: "URL to the OCS server",
+      valueHelp: "http://SERVER_IP:PORT",
+      defaultsTo: "http://ocsinventory-server:port");
+  parser.addOption("data_directory",
+      abbr: "d",
+      help: "Path to the inventory data",
+      valueHelp: "/path_to_store_inventory_data/folder-name",
+      defaultsTo: "inventory");
+  parser.addOption("log_file_path",
+      abbr: "l",
+      help: "Path to the log file",
+      valueHelp: "/path_to_store_log_file/file-name.log",
+      defaultsTo: "ocs-agent.log");
+  parser.addOption("config_directory",
+      abbr: "c",
+      help: "Path to the configuration directory",
+      valueHelp: "/path_to_store_configurations_files",
+      defaultsTo: "config");
+  parser.addFlag("help", abbr: "h", help: "Show this help", negatable: false);
+
+  try {
+    allArgs = parser.parse(args);
+  } on ArgParserException catch (ex) {
+    stdout.writeln("Failed while parsing arguments");
+
+    stdout.writeln(ex.message);
+    stdout.writeln(parser.usage);
+    exit(1);
+  } catch (ex) {
+    stdout.writeln("Something went wrong while parsing arguments!");
+    stdout.writeln(ex);
+    stdout.writeln(parser.usage);
+    exit(1);
+  }
+
+  if (allArgs.wasParsed("help")) {
+    stdout.writeln(parser.usage);
+    return;
+  }
+
   Logger logger = new Logger(config);
 
   // Initiate common
