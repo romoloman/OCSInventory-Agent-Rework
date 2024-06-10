@@ -15,7 +15,9 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // External package imports
-import 'dart:io' show Platform, exit, stdout;
+import 'dart:convert';
+import 'dart:io' show Directory, Platform, exit, stdout;
+import 'package:hive/hive.dart';
 import 'package:sprintf/sprintf.dart';
 import 'package:args/args.dart';
 
@@ -46,12 +48,12 @@ import 'package:ocs_agent/core/deployment.dart';
 
 /// In this main section we send the [body] to the asset/bases endpoint
 Future<void> main(List<String> args) async {
-  // Initiate main core
-  Config config = new Config();
-
   // Initiate the parser for the arguments
   ArgParser parser = ArgParser();
   ArgResults allArgs;
+  Hive.init(Directory.current.path + '/hiveData');
+  // Initiate main core
+  late Config config;
 
   // Add the arguments options
   parser.addOption("log_file",
@@ -112,6 +114,24 @@ Future<void> main(List<String> args) async {
     stdout.writeln(parser.usage);
     return;
   }
+
+  var box = await Hive.openBox('testBox');
+  if (allArgs.arguments.isEmpty) {
+    stdout.writeln("No arguments provided, trying to find the config file...");
+    if (box.get('Config_file_path') == null) {
+      stdout.writeln("No config file found, using default values...");
+    } else {
+      stdout.writeln("Config file found, using the provided values...");
+    }
+  }
+
+  if (allArgs.wasParsed("config_directory")) {
+    if (box.get('Config_file_path') == null) {
+      box.put(
+          'Config_file_path', allArgs.option("config_directory").toString());
+    }
+  }
+
 
   Logger logger = new Logger(config);
 
