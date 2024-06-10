@@ -27,7 +27,7 @@ class Config {
   late JsonUtils jsonUtils = new JsonUtils();
 
   final String coreFilename = "config/core.json";
-  final String inventoryFilename = "config/inventory.json";
+  final String inventoryFilename = "/inventory.json";
   final String templateFilename = "config/template.json";
 
   late File inventory;
@@ -35,10 +35,24 @@ class Config {
   late File template;
 
   /// Constructor.
-  Config() {
-    this.inventory = File(inventoryFilename);
-    this.core = File(coreFilename);
-    this.template = File(templateFilename);
+  Config(String configPath, String inventoryContent) {
+    createInventoryConfigFile(configPath, inventoryContent);
+  }
+
+  /// Create inventory config file and set the content.
+  void createInventoryConfigFile(
+      String configPath, String inventoryContent) async {
+    Directory configDir = Directory(configPath);
+    if (!configDir.existsSync()) {
+      configDir.createSync(recursive: true);
+    }
+    this.inventory = File(configPath + inventoryFilename);
+    if (!this.inventory.existsSync()) {
+      // Create the file and rite the default content to {}
+      this.inventory.createSync(recursive: true);
+      this.inventory.writeAsStringSync(inventoryContent);
+    }
+
   }
 
   /// Return all content in inventory config file.
