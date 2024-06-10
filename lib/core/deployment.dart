@@ -198,7 +198,7 @@ class Deployment {
             id = resultElement["id"];
           }
         });
-        String packagePath = config.getInventoryConfig("data_dir") +
+        String packagePath = config.getInventoryConfig("data_directory") +
             "/deployment/" +
             action["package"].toString() +
             "/";
@@ -321,7 +321,7 @@ class Deployment {
       "\$AGENT_PATH":
           Directory.current.toString().substring(11, null).replaceAll("'", "") +
               "/" +
-              config.getInventoryConfig("data_dir"),
+              config.getInventoryConfig("data_directory"),
       "\$PACKAGE": "deployment/" + package.toString()
     };
     variables.keys.forEach((key) {
@@ -547,7 +547,7 @@ class Deployment {
     logger.info(this.runtimeType.toString(), "Downloading and storing file...");
 
     // Get the package directory or create one if not exist
-    var packageDirectory = Directory(config.getInventoryConfig("data_dir") +
+    var packageDirectory = Directory(config.getInventoryConfig("data_directory") +
         "/deployment/" +
         package.toString());
     if (!packageDirectory.existsSync()) {
@@ -560,7 +560,7 @@ class Deployment {
 
     Future<String> completerValue = Future.value("");
     // Store the file in the agent directory
-    String localPath = config.getInventoryConfig("data_dir") +
+    String localPath = config.getInventoryConfig("data_directory") +
         "/deployment/" +
         package.toString() +
         "/";

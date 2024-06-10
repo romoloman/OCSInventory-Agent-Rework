@@ -92,12 +92,12 @@ class Inventory {
     this.assetID = 0;
 
     this.inventoryFileName = sprintf('%s/%s.json', [
-      config.getInventoryConfig("data_dir"),
+      config.getInventoryConfig("data_directory"),
       DateFormat("yyyy-MM-dd_HH-mm-ss").format(DateTime.now())
     ]);
     this.inventoryFile = File(inventoryFileName);
     this.inventoryBase64 = File(sprintf(
-        '%s/%s.json', [config.getInventoryConfig("data_dir"), "Base64"]));
+        '%s/%s.json', [config.getInventoryConfig("data_directory"), "Base64"]));
 
     this.errorCodes = new Map();
   }
@@ -125,6 +125,7 @@ class Inventory {
     var response =
         await httpUtils.get(Uri.parse(url), httpUtils.getHeader(config));
     
+
     if (response["status_code"] == 200) {
       logger.verbose(this.runtimeType.toString(), response["message"]);
       logger.info(this.runtimeType.toString(), "API status's up!");

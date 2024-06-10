@@ -47,7 +47,7 @@ class Logger {
     _url = config.getInventoryConfig("url");
 
     if (_isFile) {
-      file = File(config.getInventoryConfig("log_filename"));
+      file = File(config.getInventoryConfig("log_file_path"));
     }
 
     dateFormat = DateFormat('EEE MMM dd HH:mm:ss yyyy');
