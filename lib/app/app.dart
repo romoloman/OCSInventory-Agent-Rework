@@ -132,7 +132,35 @@ Future<void> main(List<String> args) async {
     }
   }
 
+  Map<String, dynamic> invenroryConfigurations = {};
+  invenroryConfigurations['log_file'] = allArgs.option("log_file").toString();
+  invenroryConfigurations['mode'] = allArgs.option("mode").toString();
+  invenroryConfigurations['password'] = allArgs.option("password").toString();
+  invenroryConfigurations['token'] = "";
+  invenroryConfigurations['username'] = allArgs.option("username").toString();
+  invenroryConfigurations['url'] = allArgs.option("url").toString();
+  invenroryConfigurations['data_directory'] = allArgs.option("data_directory").toString();
+  invenroryConfigurations['log_file_path'] = allArgs.option("log_file_path").toString();
+  invenroryConfigurations['config_directory'] = allArgs.option("config_directory").toString();
 
+  if (box.get('Config_file_path') != null) {
+    config =
+        Config(box.get('Config_file_path'), jsonEncode(invenroryConfigurations).toString());
+  } else {
+    config = Config(allArgs.option("config_directory").toString(),
+        jsonEncode(invenroryConfigurations).toString());
+  }
+
+  // Iterate allArgs and update inventory config with the provided values
+  if (allArgs.options.isNotEmpty) {
+    invenroryConfigurations.forEach((key, value) {
+      if (allArgs.wasParsed(key)) {
+        config.updateInventoryConfig(key, allArgs.option(key).toString());
+      }
+    });
+  }
+
+  // Initiate logger
   Logger logger = new Logger(config);
 
   // Initiate common
