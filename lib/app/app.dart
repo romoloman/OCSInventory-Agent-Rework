@@ -16,8 +16,7 @@
 
 // External package imports
 import 'dart:convert';
-import 'dart:io' show Directory, Platform, exit, stdout;
-import 'package:hive/hive.dart';
+import 'dart:io' show Platform, exit, stdout;
 import 'package:sprintf/sprintf.dart';
 import 'package:args/args.dart';
 
@@ -51,7 +50,6 @@ Future<void> main(List<String> args) async {
   // Initiate the parser for the arguments
   ArgParser parser = ArgParser();
   ArgResults allArgs;
-  Hive.init(Directory.current.path + '/hiveData');
   // Initiate main core
   late Config config;
 
@@ -65,7 +63,7 @@ Future<void> main(List<String> args) async {
       abbr: "m",
       help: "Agent execution mode",
       valueHelp:
-          "0: Remote with template 1: Remote without template 2: Local with template 3: Local without template",
+          "0: Installer mode 1: Remote with template 2: Remote without template 3: Local with template 4: Local without template",
       defaultsTo: "1");
   parser.addOption("password",
       abbr: "p", help: "Password", valueHelp: "password", defaultsTo: "admin");
@@ -88,11 +86,6 @@ Future<void> main(List<String> args) async {
       help: "Path to the log file",
       valueHelp: "/path_to_store_log_file/file-name.log",
       defaultsTo: "ocs-agent.log");
-  parser.addOption("config_directory",
-      abbr: "c",
-      help: "Path to the configuration directory",
-      valueHelp: "/path_to_store_configurations_files",
-      defaultsTo: "config");
   parser.addFlag("help", abbr: "h", help: "Show this help", negatable: false);
 
   try {
@@ -115,21 +108,16 @@ Future<void> main(List<String> args) async {
     return;
   }
 
-  var box = await Hive.openBox('testBox');
-  if (allArgs.arguments.isEmpty) {
-    stdout.writeln("No arguments provided, trying to find the config file...");
-    if (box.get('Config_file_path') == null) {
-      stdout.writeln("No config file found, using default values...");
-    } else {
-      stdout.writeln("Config file found, using the provided values...");
-    }
-  }
-
-  if (allArgs.wasParsed("config_directory")) {
-    if (box.get('Config_file_path') == null) {
-      box.put(
-          'Config_file_path', allArgs.option("config_directory").toString());
-    }
+  late final String configDirectory;
+  if (Platform.isLinux) {
+    configDirectory = "/etc/Ocsinventory-agent";
+  } else if (Platform.isMacOS) {
+    configDirectory = "/Library/Preferences/Ocsinventory-agent";
+  } else if (Platform.isWindows) {
+    configDirectory = "C:\\ProgramData\\Ocsinventory-agent";
+  } else {
+    stdout.writeln("Unsupported platform");
+    exit(1);
   }
 
   Map<String, dynamic> invenroryConfigurations = {};
@@ -139,17 +127,13 @@ Future<void> main(List<String> args) async {
   invenroryConfigurations['token'] = "";
   invenroryConfigurations['username'] = allArgs.option("username").toString();
   invenroryConfigurations['url'] = allArgs.option("url").toString();
-  invenroryConfigurations['data_directory'] = allArgs.option("data_directory").toString();
-  invenroryConfigurations['log_file_path'] = allArgs.option("log_file_path").toString();
-  invenroryConfigurations['config_directory'] = allArgs.option("config_directory").toString();
+  invenroryConfigurations['data_directory'] =
+      allArgs.option("data_directory").toString();
+  invenroryConfigurations['log_file_path'] =
+      allArgs.option("log_file_path").toString();
 
-  if (box.get('Config_file_path') != null) {
-    config =
-        Config(box.get('Config_file_path'), jsonEncode(invenroryConfigurations).toString());
-  } else {
-    config = Config(allArgs.option("config_directory").toString(),
-        jsonEncode(invenroryConfigurations).toString());
-  }
+  config =
+      Config(configDirectory, jsonEncode(invenroryConfigurations).toString());
 
   // Iterate allArgs and update inventory config with the provided values
   if (allArgs.options.isNotEmpty) {
@@ -199,10 +183,11 @@ Future<void> main(List<String> args) async {
 
   // Get the agent execution mode
   Map<int, String> enumMode = {
-    0: "Remote with template",
-    1: "Remote without template",
-    2: "Local with template",
-    3: "Local without template",
+    0: "Installer mode",
+    1: "Remote with template",
+    2: "Remote without template",
+    3: "Local with template",
+    4: "Local without template",
   };
   logger.info("APP",
       sprintf("Starting agent in %s mode...", [enumMode[inventory.getMode()]]));
@@ -223,14 +208,19 @@ Future<void> main(List<String> args) async {
         "OS does not match any of the supported OSs! (Check Plateform class return)");
   }
 
-  if (inventory.getMode() == 0 || inventory.getMode() == 1) {
+  if (inventory.getMode() == 0 ||
+      inventory.getMode() == 1 ||
+      inventory.getMode() == 2) {
     if (await inventory.checkApi()) {
       // Inventory process
       await inventory.checkInventoryExist(body);
       await inventory.checkAndApplyConfig();
-      await inventory.sendRemoteBaseInventory(body);
-      if (inventory.getMode() == 0) {
-        await inventory.sendRemoteTemplateInventory(body);
+
+      if (inventory.getMode() == 2) {
+        await inventory.sendRemoteBaseInventory(body);
+        if (inventory.getMode() == 1) {
+          await inventory.sendRemoteTemplateInventory(body);
+        }
       }
 
       // Deployment process
@@ -244,11 +234,19 @@ Future<void> main(List<String> args) async {
         }
       }
     }
-  } else if (inventory.getMode() == 2 || inventory.getMode() == 3) {
+  } else if (inventory.getMode() == 3 || inventory.getMode() == 4) {
     inventory.sendLocalBaseInventory(body);
-    if (inventory.getMode() == 2) {
+    if (inventory.getMode() == 3) {
       await inventory.sendLocalTemplateInventory();
     }
+  }
+  try {
+    if (config.getCoreConfig("agent", "frequency") > 0) {
+      stdout.writeln(
+          config.getCoreConfig("agent", "frequency").toString().trim());
+    }
+  } catch (e) {
+    stdout.writeln("24");
   }
 
   logger.info("APP", "Agent's process has ended!\n");
