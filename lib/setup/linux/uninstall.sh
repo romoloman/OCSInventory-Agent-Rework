@@ -1,13 +1,14 @@
 #!/bin/sh
 
 # Constants
-SERVICE_NAME="OCS-Inventory-Agent"
-CONFIG_PATH="/etc/Ocsinventory-agent"
-LOG_PATH="/var/log/ocsinventory-agent.log"
-STRORE_DATA_PATH="/var/lib/Ocsinventory-data"
+SERVICE_NAME="ocsinventory-agent"
+CONFIG_PATH="/etc/ocsinventory-agent"
+LOG_PATH="/var/log/ocsinventory-agent/ocsinventory-agent.log"
+STRORE_DATA_PATH="/var/lib/ocsinventory-data"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
-WORKING_DIRECTORY=$(dirname "$(readlink -f "$0")")
-
+AGENT_INSTALLATION_DIR="/usr/share/ocsinventory-agent"
+SYMBOLIC_LINK="/usr/bin/ocsinventory-agent-ng"
+     
 # Function to display usage information
 usage() {
     echo "Usage: $0 [-y]"
@@ -46,6 +47,12 @@ uninstall_agent() {
 
     echo "Removing store data directory..."
     sudo rm -rf ${STRORE_DATA_PATH}
+
+    echo "Removing agent installation directory..."
+    sudo rm -rf ${AGENT_INSTALLATION_DIR}
+
+    echo "Removing symbolic link..."
+    sudo rm -f ${SYMBOLIC_LINK}
 
     echo "+----------------------------------------------------------------------+"
     echo "|   OK, OCS Inventory NG Agent for Unix/Linux has been successfully    |"
