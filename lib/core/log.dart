@@ -48,6 +48,9 @@ class Logger {
 
     if (_isFile) {
       file = File(config.getInventoryConfig("log_file_path"));
+      if (!file.existsSync()) {
+        file.createSync(recursive: true);
+      }
     }
 
     dateFormat = DateFormat('EEE MMM dd HH:mm:ss yyyy');
