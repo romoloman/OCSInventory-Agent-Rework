@@ -110,11 +110,11 @@ Future<void> main(List<String> args) async {
 
   late final String configDirectory;
   if (Platform.isLinux) {
-    configDirectory = "/etc/Ocsinventory-agent";
+    configDirectory = "/etc/ocsinventory-agent";
   } else if (Platform.isMacOS) {
-    configDirectory = "/Library/Preferences/Ocsinventory-agent";
+    configDirectory = "/etc/ocsinventory-agent";
   } else if (Platform.isWindows) {
-    configDirectory = "C:\\ProgramData\\Ocsinventory-agent";
+    configDirectory = "C:\ProgramData\Agent-OCS";
   } else {
     stdout.writeln("Unsupported platform");
     exit(1);
@@ -216,7 +216,7 @@ Future<void> main(List<String> args) async {
       await inventory.checkInventoryExist(body);
       await inventory.checkAndApplyConfig();
 
-      if (inventory.getMode() == 2) {
+      if (inventory.getMode() == 2 || inventory.getMode() == 1) {
         await inventory.sendRemoteBaseInventory(body);
         if (inventory.getMode() == 1) {
           await inventory.sendRemoteTemplateInventory(body);
@@ -235,13 +235,13 @@ Future<void> main(List<String> args) async {
       }
     }
   } else if (inventory.getMode() == 3 || inventory.getMode() == 4) {
-    inventory.sendLocalBaseInventory(body);
+    await inventory.sendLocalBaseInventory(body);
     if (inventory.getMode() == 3) {
       await inventory.sendLocalTemplateInventory();
     }
   }
   try {
-    if (config.getCoreConfig("agent", "frequency") > 0) {
+    if (config.getCoreConfig("agent", "frequency") != null) {
       stdout.writeln(
           config.getCoreConfig("agent", "frequency").toString().trim());
     }
