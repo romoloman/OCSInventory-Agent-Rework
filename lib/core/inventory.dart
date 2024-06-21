@@ -873,13 +873,13 @@ class Inventory {
   }
 
   /// Create a local inventory in the JSON format.
-  void sendLocalBaseInventory(Map<String, dynamic> body) {
+  Future<void> sendLocalBaseInventory(Map<String, dynamic> body) async {
     logger.info(this.runtimeType.toString(), "Creating base inventory file...");
     logger.info(
         this.runtimeType.toString(), "Writing base inventory locally...");
     // Create a file to save the new inventory
-    inventoryFile.create(recursive: true);
-    var encoder = JsonEncoder.withIndent("\t");
+    await inventoryFile.create(recursive: true);
+    var encoder = await JsonEncoder.withIndent("\t");
     // Write the new inventory inside
     filesUtils.writeFile(inventoryFile, encoder.convert(body));
     logger.info(this.runtimeType.toString(),
