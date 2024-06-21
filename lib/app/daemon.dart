@@ -41,7 +41,7 @@ void main(List<String> args) async {
       await runMainScript(await allArgs.option("current_directory").toString());
   int frequency = parseInterval(initialResult.stdout) ?? 24;
   // Schedule the task to run at the specified interval
-  Timer.periodic(Duration(minutes: frequency), (Timer initialTimer) async {
+  Timer.periodic(Duration(hours: frequency), (Timer initialTimer) async {
     var result = await runMainScript(
         await allArgs.option("current_directory").toString());
 
@@ -51,7 +51,7 @@ void main(List<String> args) async {
       initialTimer.cancel(); // Cancel the current timer
       frequency = newFrequency;
       // Schedule a new timer with the updated interval
-      Timer.periodic(Duration(minutes: frequency), (Timer t) async {
+      Timer.periodic(Duration(hours: frequency), (Timer t) async {
         await runMainScript(
             await allArgs.option("current_directory").toString());
       });
@@ -63,11 +63,11 @@ Future<ProcessResult> runMainScript(String CurrentDirectory) async {
   try {
     String agentName = "";
     if (Platform.isLinux) {
-      agentName = "/agent_unix_ocs";
+      agentName = "/AGENT-LINUX";
     } else if (Platform.isMacOS) {
-      agentName = "/agent_mac_ocs";
+      agentName = "/AGENT-MACOS";
     } else if (Platform.isWindows) {
-      agentName = "/agent_win_ocs.exe";
+      agentName = "/AGENT-WINDOWS";
     } else {
       print('Unsupported platform');
       return ProcessResult(0, 1, '', 'Unsupported platform');
@@ -90,7 +90,7 @@ Future<ProcessResult> runMainScript(String CurrentDirectory) async {
 
     return result;
   } catch (e) {
-    print('An error occurred while executing agent_unix_ocs: $e');
+    print('An error occurred while executing the Agent: $e');
     return ProcessResult(0, 1, '', e.toString());
   }
 }
