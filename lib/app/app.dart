@@ -86,6 +86,11 @@ Future<void> main(List<String> args) async {
       help: "Path to the log file",
       valueHelp: "/path_to_store_log_file/file-name.log",
       defaultsTo: "ocs-agent.log");
+  parser.addOption("log_level",
+      abbr: "v",
+      help: "Log level",
+      valueHelp: "Display verbose logs",
+      defaultsTo: "0");
   parser.addFlag("help", abbr: "h", help: "Show this help", negatable: false);
 
   try {
@@ -121,19 +126,23 @@ Future<void> main(List<String> args) async {
   }
 
   Map<String, dynamic> invenroryConfigurations = {};
-  invenroryConfigurations['log_file'] = allArgs.option("log_file").toString();
-  invenroryConfigurations['mode'] = allArgs.option("mode").toString();
-  invenroryConfigurations['password'] = allArgs.option("password").toString();
+  invenroryConfigurations['log_file'] =
+      await allArgs.option("log_file").toString();
+  invenroryConfigurations['mode'] = await allArgs.option("mode").toString();
+  invenroryConfigurations['password'] =
+      await allArgs.option("password").toString();
   invenroryConfigurations['token'] = "";
-  invenroryConfigurations['username'] = allArgs.option("username").toString();
-  invenroryConfigurations['url'] = allArgs.option("url").toString();
+  invenroryConfigurations['username'] =
+      await allArgs.option("username").toString();
+  invenroryConfigurations['url'] = await allArgs.option("url").toString();
   invenroryConfigurations['data_directory'] =
-      allArgs.option("data_directory").toString();
+      await allArgs.option("data_directory").toString();
   invenroryConfigurations['log_file_path'] =
-      allArgs.option("log_file_path").toString();
+      await allArgs.option("log_file_path").toString();
+  invenroryConfigurations['log_level'] = "0";
 
-  config =
-      Config(configDirectory, jsonEncode(invenroryConfigurations).toString());
+  config = await Config(
+      configDirectory, jsonEncode(invenroryConfigurations).toString());
 
   // Iterate allArgs and update inventory config with the provided values
   if (allArgs.options.isNotEmpty) {

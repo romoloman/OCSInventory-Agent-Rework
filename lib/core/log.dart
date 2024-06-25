@@ -31,8 +31,8 @@ class Logger {
   late Config config;
 
   late bool _isFile;
-  late bool _debug;
   late String _url;
+  late String _logLevel;
 
   late File file;
 
@@ -42,9 +42,9 @@ class Logger {
   Logger(Config config) {
     this.config = config;
 
-    _debug = config.getCoreConfig("agent", "debug");
     _isFile = (config.getInventoryConfig("log_file").toLowerCase() == 'true');
     _url = config.getInventoryConfig("url");
+    _logLevel = config.getInventoryConfig("log_level");
 
     if (_isFile) {
       file = File(config.getInventoryConfig("log_file_path"));
@@ -97,7 +97,7 @@ class Logger {
     var now = DateTime.now();
     String date = dateFormat.format(now);
     String txt = "[$date] [VERBOSE] [$className] $verbose\n";
-    if (_debug) {
+    if (_logLevel == "1") {
       if (_isFile) {
         file.writeAsStringSync(txt, mode: FileMode.append);
       } else {
