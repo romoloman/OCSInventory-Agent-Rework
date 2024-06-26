@@ -15,6 +15,26 @@
 }
 
 - (void)didEnterPane:(InstallerSectionDirection)dir {
+    NSAlert *cfgFileExistsWrn;
+    filemgr = [ NSFileManager defaultManager];
+    
+    if ([filemgr fileExistsAtPath:@"/etc/ocsinventory-agent/inventory.json"]) {
+        //We display a warning dialog
+        cfgFileExistsWrn = [[NSAlert alloc] init];
+        
+        [cfgFileExistsWrn setMessageText:NSLocalizedStringFromTableInBundle(@"Already_conf_warn",nil,[NSBundle bundleForClass:[self class]], @"Warning about already existing cofiguration file")];
+        [cfgFileExistsWrn setInformativeText:NSLocalizedStringFromTableInBundle(@"Already_conf_warn_comment",nil,[NSBundle bundleForClass:[self class]], @"Warning about already existing configuration file comment")];
+        [cfgFileExistsWrn addButtonWithTitle:NSLocalizedStringFromTableInBundle(@"Yes",nil,[NSBundle bundleForClass:[self class]], @"Yes button")];
+        [cfgFileExistsWrn addButtonWithTitle:NSLocalizedStringFromTableInBundle(@"No",nil,[NSBundle bundleForClass:[self class]], @"No button")];
+        [cfgFileExistsWrn setAlertStyle:NSAlertStyleInformational];
+        
+        
+        if ([cfgFileExistsWrn runModal] != NSAlertFirstButtonReturn) {
+            // No button was clicked, we don't display config pane
+            [self gotoNextPane];
+        }
+    }
+    
     // Optional: Pre-fill fields or perform setup logic when the pane is shown
     self->server.stringValue = @"http://example.com";
     self->username.stringValue = @"";

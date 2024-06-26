@@ -8,7 +8,14 @@ TMP_CONFIG_FILE="/tmp/installer_config.txt"
 LOG_PATH="/var/log/ocsinventory-agent/ocsinventory-agent.log"
 STORE_DATA_PATH="/var/lib/ocsinventory-data"
 SERVICE_NAME="org.ocsinventory.agent"
+CONFIG_PATH="/etc/ocsinventory-agent/inventory.json"
 
+# Check if the config agent is ready exist in the system then run the agent without parameters
+if [[ -f "$CONFIG_PATH" ]]; then
+    echo "Configuration file found. Running the agent with existing configuration..."
+    sudo "$APP_PATH$EXEC_AGENT"
+    exit 0
+fi
 
 # Function to read configuration values of each 
 read_config() {
@@ -33,8 +40,13 @@ cp "$DAEMON_SOURCE_PATH" "$DAEMON_DEST_PATH"
 chmod +x "$DAEMON_DEST_PATH"
 
 read_config "$TMP_CONFIG_FILE"
+
+
 # Run the agent with provided arguments
 sudo "$APP_PATH$EXEC_AGENT" -f true -m 0 -p "$PASSWORD" -u "$USERNAME" -s "$URL" -l "$LOG_PATH" -d "$STORE_DATA_PATH"
+
+
+
 
 
 # Function to register service if SERVICE_MODE is yes or Yes

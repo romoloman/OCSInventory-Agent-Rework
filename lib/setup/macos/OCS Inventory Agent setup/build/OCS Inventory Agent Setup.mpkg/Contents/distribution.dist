@@ -19,7 +19,7 @@
     <!--+==========================+
         |    Package References    |
         +==========================+-->
-    <pkg-ref id="com.ffx.pkg.OCSInventoryAgent" version="1.0" auth="Root" installKBytes="10601">file:./Contents/Packages/OCS%20Inventory%20Agent.pkg</pkg-ref>
+    <pkg-ref id="com.ffx.pkg.OCSInventoryAgent" version="1.0" auth="Root" installKBytes="10593">file:./Contents/Packages/OCS%20Inventory%20Agent.pkg</pkg-ref>
     <!--+==========================+
         |    JavaScript Scripts    |
         +==========================+-->

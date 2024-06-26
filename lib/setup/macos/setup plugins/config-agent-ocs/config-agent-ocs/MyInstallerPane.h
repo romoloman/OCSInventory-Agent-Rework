@@ -12,6 +12,8 @@
     IBOutlet NSTextField *username;
     IBOutlet NSTextField *password;
     IBOutlet NSButton *serviceMode;
+    
+    NSFileManager *filemgr;
 }
     
 @end
