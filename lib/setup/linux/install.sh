@@ -2,7 +2,7 @@
 
 # Constants
 WORKING_DIRECTORY=$(dirname "$(realpath "$0")")
-WORKING_DIRECTORY_EXEC_PATH="/lib/app/linux"
+WORKING_DIRECTORY_EXEC_PATH="/lib/setup/linux"
 EXEC_AGENT="/AGENT-LINUX"
 CONFIG_PATH="/etc/ocsinventory-agent"
 LOG_PATH="/var/log/ocsinventory-agent/ocsinventory-agent.log"
@@ -104,12 +104,8 @@ run_executable() {
     local username="$2"
     local password="$3"
 
-    # Change to working directory when running the executable
-    cd ../../../
-    CUR_WORKING_DIRECTORY=$(dirname "$(realpath "$0")")
-
     # Construct command for running executable
-    command="$CUR_WORKING_DIRECTORY$WORKING_DIRECTORY_EXEC_PATH$EXEC_AGENT -f true -m 0 -p $password -u $username -s $url -l $LOG_PATH -d $STRORE_DATA_PATH"
+    command="$WORKING_DIRECTORY$EXEC_AGENT -f true -m 0 -p $password -u $username -s $url -l $LOG_PATH -d $STRORE_DATA_PATH"
 
     # echo "Executing command: $command"
    
@@ -232,6 +228,5 @@ if [ -f "/etc/systemd/system/${SERVICE_NAME}.service" ] && [ -d "$CONFIG_PATH" ]
 else
     echo "The agent installation failed"
 fi
-
 
 exit 0
