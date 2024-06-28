@@ -78,9 +78,9 @@ Future<ProcessResult> runMainScript(String CurrentDirectory) async {
     // Execute the compiled binary with arguments
     var result = await Process.run(executable, []);
 
-    // Check if the process succeeded
+    // Check if the process succeededAgent MAcOS
     if (result.exitCode == 0) {
-      print('OCS Inventory Agent executed successfully');
+      print('OCS Inventory Agent executed successfully as a service');
       print(
           'The agent will run again in ${result.stdout.toString().trim()} hours');
     } else {

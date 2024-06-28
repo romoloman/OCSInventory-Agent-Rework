@@ -12,6 +12,7 @@
     IBOutlet NSTextField *username;
     IBOutlet NSTextField *password;
     IBOutlet NSButton *serviceMode;
+    IBOutlet NSButton *runNow;
     IBOutlet NSPopUpButton *logLevelList;
 
     

@@ -44,6 +44,7 @@
     self->username.stringValue = @"";
     self->password.stringValue = @"";
     self->serviceMode.state = NSControlStateValueOff;
+    self->runNow.state = NSControlStateValueOff;
     
     //Defaults for loglevel droping list
     [logLevelList removeAllItems];
@@ -79,13 +80,14 @@
         NSString *username = self->username.stringValue;
         NSString *password = self->password.stringValue;
         BOOL serviceModeEnabled = (self->serviceMode.state == NSControlStateValueOn);
+        BOOL runNowEnabled = (self->runNow.state == NSControlStateValueOn);
         NSString *logLevel = [logLevelList titleOfSelectedItem];
         
         // Example: Save to a temporary file or perform further processing
-        NSLog(@"Server: %@, Username: %@, Password: %@, LogLevel: %@, Service Mode: %@", server, username, password, logLevel, serviceModeEnabled ? @"Yes" : @"No");
+        NSLog(@"Server: %@, Username: %@, Password: %@, LogLevel: %@, Service Mode: %@, Run now: %@", server, username, password, logLevel, serviceModeEnabled ? @"Yes" : @"No", runNowEnabled ? @"Yes" : @"No");
         
         // Example: Save to a temporary file or perform further processing
-        NSString *configContent = [NSString stringWithFormat:@"server=%@\nusername=%@\npassword=%@\nlogLevel=%@\nserviceMode=%@\n", server, username, password, logLevel, serviceModeEnabled ? @"yes" : @"no"];
+        NSString *configContent = [NSString stringWithFormat:@"server=%@\nusername=%@\npassword=%@\nlogLevel=%@\nserviceMode=%@\nrunNow=%@\n", server, username, password, logLevel, serviceModeEnabled ? @"yes" : @"no", runNowEnabled ? @"yes" : @"no"];
         NSString *tmpConfigFilePath = @"/tmp/installer_config.txt";
         [configContent writeToFile:tmpConfigFilePath atomically:YES encoding:NSUTF8StringEncoding error:nil];
             

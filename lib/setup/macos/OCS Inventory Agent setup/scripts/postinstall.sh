@@ -28,6 +28,7 @@ read_config() {
                 'password') PASSWORD="$value" ;;
                 'serviceMode') SERVICE_MODE="$value" ;;
                 'logLevel') LOG_LEVEL="$value" ;;
+                'runNow') RUN_NOW="$value" ;;
             esac
         done < "$TMP_CONFIG_FILE"
     else
@@ -54,7 +55,10 @@ esac
 # Run the agent with provided arguments
 sudo "$APP_PATH$EXEC_AGENT" -f true -m 0 -p "$PASSWORD" -u "$USERNAME" -s "$URL" -l "$LOG_PATH" -d "$STORE_DATA_PATH" -v "$LOG_LEVEL_VALUES"
 
-
+if [[ "$RUN_NOW" == "yes" || "$RUN_NOW" == "Yes" ]]; then
+    echo "Running the agent now..."
+    sudo "$APP_PATH$EXEC_AGENT" -f true -m 2 -p "$PASSWORD" -u "$USERNAME" -s "$URL" -l "$LOG_PATH" -d "$STORE_DATA_PATH" -v "$LOG_LEVEL_VALUES"
+fi
 
 
 
@@ -100,6 +104,6 @@ EOF
 register_service
 
 # Remove temporary configuration file
-# rm -f "$TMP_CONFIG_FILE"
+rm -f "$TMP_CONFIG_FILE"
 
 exit 0
