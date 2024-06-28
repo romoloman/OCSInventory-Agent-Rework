@@ -15,10 +15,11 @@ SYMBOLIC_LINK="/usr/bin/ocsinventory-agent-ng"
 
 # Function to display usage information
 usage() {
-    echo "Usage: $0 [-h URL] [-u USERNAME] [-p PASSWORD] [-l] [-s] [-h]"
-    echo "  -h HOST URL   Server URL"
+    echo "Usage: $0 [-h URL] [-u USERNAME] [-p PASSWORD] [-v LOG_LEVEL ] [-l] [-s] [-h]"
+    echo "  -h HOST       host URL of the OCS Inventory NG server"
     echo "  -u USERNAME   Username"
     echo "  -p PASSWORD   Password"
+    echo "  -v LOG_LEVEL  Log level"
     echo "  -l            Local mode (do not register service)"
     echo "  -s            Service mode (register service)"
     exit 1
@@ -30,11 +31,12 @@ LOCAL=false
 SERVICE=false
 
 # Parse command-line arguments
-while getopts "h:u:p:lsih" opt; do
+while getopts "h:u:p:v:lsih" opt; do
     case ${opt} in
         h ) URL=$OPTARG ;;
         u ) USERNAME=$OPTARG ;;
         p ) PASSWORD=$OPTARG ;;
+        v ) LOG_LEVEL=$OPTARG ;;
         l ) LOCAL=true ;;
         s ) SERVICE=true ;;
         * ) usage ;;
@@ -103,9 +105,10 @@ run_executable() {
     local url="$1"
     local username="$2"
     local password="$3"
+    local log_level="$4"
 
     # Construct command for running executable
-    command="$WORKING_DIRECTORY$EXEC_AGENT -f true -m 0 -p $password -u $username -s $url -l $LOG_PATH -d $STRORE_DATA_PATH"
+    command="$WORKING_DIRECTORY$EXEC_AGENT -f true -m 0 -p $password -u $username -s $url -l $LOG_PATH -d $STRORE_DATA_PATH -v $log_level"
 
     # echo "Executing command: $command"
    
@@ -157,9 +160,9 @@ run_silent() {
     echo "+----------------------------------------------------------+"
     echo
 
-    check_parameters "$URL" "$USERNAME" "$PASSWORD"
+    check_parameters "$URL" "$USERNAME" "$PASSWORD" 
     copy_agent_contents
-    run_executable "$URL" "$USERNAME" "$PASSWORD"
+    run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL"
     if [ "$SERVICE" = "true" ]; then
         register_service
     fi
@@ -180,6 +183,8 @@ run_interactive() {
     read USERNAME
     echo -n "Enter password: "
     read PASSWORD
+    echo -n "Enter the log level (default is 2 = Info): "
+    read LOG_LEVEL
     echo -n "Do you register the service - agent must be launched automatically (y/n)? "
     read service_choice
     if [ "$service_choice" = "y" ] || [ "$service_choice" = "Y" ]; then
@@ -188,9 +193,9 @@ run_interactive() {
         LOCAL=true
     fi
 
-    check_parameters "$URL" "$USERNAME" "$PASSWORD"
+    check_parameters "$URL" "$USERNAME" "$PASSWORD" 
     copy_agent_contents
-    run_executable "$URL" "$USERNAME" "$PASSWORD"
+    run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL"
     if [ "$SERVICE" = "true" ]; then
         register_service
     fi

@@ -89,8 +89,8 @@ Future<void> main(List<String> args) async {
   parser.addOption("log_level",
       abbr: "v",
       help: "Log level",
-      valueHelp: "Display verbose logs",
-      defaultsTo: "0");
+      valueHelp: "0: Error 1: Warning 2: Info 3: Verbose",
+      defaultsTo: "2");
   parser.addFlag("help", abbr: "h", help: "Show this help", negatable: false);
 
   try {
@@ -139,7 +139,7 @@ Future<void> main(List<String> args) async {
       await allArgs.option("data_directory").toString();
   invenroryConfigurations['log_file_path'] =
       await allArgs.option("log_file_path").toString();
-  invenroryConfigurations['log_level'] = "0";
+  invenroryConfigurations['log_level'] = await allArgs.option("log_level").toString();
 
   config = await Config(
       configDirectory, jsonEncode(invenroryConfigurations).toString());
