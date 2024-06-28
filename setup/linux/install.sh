@@ -2,7 +2,7 @@
 
 # Constants
 WORKING_DIRECTORY=$(dirname "$(realpath "$0")")
-WORKING_DIRECTORY_EXEC_PATH="/lib/setup/linux"
+WORKING_DIRECTORY_EXEC_PATH="/setup/linux"
 EXEC_AGENT="/AGENT-LINUX"
 CONFIG_PATH="/etc/ocsinventory-agent"
 LOG_PATH="/var/log/ocsinventory-agent/ocsinventory-agent.log"

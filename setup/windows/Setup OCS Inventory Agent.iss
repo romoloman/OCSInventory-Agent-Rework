@@ -44,7 +44,7 @@ Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "C:\Users\Djily\Documents\OCSInventory-Agent-Rework\OCSInventory-Agent-Rework\lib\setup\windows\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\Djily\Documents\OCSInventory-Agent-Rework\OCSInventory-Agent-Rework\setup\windows\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\Djily\Documents\OCSInventory-Agent-Rework\OCSInventory-Agent-Rework\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
@@ -61,8 +61,8 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 
 
 [UninstallRun]
-Filename: "{app}\lib\setup\windows\nssm.exe"; Parameters: "stop OCSInventory-Agent"; Flags: runhidden
-Filename: "{app}\lib\setup\windows\nssm.exe"; Parameters: "remove OCSInventory-Agent confirm"; Flags: runhidden
+Filename: "{app}\setup\windows\nssm.exe"; Parameters: "stop OCSInventory-Agent"; Flags: runhidden
+Filename: "{app}\setup\windows\nssm.exe"; Parameters: "remove OCSInventory-Agent confirm"; Flags: runhidden
 
 [UninstallDelete]
 Type: filesandordirs; Name: "C:\ProgramData\Agent-OCS"
@@ -226,8 +226,8 @@ var
   Command: String;
   NSSMPath: String;
 begin
-  Command := 'install OCSInventory-Agent "C:\Program Files\OCS Inventory Agent\lib\setup\windows\daemon-windows.exe"';
-  NSSMPath := 'C:\Program Files\OCS Inventory Agent\lib\setup\windows\nssm.exe';
+  Command := 'install OCSInventory-Agent "C:\Program Files\OCS Inventory Agent\setup\windows\daemon-windows.exe"';
+  NSSMPath := 'C:\Program Files\OCS Inventory Agent\setup\windows\nssm.exe';
   Log('Installing service with NSSM: ' + NSSMPath + ' ' + Command);
   Result := Exec(NSSMPath, Command, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
   if not Result then

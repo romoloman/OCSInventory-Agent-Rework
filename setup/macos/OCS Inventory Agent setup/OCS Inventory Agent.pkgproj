@@ -38,9 +38,9 @@
 									<key>GID</key>
 									<integer>80</integer>
 									<key>PATH</key>
-									<string>../ocsng_app-xcode/build/Debug/OCS-NG.app</string>
+									<string>/Users/factorfx/Documents/OCSInventory-Agent-Rework/setup/macos/ocsng_app-xcode/build/Debug/OCS-NG.app</string>
 									<key>PATH_TYPE</key>
-									<integer>1</integer>
+									<integer>0</integer>
 									<key>PERMISSIONS</key>
 									<integer>493</integer>
 									<key>TYPE</key>
@@ -480,7 +480,7 @@
 				<key>POSTINSTALL_PATH</key>
 				<dict>
 					<key>PATH</key>
-					<string>/Users/factorfx/Documents/OCSInventory-Agent-Rework/lib/setup/macos/OCS Inventory Agent setup/scripts/postinstall.sh</string>
+					<string>/Users/factorfx/Documents/OCSInventory-Agent-Rework/setup/macos/OCS Inventory Agent setup/scripts/postinstall.sh</string>
 					<key>PATH_TYPE</key>
 					<integer>0</integer>
 				</dict>
@@ -616,7 +616,7 @@
 					<key>ICPRESENTATION_CHAPTER_VIEW_CONTROLLER_INSTALLERPLUGIN_PATH</key>
 					<dict>
 						<key>PATH</key>
-						<string>/Users/factorfx/Documents/OCSInventory-Agent-Rework/lib/setup/macos/OCS Inventory Agent setup/config-agent-ocs.bundle</string>
+						<string>/Users/factorfx/Documents/OCSInventory-Agent-Rework/setup/macos/OCS Inventory Agent setup/config-agent-ocs.bundle</string>
 						<key>PATH_TYPE</key>
 						<integer>0</integer>
 					</dict>
@@ -669,7 +669,7 @@
 						<key>VALUE</key>
 						<dict>
 							<key>PATH</key>
-							<string>/Users/factorfx/Documents/OCSInventory-Agent-Rework/lib/setup/macos/LICENCE.txt</string>
+							<string>/Users/factorfx/Documents/OCSInventory-Agent-Rework/setup/macos/LICENCE.txt</string>
 							<key>PATH_TYPE</key>
 							<integer>0</integer>
 						</dict>
