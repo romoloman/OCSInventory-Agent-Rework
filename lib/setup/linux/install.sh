@@ -29,9 +29,10 @@ usage() {
 SILENT=false
 LOCAL=false
 SERVICE=false
+NOW=false  # if true, we run the agent now with mode 2
 
 # Parse command-line arguments
-while getopts "h:u:p:v:lsih" opt; do
+while getopts "h:u:p:v:lsnih" opt; do
     case ${opt} in
         h ) URL=$OPTARG ;;
         u ) USERNAME=$OPTARG ;;
@@ -39,6 +40,7 @@ while getopts "h:u:p:v:lsih" opt; do
         v ) LOG_LEVEL=$OPTARG ;;
         l ) LOCAL=true ;;
         s ) SERVICE=true ;;
+        n ) NOW=true ;;
         * ) usage ;;
     esac
 done
@@ -106,13 +108,18 @@ run_executable() {
     local username="$2"
     local password="$3"
     local log_level="$4"
+    local run_now="$5"
 
     # Construct command for running executable
-    command="$WORKING_DIRECTORY$EXEC_AGENT -f true -m 0 -p $password -u $username -s $url -l $LOG_PATH -d $STRORE_DATA_PATH -v $log_level"
-
+    command_install="$WORKING_DIRECTORY$EXEC_AGENT -f true -m 0 -p $password -u $username -s $url -l $LOG_PATH -d $STRORE_DATA_PATH -v $log_level"
     # echo "Executing command: $command"
-   
-    $command
+    $command_install
+
+    if [ "$run_now" = "true" ]; then
+        echo "Running the agent now..."
+        command_run="$WORKING_DIRECTORY$EXEC_AGENT -f true -m 2 -p $password -u $username -s $url -l $LOG_PATH -d $STRORE_DATA_PATH -v $log_level"
+        $command_run
+    fi
 }
 
 
@@ -162,7 +169,7 @@ run_silent() {
 
     check_parameters "$URL" "$USERNAME" "$PASSWORD" 
     copy_agent_contents
-    run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL"
+    run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW"
     if [ "$SERVICE" = "true" ]; then
         register_service
     fi
@@ -192,10 +199,15 @@ run_interactive() {
     else
         LOCAL=true
     fi
+    echo -n "Do you want to run the agent now (y/n)? "
+    read now_choice
+    if [ "$now_choice" = "y" ] || [ "$now_choice" = "Y" ]; then
+        NOW=true
+    fi
 
     check_parameters "$URL" "$USERNAME" "$PASSWORD" 
     copy_agent_contents
-    run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL"
+    run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW"
     if [ "$SERVICE" = "true" ]; then
         register_service
     fi
