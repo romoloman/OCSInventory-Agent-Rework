@@ -39,7 +39,7 @@ void main(List<String> args) async {
   // Run the main script initially to get the interval
   var initialResult =
       await runMainScript(await allArgs.option("current_directory").toString());
-  int frequency = parseInterval(initialResult.stdout) ?? 24;
+  int frequency = parseInterval(initialResult.stdout) ?? 4;
   // Schedule the task to run at the specified interval
   Timer.periodic(Duration(hours: frequency), (Timer initialTimer) async {
     var result = await runMainScript(

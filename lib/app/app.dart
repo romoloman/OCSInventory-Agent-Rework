@@ -119,7 +119,7 @@ Future<void> main(List<String> args) async {
   } else if (Platform.isMacOS) {
     configDirectory = "/etc/ocsinventory-agent";
   } else if (Platform.isWindows) {
-    configDirectory = "C:\ProgramData\Agent-OCS";
+    configDirectory = "C:\\ProgramData\\Agent-OCS\\config";
   } else {
     stdout.writeln("Unsupported platform");
     exit(1);
@@ -255,7 +255,7 @@ Future<void> main(List<String> args) async {
           config.getCoreConfig("agent", "frequency").toString().trim());
     }
   } catch (e) {
-    stdout.writeln("24");
+    stdout.writeln("4");
   }
 
   logger.info("APP", "Agent's process has ended!\n");
