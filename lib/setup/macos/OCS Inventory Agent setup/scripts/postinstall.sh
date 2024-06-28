@@ -27,6 +27,7 @@ read_config() {
                 'username') USERNAME="$value" ;;
                 'password') PASSWORD="$value" ;;
                 'serviceMode') SERVICE_MODE="$value" ;;
+                'logLevel') LOG_LEVEL="$value" ;;
             esac
         done < "$TMP_CONFIG_FILE"
     else
@@ -41,9 +42,17 @@ chmod +x "$DAEMON_DEST_PATH"
 
 read_config "$TMP_CONFIG_FILE"
 
+# Retrieve log level values (0: Error 1: Warning 2: Info 3: Verbose)
+$LOG_LEVEL_VALUES = 2
+case "$LOG_LEVEL" in
+    'Error') LOG_LEVEL_VALUES=0 ;;
+    'Warning') LOG_LEVEL_VALUES=1 ;;
+    'Info') LOG_LEVEL_VALUES=2 ;;
+    'Verbose') LOG_LEVEL_VALUES=3 ;;
+esac
 
 # Run the agent with provided arguments
-sudo "$APP_PATH$EXEC_AGENT" -f true -m 0 -p "$PASSWORD" -u "$USERNAME" -s "$URL" -l "$LOG_PATH" -d "$STORE_DATA_PATH"
+sudo "$APP_PATH$EXEC_AGENT" -f true -m 0 -p "$PASSWORD" -u "$USERNAME" -s "$URL" -l "$LOG_PATH" -d "$STORE_DATA_PATH" -v "$LOG_LEVEL_VALUES"
 
 
 
@@ -91,6 +100,6 @@ EOF
 register_service
 
 # Remove temporary configuration file
-rm -f "$TMP_CONFIG_FILE"
+# rm -f "$TMP_CONFIG_FILE"
 
 exit 0

@@ -14,6 +14,10 @@
     return [[NSBundle bundleForClass:[self class]] localizedStringForKey:@"PaneTitle" value:nil table:nil];
 }
 
+- (NSArray *) logLevels {
+    return [NSArray arrayWithObjects:@"Error", @"Warning", @"Info", @"Verbose", nil];
+}
+
 - (void)didEnterPane:(InstallerSectionDirection)dir {
     NSAlert *cfgFileExistsWrn;
     filemgr = [ NSFileManager defaultManager];
@@ -40,6 +44,21 @@
     self->username.stringValue = @"";
     self->password.stringValue = @"";
     self->serviceMode.state = NSControlStateValueOff;
+    
+    //Defaults for loglevel droping list
+    [logLevelList removeAllItems];
+    [logLevelList addItemWithTitle: @"Error"];
+    [logLevelList addItemWithTitle: @"Warning"];
+    [logLevelList addItemWithTitle: @"Info"];
+    [logLevelList addItemWithTitle: @"Verbose"];
+    [logLevelList selectItemWithTitle: @"Info"];
+}
+
+- (IBAction) chooseLogLevel:(id)sender {
+    NSString *logLevel = [logLevelList titleOfSelectedItem];
+    
+    //We show the selected log level
+    [logLevelList setTitle:logLevel];
 }
 
 - (BOOL)shouldExitPane:(InstallerSectionDirection)direction {
@@ -60,12 +79,13 @@
         NSString *username = self->username.stringValue;
         NSString *password = self->password.stringValue;
         BOOL serviceModeEnabled = (self->serviceMode.state == NSControlStateValueOn);
+        NSString *logLevel = [logLevelList titleOfSelectedItem];
         
         // Example: Save to a temporary file or perform further processing
-        NSLog(@"Server: %@, Username: %@, Password: %@, Service Mode: %@", server, username, password, serviceModeEnabled ? @"Yes" : @"No");
+        NSLog(@"Server: %@, Username: %@, Password: %@, LogLevel: %@, Service Mode: %@", server, username, password, logLevel, serviceModeEnabled ? @"Yes" : @"No");
         
         // Example: Save to a temporary file or perform further processing
-        NSString *configContent = [NSString stringWithFormat:@"server=%@\nusername=%@\npassword=%@\nserviceMode=%@\n", server, username, password, serviceModeEnabled ? @"yes" : @"no"];
+        NSString *configContent = [NSString stringWithFormat:@"server=%@\nusername=%@\npassword=%@\nlogLevel=%@\nserviceMode=%@\n", server, username, password, logLevel, serviceModeEnabled ? @"yes" : @"no"];
         NSString *tmpConfigFilePath = @"/tmp/installer_config.txt";
         [configContent writeToFile:tmpConfigFilePath atomically:YES encoding:NSUTF8StringEncoding error:nil];
             
