@@ -44,7 +44,7 @@ chmod +x "$DAEMON_DEST_PATH"
 read_config "$TMP_CONFIG_FILE"
 
 # Retrieve log level values (0: Error 1: Warning 2: Info 3: Verbose)
-$LOG_LEVEL_VALUES=2
+LOG_LEVEL_VALUES=2
 case "$LOG_LEVEL" in
     'Error') LOG_LEVEL_VALUES=0 ;;
     'Warning') LOG_LEVEL_VALUES=1 ;;
