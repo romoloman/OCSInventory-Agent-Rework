@@ -169,7 +169,7 @@ run_silent() {
     check_parameters "$URL" "$USERNAME" "$PASSWORD" 
     copy_agent_contents
     run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW"
-    if [ "$SERVICE" = "true" && "$LOCAL" = "false" ]; then
+    if [ "$SERVICE" = "true" ] && [ "$LOCAL" = "false" ]; then
         register_service
     fi
 }
