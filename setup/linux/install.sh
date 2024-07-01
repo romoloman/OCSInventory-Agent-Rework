@@ -127,7 +127,7 @@ run_executable() {
 # Function to register service
 register_service() {
     # create service file
-    echo "Creating "$SERVICE_NAME" service file..."
+    echo "Creating ${SERVICE_NAME} service file..."
     sudo tee "/etc/systemd/system/${SERVICE_NAME}.service" > /dev/null << EOF
 [Unit]
 Description="$SERVICE_DESCRIPTION"
@@ -154,8 +154,6 @@ EOF
     echo "Reloading daemon and enabling service"
     sudo systemctl daemon-reload 
     sudo systemctl enable ${SERVICE_NAME}.service
-    sudo systemctl start ${SERVICE_NAME}.service
-    echo "Service Started"
 }
 
 # Function to run in silent mode
@@ -171,7 +169,7 @@ run_silent() {
     check_parameters "$URL" "$USERNAME" "$PASSWORD" 
     copy_agent_contents
     run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW"
-    if [ "$SERVICE" = "true" ]; then
+    if [ "$SERVICE" = "true" && "$LOCAL" = "false" ]; then
         register_service
     fi
 }
