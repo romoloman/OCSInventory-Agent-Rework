@@ -15,13 +15,14 @@ SYMBOLIC_LINK="/usr/bin/ocsinventory-agent-ng"
 
 # Function to display usage information
 usage() {
-    echo "Usage: $0 [-h URL] [-u USERNAME] [-p PASSWORD] [-v LOG_LEVEL ] [-l] [-s] [-h]"
+    echo "Usage: $0 [-h URL] [-u USERNAME] [-p PASSWORD] [-v LOG_LEVEL ] [-l] [-s] [-n] [-h]"
     echo "  -h HOST       host URL of the OCS Inventory NG server"
     echo "  -u USERNAME   Username"
     echo "  -p PASSWORD   Password"
     echo "  -v LOG_LEVEL  Log level"
     echo "  -l            Local mode (do not register service)"
     echo "  -s            Service mode (register service)"
+    echo "  -n            Run the agent now"
     exit 1
 }
 
@@ -83,7 +84,7 @@ check_installed_agent
 copy_agent_contents() {
 
     # Define the source directory by navigating three levels up from the script directory
-    SOURCE_DIR="$WORKING_DIRECTORY/../../../"
+    SOURCE_DIR="$WORKING_DIRECTORY/../../"
 
     # Create the target directory if it does not exist
     mkdir -p "$AGENT_INSTALLATION_DIR"

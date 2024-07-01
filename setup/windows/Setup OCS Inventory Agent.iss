@@ -70,12 +70,13 @@ Type: filesandordirs; Name: "C:\ProgramData\Agent-OCS"
 [Code]
 var
   Silent: Boolean;
-  URL, Username, Password: String;
-  LocalMode, ServiceMode: Boolean;
+  URL, Username, Password, LogLevel: String;
+  LocalMode, ServiceMode, RunNow: Boolean;
   InputPage: TWizardPage;
-  URLLabel, UsernameLabel, PasswordLabel: TLabel;
+  URLLabel, UsernameLabel, PasswordLabel, LogLevelLabel: TLabel;
   URLInput, UsernameInput, PasswordInput: TEdit;
-  LocalCheckBox, ServiceCheckBox: TNewCheckBox;
+  LocalCheckBox, ServiceCheckBox, RunNowCheckBox: TNewCheckBox;
+  LogLevelComboBox: TComboBox;
 
 procedure InitializeWizard;
 begin
@@ -89,6 +90,8 @@ begin
     Password := ExpandConstant('{param:PASSWORD}');
     LocalMode := (ExpandConstant('{param:LOCAL}') = 'True');
     ServiceMode := (ExpandConstant('{param:SERVICE}') = 'True');
+    RunNow := (ExpandConstant('{param:NOW}') = 'True');
+    LogLevel := ExpandConstant('{param:LOGLEVEL}');
   end
   else
   begin
@@ -132,9 +135,25 @@ begin
     PasswordInput.PasswordChar := '*';
     PasswordInput.Text := Password;
 
+    LogLevelLabel := TLabel.Create(InputPage);
+    LogLevelLabel.Parent := InputPage.Surface;
+    LogLevelLabel.Top := PasswordInput.Top + PasswordInput.Height + 15; // Position below PasswordInput
+    LogLevelLabel.Left := 10;
+    LogLevelLabel.Caption := 'Log Level:';
+    LogLevelComboBox := TComboBox.Create(InputPage);
+    LogLevelComboBox.Parent := InputPage.Surface;
+    LogLevelComboBox.Top := LogLevelLabel.Top - 3;
+    LogLevelComboBox.Left := LogLevelLabel.Left + 100;
+    LogLevelComboBox.Width := InputPage.SurfaceWidth - 110;
+    LogLevelComboBox.Items.Add('Error');
+    LogLevelComboBox.Items.Add('Warning');
+    LogLevelComboBox.Items.Add('Info');
+    LogLevelComboBox.Items.Add('Verbose');
+    LogLevelComboBox.ItemIndex := 2; // Default to Info
+
     LocalCheckBox := TNewCheckBox.Create(InputPage);
     LocalCheckBox.Parent := InputPage.Surface;
-    LocalCheckBox.Top := PasswordInput.Top + PasswordInput.Height + 30;
+    LocalCheckBox.Top := LogLevelComboBox.Top + LogLevelComboBox.Height + 30;
     LocalCheckBox.Left := 10;
     LocalCheckBox.Caption := 'Do not register service - agent must be launched manually';
     LocalCheckBox.Width := InputPage.SurfaceWidth - 110;
@@ -147,6 +166,16 @@ begin
     ServiceCheckBox.Caption := 'Register service - agent must be launched automatically';
     ServiceCheckBox.Width := InputPage.SurfaceWidth - 110;
     ServiceCheckBox.Checked := ServiceMode;
+
+    RunNowCheckBox := TNewCheckBox.Create(InputPage);
+    RunNowCheckBox.Parent := InputPage.Surface;
+    RunNowCheckBox.Top := ServiceCheckBox.Top + ServiceCheckBox.Height + 10; 
+    RunNowCheckBox.Left := 10;
+    RunNowCheckBox.Caption := 'Run agent now';
+    RunNowCheckBox.Width := InputPage.SurfaceWidth - 110;
+    RunNowCheckBox.Checked := RunNow; // Default to checked (run agent now)
+
+  
   end;
 end;
 
@@ -203,6 +232,22 @@ begin
     Result := PasswordInput.Text;
 end;
 
+function GetLogLevel: String;
+begin
+  if Silent then
+    Result := LogLevel
+  else
+  begin
+    case LogLevelComboBox.Text of
+      'Error': Result := '0';
+      'Warning': Result := '1';
+      'Info': Result := '2';
+      'Verbose': Result := '3';
+      else Result := '2'; // Default to Info if something goes wrong
+    end;
+  end;
+end;
+
 function IsLocalMode: Boolean;
 begin
   if Silent then
@@ -217,6 +262,14 @@ begin
     Result := ServiceMode
   else
     Result := ServiceCheckBox.Checked;
+end;
+
+function IsRunNow: Boolean;
+begin
+  if Silent then
+    Result := RunNow
+  else
+    Result := RunNowCheckBox.Checked;
 end;
 
 
@@ -237,21 +290,31 @@ end;
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   ResultCode: Integer;
-  CommandAgentConfigure: String;
+  CommandAgentConfigure, CommandRunNow: String;
 begin
-
 
   try
     if CurStep = ssPostInstall then
     begin
-      CommandAgentConfigure := '-f true -m 0 -p ' + GetPassword() + ' -u ' + GetUsername() + ' -s ' + GetURL() + ' -d "C:\ProgramData\Agent-OCS\inventory" -l "C:\ProgramData\Agent-OCS\agent.log"';
+      CommandAgentConfigure := '-f true -m 0 -p ' + GetPassword() + ' -u ' + GetUsername() + ' -s ' + GetURL() + ' -d "C:\ProgramData\Agent-OCS\inventory" -l "C:\ProgramData\Agent-OCS\agent.log"' + ' -v ' + GetLogLevel();
       Log('Executing Command Agent Configuration: ' + ExpandConstant('{app}\{#MyAppExeName}') + ' ' + CommandAgentConfigure);
       
       if not Exec(ExpandConstant('{app}\{#MyAppExeName}'), CommandAgentConfigure, '', SW_HIDE, ewNoWait, ResultCode) then
       begin
         Log('Failed to configure the agent ' + ExpandConstant('{app}\{#MyAppExeName}') + ' with code ' + IntToStr(ResultCode));
       end;
-      
+
+      if IsRunNow then
+      begin
+        CommandRunNow := '-f true -m 2 -p ' + GetPassword() + ' -u ' + GetUsername() + ' -s ' + GetURL() + ' -d "C:\ProgramData\Agent-OCS\inventory" -l "C:\ProgramData\Agent-OCS\agent.log"' + ' -v ' + GetLogLevel();
+        Log('Executing Command run agent: ' + ExpandConstant('{app}\{#MyAppExeName}') + ' ' + CommandRunNow);
+        
+        if not Exec(ExpandConstant('{app}\{#MyAppExeName}'), CommandRunNow, '', SW_HIDE, ewNoWait, ResultCode) then
+        begin
+          Log('Failed to run the agent ' + ExpandConstant('{app}\{#MyAppExeName}') + ' with code ' + IntToStr(ResultCode));
+        end;
+      end;
+
       if IsServiceMode then
       begin
         if not InstallServiceWithNSSM then
