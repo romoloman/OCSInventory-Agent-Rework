@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Constants
 WORKING_DIRECTORY=$(dirname "$(realpath "$0")")
@@ -65,19 +65,19 @@ check_parameters() {
         usage
     fi
 }
-# Function to check if the agent is already installed
+# Function to check if the agent is alread -ry installed
 check_installed_agent() {
     if [ -d "$AGENT_INSTALLATION_DIR" ] || [ -f "/etc/systemd/system/${SERVICE_NAME}.service" ] || [ -d "$CONFIG_PATH" ] || [ -f "$LOG_PATH" ]; then
-        echo -n "The agent is already installed, do you want to remove it first ? (y/n) "
-        read remove_choice
+        echo -n "The agent is alread -ry installed, do you want to remove it first ? (y/n) "
+        read -r remove_choice
         if [ "$remove_choice" = "y" ] || [ "$remove_choice" = "Y" ]; then
             echo "Uninstalling the existing agent..."
-            sudo sh $WORKING_DIRECTORY/uninstall.sh -y
+            sudo sh "${WORKING_DIRECTORY}/uninstall.sh" -y
         fi
     fi
 }
 
-# Check if the agent is already installed
+# Check if the agent is alread -ry installed
 check_installed_agent
 
 # Function to copy agent contents to /usr/share/ocsinventory-agent
@@ -127,23 +127,23 @@ run_executable() {
 # Function to register service
 register_service() {
     # create service file
-    echo "Creating $SERVICE_NAME service file..."
-    sudo cat > /etc/systemd/system/${SERVICE_NAME}.service << EOF
+    echo "Creating "$SERVICE_NAME" service file..."
+    sudo tee "/etc/systemd/system/${SERVICE_NAME}.service" > /dev/null << EOF
 [Unit]
-Description=$SERVICE_DESCRIPTION
+Description="$SERVICE_DESCRIPTION"
 After=network.target
 
 [Service]
-ExecStart=$AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$SERVICE_EXEC 
+ExecStart="$AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$SERVICE_EXEC" 
 User=root
 Group=root
 RestartSec=60
 StartLimitInterval=1800
 StartLimitBurst=3
-WorkingDirectory=$AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH
+WorkingDirectory="$AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH"
 
 # Ensure that PID file and logging directories are set if needed
-PIDFile=/var/run/$SERVICE_NAME.pid
+PIDFile=/var/run/"$SERVICE_NAME".pid
 StandardOutput=syslog
 StandardError=syslog
 
@@ -186,22 +186,22 @@ run_interactive() {
     echo "+---------------------------------------------------------------+"
     echo
     echo -n "Enter server URL: "
-    read URL
+    read -r URL
     echo -n "Enter username: "
-    read USERNAME
+    read -r USERNAME
     echo -n "Enter password: "
-    read PASSWORD
+    read -r PASSWORD
     echo -n "Enter the log level (default is 2 = Info): "
-    read LOG_LEVEL
+    read -r LOG_LEVEL
     echo -n "Do you register the service - agent must be launched automatically (y/n)? "
-    read service_choice
+    read -r service_choice
     if [ "$service_choice" = "y" ] || [ "$service_choice" = "Y" ]; then
         SERVICE=true
     else
         LOCAL=true
     fi
     echo -n "Do you want to run the agent now (y/n)? "
-    read now_choice
+    read -r now_choice
     if [ "$now_choice" = "y" ] || [ "$now_choice" = "Y" ]; then
         NOW=true
     fi
@@ -215,7 +215,7 @@ run_interactive() {
 }
 
 # Check if all required parameters are provided for silent mode
-if [ ! -z "$URL" ] && [ ! -z "$USERNAME" ] && [ ! -z "$PASSWORD" ]; then
+if [ -n "$URL" ] && [ -n "$USERNAME" ] && [ -n "$PASSWORD" ]; then
     SILENT=true
 fi
 

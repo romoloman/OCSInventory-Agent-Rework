@@ -83,7 +83,7 @@ In this file, there is the properties to configure the agent:
     "password": "password",
     "token": "token value",
     "username": "username",
-    "url": "http://ip_server:port",
+    "url": "http://example.com:port",
     "data_directory": "/var/lib/ocsinventory-data",
     "log_file_path": "/var/log/ocsinventory-agent/ocsinventory-agent.log",
     "log_level": "3"
@@ -131,7 +131,7 @@ This is a list of all available `install.sh` script arguments:
 For example, if you want to install OCS Inventory Agent in non-interactive mode and set server adress, set password, set username, set log level, register the service and run the agent now, you have to run this command:
 
 ```text
-sudo install.sh -h http://server_ip:port -u username -p password -v 3 -s -n
+sudo install.sh -h http://example.com:port -u username -p password -v 3 -s -n
 ```
 
 #### 3. Installing the agent interactively
@@ -211,7 +211,7 @@ This is a list of all available `OCS-NG setup` script arguments:
 
 - /SILENT : run in silent mode
 - LOG="\path to store\setup.log" : log file of the installation process
-- /URL=http://server:port : host url of the OCS Inventory NG server
+- /URL=http://example.com:port : host url of the OCS Inventory NG server
 - /USERNAME=username : set username
 - /PASSWORD=password : set password
 - /LOGLEVEL=3 : set level of the log
@@ -222,7 +222,7 @@ This is a list of all available `OCS-NG setup` script arguments:
 For example, if you want to install OCS Inventory Agent in non-interactive mode and run in silent mode, log installation process, set server adress, set password, set username, set log level to verbose, register the service and run the agent now, you have to run this command:
 
 ```text
-mysetup-agent.exe /SILENT /LOG="C:\Users\Djily\Desktop\setup3.log" /URL=http://server:port /USERNAME=username /PASSWORD=password /LOCAL=False /SERVICE=True /NOW=True /LOGLEVEL=3
+mysetup-agent.exe /SILENT /LOG="C:\Users\Djily\Desktop\setup3.log" /URL=http://example.com:port /USERNAME=username /PASSWORD=password /LOCAL=False /SERVICE=True /NOW=True /LOGLEVEL=3
 ```
 
 #### 3. Installing the agent interactively

@@ -44,7 +44,7 @@ chmod +x "$DAEMON_DEST_PATH"
 read_config "$TMP_CONFIG_FILE"
 
 # Retrieve log level values (0: Error 1: Warning 2: Info 3: Verbose)
-$LOG_LEVEL_VALUES = 2
+"$LOG_LEVEL_VALUES" = 2
 case "$LOG_LEVEL" in
     'Error') LOG_LEVEL_VALUES=0 ;;
     'Warning') LOG_LEVEL_VALUES=1 ;;
@@ -77,16 +77,16 @@ register_service() {
     <string>$SERVICE_NAME</string>
     <key>ProgramArguments</key>
     <array>
-        <string>$APP_PATH$EXEC_DAEMON</string>
+        <string>"$APP_PATH$EXEC_DAEMON"</string>
         <string>-d</string>
-        <string>$APP_PATH</string>
+        <string>"$APP_PATH"</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
     <key>StandardOutPath</key>
-    <string>$LOG_PATH</string>
+    <string>"$LOG_PATH"</string>
     <key>StandardErrorPath</key>
-    <string>$LOG_PATH</string>
+    <string>"$LOG_PATH"</string>
 </dict>
 </plist>
 EOF

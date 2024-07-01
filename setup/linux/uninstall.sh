@@ -64,7 +64,7 @@ uninstall_agent() {
 # Function to prompt for confirmation
 prompt_confirmation() {
     echo -n "Are you sure you want to uninstall OCS Inventory NG Agent (y/n)? "
-    read confirm
+    read -r confirm
     if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
         uninstall_agent
     else

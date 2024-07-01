@@ -6,7 +6,7 @@ echo "OSVer is $OSVER"
 PID=`ps ax -e | grep OCS-NG | grep -v grep | grep -v $0 | awk '{print $1}'`
 if [ "$PID" !=  "" ]; then
 	echo "killing process: $PID"
-	sudo kill $PID
+	sudo kill "$PID"
 fi
 
 FILES="/Library/Receipts/OCS-NG* /etc/ocsinventory-agent/ /var/lib/ocsinventory-agent/ /Applications/OCS-NG.app /var/log/ocsinventory-agent/"
@@ -23,7 +23,7 @@ else
 fi
 
 for FILE in $FILES; do
-  echo 'removing '.$FILE
-  rm -f -R $FILE
+  echo 'removing '."$FILE"
+  rm -f -R "$FILE"
 done
 
