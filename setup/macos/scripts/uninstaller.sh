@@ -1,10 +1,10 @@
 #!/bin/bash
 
-OSVER=`uname -r`
+OSVER=$(uname -r)
 echo "OSVer is $OSVER"
 
 PID=PID=$(pgrep -f OCS-NG)
-if [ "$PID" !=  "" ]; then
+if [ "$PID" != "" ]; then
 	echo "killing process: $PID"
 	sudo kill "$PID"
 fi
@@ -23,7 +23,6 @@ else
 fi
 
 for FILE in $FILES; do
-  echo 'removing '."$FILE"
-  rm -f -R "$FILE"
+	echo 'removing '."$FILE"
+	rm -f -R "$FILE"
 done
-

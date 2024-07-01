@@ -1,5 +1,5 @@
 //
-// OCSINVENTORY-NG 
+// OCSINVENTORY-NG
 // Copyleft Guillaume PROTET 2011
 // Web : http://www.ocsinventory-ng.org
 //
@@ -10,11 +10,10 @@
 //
 
 #ifdef __OBJC__
-    #import <Cocoa/Cocoa.h>
+#import <Cocoa/Cocoa.h>
 #endif
 
 @interface ocscontact : NSObject {
-
 }
 
 @end

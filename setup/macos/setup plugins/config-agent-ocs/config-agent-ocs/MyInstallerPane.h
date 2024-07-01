@@ -7,16 +7,15 @@
 
 #import <InstallerPlugins/InstallerPlugins.h>
 
-@interface MyInstallerPane : InstallerPane{
-    IBOutlet NSTextField *server;
-    IBOutlet NSTextField *username;
-    IBOutlet NSTextField *password;
-    IBOutlet NSButton *serviceMode;
-    IBOutlet NSButton *runNow;
-    IBOutlet NSPopUpButton *logLevelList;
+@interface MyInstallerPane : InstallerPane {
+  IBOutlet NSTextField *server;
+  IBOutlet NSTextField *username;
+  IBOutlet NSTextField *password;
+  IBOutlet NSButton *serviceMode;
+  IBOutlet NSButton *runNow;
+  IBOutlet NSPopUpButton *logLevelList;
 
-    
-    NSFileManager *filemgr;
+  NSFileManager *filemgr;
 }
-    
+
 @end
