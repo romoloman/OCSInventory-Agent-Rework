@@ -10,6 +10,8 @@
 #define MyAppAssocExt ".myp"
 #define MyAppAssocKey StringChange(MyAppAssocName, " ", "") + MyAppAssocExt
 
+#define AgentPath "path_of_your_agent\OCSInventory-Agent-Rework"
+
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
@@ -25,13 +27,13 @@ DefaultDirName=C:\Program Files\{#MyAppName}
 DisableDirPage=yes
 ChangesAssociations=yes
 DisableProgramGroupPage=yes
-LicenseFile=C:\Users\Djily\Desktop\LICENSE.TXT
+LicenseFile={#AgentPath}\setup\windows\media\LICENSE.TXT
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
-OutputDir=C:\Users\Djily\Desktop
+OutputDir=Setup OCS-NG
 OutputBaseFilename=OCS-NG
-SetupIconFile=C:\Users\Djily\Documents\icone_ocs.ico
+SetupIconFile={#AgentPath}\setup\windows\media\icone_ocs.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -44,8 +46,8 @@ Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "C:\Users\Djily\Documents\OCSInventory-Agent-Rework\OCSInventory-Agent-Rework\setup\windows\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\Djily\Documents\OCSInventory-Agent-Rework\OCSInventory-Agent-Rework\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#AgentPath}\setup\windows\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#AgentPath}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]
@@ -58,7 +60,6 @@ Root: HKA; Subkey: "Software\Classes\Applications\{#MyAppExeName}\SupportedTypes
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
-
 
 [UninstallRun]
 Filename: "{app}\setup\windows\nssm.exe"; Parameters: "stop OCSInventory-Agent"; Flags: runhidden
@@ -298,8 +299,11 @@ begin
     begin
       CommandAgentConfigure := '-f true -m 0 -p ' + GetPassword() + ' -u ' + GetUsername() + ' -s ' + GetURL() + ' -d "C:\ProgramData\Agent-OCS\inventory" -l "C:\ProgramData\Agent-OCS\agent.log"' + ' -v ' + GetLogLevel();
       Log('Executing Command Agent Configuration: ' + ExpandConstant('{app}\{#MyAppExeName}') + ' ' + CommandAgentConfigure);
-      
-      if not Exec(ExpandConstant('{app}\{#MyAppExeName}'), CommandAgentConfigure, '', SW_HIDE, ewNoWait, ResultCode) then
+      if Exec(ExpandConstant('{app}\{#MyAppExeName}'), CommandAgentConfigure, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+      begin
+        Log('Successfully configured the agent: ' + ExpandConstant('{app}\{#MyAppExeName}'));
+      end
+      else
       begin
         Log('Failed to configure the agent ' + ExpandConstant('{app}\{#MyAppExeName}') + ' with code ' + IntToStr(ResultCode));
       end;
@@ -325,4 +329,3 @@ begin
       Log('Exception in CurStepChanged: ');
   end;
 end;
-
