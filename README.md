@@ -190,10 +190,21 @@ Ensure that you have something like this:
 ├── Setup OCS Inventory Agent.iss
 └── nssm.exe
 ```
+#### 2. Create your own package
 
-Now you can create your package (if needed) with inno setup by using `Setup OCS Inventory Agent.iss` script
+You can create your package (if needed) with Inno setup by using `Setup OCS Inventory Agent.iss` script
+- Download and Install Inno Setup. You can download it from [here](https://jrsoftware.org/isinfo.php).
+- Run Inno Setup and open the `Setup OCS Inventory Agent.iss` script
+- Set up the script, specifying the `Agent path`
+- Build the package using Inno Setup's build feature
+- The resulting installer will be created in `/setup/windows/` directory
 
-#### 2. Installing the agent non-interactively
+For esample, if you want to create your own package, you need to adjust the agent path according to your local setup like this:
+```text
+#define AgentPath "path where your agent are located\OCSInventory-Agent-Rework"
+```
+
+#### 3. Installing the agent non-interactively
 
 To install the agent in non-interactive mode, you have to run the `OCS-NG setup` with a set of launch arguments to allow to set all configuration options as you can do in interactive mode.
 This is a list of all available `OCS-NG setup` script arguments:
@@ -214,11 +225,11 @@ For example, if you want to install OCS Inventory Agent in non-interactive mode 
 mysetup-agent.exe /SILENT /LOG="C:\path to store\setup.log" /URL=Server_ip_and_port /USERNAME=username /PASSWORD=password /LOCAL=False /SERVICE=True /NOW=True /LOGLEVEL=3
 ```
 
-#### 3. Installing the agent interactively
+#### 4. Installing the agent interactively
 
 To install the agent in non-interactive mode, you have to run the `OCS-NG setup` and set all configuration fields.
 
-#### 4. Additionnal information
+#### 5. Additionnal information
 
 - The is installed in `C:\Program Files\OCS Inventory AGENT`
 
@@ -248,8 +259,9 @@ You need to compile the entry point `app.dart` and the daemon `daemon.dart` usin
 dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o AGENT-MACOS
 dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/daemon.dart -o DAEMON-MACOS
 ```
+#### 2. Create your own package
 
-Now you can create your package (if needed) with Xcode and Package applications.
+You can create your package (if needed) with Xcode and Package applications.
 
 - Build `config-agent-ocs` and place the bundle file into `OCS Inventory Agent setup` directory
 - Build `ocsng_app-xcode` to create OCS-NG pkg and ocscontact
@@ -280,7 +292,7 @@ Ensure that you have something like this:
 └── THANKS
 ```
 
-#### 2. Installing the agent interactively
+#### 3. Installing the agent interactively
 
 To install the agent in non-interactive mode, you have to run the `OCS Inventory Agent.mpkg` package and set all configuration fields.
 
