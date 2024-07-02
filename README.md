@@ -59,10 +59,10 @@ In this file, there are properties to configure the agent:
 |    log_file    |                   Default to false, the logs will be written in the terminal you'r using. Set to true, you'll need to specify a log file where you want to write logs.                    |
 | log_file_path  |               This property is to set the log file path. Only define it if you put log_file to true.<br>**Warning**: It will not create the file. You'll need to create it.               |
 |      mode      | This is the working mode property of the agent, there is 5 modes: 0- Installation mode 1-Remote with template 2- Remote without template 3- Local with template 4- Local without template |
-|   password   |                                                By default in remote inventory mode, set the password to connect to the backend server api.                                                |
+|    password    |                                                By default in remote inventory mode, set the password to connect to the backend server api.                                                |
 |     token      |                                                  Will be automatically replace to store the retreived token from the backend server api.                                                  |
-|   username   |                                                By default in remote inventory mode, set the username to connect to the backend server api.                                                |
-|     url      |                                                                                  Backend server api url.                                                                                  |
+|    username    |                                                By default in remote inventory mode, set the username to connect to the backend server api.                                                |
+|      url       |                                                                                  Backend server api url.                                                                                  |
 
 
 ```text
