@@ -122,34 +122,34 @@ run_executable() {
 
 # Function to register service
 register_service() {
-	# create service file
-	echo "Creating ${SERVICE_NAME} service file..."
-	sudo tee "/etc/systemd/system/${SERVICE_NAME}.service" >/dev/null <<EOF
+    # create service file
+    echo "Creating ${SERVICE_NAME} service file..."
+    sudo tee "/etc/systemd/system/${SERVICE_NAME}.service" > /dev/null << EOF
 [Unit]
-Description="$SERVICE_DESCRIPTION"
+Description=${SERVICE_DESCRIPTION}
 After=network.target
 
 [Service]
-ExecStart="$AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$SERVICE_EXEC" 
+ExecStart=${AGENT_INSTALLATION_DIR}${WORKING_DIRECTORY_EXEC_PATH}${SERVICE_EXEC}
 User=root
 Group=root
 RestartSec=60
 StartLimitInterval=1800
 StartLimitBurst=3
-WorkingDirectory="$AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH"
+WorkingDirectory=${AGENT_INSTALLATION_DIR}${WORKING_DIRECTORY_EXEC_PATH}
 
 # Ensure that PID file and logging directories are set if needed
-PIDFile=/var/run/"$SERVICE_NAME".pid
+PIDFile=/var/run/${SERVICE_NAME}.pid
 StandardOutput=syslog
 StandardError=syslog
 
 [Install]
 WantedBy=multi-user.target
 EOF
-	# restart daemon, enable and start service
-	echo "Reloading daemon and enabling service"
-	sudo systemctl daemon-reload
-	sudo systemctl enable ${SERVICE_NAME}.service
+    # restart daemon, enable and start service
+    echo "Reloading daemon and enabling service"
+    sudo systemctl daemon-reload 
+    sudo systemctl enable ${SERVICE_NAME}.service
 }
 
 # Function to run in silent mode

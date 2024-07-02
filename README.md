@@ -4,7 +4,7 @@
 
 ### Download Flutter packages
 
-Begin to download the Flutter package by clicking on the big blue button in `Manual install` section on these websites":
+Begin to download the Flutter package by clicking on the big blue button in `Manual install` section on these websites:
 
 - [Linux Installation](https://docs.flutter.dev/get-started/install/linux)
 - [MacOS Installation](https://docs.flutter.dev/get-started/install/macos/desktop?tab=download)
@@ -24,12 +24,6 @@ echo 'export PATH="$PATH:<path_to_flutter_directory>/flutter/bin"' >> $HOME/.bas
 echo 'export PATH="$PATH:<path_to_flutter_directory>/flutter/bin"' >> ~/.zshenv
 ```
 
-- Windows:
-
-Change of OS...
-
-Joking :) [Link here](https://docs.flutter.dev/get-started/install/windows/desktop?tab=download#update-your-windows-path-variable)
-
 ## Step 2: Clone of the project
 
 ```text
@@ -41,8 +35,6 @@ or with SSH
 ```text
 git clone git@github.com:OCSInventory-NG/OCSInventory-Agent-Rework.git
 ```
-
-If you did it since the begining without cheats... well done! You're a superhero.
 
 ## Step 3: Agent configuration
 
@@ -56,9 +48,9 @@ If you did it since the begining without cheats... well done! You're a superhero
 
 - Configuration directory, log file and data inventories are in the same directory : `C:\ProgramData\Agent-OCS`
 
-After installing the agent, there is a config forlder, and the file `inventory.json` inside.
+After installing the agent, there is a config forlder and the file `inventory.json` inside.
 
-In this file, there is the properties to configure the agent:
+In this file, there are properties to configure the agent:
 
 |    Property    |                                                                                        Description                                                                                        |
 |:--------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
@@ -67,14 +59,11 @@ In this file, there is the properties to configure the agent:
 |    log_file    |                   Default to false, the logs will be written in the terminal you'r using. Set to true, you'll need to specify a log file where you want to write logs.                    |
 | log_file_path  |               This property is to set the log file path. Only define it if you put log_file to true.<br>**Warning**: It will not create the file. You'll need to create it.               |
 |      mode      | This is the working mode property of the agent, there is 5 modes: 0- Installation mode 1-Remote with template 2- Remote without template 3- Local with template 4- Local without template |
-|   `password`   |                                                By default in remote inventory mode, set the password to connect to the backend server api.                                                |
+|   password   |                                                By default in remote inventory mode, set the password to connect to the backend server api.                                                |
 |     token      |                                                  Will be automatically replace to store the retreived token from the backend server api.                                                  |
-|   `username`   |                                                By default in remote inventory mode, set the username to connect to the backend server api.                                                |
-|     `url`      |                                                                                  Backend server api url.                                                                                  |
+|   username   |                                                By default in remote inventory mode, set the username to connect to the backend server api.                                                |
+|     url      |                                                                                  Backend server api url.                                                                                  |
 
-> _**IMPORTANT NOTE**: `Special words` are mandatories properties to configure._
->
-> There is an example of the inventory configuration file:
 
 ```text
 {
@@ -222,7 +211,7 @@ This is a list of all available `OCS-NG setup` script arguments:
 For example, if you want to install OCS Inventory Agent in non-interactive mode and run in silent mode, log installation process, set server adress, set password, set username, set log level to verbose, register the service and run the agent now, you have to run this command:
 
 ```text
-mysetup-agent.exe /SILENT /LOG="C:\Users\Djily\Desktop\setup3.log" /URL=Server_ip_and_port /USERNAME=username /PASSWORD=password /LOCAL=False /SERVICE=True /NOW=True /LOGLEVEL=3
+mysetup-agent.exe /SILENT /LOG="C:\path to store\setup.log" /URL=Server_ip_and_port /USERNAME=username /PASSWORD=password /LOCAL=False /SERVICE=True /NOW=True /LOGLEVEL=3
 ```
 
 #### 3. Installing the agent interactively
@@ -299,6 +288,4 @@ To install the agent in non-interactive mode, you have to run the `OCS Inventory
 
 - The is installed in `/Applications/OCS-NG`
 
-For example, if you want to run the agent and set log level to verbose, you have to run this command:
-
-- If you set service will be in `/Library/LaunchDaemons/org.ocsinventory.agent.plist`
+- If you set up the service, it will be in `/Library/LaunchDaemons/org.ocsinventory.agent.plist`
