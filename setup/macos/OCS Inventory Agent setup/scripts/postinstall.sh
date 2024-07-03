@@ -9,6 +9,7 @@ LOG_PATH="/var/log/ocsinventory-agent/ocsinventory-agent.log"
 STORE_DATA_PATH="/var/lib/ocsinventory-data"
 SERVICE_NAME="org.ocsinventory.agent"
 CONFIG_PATH="/etc/ocsinventory-agent/inventory.json"
+
 # Check if the config agent is ready exist in the system then run the agent without parameters
 if [[ -f "$CONFIG_PATH" ]]; then
 	echo "Configuration file found. Running the agent with existing configuration..."
@@ -97,6 +98,6 @@ EOF
 register_service
 
 # Remove temporary configuration file
-rm -f "$TMP_CONFIG_FILE"
+sudo rm -f "$TMP_CONFIG_FILE"
 
 exit 0
