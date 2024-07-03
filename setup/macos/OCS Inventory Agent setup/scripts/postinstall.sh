@@ -36,7 +36,6 @@ read_config() {
 	fi
 }
 
-
 read_config "$TMP_CONFIG_FILE"
 
 # Retrieve log level values (0: Error 1: Warning 2: Info 3: Verbose)
