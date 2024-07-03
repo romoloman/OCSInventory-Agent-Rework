@@ -53,7 +53,7 @@ After installing the agent, there is a config forlder and the file `inventory.js
 In this file, there are properties to configure the agent:
 
 |    Property    |                                                                                        Description                                                                                        |
-|:--------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+| :------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
 | data_directory |                                                                     Folder where the agent will store inventory data.                                                                     |
 |   log_level    |                                                                      0: Error 1: Warning 2: Info (default) 3 Verbose                                                                      |
 |    log_file    |                   Default to false, the logs will be written in the terminal you'r using. Set to true, you'll need to specify a log file where you want to write logs.                    |
@@ -78,7 +78,7 @@ In this file, there are properties to configure the agent:
 }
 ```
 
-## Step 5: Installing the Agent
+## Step 4: Installing the Agent
 
 ### Installing the agent on Linux
 
@@ -105,7 +105,7 @@ Ensure that you have something like this:
 
 #### 2. Installing the agent non-interactively
 
-To install the agent in non-interactive mode, you have to run the `install.sh` script with a set of launch arguments to allow to set all configuration options as you can do in interactive mode.
+To install the agent in non-interactive mode, you have to run the linux `install.sh` script with a set of launch arguments to allow to set all configuration options as you can do in interactive mode.
 This is a list of all available `install.sh` script arguments:
 
 - -h : set host url of the OCS Inventory NG server
@@ -298,12 +298,50 @@ Ensure that you have something like this:
 └── THANKS
 ```
 
-#### 3. Installing the agent interactively
+#### 3. Installing the agent non-interactively
+
+To install the agent in non-interactive mode, you have to run the MacOS `install.sh` script with a set of launch arguments to allow to set all configuration options as you can do in interactive mode.
+This is a list of all available `install.sh` script arguments:
+
+- -h : set host url of the OCS Inventory NG server
+- -u : set username
+- -p : set password
+- -v : set level of the log
+- -s : set service mode (register service)
+- -n : set to run the agent now
+
+For example, if you want to install OCS Inventory Agent in non-interactive mode and set server adress, set password, set username, set log level, register the service and run the agent now, you have to run this command:
+
+```text
+sudo install.sh -h Server_ip_and_port -u username -p password -v 3 -s -n
+```
+
+#### 5. Installing the agent interactively
 
 To install the agent in non-interactive mode, you have to run the `OCS Inventory Agent.mpkg` package and set all configuration fields.
 
-#### 4. Additionnal information
+#### 5. Additionnal information
 
 - The is installed in `/Applications/OCS-NG`
 
 - If you set up the service, it will be in `/Library/LaunchDaemons/org.ocsinventory.agent.plist`
+
+## Step 5: Uninstalling the agent
+
+- Linux Agent: To uninstall the Linux agent, navigate to `/usr/share/ocsinventory-agent/setup/linux/` and execute the `uninstall.sh` script with root privileges.
+- Windows Agent: To uninstall the Windows agent, go to `C:\Program Files\OCS Inventory Agent` and run the `uninstall application` executable.
+- MacOS Agent: To uninstall the macOS agent, navigate to `/Applications/OCS-NG.app/Contents/Resources/` and execute the `uninstaller.sh` script with root privileges.
+
+## Step 6: Troubleshooting
+
+If you encounter any issues during the installation or usage of the OCS Inventory Agent, here are some troubleshooting steps you can follow:
+
+1. Check the log files: The agent logs can provide valuable information about any errors or issues. You can find the log files in the `/var/log/ocsinventory-agent/` directory on Linux, `C:\Program Files\OCS Inventory AGENT\logs` directory on Windows, and `/Applications/OCS-NG/logs` directory on macOS.
+
+2. Verify the server URL: Make sure that the server URL you provided is correct and accessible. Double-check for any typos or network connectivity issues.
+
+3. Check the credentials: Ensure that the username and password you provided are correct and have the necessary permissions to access the backend server API.
+
+4. Verify the API URL: Double-check the API URL to ensure it is accurate and points to the correct backend server.
+
+5. Restart the agent: Sometimes, restarting the agent can resolve certain issues. You can do this by running the appropriate command for your operating system: `sudo systemctl restart ocsinventory-agent` on Linux,`C:\Program Files\OCS Inventory Agent\setup\windows\nssm.exe stop OCSInventory-Agent` followed by `C:\Program Files\OCS Inventory Agent\setup\windows\nssm.exe start OCSInventory-Agent` on Windows, and `sudo launchctl unload /Library/LaunchDaemons/org.ocsinventory.agent.plist` followed by `sudo launchctl load /Library/LaunchDaemons/org.ocsinventory.agent.plist` on macOS.

@@ -1,12 +1,12 @@
 #!/bin/bash
 WORKING_DIRECTORY=$(dirname "$(realpath "$0")")
 # Define default values
-DEFAULT_SERVER="http://example.com"
-DEFAULT_USERNAME="defaultuser"
-DEFAULT_PASSWORD="defaultpassword"
-DEFAULT_LOGLEVEL="Info"
-DEFAULT_SERVICEMODE="no"
-DEFAULT_RUNNOW="no"
+SERVER="http://example.com"
+USER="user"
+PASSWORD="password"
+LOGLEVEL="Info"
+SERVICEMODE="no"
+RUNNOW="no"
 
 # Function to display usage information
 usage() {
@@ -15,15 +15,12 @@ usage() {
 	echo "  -u USERNAME   Username"
 	echo "  -p PASSWORD   Password"
 	echo "  -v LOG_LEVEL  Log level"
-	echo "  -l            Local mode (do not register service)"
 	echo "  -s            Service mode (register service)"
 	echo "  -n            Run the agent now"
 	exit 1
 }
 
 # Default values
-SILENT=false
-LOCAL=false
 SERVICE=false
 NOW=false # if true, we run the agent now with mode 2
 
@@ -34,7 +31,6 @@ while getopts "h:u:p:v:lsnih" opt; do
 	u) USERNAME=$OPTARG ;;
 	p) PASSWORD=$OPTARG ;;
 	v) LOG_LEVEL=$OPTARG ;;
-	l) LOCAL=true ;;
 	s) SERVICE=true ;;
 	n) NOW=true ;;
 	*) usage ;;
@@ -55,12 +51,12 @@ else
 fi
 
 # Read values from arguments or use defaults
-server="${URL:-$DEFAULT_SERVER}"
-username="${USERNAME:-$DEFAULT_USERNAME}"
-password="${PASSWORD:-$DEFAULT_PASSWORD}"
-logLevel="${LOG_LEVEL:-$DEFAULT_LOGLEVEL}"
-serviceMode="${SERVICE:-$DEFAULT_SERVICEMODE}"
-runNow="${NOW:-$DEFAULT_RUNNOW}"
+server="${URL:-$SERVER}"
+username="${USERNAME:-$USER}"
+password="${PASSWORD:-$PASSWORD}"
+logLevel="${LOG_LEVEL:-$LOGLEVEL}"
+serviceMode="${SERVICE:-$SERVICEMODE}"
+runNow="${NOW:-$RUNNOW}"
 
 # Save the configuration to /tmp/installer_config_file.txt
 cat <<EOF | sudo tee "/tmp/installer_config.txt" >/dev/null
