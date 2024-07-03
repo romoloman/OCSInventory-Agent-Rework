@@ -9,7 +9,6 @@ LOG_PATH="/var/log/ocsinventory-agent/ocsinventory-agent.log"
 STORE_DATA_PATH="/var/lib/ocsinventory-data"
 SERVICE_NAME="org.ocsinventory.agent"
 CONFIG_PATH="/etc/ocsinventory-agent/inventory.json"
-
 # Check if the config agent is ready exist in the system then run the agent without parameters
 if [[ -f "$CONFIG_PATH" ]]; then
 	echo "Configuration file found. Running the agent with existing configuration..."
@@ -37,9 +36,6 @@ read_config() {
 	fi
 }
 
-# Copy the daemon executable to /usr/local/bin
-cp "$DAEMON_SOURCE_PATH" "$DAEMON_DEST_PATH"
-chmod +x "$DAEMON_DEST_PATH"
 
 read_config "$TMP_CONFIG_FILE"
 
@@ -66,32 +62,32 @@ register_service() {
 		echo "Creating OCS Inventory Agent service..."
 
 		# Create service file
-		cat <<EOF | sudo tee "/Library/LaunchDaemons/$SERVICE_NAME.plist" >/dev/null
+		cat <<EOF | sudo tee "/Library/LaunchDaemons/${SERVICE_NAME}.plist" >/dev/null
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>$SERVICE_NAME</string>
+    <string>${SERVICE_NAME}</string>
     <key>ProgramArguments</key>
     <array>
-        <string>"$APP_PATH$EXEC_DAEMON"</string>
+        <string>${APP_PATH}${EXEC_DAEMON}</string>
         <string>-d</string>
-        <string>"$APP_PATH"</string>
+        <string>${APP_PATH}</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
     <key>StandardOutPath</key>
-    <string>"$LOG_PATH"</string>
+    <string>${LOG_PATH}</string>
     <key>StandardErrorPath</key>
-    <string>"$LOG_PATH"</string>
+    <string>${LOG_PATH}</string>
 </dict>
 </plist>
 EOF
 
 		# Set permissions and load service
-		sudo chown root:wheel "/Library/LaunchDaemons/$SERVICE_NAME.plist"
-		sudo launchctl load "/Library/LaunchDaemons/$SERVICE_NAME.plist"
+		sudo chown root:wheel "/Library/LaunchDaemons/${SERVICE_NAME}.plist"
+		sudo launchctl load "/Library/LaunchDaemons/${SERVICE_NAME}.plist"
 
 		echo "OCS Inventory Agent service registered."
 	else

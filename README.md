@@ -53,7 +53,7 @@ After installing the agent, there is a config forlder and the file `inventory.js
 In this file, there are properties to configure the agent:
 
 |    Property    |                                                                                        Description                                                                                        |
-|:--------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+| :------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
 | data_directory |                                                                     Folder where the agent will store inventory data.                                                                     |
 |   log_level    |                                                                      0: Error 1: Warning 2: Info (default) 3 Verbose                                                                      |
 |    log_file    |                   Default to false, the logs will be written in the terminal you'r using. Set to true, you'll need to specify a log file where you want to write logs.                    |
@@ -63,7 +63,6 @@ In this file, there are properties to configure the agent:
 |     token      |                                                  Will be automatically replace to store the retreived token from the backend server api.                                                  |
 |    username    |                                                By default in remote inventory mode, set the username to connect to the backend server api.                                                |
 |      url       |                                                                                  Backend server api url.                                                                                  |
-
 
 ```text
 {
@@ -190,9 +189,11 @@ Ensure that you have something like this:
 ├── Setup OCS Inventory Agent.iss
 └── nssm.exe
 ```
+
 #### 2. Create your own package
 
 You can create your package (if needed) with Inno setup by using `Setup OCS Inventory Agent.iss` script
+
 - Download and Install Inno Setup. You can download it from [here](https://jrsoftware.org/isinfo.php).
 - Run Inno Setup and open the `Setup OCS Inventory Agent.iss` script
 - Set up the script, specifying the `Agent path`
@@ -200,6 +201,7 @@ You can create your package (if needed) with Inno setup by using `Setup OCS Inve
 - The resulting installer will be created in `/setup/windows/` directory
 
 For esample, if you want to create your own package, you need to adjust the agent path according to your local setup like this:
+
 ```text
 #define AgentPath "path where your agent are located\OCSInventory-Agent-Rework"
 ```
@@ -259,12 +261,13 @@ You need to compile the entry point `app.dart` and the daemon `daemon.dart` usin
 dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o AGENT-MACOS
 dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/daemon.dart -o DAEMON-MACOS
 ```
+
 #### 2. Create your own package
 
 You can create your package (if needed) with Xcode and Package applications.
 
-- Build `config-agent-ocs` and place the bundle file into `OCS Inventory Agent setup` directory
-- Build `ocsng_app-xcode` to create OCS-NG pkg and ocscontact
+- Build `config-agent-ocs` and copy the bundle file into `OCS Inventory Agent setup` directory
+- Build `ocsng_app-xcode` to create OCS-NG pkg and ocscontact. Ensure the Scheme is correct to build each of them
 - Build `OCS Inventory Agent setup` to create installation package
 
 Ensure that you have something like this:
@@ -276,15 +279,18 @@ Ensure that you have something like this:
 ├── DAEMON-MACOS
 ├── LICENCE.txt
 ├── OCS Inventory Agent setup
-│ ├── build
-│ ├── OCS Inventory Agent.mpkg
-│ ├── config-agent-ocs.bundle
-│ ├── OCS Inventory Agent.pkgproj
-│ └── scripts
+│   ├── build
+│   │   └── OCS Inventory Agent Setup.mpkg
+│   ├── config-agent-ocs.bundle
+│   ├── OCS Inventory Agent.pkgproj
+│   └── scripts
 ├── ocsng_app-xcode
-│ ├── build
-│ ├── ocscontact
-│ ├── OCS-NG
+│   ├── build
+│   │   └── build
+│   │       └── ocscontact
+│   │       └── OCS-NG
+│   ├── en.lproj
+│   ├── ...
 ├── README.md
 ├── scripts
 ├── setup plugins
