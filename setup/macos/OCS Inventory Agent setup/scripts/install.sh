@@ -1,12 +1,5 @@
 #!/bin/bash
 WORKING_DIRECTORY=$(dirname "$(realpath "$0")")
-# Define default values
-SERVER="http://example.com"
-USER="user"
-PASSWORD="password"
-LOGLEVEL="Info"
-SERVICEMODE="no"
-RUNNOW="no"
 
 # Function to display usage information
 usage() {
@@ -50,22 +43,14 @@ else
     NOW="no"
 fi
 
-# Read values from arguments or use defaults
-server="${URL:-$SERVER}"
-username="${USERNAME:-$USER}"
-password="${PASSWORD:-$PASSWORD}"
-logLevel="${LOG_LEVEL:-$LOGLEVEL}"
-serviceMode="${SERVICE:-$SERVICEMODE}"
-runNow="${NOW:-$RUNNOW}"
-
 # Save the configuration to /tmp/installer_config_file.txt
 cat <<EOF | sudo tee "/tmp/installer_config.txt" >/dev/null
-server=${server}
-username=${username}
-password=${password}
-logLevel=${logLevel}
-serviceMode=${serviceMode}
-runNow=${runNow}
+server=${URL}
+username=${USERNAME}
+password=${PASSWORD}
+logLevel=${LOG_LEVEL}
+serviceMode=${SERVICE}
+runNow=${NOW}
 EOF
 
 # build the package path by navigating one level up from the script directory
