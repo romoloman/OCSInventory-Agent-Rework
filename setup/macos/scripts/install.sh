@@ -55,7 +55,7 @@ EOF
 
 # build the package path by navigating one level up from the script directory
 SETUP_PATH=$(dirname "$WORKING_DIRECTORY")
-PKG_PATH="${SETUP_PATH}/build/OCS Inventory Agent Setup.mpkg"
+PKG_PATH="${SETUP_PATH}/OCS Inventory Agent setup/build/OCS Inventory Agent Setup.mpkg"
 
 # Check if the package exists
 if [ -f "$PKG_PATH" ]; then
