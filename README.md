@@ -53,7 +53,7 @@ After installing the agent, there is a config forlder and the file `inventory.js
 In this file, there are properties to configure the agent:
 
 |    Property    |                                                                                        Description                                                                                        |
-| :------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+|:--------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
 | data_directory |                                                                     Folder where the agent will store inventory data.                                                                     |
 |   log_level    |                                                                      0: Error 1: Warning 2: Info (default) 3 Verbose                                                                      |
 |    log_file    |                   Default to false, the logs will be written in the terminal you'r using. Set to true, you'll need to specify a log file where you want to write logs.                    |

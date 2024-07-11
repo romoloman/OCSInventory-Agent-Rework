@@ -32,15 +32,15 @@ done
 
 # Change service and now values to yes if the flags are set
 if [ "$SERVICE" = "true" ]; then
-    SERVICE="yes"
+	SERVICE="yes"
 else
-    SERVICE="no"
+	SERVICE="no"
 fi
 
 if [ "$NOW" = "true" ]; then
-    NOW="yes"
+	NOW="yes"
 else
-    NOW="no"
+	NOW="no"
 fi
 
 # Save the configuration to /tmp/installer_config_file.txt
@@ -66,4 +66,3 @@ fi
 sudo installer -pkg "$PKG_PATH" -target /Applications
 
 exit 0
-
