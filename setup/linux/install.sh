@@ -15,12 +15,12 @@ SYMBOLIC_LINK="/usr/bin/ocsinventory-agent-ng"
 
 # Function to display usage information
 usage() {
-	echo "Usage: $0 [-h URL] [-u USERNAME] [-p PASSWORD] [-v LOG_LEVEL ] [-l] [-s] [-n] [-h]"
+	echo "Usage: $0 [-h URL] [-u USERNAME] [-p PASSWORD] [-v LOG_LEVEL ] [-c CERTIFICAT] [-s] [-n] [-h]"
 	echo "  -h HOST       host URL of the OCS Inventory NG server"
 	echo "  -u USERNAME   Username"
 	echo "  -p PASSWORD   Password"
 	echo "  -v LOG_LEVEL  Log level"
-	echo "  -l            Local mode (do not register service)"
+	echo "  -c CERTIFICAT Path to the certificate file"
 	echo "  -s            Service mode (register service)"
 	echo "  -n            Run the agent now"
 	exit 1
@@ -33,12 +33,13 @@ SERVICE=false
 NOW=false # if true, we run the agent now with mode 2
 
 # Parse command-line arguments
-while getopts "h:u:p:v:lsnih" opt; do
+while getopts "h:u:p:v:c:lsnih" opt; do
 	case ${opt} in
 	h) URL=$OPTARG ;;
 	u) USERNAME=$OPTARG ;;
 	p) PASSWORD=$OPTARG ;;
 	v) LOG_LEVEL=$OPTARG ;;
+	c) CERTIFICAT=$OPTARG ;;
 	l) LOCAL=true ;;
 	s) SERVICE=true ;;
 	n) NOW=true ;;
@@ -51,6 +52,7 @@ check_parameters() {
 	local url="$1"
 	local username="$2"
 	local password="$3"
+	local certificate="$4"
 
 	if [ -z "$url" ]; then
 		echo "Server URL is required"
@@ -64,11 +66,15 @@ check_parameters() {
 		echo "Password is required"
 		usage
 	fi
+	if [ -z "$certificate" ]; then
+		echo "Certificate is required"
+		usage
+	fi
 }
 # Function to check if the agent is alread -ry installed
 check_installed_agent() {
 	if [ -d "$AGENT_INSTALLATION_DIR" ] || [ -f "/etc/systemd/system/${SERVICE_NAME}.service" ] || [ -d "$CONFIG_PATH" ] || [ -f "$LOG_PATH" ]; then
-		echo -n "The agent is alread -ry installed, do you want to remove it first ? (y/n) "
+		echo -n "The agent is already installed, do you want to remove it first ? (y/n) "
 		read -r remove_choice
 		if [ "$remove_choice" = "y" ] || [ "$remove_choice" = "Y" ]; then
 			echo "Uninstalling the existing agent..."
@@ -107,15 +113,16 @@ run_executable() {
 	local password="$3"
 	local log_level="$4"
 	local run_now="$5"
+	local certificate="$6"
 
 	# Construct command for running executable
-	command_install="$WORKING_DIRECTORY$EXEC_AGENT -f true -m 0 -p $password -u $username -s $url -l $LOG_PATH -d $STRORE_DATA_PATH -v $log_level"
+	command_install="$WORKING_DIRECTORY$EXEC_AGENT -f true -m 0 -p $password -u $username -s $url -l $LOG_PATH -d $STRORE_DATA_PATH -v $log_level -c $certificate"
 	# echo "Executing command: $command"
 	$command_install
 
 	if [ "$run_now" = "true" ]; then
 		echo "Running the agent now..."
-		command_run="$WORKING_DIRECTORY$EXEC_AGENT -f true -m 2 -p $password -u $username -s $url -l $LOG_PATH -d $STRORE_DATA_PATH -v $log_level"
+		command_run="$WORKING_DIRECTORY$EXEC_AGENT -f true -m 2 -p $password -u $username -s $url -l $LOG_PATH -d $STRORE_DATA_PATH -v $log_level -c $certificate"
 		$command_run
 	fi
 }
@@ -162,9 +169,15 @@ run_silent() {
 	echo "+----------------------------------------------------------+"
 	echo
 
-	check_parameters "$URL" "$USERNAME" "$PASSWORD"
+	# Check if the CERTIFICAT file exists
+	if [ ! -f "$CERTIFICAT" ]; then
+		echo "Certificate file does not exist"
+		usage
+	fi
+
+	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$CERTIFICAT"
 	copy_agent_contents
-	run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW"
+	run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICAT"
 	if [ "$SERVICE" = "true" ] && [ "$LOCAL" = "false" ]; then
 		register_service
 	fi
@@ -187,6 +200,8 @@ run_interactive() {
 	read -r PASSWORD
 	echo -n "Enter the log level (default is 2 = Info): "
 	read -r LOG_LEVEL
+	echo -n "Enter the certificat path"
+	read -r CERTIFICAT
 	echo -n "Do you register the service - agent must be launched automatically (y/n)? "
 	read -r service_choice
 	if [ "$service_choice" = "y" ] || [ "$service_choice" = "Y" ]; then
@@ -200,9 +215,15 @@ run_interactive() {
 		NOW=true
 	fi
 
-	check_parameters "$URL" "$USERNAME" "$PASSWORD"
+	# Check if the CERTIFICAT file exists
+	if [ ! -f "$CERTIFICAT" ]; then
+		echo "Certificate file does not exist"
+		usage
+	fi
+
+	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$CERTIFICAT"
 	copy_agent_contents
-	run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW"
+	run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICAT"
 	if [ "$SERVICE" = "true" ]; then
 		register_service
 	fi

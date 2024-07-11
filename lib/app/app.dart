@@ -91,6 +91,11 @@ Future<void> main(List<String> args) async {
       help: "Log level",
       valueHelp: "0: Error 1: Warning 2: Info 3: Verbose",
       defaultsTo: "2");
+  parser.addOption("certificat",
+      abbr: "c",
+      help: "Path to the certificate file",
+      valueHelp: "/path_to_store_certificate_file/cert.pem",
+      defaultsTo: "/etc/ocsinventory-agent/ocsinventory-agent.pem");
   parser.addFlag("help", abbr: "h", help: "Show this help", negatable: false);
 
   try {
@@ -139,7 +144,10 @@ Future<void> main(List<String> args) async {
       await allArgs.option("data_directory").toString();
   invenroryConfigurations['log_file_path'] =
       await allArgs.option("log_file_path").toString();
-  invenroryConfigurations['log_level'] = await allArgs.option("log_level").toString();
+  invenroryConfigurations['log_level'] =
+      await allArgs.option("log_level").toString();
+  invenroryConfigurations['certificat'] =
+      await allArgs.option("certificat").toString();
 
   config = await Config(
       configDirectory, jsonEncode(invenroryConfigurations).toString());
@@ -158,7 +166,7 @@ Future<void> main(List<String> args) async {
 
   // Initiate common
   FilesUtils filesUtils = new FilesUtils();
-  HTTPUtils httpUtils = new HTTPUtils(logger);
+  HTTPUtils httpUtils = new HTTPUtils(logger, config);
   JsonUtils jsonUtils = new JsonUtils();
 
   // Initiate core
