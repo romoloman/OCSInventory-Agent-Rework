@@ -15,8 +15,10 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // External packages imports
+import 'dart:convert';
 import 'dart:io';
-import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
+import 'package:ocs_agent/core/config.dart';
 import 'package:sprintf/sprintf.dart';
 
 // Core imports
@@ -25,10 +27,14 @@ import 'package:ocs_agent/core/log.dart';
 /// This class will execute and log the status of the query
 class HTTPUtils {
   late Logger logger;
+  late IOClient ioClient;
+  late Config config;
 
   /// Constructor
-  HTTPUtils(Logger logger) {
+  HTTPUtils(Logger logger, Config config) {
     this.logger = logger;
+    this.config = config;
+    this.ioClient = createHttpsClient();
   }
 
   /// Return header in json format.
@@ -40,6 +46,15 @@ class HTTPUtils {
       HttpHeaders.contentTypeHeader: 'application/json',
       HttpHeaders.authorizationHeader: "Token $token"
     };
+  }
+
+  /// Create https client
+  IOClient createHttpsClient() {
+    SecurityContext context = SecurityContext(withTrustedRoots: false);
+    String certificate =
+        File(config.getInventoryConfig("certificat")).readAsStringSync();
+    context.setTrustedCertificatesBytes(utf8.encode(certificate));
+    return IOClient(HttpClient(context: context));
   }
 
   /// Return the statusCode message
@@ -60,7 +75,7 @@ class HTTPUtils {
       Uri uri, Map<String, String>? headers) async {
     var returnObject = new Map<String, dynamic>();
     try {
-      var query = await http.delete(uri, headers: headers);
+      var query = await ioClient.delete(uri, headers: headers);
       returnObject["body"] = query.body;
       returnObject["status_code"] = query.statusCode;
       returnObject["message"] =
@@ -78,7 +93,7 @@ class HTTPUtils {
       Uri uri, Map<String, String>? headers) async {
     var returnObject = new Map<String, dynamic>();
     try {
-      var query = await http.get(uri, headers: headers);
+      var query = await ioClient.get(uri, headers: headers);
       returnObject["body"] = query.body;
       returnObject["status_code"] = query.statusCode;
       returnObject["message"] =
@@ -96,7 +111,7 @@ class HTTPUtils {
       Uri uri, Map<String, String>? headers, Object? body) async {
     var returnObject = new Map<String, dynamic>();
     try {
-      var query = await http.patch(uri, headers: headers, body: body);
+      var query = await ioClient.patch(uri, headers: headers, body: body);
       returnObject["body"] = query.body;
       returnObject["status_code"] = query.statusCode;
       returnObject["message"] =
@@ -114,7 +129,7 @@ class HTTPUtils {
       Uri uri, Map<String, String>? headers, Object? body) async {
     var returnObject = new Map<String, dynamic>();
     try {
-      var query = await http.post(uri, headers: headers, body: body);
+      var query = await ioClient.post(uri, headers: headers, body: body);
       returnObject["body"] = query.body;
       returnObject["status_code"] = query.statusCode;
       returnObject["message"] =
@@ -132,7 +147,7 @@ class HTTPUtils {
       Uri uri, Map<String, String>? headers, Object? body) async {
     var returnObject = new Map<String, dynamic>();
     try {
-      var query = await http.put(uri, headers: headers, body: body);
+      var query = await ioClient.put(uri, headers: headers, body: body);
       returnObject["body"] = query.body;
       returnObject["status_code"] = query.statusCode;
       returnObject["message"] =

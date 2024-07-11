@@ -103,7 +103,7 @@ class Logger {
   /// Send formatted logs to the server
   void serverLogger(int assetID, int errorCode, String comment) async {
     if (assetID != -1) {
-      HTTPUtils query = new HTTPUtils(this);
+      HTTPUtils query = new HTTPUtils(this, config);
       Map<int, String> errorCodes = {
         0: "UNKNOWN",
         1: "INVENTORY_BASE_INSERT",
