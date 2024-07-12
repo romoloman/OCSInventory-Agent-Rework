@@ -15,12 +15,12 @@ SYMBOLIC_LINK="/usr/bin/ocsinventory-agent-ng"
 
 # Function to display usage information
 usage() {
-	echo "Usage: $0 [-h URL] [-u USERNAME] [-p PASSWORD] [-v LOG_LEVEL ] [-c CERTIFICAT] [-s] [-n] [-h]"
+	echo "Usage: $0 [-h URL] [-u USERNAME] [-p PASSWORD] [-v LOG_LEVEL ] [-c CERTIFICATE] [-s] [-n] [-h]"
 	echo "  -h HOST       host URL of the OCS Inventory NG server"
 	echo "  -u USERNAME   Username"
 	echo "  -p PASSWORD   Password"
 	echo "  -v LOG_LEVEL  Log level"
-	echo "  -c CERTIFICAT Path to the certificate file"
+	echo "  -c CERTIFICATE Path to the certificate file"
 	echo "  -s            Service mode (register service)"
 	echo "  -n            Run the agent now"
 	exit 1
@@ -39,7 +39,7 @@ while getopts "h:u:p:v:c:lsnih" opt; do
 	u) USERNAME=$OPTARG ;;
 	p) PASSWORD=$OPTARG ;;
 	v) LOG_LEVEL=$OPTARG ;;
-	c) CERTIFICAT=$OPTARG ;;
+	c) CERTIFICATE=$OPTARG ;;
 	l) LOCAL=true ;;
 	s) SERVICE=true ;;
 	n) NOW=true ;;
@@ -169,15 +169,15 @@ run_silent() {
 	echo "+----------------------------------------------------------+"
 	echo
 
-	# Check if the CERTIFICAT file exists
-	if [ ! -f "$CERTIFICAT" ]; then
+	# Check if the CERTIFICATE file exists
+	if [ ! -f "$CERTIFICATE" ]; then
 		echo "Certificate file does not exist"
 		usage
 	fi
 
-	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$CERTIFICAT"
+	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$CERTIFICATE"
 	copy_agent_contents
-	run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICAT"
+	run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICATE"
 	if [ "$SERVICE" = "true" ] && [ "$LOCAL" = "false" ]; then
 		register_service
 	fi
@@ -200,8 +200,8 @@ run_interactive() {
 	read -r PASSWORD
 	echo -n "Enter the log level (default is 2 = Info): "
 	read -r LOG_LEVEL
-	echo -n "Enter the certificat path"
-	read -r CERTIFICAT
+	echo -n "Enter the certificate path"
+	read -r CERTIFICATE
 	echo -n "Do you register the service - agent must be launched automatically (y/n)? "
 	read -r service_choice
 	if [ "$service_choice" = "y" ] || [ "$service_choice" = "Y" ]; then
@@ -215,15 +215,15 @@ run_interactive() {
 		NOW=true
 	fi
 
-	# Check if the CERTIFICAT file exists
-	if [ ! -f "$CERTIFICAT" ]; then
+	# Check if the CERTIFICATE file exists
+	if [ ! -f "$CERTIFICATE" ]; then
 		echo "Certificate file does not exist"
 		usage
 	fi
 
-	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$CERTIFICAT"
+	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$CERTIFICATE"
 	copy_agent_contents
-	run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICAT"
+	run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICATE"
 	if [ "$SERVICE" = "true" ]; then
 		register_service
 	fi

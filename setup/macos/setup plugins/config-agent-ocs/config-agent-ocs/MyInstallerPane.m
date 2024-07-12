@@ -122,10 +122,10 @@
         }
         
         // Example: Save to a temporary file or perform further processing
-        NSLog(@"Server: %@, Username: %@, Password: %@, LogLevel: %@, Service Mode: %@, Run now: %@, Certificat: %@", server, username, password, logLevel, serviceModeEnabled ? @"Yes" : @"No", runNowEnabled ? @"Yes" : @"No", cacert);
+        NSLog(@"Server: %@, Username: %@, Password: %@, LogLevel: %@, Service Mode: %@, Run now: %@, Certificate: %@", server, username, password, logLevel, serviceModeEnabled ? @"Yes" : @"No", runNowEnabled ? @"Yes" : @"No", cacert);
         
         // Example: Save to a temporary file or perform further processing
-        NSString *configContent = [NSString stringWithFormat:@"server=%@\nusername=%@\npassword=%@\nlogLevel=%@\nserviceMode=%@\nrunNow=%@\ncertificat=%@\n", server, username, password, logLevel, serviceModeEnabled ? @"yes" : @"no", runNowEnabled ? @"yes" : @"no", cacert];
+        NSString *configContent = [NSString stringWithFormat:@"server=%@\nusername=%@\npassword=%@\nlogLevel=%@\nserviceMode=%@\nrunNow=%@\ncertificate=%@\n", server, username, password, logLevel, serviceModeEnabled ? @"yes" : @"no", runNowEnabled ? @"yes" : @"no", cacert];
         NSString *tmpConfigFilePath = @"/tmp/installer_config.txt";
         [configContent writeToFile:tmpConfigFilePath atomically:YES encoding:NSUTF8StringEncoding error:nil];
             

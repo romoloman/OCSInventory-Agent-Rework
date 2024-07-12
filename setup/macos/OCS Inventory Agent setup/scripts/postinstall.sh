@@ -29,7 +29,7 @@ read_config() {
 			'serviceMode') SERVICE_MODE="$value" ;;
 			'logLevel') LOG_LEVEL="$value" ;;
 			'runNow') RUN_NOW="$value" ;;
-			'certificat') CERTIFICATE="$value" ;;
+			'certificate') CERTIFICATE="$value" ;;
 			esac
 		done <"$TMP_CONFIG_FILE"
 	else

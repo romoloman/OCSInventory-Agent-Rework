@@ -91,7 +91,7 @@ Future<void> main(List<String> args) async {
       help: "Log level",
       valueHelp: "0: Error 1: Warning 2: Info 3: Verbose",
       defaultsTo: "2");
-  parser.addOption("certificat",
+  parser.addOption("certificate",
       abbr: "c",
       help: "Path to the certificate file",
       valueHelp: "/path_to_store_certificate_file/cert.pem",
@@ -146,8 +146,8 @@ Future<void> main(List<String> args) async {
       await allArgs.option("log_file_path").toString();
   invenroryConfigurations['log_level'] =
       await allArgs.option("log_level").toString();
-  invenroryConfigurations['certificat'] =
-      await allArgs.option("certificat").toString();
+  invenroryConfigurations['certificate'] =
+      await allArgs.option("certificate").toString();
 
   config = await Config(
       configDirectory, jsonEncode(invenroryConfigurations).toString());

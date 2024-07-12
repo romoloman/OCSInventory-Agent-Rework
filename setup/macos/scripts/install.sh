@@ -3,12 +3,12 @@ WORKING_DIRECTORY=$(dirname "$(realpath "$0")")
 
 # Function to display usage information
 usage() {
-	echo "Usage: $0 [-h URL] [-u USERNAME] [-p PASSWORD] [-v LOG_LEVEL ] [-c CERTIFICAT] [-s] [-n] [-h]"
+	echo "Usage: $0 [-h URL] [-u USERNAME] [-p PASSWORD] [-v LOG_LEVEL ] [-c CERTIFICATE] [-s] [-n] [-h]"
 	echo "  -h HOST       host URL of the OCS Inventory NG server"
 	echo "  -u USERNAME   Username"
 	echo "  -p PASSWORD   Password"
 	echo "  -v LOG_LEVEL  Log level"
-	echo "  -c CERTIFICAT Path to the certificate file"
+	echo "  -c CERTIFICATE Path to the certificate file"
 	echo "  -s            Service mode (register service)"
 	echo "  -n            Run the agent now"
 	exit 1
@@ -25,7 +25,7 @@ while getopts "h:u:p:v:c:snih" opt; do
 	u) USERNAME=$OPTARG ;;
 	p) PASSWORD=$OPTARG ;;
 	v) LOG_LEVEL=$OPTARG ;;
-	c) CERTIFICAT=$OPTARG ;;
+	c) CERTIFICATE=$OPTARG ;;
 	s) SERVICE=true ;;
 	n) NOW=true ;;
 	*) usage ;;
@@ -51,8 +51,8 @@ if [ -z "$URL" ] || [ -z "$USERNAME" ] || [ -z "$PASSWORD" ] || [ -z "$LOG_LEVEL
 fi
 
 # Check if the certificate file exists
-if [ ! -f "$CERTIFICAT" ]; then
-	echo "Certificate file not found: $CERTIFICAT"
+if [ ! -f "$CERTIFICATE" ]; then
+	echo "Certificate file not found: $CERTIFICATE"
 	exit 1
 fi
 
@@ -64,7 +64,7 @@ password=${PASSWORD}
 logLevel=${LOG_LEVEL}
 serviceMode=${SERVICE}
 runNow=${NOW}
-certificat=${CERTIFICAT}
+certificate=${CERTIFICATE}
 EOF
 
 # build the package path by navigating one level up from the script directory

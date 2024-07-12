@@ -52,9 +52,15 @@ class HTTPUtils {
   IOClient createHttpsClient() {
     SecurityContext context = SecurityContext(withTrustedRoots: false);
     String certificate =
-        File(config.getInventoryConfig("certificat")).readAsStringSync();
+        File(config.getInventoryConfig("certificate")).readAsStringSync();
     context.setTrustedCertificatesBytes(utf8.encode(certificate));
-    return IOClient(HttpClient(context: context));
+
+    HttpClient client = HttpClient(context: context)
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+
+    // HttpClient client = HttpClient(context: context);
+    return IOClient(client);
   }
 
   /// Return the statusCode message
