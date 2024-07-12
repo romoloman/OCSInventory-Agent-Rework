@@ -16,7 +16,6 @@
   IBOutlet NSPopUpButton *logLevelList;
   IBOutlet NSTextField *cacertfile;
 
-
   NSFileManager *filemgr;
   NSString *tmpCacertFilePath;
 }
