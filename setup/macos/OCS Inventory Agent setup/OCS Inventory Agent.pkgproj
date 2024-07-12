@@ -480,9 +480,9 @@
 				<key>POSTINSTALL_PATH</key>
 				<dict>
 					<key>PATH</key>
-					<string>/Users/factorfx/Documents/OCSInventory-Agent-Rework/setup/macos/OCS Inventory Agent setup/scripts/postinstall.sh</string>
+					<string>scripts/postinstall.sh</string>
 					<key>PATH_TYPE</key>
-					<integer>0</integer>
+					<integer>1</integer>
 				</dict>
 				<key>PREINSTALL_PATH</key>
 				<dict>

@@ -14,8 +14,11 @@
   IBOutlet NSButton *serviceMode;
   IBOutlet NSButton *runNow;
   IBOutlet NSPopUpButton *logLevelList;
+  IBOutlet NSTextField *cacertfile;
+
 
   NSFileManager *filemgr;
+  NSString *tmpCacertFilePath;
 }
 
 @end

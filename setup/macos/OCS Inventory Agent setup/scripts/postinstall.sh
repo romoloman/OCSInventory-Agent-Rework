@@ -29,6 +29,7 @@ read_config() {
 			'serviceMode') SERVICE_MODE="$value" ;;
 			'logLevel') LOG_LEVEL="$value" ;;
 			'runNow') RUN_NOW="$value" ;;
+			'certificat') CERTIFICATE="$value" ;;
 			esac
 		done <"$TMP_CONFIG_FILE"
 	else
@@ -49,11 +50,11 @@ case "$LOG_LEVEL" in
 esac
 
 # Run the agent with provided arguments
-sudo "$APP_PATH$EXEC_AGENT" -f true -m 0 -p "$PASSWORD" -u "$USERNAME" -s "$URL" -l "$LOG_PATH" -d "$STORE_DATA_PATH" -v "$LOG_LEVEL_VALUES"
+sudo "$APP_PATH$EXEC_AGENT" -f true -m 0 -p "$PASSWORD" -u "$USERNAME" -s "$URL" -l "$LOG_PATH" -d "$STORE_DATA_PATH" -v "$LOG_LEVEL_VALUES" -c "$CERTIFICATE"
 
 if [[ "$RUN_NOW" == "yes" || "$RUN_NOW" == "Yes" ]]; then
 	echo "Running the agent now..."
-	sudo "$APP_PATH$EXEC_AGENT" -f true -m 2 -p "$PASSWORD" -u "$USERNAME" -s "$URL" -l "$LOG_PATH" -d "$STORE_DATA_PATH" -v "$LOG_LEVEL_VALUES"
+	sudo "$APP_PATH$EXEC_AGENT" -f true -m 2 -p admin -u "$USERNAME" -s "$URL" -l "$LOG_PATH" -d "$STORE_DATA_PATH" -v "$LOG_LEVEL_VALUES" -c "$CERTIFICATE"
 fi
 
 # Function to register service if SERVICE_MODE is yes or Yes
@@ -98,6 +99,6 @@ EOF
 register_service
 
 # Remove temporary configuration file
-sudo rm -f "$TMP_CONFIG_FILE"
+# sudo rm -f "$TMP_CONFIG_FILE"
 
 exit 0

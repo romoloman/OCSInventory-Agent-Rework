@@ -40,7 +40,7 @@
     }
     
     // Optional: Pre-fill fields or perform setup logic when the pane is shown
-    self->server.stringValue = @"http://example.com";
+    self->server.stringValue = @"https://example.com:port";
     self->username.stringValue = @"";
     self->password.stringValue = @"";
     self->serviceMode.state = NSControlStateValueOff;
@@ -55,6 +55,29 @@
     [logLevelList selectItemWithTitle: @"Info"];
 }
 
+- (IBAction)chooseCacertFile:(id)sender {
+    NSOpenPanel *panel = [NSOpenPanel openPanel];
+    NSArray* fileTypes = [[NSArray alloc] initWithObjects:@"pem",@"PEM",@"crt",@"CRT",nil];
+    
+    //Configuration for the browse panel
+    [panel setCanChooseDirectories:NO];
+    [panel setCanChooseFiles:YES];
+    [panel setAllowsMultipleSelection:NO];
+    [panel setAllowedFileTypes:fileTypes];
+    
+    // Get panel return value
+    NSInteger clicked = [panel runModal];
+    
+    // If OK clicked only
+    if (clicked == NSModalResponseOK) {
+        for (NSURL *url in [panel URLs]) {
+            // do something with the url here.
+            NSString *path = url.path;
+            [cacertfile setStringValue:path];
+        }
+    }
+}
+
 - (IBAction) chooseLogLevel:(id)sender {
     NSString *logLevel = [logLevelList titleOfSelectedItem];
     
@@ -63,6 +86,8 @@
 }
 
 - (BOOL)shouldExitPane:(InstallerSectionDirection)direction {
+    NSAlert *caCertWrn;
+
     // Validate and process user input before exiting the pane
     if (direction == InstallerDirectionForward) {
         if (self->server.stringValue.length == 0 || self->username.stringValue.length == 0 || self->password.stringValue.length == 0) {
@@ -82,12 +107,25 @@
         BOOL serviceModeEnabled = (self->serviceMode.state == NSControlStateValueOn);
         BOOL runNowEnabled = (self->runNow.state == NSControlStateValueOn);
         NSString *logLevel = [logLevelList titleOfSelectedItem];
+        NSString *cacert = self->cacertfile.stringValue;
+        
+        if ( [[cacertfile stringValue] length] == 0 ) {
+            //We display a warning dialog
+            caCertWrn = [[NSAlert alloc] init];
+            
+            [caCertWrn addButtonWithTitle:@"OK"];
+            [caCertWrn setMessageText:NSLocalizedStringFromTableInBundle(@"Missing_cert_warn",nil,[NSBundle bundleForClass:[self class]], @"Warning about missing certificate file")];
+            [caCertWrn setInformativeText:NSLocalizedStringFromTableInBundle(@"Missing_cert_warn_comment",nil,[NSBundle bundleForClass:[self class]], @"Warning about missing certificate file comment")];
+            [caCertWrn setAlertStyle:NSAlertStyleInformational];
+            [caCertWrn runModal];  // display the warning dialog
+            
+        }
         
         // Example: Save to a temporary file or perform further processing
-        NSLog(@"Server: %@, Username: %@, Password: %@, LogLevel: %@, Service Mode: %@, Run now: %@", server, username, password, logLevel, serviceModeEnabled ? @"Yes" : @"No", runNowEnabled ? @"Yes" : @"No");
+        NSLog(@"Server: %@, Username: %@, Password: %@, LogLevel: %@, Service Mode: %@, Run now: %@, Certificat: %@", server, username, password, logLevel, serviceModeEnabled ? @"Yes" : @"No", runNowEnabled ? @"Yes" : @"No", cacert);
         
         // Example: Save to a temporary file or perform further processing
-        NSString *configContent = [NSString stringWithFormat:@"server=%@\nusername=%@\npassword=%@\nlogLevel=%@\nserviceMode=%@\nrunNow=%@\n", server, username, password, logLevel, serviceModeEnabled ? @"yes" : @"no", runNowEnabled ? @"yes" : @"no"];
+        NSString *configContent = [NSString stringWithFormat:@"server=%@\nusername=%@\npassword=%@\nlogLevel=%@\nserviceMode=%@\nrunNow=%@\ncertificat=%@\n", server, username, password, logLevel, serviceModeEnabled ? @"yes" : @"no", runNowEnabled ? @"yes" : @"no", cacert];
         NSString *tmpConfigFilePath = @"/tmp/installer_config.txt";
         [configContent writeToFile:tmpConfigFilePath atomically:YES encoding:NSUTF8StringEncoding error:nil];
             
