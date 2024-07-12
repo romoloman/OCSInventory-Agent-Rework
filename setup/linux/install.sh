@@ -154,9 +154,11 @@ StandardError=syslog
 WantedBy=multi-user.target
 EOF
 	# restart daemon, enable and start service
-	echo "Reloading daemon and enabling service"
-	sudo systemctl daemon-reload
-	sudo systemctl enable ${SERVICE_NAME}.service
+    echo "Reloading daemon and enabling service"
+    sudo systemctl daemon-reload 
+    sudo systemctl enable ${SERVICE_NAME}.service
+    sudo systemctl start ${SERVICE_NAME}.service
+    echo "Service Started"
 }
 
 # Function to run in silent mode

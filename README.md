@@ -53,7 +53,7 @@ After installing the agent, there is a config forlder and the file `inventory.js
 In this file, there are properties to configure the agent:
 
 |    Property    |                                                                                        Description                                                                                        |
-|:--------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+| :------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
 | data_directory |                                                                     Folder where the agent will store inventory data.                                                                     |
 |   log_level    |                                                                      0: Error 1: Warning 2: Info (default) 3 Verbose                                                                      |
 |    log_file    |                   Default to false, the logs will be written in the terminal you'r using. Set to true, you'll need to specify a log file where you want to write logs.                    |
@@ -63,6 +63,7 @@ In this file, there are properties to configure the agent:
 |     token      |                                                  Will be automatically replace to store the retreived token from the backend server api.                                                  |
 |    username    |                                                By default in remote inventory mode, set the username to connect to the backend server api.                                                |
 |      url       |                                                                                  Backend server api url.                                                                                  |
+|  certificate   |                                                                      specify the path to the certificate file (.pem)                                                                      |
 
 ```text
 {
@@ -74,7 +75,8 @@ In this file, there are properties to configure the agent:
     "url": "Server ip and port",
     "data_directory": "/var/lib/ocsinventory-data",
     "log_file_path": "/var/log/ocsinventory-agent/ocsinventory-agent.log",
-    "log_level": "3"
+    "log_level": "3",
+    "certificate" "/certificate path/file_name.pem"
 }
 ```
 
@@ -115,16 +117,17 @@ This is a list of all available `install.sh` script arguments:
 - -l : set local mode (do not register service)
 - -s : set service mode (register service)
 - -n : set to run the agent now
+- -c : set certificate path
 
 For example, if you want to install OCS Inventory Agent in non-interactive mode and set server adress, set password, set username, set log level, register the service and run the agent now, you have to run this command:
 
 ```text
-sudo install.sh -h Server_ip_and_port -u username -p password -v 3 -s -n
+sudo sh install.sh -h Server_ip_and_port -u username -p password -v 3 -s -n -c -c /path of the certificate/cert.pem
 ```
 
 #### 3. Installing the agent interactively
 
-To install the agent in non-interactive mode, you have to run the `install.sh` script with root privileges.
+To install the agent in interactive mode, you have to run the `install.sh` script with root privileges.
 If the agent configuration is already exist, it will ask you to remove it before installing the agent.
 
 ```text
@@ -135,6 +138,8 @@ Enter username:
 Enter password:
 
 Enter the log level (default is 2 = Info):
+
+Enter the certificate path
 
 Do you register the service - agent must be launched automatically (y/n)?
 
@@ -163,6 +168,7 @@ sudo ocsinventory-agent-ng -v 3
   - -d (--data_directory) : Path to the inventory data (if needed)
   - -l (--log_file_path) : Path to the log file (if needed)
   - -v (--log_level) : Log level (if needed)
+  - -c (--certificate) : Certificate path
 
 ### Installing the agent on Windows
 
@@ -211,7 +217,7 @@ For esample, if you want to create your own package, you need to adjust the agen
 To install the agent in non-interactive mode, you have to run the `OCS-NG setup` with a set of launch arguments to allow to set all configuration options as you can do in interactive mode.
 This is a list of all available `OCS-NG setup` script arguments:
 
-- /SILENT : run in silent mode
+- /VERYSILENT : run in silent mode
 - LOG="\path to store\setup.log" : log file of the installation process
 - /URL=Server ip and port : host url of the OCS Inventory NG server
 - /USERNAME=username : set username
@@ -220,16 +226,17 @@ This is a list of all available `OCS-NG setup` script arguments:
 - /LOCAL=False : set local mode (do not register service)
 - /SERVICE=True : set service mode (register service)
 - /NOW=True : set to run the agent now
+- /CERTIFICATE="\path of the certificate\cert.pem" : set certificate path
 
 For example, if you want to install OCS Inventory Agent in non-interactive mode and run in silent mode, log installation process, set server adress, set password, set username, set log level to verbose, register the service and run the agent now, you have to run this command:
 
 ```text
-mysetup-agent.exe /SILENT /LOG="C:\path to store\setup.log" /URL=Server_ip_and_port /USERNAME=username /PASSWORD=password /LOCAL=False /SERVICE=True /NOW=True /LOGLEVEL=3
+mysetup-agent.exe /VERYSILENT /LOG="C:\path to store\setup.log" /URL=Server_ip_and_port /USERNAME=username /PASSWORD=password /LOCAL=False /SERVICE=True /NOW=True /LOGLEVEL=3 /CERTIFICATE="\path of the certificate\cert.pem"
 ```
 
 #### 4. Installing the agent interactively
 
-To install the agent in non-interactive mode, you have to run the `OCS-NG setup` and set all configuration fields.
+To install the agent in interactive mode, you have to run the `OCS-NG setup` and set all configuration fields.
 
 #### 5. Additionnal information
 
@@ -249,6 +256,7 @@ For example, if you want to run the agent and set log level to verbose, you have
   - -d (--data_directory) : Path to the inventory data
   - -l (--log_file_path) : Path to the log file
   - -v (--log_level) : Log level
+  - -c (--certificate) : Certificate path
 
 ### Installing the agent on MacOS
 
@@ -309,16 +317,17 @@ This is a list of all available `install.sh` script arguments:
 - -v : set level of the log
 - -s : set service mode (register service)
 - -n : set to run the agent now
+- -c : set certificate path
 
 For example, if you want to install OCS Inventory Agent in non-interactive mode and set server adress, set password, set username, set log level, register the service and run the agent now, you have to run this command:
 
 ```text
-sudo install.sh -h Server_ip_and_port -u username -p password -v 3 -s -n
+sudo sh install.sh -h Server_ip_and_port -u username -p password -v 3 -s -n -c -c /path of the certificate/cert.pem
 ```
 
 #### 5. Installing the agent interactively
 
-To install the agent in non-interactive mode, you have to run the `OCS Inventory Agent.mpkg` package and set all configuration fields.
+To install the agent in interactive mode, you have to run the `OCS Inventory Agent.mpkg` package and set all configuration fields.
 
 #### 5. Additionnal information
 
