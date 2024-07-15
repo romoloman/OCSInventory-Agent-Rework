@@ -96,6 +96,10 @@ Future<void> main(List<String> args) async {
       help: "Path to the certificate file",
       valueHelp: "/path_to_store_certificate_file/cert.pem",
       defaultsTo: "/etc/ocsinventory-agent/ocsinventory-agent.pem");
+  parser.addOption("service",
+      help: "Check if the agent is running as a service",
+      valueHelp: "This parameter is only used by the daemon",
+      defaultsTo: "false");
   parser.addFlag("help", abbr: "h", help: "Show this help", negatable: false);
 
   try {
@@ -257,13 +261,16 @@ Future<void> main(List<String> args) async {
       await inventory.sendLocalTemplateInventory();
     }
   }
-  try {
-    if (config.getCoreConfig("agent", "frequency") != null) {
-      stdout.writeln(
-          config.getCoreConfig("agent", "frequency").toString().trim());
+
+  if (await allArgs.option("service").toString() == "true") {
+    try {
+      if (config.getCoreConfig("agent", "frequency") != null) {
+        stdout.writeln(
+            config.getCoreConfig("agent", "frequency").toString().trim());
+      }
+    } catch (e) {
+      stdout.writeln("4");
     }
-  } catch (e) {
-    stdout.writeln("4");
   }
 
   logger.info("APP", "Agent's process has ended!\n");

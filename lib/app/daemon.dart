@@ -69,28 +69,28 @@ Future<ProcessResult> runMainScript(String CurrentDirectory) async {
     } else if (Platform.isWindows) {
       agentName = "/AGENT-WINDOWS";
     } else {
-      print('Unsupported platform');
+      stdout.writeln('Unsupported platform');
       return ProcessResult(0, 1, '', 'Unsupported platform');
     }
     // Define the command to execute
     var executable = CurrentDirectory + agentName;
-    print(executable);
     // Execute the compiled binary with arguments
-    var result = await Process.run(executable, []);
+    var arguments = ["--service=true" ];
+    var result = await Process.run(executable, arguments);
 
     // Check if the process succeededAgent MAcOS
     if (result.exitCode == 0) {
-      print('OCS Inventory Agent executed successfully as a service');
-      print(
+      stdout.writeln('OCS Inventory Agent executed successfully as a service');
+      stdout.writeln(
           'The agent will run again in ${result.stdout.toString().trim()} hours');
     } else {
-      print('OCS Inventory Agent execution failed');
-      print('Error: ${result.stderr}');
+      stdout.writeln('OCS Inventory Agent execution failed');
+      stdout.writeln('Error: ${result.stderr}');
     }
 
     return result;
   } catch (e) {
-    print('An error occurred while executing the Agent: $e');
+    stdout.writeln('An error occurred while executing the Agent: $e');
     return ProcessResult(0, 1, '', e.toString());
   }
 }
