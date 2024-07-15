@@ -3,8 +3,8 @@
 
 #define MyAppName "OCS Inventory Agent"
 #define MyAppVersion "1.0.0"
-#define MyAppPublisher "FACTORFX"
-#define MyAppURL "https://www.factorfx.com/"
+#define MyAppPublisher "OCS Inventory "
+#define MyAppURL "https://www.ocsinventory.com/"
 #define MyAppExeName "agent-windows.exe"
 #define MyAppAssocName MyAppName + " File"
 #define MyAppAssocExt ".myp"
@@ -15,7 +15,7 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{BA5D283B-3ECB-44F2-AB81-3FE690F68C99}
+AppId={{652EB54C-0A14-46AF-9F06-3BA7C294AFC9}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
@@ -27,10 +27,10 @@ DefaultDirName=C:\Program Files\{#MyAppName}
 DisableDirPage=yes
 ChangesAssociations=yes
 DisableProgramGroupPage=yes
-LicenseFile={#AgentPath}\setup\windows\media\LICENSE.TXT
+LicenseFile={#AgentPath}\setup\windows\media\licence.TXT
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
-PrivilegesRequiredOverridesAllowed=dialog
+PrivilegesRequiredOverridesAllowed=commandline
 OutputDir=Setup OCS-NG
 OutputBaseFilename=OCS-NG
 SetupIconFile={#AgentPath}\setup\windows\media\icone_ocs.ico
@@ -41,9 +41,6 @@ WizardStyle=modern
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "french"; MessagesFile: "compiler:Languages\French.isl"
-
-[Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
 Source: "{#AgentPath}\setup\windows\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
@@ -59,7 +56,6 @@ Root: HKA; Subkey: "Software\Classes\Applications\{#MyAppExeName}\SupportedTypes
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [UninstallRun]
 Filename: "{app}\setup\windows\nssm.exe"; Parameters: "stop OCSInventory-Agent"; Flags: runhidden
@@ -71,13 +67,26 @@ Type: filesandordirs; Name: "C:\ProgramData\Agent-OCS"
 [Code]
 var
   Silent: Boolean;
-  URL, Username, Password, LogLevel: String;
-  LocalMode, ServiceMode, RunNow: Boolean;
+  URL, Username, Password, LogLevel, CertFilePath: String;
+  ServiceMode, RunNow: Boolean;
   InputPage: TWizardPage;
   URLLabel, UsernameLabel, PasswordLabel, LogLevelLabel: TLabel;
   URLInput, UsernameInput, PasswordInput: TEdit;
-  LocalCheckBox, ServiceCheckBox, RunNowCheckBox: TNewCheckBox;
+  ServiceCheckBox, RunNowCheckBox: TNewCheckBox;
   LogLevelComboBox: TComboBox;
+  CertFileLabel: TLabel;
+  CertFileInput: TEdit;
+  CertFileButton: TButton;
+
+procedure BrowseCertFile(Sender: TObject);
+var
+  FileName: String;
+begin
+  if GetOpenFileName('', FileName, '', 'Certificate Files|*.crt;*.pem|All Files|*.*', 'pem') then
+  begin
+    CertFileInput.Text := FileName;
+  end;
+end;
 
 procedure InitializeWizard;
 begin
@@ -89,10 +98,10 @@ begin
     URL := ExpandConstant('{param:URL}');
     Username := ExpandConstant('{param:USERNAME}');
     Password := ExpandConstant('{param:PASSWORD}');
-    LocalMode := (ExpandConstant('{param:LOCAL}') = 'True');
     ServiceMode := (ExpandConstant('{param:SERVICE}') = 'True');
     RunNow := (ExpandConstant('{param:NOW}') = 'True');
     LogLevel := ExpandConstant('{param:LOGLEVEL}');
+    CertFilePath := ExpandConstant('{param:CERTIFICATE}');
   end
   else
   begin
@@ -152,17 +161,29 @@ begin
     LogLevelComboBox.Items.Add('Verbose');
     LogLevelComboBox.ItemIndex := 2; // Default to Info
 
-    LocalCheckBox := TNewCheckBox.Create(InputPage);
-    LocalCheckBox.Parent := InputPage.Surface;
-    LocalCheckBox.Top := LogLevelComboBox.Top + LogLevelComboBox.Height + 30;
-    LocalCheckBox.Left := 10;
-    LocalCheckBox.Caption := 'Do not register service - agent must be launched manually';
-    LocalCheckBox.Width := InputPage.SurfaceWidth - 110;
-    LocalCheckBox.Checked := LocalMode;
+    CertFileLabel := TLabel.Create(InputPage);
+    CertFileLabel.Parent := InputPage.Surface;
+    CertFileLabel.Top := LogLevelComboBox.Top + LogLevelComboBox.Height + 15;
+    CertFileLabel.Left := 10;
+    CertFileLabel.Caption := 'Certificate File:';
+    
+    CertFileInput := TEdit.Create(InputPage);
+    CertFileInput.Parent := InputPage.Surface;
+    CertFileInput.Top := CertFileLabel.Top - 3;
+    CertFileInput.Left := CertFileLabel.Left + 100;
+    CertFileInput.Width := InputPage.SurfaceWidth - 200;
+    
+    CertFileButton := TButton.Create(InputPage);
+    CertFileButton.Parent := InputPage.Surface;
+    CertFileButton.Top := CertFileInput.Top;
+    CertFileButton.Left := CertFileInput.Left + CertFileInput.Width + 10;
+    CertFileButton.Width := 75;
+    CertFileButton.Caption := 'Browse...';
+    CertFileButton.OnClick := @BrowseCertFile;
     
     ServiceCheckBox := TNewCheckBox.Create(InputPage);
     ServiceCheckBox.Parent := InputPage.Surface;
-    ServiceCheckBox.Top := LocalCheckBox.Top + LocalCheckBox.Height + 10;
+    ServiceCheckBox.Top := CertFileInput.Top + CertFileInput.Height + 10;
     ServiceCheckBox.Left := 10;
     ServiceCheckBox.Caption := 'Register service - agent must be launched automatically';
     ServiceCheckBox.Width := InputPage.SurfaceWidth - 110;
@@ -170,11 +191,11 @@ begin
 
     RunNowCheckBox := TNewCheckBox.Create(InputPage);
     RunNowCheckBox.Parent := InputPage.Surface;
-    RunNowCheckBox.Top := ServiceCheckBox.Top + ServiceCheckBox.Height + 10; 
+    RunNowCheckBox.Top := ServiceCheckBox.Top + ServiceCheckBox.Height + 10;
     RunNowCheckBox.Left := 10;
     RunNowCheckBox.Caption := 'Run agent now';
     RunNowCheckBox.Width := InputPage.SurfaceWidth - 110;
-    RunNowCheckBox.Checked := RunNow; // Default to checked (run agent now)
+    RunNowCheckBox.Checked := RunNow;
 
   
   end;
@@ -184,11 +205,9 @@ function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   Result := True;
   
-  // Check if in silent mode
   if Silent then
-    Exit; // Exit without performing any validation or showing messages
+    Exit;
   
-  // Perform validation only if not in silent mode
   if CurPageID = InputPage.ID then
   begin
     if URLInput.Text = '' then
@@ -204,6 +223,11 @@ begin
     else if PasswordInput.Text = '' then
     begin
       Log('Error: Please enter a valid Password.');
+      Result := False;
+    end
+    else if CertFileInput.Text = '' then
+    begin
+      Log('Error: Please select a certificate file.');
       Result := False;
     end;
   end;
@@ -249,13 +273,18 @@ begin
   end;
 end;
 
-function IsLocalMode: Boolean;
+function GetCertificateFilePath: String;
 begin
   if Silent then
-    Result := LocalMode
+  begin
+    Result := CertFilePath;
+  end
   else
-    Result := LocalCheckBox.Checked;
+  begin
+    Result := CertFileInput.Text;
+  end;
 end;
+
 
 function IsServiceMode: Boolean;
 begin
@@ -297,8 +326,10 @@ begin
   try
     if CurStep = ssPostInstall then
     begin
-      CommandAgentConfigure := '-f true -m 0 -p ' + GetPassword() + ' -u ' + GetUsername() + ' -s ' + GetURL() + ' -d "C:\ProgramData\Agent-OCS\inventory" -l "C:\ProgramData\Agent-OCS\agent.log"' + ' -v ' + GetLogLevel();
+      
+      CommandAgentConfigure := '-f true -m 0 -p ' + GetPassword() + ' -u ' + GetUsername() + ' -s ' + GetURL() + ' -d "C:\ProgramData\Agent-OCS\inventory" -l "C:\ProgramData\Agent-OCS\agent.log"' + ' -v ' + GetLogLevel() + ' -c "' + GetCertificateFilePath()+'"';
       Log('Executing Command Agent Configuration: ' + ExpandConstant('{app}\{#MyAppExeName}') + ' ' + CommandAgentConfigure);
+      Log('Cetificat path: ' + GetCertificateFilePath());
       if Exec(ExpandConstant('{app}\{#MyAppExeName}'), CommandAgentConfigure, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
       begin
         Log('Successfully configured the agent: ' + ExpandConstant('{app}\{#MyAppExeName}'));
@@ -310,7 +341,7 @@ begin
 
       if IsRunNow then
       begin
-        CommandRunNow := '-f true -m 2 -p ' + GetPassword() + ' -u ' + GetUsername() + ' -s ' + GetURL() + ' -d "C:\ProgramData\Agent-OCS\inventory" -l "C:\ProgramData\Agent-OCS\agent.log"' + ' -v ' + GetLogLevel();
+        CommandRunNow := '-f true -m 2 -p ' + GetPassword() + ' -u ' + GetUsername() + ' -s ' + GetURL() + ' -d "C:\ProgramData\Agent-OCS\inventory" -l "C:\ProgramData\Agent-OCS\agent.log"' + ' -v ' + GetLogLevel() + ' -c "' + GetCertificateFilePath()+'"';
         Log('Executing Command run agent: ' + ExpandConstant('{app}\{#MyAppExeName}') + ' ' + CommandRunNow);
         
         if not Exec(ExpandConstant('{app}\{#MyAppExeName}'), CommandRunNow, '', SW_HIDE, ewNoWait, ResultCode) then

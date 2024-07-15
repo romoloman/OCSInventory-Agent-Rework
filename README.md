@@ -214,8 +214,8 @@ For esample, if you want to create your own package, you need to adjust the agen
 
 #### 3. Installing the agent non-interactively
 
-To install the agent in non-interactive mode, you have to run the `OCS-NG setup` with a set of launch arguments to allow to set all configuration options as you can do in interactive mode.
-This is a list of all available `OCS-NG setup` script arguments:
+To install the agent in non-interactive mode, you have to run the `OCS-NG` with a set of launch arguments to allow to set all configuration options as you can do in interactive mode.
+This is a list of all available `OCS-NG` script arguments:
 
 - /VERYSILENT : run in silent mode
 - LOG="\path to store\setup.log" : log file of the installation process
@@ -236,7 +236,7 @@ mysetup-agent.exe /VERYSILENT /LOG="C:\path to store\setup.log" /URL=Server_ip_a
 
 #### 4. Installing the agent interactively
 
-To install the agent in interactive mode, you have to run the `OCS-NG setup` and set all configuration fields.
+To install the agent in interactive mode, you have to run the `OCS-NG` and set all configuration fields.
 
 #### 5. Additionnal information
 
