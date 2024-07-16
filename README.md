@@ -80,6 +80,24 @@ In this file, there are properties to configure the agent:
 }
 ```
 
+If you want to bypass the Certificat SSL verification, go to the file `/path of your project/OCSInventory-Agent-Rework/lib/core/common/http_utils.dart`
+
+In the function `createHttpsClient` :
+Replace this code :
+
+```
+HttpClient client = HttpClient(context: context);
+```
+
+By
+
+```
+HttpClient client = HttpClient(context: context)
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+```
+
+
 ## Step 4: Installing the Agent
 
 ### Installing the agent on Linux
