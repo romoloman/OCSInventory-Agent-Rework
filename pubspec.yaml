@@ -32,6 +32,9 @@ dependencies:
   http: ^1.2.1
   sprintf: ^7.0.0
   archive: ^3.4.10
+  args: ^2.5.0
+  hive: ^2.0.0
+  hive_flutter: ^1.1.0
 
 dev_dependencies:
   flutter_test:

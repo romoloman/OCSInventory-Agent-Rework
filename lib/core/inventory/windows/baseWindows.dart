@@ -121,7 +121,7 @@ class BaseWindows {
       uuid = (await windowsCommand.commandPowershell(
               "[guid]::NewGuid().ToString()", true))["value"]
           .toString();
-      String containerFileName = sprintf('%s/%s.json', ["config/", "uuid"]);
+      String containerFileName = sprintf('%s.json', ["generated_uuid"]);
       File containerWindowsFile = File(containerFileName);
       if (!containerWindowsFile.existsSync()) {
         containerWindowsFile.createSync(recursive: true);

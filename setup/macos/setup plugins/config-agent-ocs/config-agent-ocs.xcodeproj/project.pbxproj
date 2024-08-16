@@ -1,0 +1,357 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		BFF9FD052C218B6500E3F726 /* MyInstallerPane.m in Sources */ = {isa = PBXBuildFile; fileRef = BFF9FD042C218B6500E3F726 /* MyInstallerPane.m */; };
+		BFF9FD082C218B6500E3F726 /* MyInstallerPane.xib in Resources */ = {isa = PBXBuildFile; fileRef = BFF9FD062C218B6500E3F726 /* MyInstallerPane.xib */; };
+		BFF9FD0B2C218B6500E3F726 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = BFF9FD092C218B6500E3F726 /* Localizable.strings */; };
+		BFF9FD0D2C218B6500E3F726 /* InstallerSections.plist in Resources */ = {isa = PBXBuildFile; fileRef = BFF9FD0C2C218B6500E3F726 /* InstallerSections.plist */; };
+		BFF9FD112C218B6500E3F726 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = BFF9FD0F2C218B6500E3F726 /* InfoPlist.strings */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		BFF9FD002C218B6500E3F726 /* config-agent-ocs.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "config-agent-ocs.bundle"; sourceTree = BUILT_PRODUCTS_DIR; };
+		BFF9FD032C218B6500E3F726 /* MyInstallerPane.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MyInstallerPane.h; sourceTree = "<group>"; };
+		BFF9FD042C218B6500E3F726 /* MyInstallerPane.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MyInstallerPane.m; sourceTree = "<group>"; };
+		BFF9FD072C218B6500E3F726 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MyInstallerPane.xib; sourceTree = "<group>"; };
+		BFF9FD0A2C218B6500E3F726 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		BFF9FD0C2C218B6500E3F726 /* InstallerSections.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = InstallerSections.plist; sourceTree = "<group>"; };
+		BFF9FD0E2C218B6500E3F726 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		BFF9FD102C218B6500E3F726 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		BFF9FD182C218D0D00E3F726 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/MyInstallerPane.strings; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		BFF9FCFD2C218B6500E3F726 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		BFF9FCF72C218B6500E3F726 = {
+			isa = PBXGroup;
+			children = (
+				BFF9FD022C218B6500E3F726 /* config-agent-ocs */,
+				BFF9FD012C218B6500E3F726 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		BFF9FD012C218B6500E3F726 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				BFF9FD002C218B6500E3F726 /* config-agent-ocs.bundle */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		BFF9FD022C218B6500E3F726 /* config-agent-ocs */ = {
+			isa = PBXGroup;
+			children = (
+				BFF9FD032C218B6500E3F726 /* MyInstallerPane.h */,
+				BFF9FD042C218B6500E3F726 /* MyInstallerPane.m */,
+				BFF9FD062C218B6500E3F726 /* MyInstallerPane.xib */,
+				BFF9FD092C218B6500E3F726 /* Localizable.strings */,
+				BFF9FD0C2C218B6500E3F726 /* InstallerSections.plist */,
+				BFF9FD0E2C218B6500E3F726 /* Info.plist */,
+				BFF9FD0F2C218B6500E3F726 /* InfoPlist.strings */,
+			);
+			path = "config-agent-ocs";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		BFF9FCFF2C218B6500E3F726 /* config-agent-ocs */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BFF9FD142C218B6500E3F726 /* Build configuration list for PBXNativeTarget "config-agent-ocs" */;
+			buildPhases = (
+				BFF9FCFC2C218B6500E3F726 /* Sources */,
+				BFF9FCFD2C218B6500E3F726 /* Frameworks */,
+				BFF9FCFE2C218B6500E3F726 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "config-agent-ocs";
+			productName = "config-agent-ocs";
+			productReference = BFF9FD002C218B6500E3F726 /* config-agent-ocs.bundle */;
+			productType = "com.apple.product-type.bundle";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		BFF9FCF82C218B6500E3F726 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					BFF9FCFF2C218B6500E3F726 = {
+						CreatedOnToolsVersion = 15.0.1;
+					};
+				};
+			};
+			buildConfigurationList = BFF9FCFB2C218B6500E3F726 /* Build configuration list for PBXProject "config-agent-ocs" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = BFF9FCF72C218B6500E3F726;
+			productRefGroup = BFF9FD012C218B6500E3F726 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				BFF9FCFF2C218B6500E3F726 /* config-agent-ocs */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		BFF9FCFE2C218B6500E3F726 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BFF9FD082C218B6500E3F726 /* MyInstallerPane.xib in Resources */,
+				BFF9FD112C218B6500E3F726 /* InfoPlist.strings in Resources */,
+				BFF9FD0B2C218B6500E3F726 /* Localizable.strings in Resources */,
+				BFF9FD0D2C218B6500E3F726 /* InstallerSections.plist in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		BFF9FCFC2C218B6500E3F726 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BFF9FD052C218B6500E3F726 /* MyInstallerPane.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		BFF9FD062C218B6500E3F726 /* MyInstallerPane.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				BFF9FD072C218B6500E3F726 /* Base */,
+				BFF9FD182C218D0D00E3F726 /* en */,
+			);
+			name = MyInstallerPane.xib;
+			sourceTree = "<group>";
+		};
+		BFF9FD092C218B6500E3F726 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				BFF9FD0A2C218B6500E3F726 /* en */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		BFF9FD0F2C218B6500E3F726 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				BFF9FD102C218B6500E3F726 /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		BFF9FD122C218B6500E3F726 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		BFF9FD132C218B6500E3F726 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		BFF9FD152C218B6500E3F726 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8Z5RVV6J8F;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "config-agent-ocs/Info.plist";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMainNibFile = MyInstallerPane;
+				INFOPLIST_KEY_NSPrincipalClass = InstallerSection;
+				INSTALL_PATH = "$(HOME)/Library/Bundles";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.FFX.Agent-OCS.config-agent-ocs";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				WRAPPER_EXTENSION = bundle;
+			};
+			name = Debug;
+		};
+		BFF9FD162C218B6500E3F726 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8Z5RVV6J8F;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "config-agent-ocs/Info.plist";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMainNibFile = MyInstallerPane;
+				INFOPLIST_KEY_NSPrincipalClass = InstallerSection;
+				INSTALL_PATH = "$(HOME)/Library/Bundles";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.FFX.Agent-OCS.config-agent-ocs";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				WRAPPER_EXTENSION = bundle;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		BFF9FCFB2C218B6500E3F726 /* Build configuration list for PBXProject "config-agent-ocs" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BFF9FD122C218B6500E3F726 /* Debug */,
+				BFF9FD132C218B6500E3F726 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BFF9FD142C218B6500E3F726 /* Build configuration list for PBXNativeTarget "config-agent-ocs" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BFF9FD152C218B6500E3F726 /* Debug */,
+				BFF9FD162C218B6500E3F726 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = BFF9FCF82C218B6500E3F726 /* Project object */;
+}

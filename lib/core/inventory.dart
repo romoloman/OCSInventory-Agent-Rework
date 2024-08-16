@@ -92,12 +92,12 @@ class Inventory {
     this.assetID = 0;
 
     this.inventoryFileName = sprintf('%s/%s.json', [
-      config.getInventoryConfig("data_dir"),
+      config.getInventoryConfig("data_directory"),
       DateFormat("yyyy-MM-dd_HH-mm-ss").format(DateTime.now())
     ]);
     this.inventoryFile = File(inventoryFileName);
     this.inventoryBase64 = File(sprintf(
-        '%s/%s.json', [config.getInventoryConfig("data_dir"), "Base64"]));
+        '%s/%s.json', [config.getInventoryConfig("data_directory"), "Base64"]));
 
     this.errorCodes = new Map();
   }
@@ -125,6 +125,7 @@ class Inventory {
     var response =
         await httpUtils.get(Uri.parse(url), httpUtils.getHeader(config));
     
+
     if (response["status_code"] == 200) {
       logger.verbose(this.runtimeType.toString(), response["message"]);
       logger.info(this.runtimeType.toString(), "API status's up!");
@@ -872,13 +873,13 @@ class Inventory {
   }
 
   /// Create a local inventory in the JSON format.
-  void sendLocalBaseInventory(Map<String, dynamic> body) {
+  Future<void> sendLocalBaseInventory(Map<String, dynamic> body) async {
     logger.info(this.runtimeType.toString(), "Creating base inventory file...");
     logger.info(
         this.runtimeType.toString(), "Writing base inventory locally...");
     // Create a file to save the new inventory
-    inventoryFile.create(recursive: true);
-    var encoder = JsonEncoder.withIndent("\t");
+    await inventoryFile.create(recursive: true);
+    var encoder = await JsonEncoder.withIndent("\t");
     // Write the new inventory inside
     filesUtils.writeFile(inventoryFile, encoder.convert(body));
     logger.info(this.runtimeType.toString(),

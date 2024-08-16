@@ -15,8 +15,10 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // External package imports
-import 'dart:io' show Platform;
+import 'dart:convert';
+import 'dart:io' show Platform, exit, stdout;
 import 'package:sprintf/sprintf.dart';
+import 'package:args/args.dart';
 
 // Common imports
 import 'package:ocs_agent/core/common/files_utils.dart';
@@ -45,13 +47,130 @@ import 'package:ocs_agent/core/deployment.dart';
 
 /// In this main section we send the [body] to the asset/bases endpoint
 Future<void> main(List<String> args) async {
+  // Initiate the parser for the arguments
+  ArgParser parser = ArgParser();
+  ArgResults allArgs;
   // Initiate main core
-  Config config = new Config();
+  late Config config;
+
+  // Add the arguments options
+  parser.addOption("log_file",
+      abbr: "f",
+      help: "Enalbe or disable the log file",
+      valueHelp: "true/false",
+      defaultsTo: "false");
+  parser.addOption("mode",
+      abbr: "m",
+      help: "Agent execution mode",
+      valueHelp:
+          "0: Installer mode 1: Remote with template 2: Remote without template 3: Local with template 4: Local without template",
+      defaultsTo: "1");
+  parser.addOption("password",
+      abbr: "p", help: "Password", valueHelp: "password", defaultsTo: "admin");
+  parser.addOption("token",
+      abbr: "t", help: "Token", valueHelp: "token", defaultsTo: "");
+  parser.addOption("username",
+      abbr: "u", help: "Username", valueHelp: "username", defaultsTo: "admin");
+  parser.addOption("url",
+      abbr: "s",
+      help: "URL to the OCS server",
+      valueHelp: "http://SERVER_IP:PORT",
+      defaultsTo: "http://ocsinventory-server:port");
+  parser.addOption("data_directory",
+      abbr: "d",
+      help: "Path to the inventory data",
+      valueHelp: "/path_to_store_inventory_data/folder-name",
+      defaultsTo: "inventory");
+  parser.addOption("log_file_path",
+      abbr: "l",
+      help: "Path to the log file",
+      valueHelp: "/path_to_store_log_file/file-name.log",
+      defaultsTo: "ocs-agent.log");
+  parser.addOption("log_level",
+      abbr: "v",
+      help: "Log level",
+      valueHelp: "0: Error 1: Warning 2: Info 3: Verbose",
+      defaultsTo: "2");
+  parser.addOption("certificate",
+      abbr: "c",
+      help: "Path to the certificate file",
+      valueHelp: "/path_to_store_certificate_file/cert.pem",
+      defaultsTo: "/etc/ocsinventory-agent/ocsinventory-agent.pem");
+  parser.addOption("service",
+      help: "Check if the agent is running as a service",
+      valueHelp: "This parameter is only used by the daemon",
+      defaultsTo: "false");
+  parser.addFlag("help", abbr: "h", help: "Show this help", negatable: false);
+
+  try {
+    allArgs = parser.parse(args);
+  } on ArgParserException catch (ex) {
+    stdout.writeln("Failed while parsing arguments");
+
+    stdout.writeln(ex.message);
+    stdout.writeln(parser.usage);
+    exit(1);
+  } catch (ex) {
+    stdout.writeln("Something went wrong while parsing arguments!");
+    stdout.writeln(ex);
+    stdout.writeln(parser.usage);
+    exit(1);
+  }
+
+  if (allArgs.wasParsed("help")) {
+    stdout.writeln(parser.usage);
+    return;
+  }
+
+  late final String configDirectory;
+  if (Platform.isLinux) {
+    configDirectory = "/etc/ocsinventory-agent";
+  } else if (Platform.isMacOS) {
+    configDirectory = "/etc/ocsinventory-agent";
+  } else if (Platform.isWindows) {
+    configDirectory = "C:\\ProgramData\\Agent-OCS\\config";
+  } else {
+    stdout.writeln("Unsupported platform");
+    exit(1);
+  }
+
+  Map<String, dynamic> invenroryConfigurations = {};
+  invenroryConfigurations['log_file'] =
+      await allArgs.option("log_file").toString();
+  invenroryConfigurations['mode'] = await allArgs.option("mode").toString();
+  invenroryConfigurations['password'] =
+      await allArgs.option("password").toString();
+  invenroryConfigurations['token'] = "";
+  invenroryConfigurations['username'] =
+      await allArgs.option("username").toString();
+  invenroryConfigurations['url'] = await allArgs.option("url").toString();
+  invenroryConfigurations['data_directory'] =
+      await allArgs.option("data_directory").toString();
+  invenroryConfigurations['log_file_path'] =
+      await allArgs.option("log_file_path").toString();
+  invenroryConfigurations['log_level'] =
+      await allArgs.option("log_level").toString();
+  invenroryConfigurations['certificate'] =
+      await allArgs.option("certificate").toString();
+
+  config = await Config(
+      configDirectory, jsonEncode(invenroryConfigurations).toString());
+
+  // Iterate allArgs and update inventory config with the provided values
+  if (allArgs.options.isNotEmpty) {
+    invenroryConfigurations.forEach((key, value) {
+      if (allArgs.wasParsed(key)) {
+        config.updateInventoryConfig(key, allArgs.option(key).toString());
+      }
+    });
+  }
+
+  // Initiate logger
   Logger logger = new Logger(config);
 
   // Initiate common
   FilesUtils filesUtils = new FilesUtils();
-  HTTPUtils httpUtils = new HTTPUtils(logger);
+  HTTPUtils httpUtils = new HTTPUtils(logger, config);
   JsonUtils jsonUtils = new JsonUtils();
 
   // Initiate core
@@ -85,10 +204,11 @@ Future<void> main(List<String> args) async {
 
   // Get the agent execution mode
   Map<int, String> enumMode = {
-    0: "Remote with template",
-    1: "Remote without template",
-    2: "Local with template",
-    3: "Local without template",
+    0: "Installer mode",
+    1: "Remote with template",
+    2: "Remote without template",
+    3: "Local with template",
+    4: "Local without template",
   };
   logger.info("APP",
       sprintf("Starting agent in %s mode...", [enumMode[inventory.getMode()]]));
@@ -109,14 +229,19 @@ Future<void> main(List<String> args) async {
         "OS does not match any of the supported OSs! (Check Plateform class return)");
   }
 
-  if (inventory.getMode() == 0 || inventory.getMode() == 1) {
+  if (inventory.getMode() == 0 ||
+      inventory.getMode() == 1 ||
+      inventory.getMode() == 2) {
     if (await inventory.checkApi()) {
       // Inventory process
       await inventory.checkInventoryExist(body);
       await inventory.checkAndApplyConfig();
-      await inventory.sendRemoteBaseInventory(body);
-      if (inventory.getMode() == 0) {
-        await inventory.sendRemoteTemplateInventory(body);
+
+      if (inventory.getMode() == 2 || inventory.getMode() == 1) {
+        await inventory.sendRemoteBaseInventory(body);
+        if (inventory.getMode() == 1) {
+          await inventory.sendRemoteTemplateInventory(body);
+        }
       }
 
       // Deployment process
@@ -130,10 +255,21 @@ Future<void> main(List<String> args) async {
         }
       }
     }
-  } else if (inventory.getMode() == 2 || inventory.getMode() == 3) {
-    inventory.sendLocalBaseInventory(body);
-    if (inventory.getMode() == 2) {
+  } else if (inventory.getMode() == 3 || inventory.getMode() == 4) {
+    await inventory.sendLocalBaseInventory(body);
+    if (inventory.getMode() == 3) {
       await inventory.sendLocalTemplateInventory();
+    }
+  }
+
+  if (await allArgs.option("service").toString() == "true") {
+    try {
+      if (config.getCoreConfig("agent", "frequency") != null) {
+        stdout.writeln(
+            config.getCoreConfig("agent", "frequency").toString().trim());
+      }
+    } catch (e) {
+      stdout.writeln("4");
     }
   }
 

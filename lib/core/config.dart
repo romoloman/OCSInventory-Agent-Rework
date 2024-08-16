@@ -26,19 +26,50 @@ class Config {
   late FilesUtils filesUtils = new FilesUtils();
   late JsonUtils jsonUtils = new JsonUtils();
 
-  final String coreFilename = "config/core.json";
-  final String inventoryFilename = "config/inventory.json";
-  final String templateFilename = "config/template.json";
+  final String coreFilename = "/core.json";
+  final String inventoryFilename = "/inventory.json";
+  final String templateFilename = "/template.json";
 
   late File inventory;
   late File core;
   late File template;
 
   /// Constructor.
-  Config() {
-    this.inventory = File(inventoryFilename);
-    this.core = File(coreFilename);
-    this.template = File(templateFilename);
+  Config(String configPath, String inventoryContent) {
+    createInventoryConfigFile(configPath, inventoryContent);
+  }
+
+  /// Create inventory config file and set the content.
+  void createInventoryConfigFile(
+      String configPath, String inventoryContent) async {
+    Directory configDir = Directory(configPath);
+    if (!configDir.existsSync()) {
+      configDir.createSync(recursive: true);
+    }
+    this.inventory = File(configPath + inventoryFilename);
+    if (!this.inventory.existsSync()) {
+      // Create the file and rite the default content to {}
+      this.inventory.createSync(recursive: true);
+      this.inventory.writeAsStringSync(inventoryContent);
+    }
+    await createOthersConfigFiles(configPath);
+  }
+
+  /// Create core and template config files.
+  Future<void> createOthersConfigFiles(String configPath) async {
+    this.core = File(configPath + coreFilename);
+    if (!this.core.existsSync()) {
+      // Create the file and rite the default content to []
+      this.core.createSync(recursive: true);
+      this.core.writeAsStringSync("[]");
+    }
+
+    this.template = File(configPath + templateFilename);
+    if (!this.template.existsSync()) {
+      // Create the file and rite the default content to {}
+      this.template.createSync(recursive: true);
+      this.template.writeAsStringSync("{}");
+    }
   }
 
   /// Return all content in inventory config file.
