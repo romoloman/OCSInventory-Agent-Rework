@@ -60,18 +60,19 @@ After installing the agent, there is a config forlder and the file `inventory.js
 
 In this file, there are properties to configure the agent:
 
-|    Property    |                                                                                        Description                                                                                        |
-|:--------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
-| data_directory |                                                                     Folder where the agent will store inventory data.                                                                     |
-|   log_level    |                                                                      0: Error 1: Warning 2: Info (default) 3 Verbose                                                                      |
-|    log_file    |                   Default to false, the logs will be written in the terminal you'r using. Set to true, you'll need to specify a log file where you want to write logs.                    |
-| log_file_path  |               This property is to set the log file path. Only define it if you put log_file to true.<br>**Warning**: It will not create the file. You'll need to create it.               |
-|      mode      | This is the working mode property of the agent, there is 5 modes: 0- Installation mode 1-Remote with template 2- Remote without template 3- Local with template 4- Local without template |
-|    password    |                                                By default in remote inventory mode, set the password to connect to the backend server api.                                                |
-|     token      |                                                  Will be automatically replace to store the retreived token from the backend server api.                                                  |
-|    username    |                                                By default in remote inventory mode, set the username to connect to the backend server api.                                                |
-|      url       |                                                                                  Backend server api url.                                                                                  |
-|  certificate   |                                                                      specify the path to the certificate file (.pem)                                                                      |
+|      Property      |                                                                                        Description                                                                                        |
+| :----------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+|   data_directory   |                                                                     Folder where the agent will store inventory data.                                                                     |
+|     log_level      |                                                                      0: Error 1: Warning 2: Info (default) 3 Verbose                                                                      |
+|      log_file      |                   Default to false, the logs will be written in the terminal you'r using. Set to true, you'll need to specify a log file where you want to write logs.                    |
+|   log_file_path    |               This property is to set the log file path. Only define it if you put log_file to true.<br>**Warning**: It will not create the file. You'll need to create it.               |
+|        mode        | This is the working mode property of the agent, there is 5 modes: 0- Installation mode 1-Remote with template 2- Remote without template 3- Local with template 4- Local without template |
+|      password      |                                                By default in remote inventory mode, set the password to connect to the backend server api.                                                |
+|       token        |                                                  Will be automatically replace to store the retreived token from the backend server api.                                                  |
+|      username      |                                                By default in remote inventory mode, set the username to connect to the backend server api.                                                |
+|        url         |                                                                                  Backend server api url.                                                                                  |
+|    certificate     |                                                                      specify the path to the certificate file (.pem)                                                                      |
+| bypass_certificate |                                                                     Bypass certificate verification (false by default)                                                                    |
 
 ```text
 {
@@ -84,27 +85,12 @@ In this file, there are properties to configure the agent:
     "data_directory": "/var/lib/ocsinventory-data",
     "log_file_path": "/var/log/ocsinventory-agent/ocsinventory-agent.log",
     "log_level": "3",
-    "certificate" "/certificate path/file_name.pem"
+    "certificate": "/certificate path/file_name.pem"
+    "bypass_certificate": "false"
 }
 ```
 
-If you want to bypass the Certificat SSL verification, go to the file `/path of your project/OCSInventory-Agent-Rework/lib/core/common/http_utils.dart`
-
-In the function `createHttpsClient` :
-Replace this code :
-
-```
-HttpClient client = HttpClient(context: context);
-```
-
-By
-
-```
-HttpClient client = HttpClient(context: context)
-      ..badCertificateCallback =
-          (X509Certificate cert, String host, int port) => true;
-```
-
+If you want to bypass the Certificat SSL verification, you have to run the the agent with `-b true` option or replace bypass_certificate value to true.
 
 ## Step 5: Installing the Agent
 
