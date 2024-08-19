@@ -36,7 +36,15 @@ or with SSH
 git clone git@github.com:OCSInventory-NG/OCSInventory-Agent-Rework.git
 ```
 
-## Step 3: Agent configuration
+## Step 3: Getting dependencies
+
+Go to the agent directory and run this command :
+
+```text
+flutter pub get
+```
+
+## Step 4: Agent configuration
 
 ### Linux and macos
 
@@ -98,7 +106,7 @@ HttpClient client = HttpClient(context: context)
 ```
 
 
-## Step 4: Installing the Agent
+## Step 5: Installing the Agent
 
 ### Installing the agent on Linux
 
@@ -353,13 +361,13 @@ To install the agent in interactive mode, you have to run the `OCS Inventory Age
 
 - If you set up the service, it will be in `/Library/LaunchDaemons/org.ocsinventory.agent.plist`
 
-## Step 5: Uninstalling the agent
+## Step 6: Uninstalling the agent
 
 - Linux Agent: To uninstall the Linux agent, navigate to `/usr/share/ocsinventory-agent/setup/linux/` and execute the `uninstall.sh` script with root privileges.
 - Windows Agent: To uninstall the Windows agent, go to `C:\Program Files\OCS Inventory Agent` and run the `uninstall application` executable.
 - MacOS Agent: To uninstall the macOS agent, navigate to `/Applications/OCS-NG.app/Contents/Resources/` and execute the `uninstaller.sh` script with root privileges.
 
-## Step 6: Troubleshooting
+## Step 7: Troubleshooting
 
 If you encounter any issues during the installation or usage of the OCS Inventory Agent, here are some troubleshooting steps you can follow:
 
