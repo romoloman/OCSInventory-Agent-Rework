@@ -55,12 +55,15 @@ class HTTPUtils {
         File(config.getInventoryConfig("certificate")).readAsStringSync();
     context.setTrustedCertificatesBytes(utf8.encode(certificate));
 
-    HttpClient client = HttpClient(context: context)
-      ..badCertificateCallback =
-          (X509Certificate cert, String host, int port) => true;
-
-    // HttpClient client = HttpClient(context: context);
-    return IOClient(client);
+    if (config.getInventoryConfig("bypass_certificate") == "true") {
+      HttpClient client = HttpClient(context: context)
+        ..badCertificateCallback =
+            (X509Certificate cert, String host, int port) => true;
+      return IOClient(client);
+    } else {
+      HttpClient client = HttpClient(context: context);
+      return IOClient(client);
+    }
   }
 
   /// Return the statusCode message
