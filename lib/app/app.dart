@@ -96,6 +96,11 @@ Future<void> main(List<String> args) async {
       help: "Path to the certificate file",
       valueHelp: "/path_to_store_certificate_file/cert.pem",
       defaultsTo: "/etc/ocsinventory-agent/ocsinventory-agent.pem");
+  parser.addOption("bypass_certificate",
+      abbr: "b",
+      help: "Bypass certificate validation",
+      valueHelp: "true/false",
+      defaultsTo: "false");
   parser.addOption("service",
       help: "Check if the agent is running as a service",
       valueHelp: "This parameter is only used by the daemon",
@@ -152,6 +157,8 @@ Future<void> main(List<String> args) async {
       await allArgs.option("log_level").toString();
   invenroryConfigurations['certificate'] =
       await allArgs.option("certificate").toString();
+  invenroryConfigurations["bypass_certificate"] =
+      await allArgs.option("bypass_certificate").toString();
 
   config = await Config(
       configDirectory, jsonEncode(invenroryConfigurations).toString());
