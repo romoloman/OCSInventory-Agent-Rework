@@ -50,18 +50,17 @@ class HTTPUtils {
 
   /// Create https client
   IOClient createHttpsClient() {
-    SecurityContext context = SecurityContext(withTrustedRoots: false);
-    String certificate =
-        File(config.getInventoryConfig("certificate")).readAsStringSync();
-    context.setTrustedCertificatesBytes(utf8.encode(certificate));
-
     if (config.getInventoryConfig("bypass_certificate") == "true") {
+      SecurityContext context = SecurityContext(withTrustedRoots: false);
+      String certificate =
+          File(config.getInventoryConfig("certificate")).readAsStringSync();
+      context.setTrustedCertificatesBytes(utf8.encode(certificate));
       HttpClient client = HttpClient(context: context)
         ..badCertificateCallback =
             (X509Certificate cert, String host, int port) => true;
       return IOClient(client);
     } else {
-      HttpClient client = HttpClient(context: context);
+      HttpClient client = HttpClient();
       return IOClient(client);
     }
   }

@@ -31,6 +31,7 @@ SILENT=false
 LOCAL=false
 SERVICE=false
 NOW=false # if true, we run the agent now with mode 2
+CERTIFICATE="null"
 
 # Parse command-line arguments
 while getopts "h:u:p:v:c:lsnih" opt; do
@@ -66,10 +67,7 @@ check_parameters() {
 		echo "Password is required"
 		usage
 	fi
-	if [ -z "$certificate" ]; then
-		echo "Certificate is required"
-		usage
-	fi
+
 }
 # Function to check if the agent is alread -ry installed
 check_installed_agent() {
@@ -151,12 +149,6 @@ run_silent() {
 	echo "+----------------------------------------------------------+"
 	echo
 
-	# Check if the CERTIFICATE file exists
-	if [ ! -f "$CERTIFICATE" ]; then
-		echo "Certificate file does not exist"
-		usage
-	fi
-
 	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$CERTIFICATE"
 	copy_agent_contents
 	run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICATE"
@@ -195,12 +187,6 @@ run_interactive() {
 	read -r now_choice
 	if [ "$now_choice" = "y" ] || [ "$now_choice" = "Y" ]; then
 		NOW=true
-	fi
-
-	# Check if the CERTIFICATE file exists
-	if [ ! -f "$CERTIFICATE" ]; then
-		echo "Certificate file does not exist"
-		usage
 	fi
 
 	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$CERTIFICATE"
