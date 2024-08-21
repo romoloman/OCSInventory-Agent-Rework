@@ -50,19 +50,37 @@ class HTTPUtils {
 
   /// Create https client
   IOClient createHttpsClient() {
-    SecurityContext context = SecurityContext(withTrustedRoots: false);
-    String certificate =
-        File(config.getInventoryConfig("certificate")).readAsStringSync();
-    context.setTrustedCertificatesBytes(utf8.encode(certificate));
-
     if (config.getInventoryConfig("bypass_certificate") == "true") {
-      HttpClient client = HttpClient(context: context)
-        ..badCertificateCallback =
-            (X509Certificate cert, String host, int port) => true;
-      return IOClient(client);
+      SecurityContext context = SecurityContext(withTrustedRoots: false);
+      String certificate =
+          File(config.getInventoryConfig("certificate")).readAsStringSync();
+      context.setTrustedCertificatesBytes(utf8.encode(certificate));
+
+      try {
+        HttpClient client = HttpClient(context: context);
+        client.badCertificateCallback =
+            (X509Certificate cert, String host, int port) {
+          return true;
+        };
+        return IOClient(client);
+      } catch (exception) {
+        logger.error(this.runtimeType.toString(),
+            sprintf("HTTP query: %s", [exception.toString().trim()]));
+        HttpClient client = HttpClient();
+        return IOClient(client);
+      }
     } else {
-      HttpClient client = HttpClient(context: context);
-      return IOClient(client);
+      try {
+        HttpClient client = HttpClient();
+        print("hereeeeeeeeeeeee");
+
+        return IOClient(client);
+      } catch (exception) {
+        logger.error(this.runtimeType.toString(),
+            sprintf("HTTP query: %s", [exception.toString().trim()]));
+        HttpClient client = HttpClient();
+        return IOClient(client);
+      }
     }
   }
 
