@@ -72,8 +72,6 @@ class HTTPUtils {
     } else {
       try {
         HttpClient client = HttpClient();
-        print("hereeeeeeeeeeeee");
-
         return IOClient(client);
       } catch (exception) {
         logger.error(this.runtimeType.toString(),
