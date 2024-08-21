@@ -1,0 +1,20 @@
+[Unit]
+Description=OCS Inventory Agent
+After=network.target
+
+[Service]
+ExecStart=/usr/share/ocsinventory-agent/setup/linux/DAEMON-LINUX
+User=root
+Group=root
+RestartSec=60
+StartLimitInterval=1800
+StartLimitBurst=3
+WorkingDirectory=/usr/share/ocsinventory-agent/setup/linux
+
+# Ensure that PID file and logging directories are set if needed
+PIDFile=/var/run/ocsinventory-agent.pid
+StandardOutput=syslog
+StandardError=syslog
+
+[Install]
+WantedBy=multi-user.target
