@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Check if the script is run as root
+if [ "$(id -u)" != "0" ]; then
+	echo "Please run the installation as root"
+	exit 1
+fi
+
 # Constants
 WORKING_DIRECTORY=$(dirname "$(realpath "$0")")
 WORKING_DIRECTORY_EXEC_PATH="/setup/linux"
@@ -12,6 +18,8 @@ SERVICE_DESCRIPTION="OCS Inventory Agent"
 SERVICE_EXEC="/DAEMON-LINUX"
 AGENT_INSTALLATION_DIR="/usr/share/ocsinventory-agent"
 SYMBOLIC_LINK="/usr/bin/ocsinventory-agent-ng"
+
+
 
 # Function to display usage information
 usage() {
