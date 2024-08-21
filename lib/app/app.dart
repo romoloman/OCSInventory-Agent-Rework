@@ -16,7 +16,7 @@
 
 // External package imports
 import 'dart:convert';
-import 'dart:io' show Platform, exit, stdout;
+import 'dart:io' show File, Platform, exit, stdout;
 import 'package:sprintf/sprintf.dart';
 import 'package:args/args.dart';
 
@@ -163,11 +163,25 @@ Future<void> main(List<String> args) async {
   config = await Config(
       configDirectory, jsonEncode(invenroryConfigurations).toString());
 
+  if (allArgs.wasParsed("certificate")) {
+    File certificate = File(allArgs.option("certificate").toString());
+    if (certificate.existsSync()) {
+      // Copy the certificate to the config directory
+      String certificatePath = configDirectory + "/cert.pem";
+      if (Platform.isWindows) {
+        certificatePath = configDirectory + "\\cert.pem";
+      }
+
+      certificate.copySync(certificatePath);
+      invenroryConfigurations["certificate"] = certificatePath;
+    }
+  }
+  
   // Iterate allArgs and update inventory config with the provided values
   if (allArgs.options.isNotEmpty) {
     invenroryConfigurations.forEach((key, value) {
       if (allArgs.wasParsed(key)) {
-        config.updateInventoryConfig(key, allArgs.option(key).toString());
+        config.updateInventoryConfig(key, value);
       }
     });
   }
