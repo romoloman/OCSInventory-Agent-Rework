@@ -3,14 +3,15 @@ WORKING_DIRECTORY=$(dirname "$(realpath "$0")")
 
 # Function to display usage information
 usage() {
-	echo "Usage: $0 [-h URL] [-u USERNAME] [-p PASSWORD] [-v LOG_LEVEL ] [-c CERTIFICATE] [-s] [-n] [-h]"
-	echo "  -h HOST       host URL of the OCS Inventory NG server"
-	echo "  -u USERNAME   Username"
-	echo "  -p PASSWORD   Password"
-	echo "  -v LOG_LEVEL  Log level"
-	echo "  -c CERTIFICATE Path to the certificate file"
-	echo "  -s            Service mode (register service)"
-	echo "  -n            Run the agent now"
+	echo "Usage: $0 [-l Link] [-u USERNAME] [-p PASSWORD] [-v LOG_LEVEL ] [-c CERTIFICATE] [-s] [-n] [-h]"
+	echo "  -l LINK             link of the OCS Inventory NG server"
+	echo "  -u USERNAME         Username"
+	echo "  -p PASSWORD         Password"
+	echo "  -v LOG_LEVEL        Log level"
+	echo "  -c CERTIFICATE      Path to the certificate file"
+	echo "  -s                  Service mode (register service)"
+	echo "  -n                  Run the agent now"
+	echo "  -h                  Display this help message"
 	exit 1
 }
 
@@ -19,15 +20,16 @@ SERVICE=false
 NOW=false # if true, we run the agent now with mode 2
 
 # Parse command-line arguments
-while getopts "h:u:p:v:c:snih" opt; do
+while getopts "l:u:p:v:c:snh" opt; do
 	case ${opt} in
-	h) URL=$OPTARG ;;
+	l) URL=$OPTARG ;;
 	u) USERNAME=$OPTARG ;;
 	p) PASSWORD=$OPTARG ;;
 	v) LOG_LEVEL=$OPTARG ;;
 	c) CERTIFICATE=$OPTARG ;;
 	s) SERVICE=true ;;
 	n) NOW=true ;;
+	h) usage ;;
 	*) usage ;;
 	esac
 done

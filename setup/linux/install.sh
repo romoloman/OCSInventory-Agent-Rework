@@ -15,35 +15,35 @@ SYMBOLIC_LINK="/usr/bin/ocsinventory-agent-ng"
 
 # Function to display usage information
 usage() {
-	echo "Usage: $0 [-h URL] [-u USERNAME] [-p PASSWORD] [-v LOG_LEVEL ] [-c CERTIFICATE] [-s] [-n] [-h]"
-	echo "  -h HOST       host URL of the OCS Inventory NG server"
-	echo "  -u USERNAME   Username"
-	echo "  -p PASSWORD   Password"
-	echo "  -v LOG_LEVEL  Log level"
-	echo "  -c CERTIFICATE Path to the certificate file"
-	echo "  -s            Service mode (register service)"
-	echo "  -n            Run the agent now"
+	echo "Usage: $0 [-l Link] [-u USERNAME] [-p PASSWORD] [-v LOG_LEVEL ] [-c CERTIFICATE] [-s] [-n] [-h]"
+	echo "  -l Link             Link of the OCS Inventory NG server"
+	echo "  -u USERNAME         Username"
+	echo "  -p PASSWORD         Password"
+	echo "  -v LOG_LEVEL        Log level"
+	echo "  -c CERTIFICATE      Path to the certificate file"
+	echo "  -s                  Service mode (register service)"
+	echo "  -n                  Run the agent now"
+	echo "  -h			        Display this help message"
 	exit 1
 }
 
 # Default values
 SILENT=false
-LOCAL=false
 SERVICE=false
 NOW=false # if true, we run the agent now with mode 2
 CERTIFICATE="null"
 
 # Parse command-line arguments
-while getopts "h:u:p:v:c:lsnih" opt; do
+while getopts "l:u:p:v:c:snh" opt; do
 	case ${opt} in
-	h) URL=$OPTARG ;;
+	l) URL=$OPTARG ;;
 	u) USERNAME=$OPTARG ;;
 	p) PASSWORD=$OPTARG ;;
 	v) LOG_LEVEL=$OPTARG ;;
 	c) CERTIFICATE=$OPTARG ;;
-	l) LOCAL=true ;;
 	s) SERVICE=true ;;
 	n) NOW=true ;;
+	h) usage ;;
 	*) usage ;;
 	esac
 done
@@ -152,7 +152,7 @@ run_silent() {
 	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$CERTIFICATE"
 	copy_agent_contents
 	run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICATE"
-	if [ "$SERVICE" = "true" ] && [ "$LOCAL" = "false" ]; then
+	if [ "$SERVICE" = "true" ]; then
 		register_service
 	fi
 }
@@ -180,8 +180,6 @@ run_interactive() {
 	read -r service_choice
 	if [ "$service_choice" = "y" ] || [ "$service_choice" = "Y" ]; then
 		SERVICE=true
-	else
-		LOCAL=true
 	fi
 	echo -n "Do you want to run the agent now (y/n)? "
 	read -r now_choice
