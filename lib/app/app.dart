@@ -139,6 +139,16 @@ Future<void> main(List<String> args) async {
     exit(1);
   }
 
+  late int logLevel;
+  if (allArgs.wasParsed("log_level")) {
+    logLevel = int.parse(allArgs.option("log_level").toString());
+    if (logLevel >= 0 || logLevel <= 3) {
+      stdout
+          .writeln("Log level must be between 0 and 3 so it has been set to 2");
+      logLevel = 2;
+    }
+  }
+
   Map<String, dynamic> invenroryConfigurations = {};
   invenroryConfigurations['log_file'] =
       await allArgs.option("log_file").toString();
@@ -153,8 +163,7 @@ Future<void> main(List<String> args) async {
       await allArgs.option("data_directory").toString();
   invenroryConfigurations['log_file_path'] =
       await allArgs.option("log_file_path").toString();
-  invenroryConfigurations['log_level'] =
-      await allArgs.option("log_level").toString();
+  invenroryConfigurations['log_level'] = logLevel;
   invenroryConfigurations['certificate'] =
       await allArgs.option("certificate").toString();
   invenroryConfigurations["bypass_certificate"] =
@@ -176,7 +185,7 @@ Future<void> main(List<String> args) async {
       invenroryConfigurations["certificate"] = certificatePath;
     }
   }
-  
+
   // Iterate allArgs and update inventory config with the provided values
   if (allArgs.options.isNotEmpty) {
     invenroryConfigurations.forEach((key, value) {
