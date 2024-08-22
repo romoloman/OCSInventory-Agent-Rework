@@ -159,9 +159,19 @@ Future<void> main(List<String> args) async {
     }
   }
 
+  late bool logFile;
+  if (allArgs.wasParsed("log_file")) {
+    logFile = allArgs.option("log_file").toString() == "true";
+    if (allArgs.option("log_file").toString() != "true" &&
+        allArgs.option("log_file").toString() != "false") {
+      stdout.writeln(
+          "Log file must be true or false so it has been set to false");
+      logFile = false;
+    }
+  }
+
   Map<String, dynamic> invenroryConfigurations = {};
-  invenroryConfigurations['log_file'] =
-      await allArgs.option("log_file").toString();
+  invenroryConfigurations['log_file'] = logFile;
   invenroryConfigurations['mode'] = mode;
   invenroryConfigurations['password'] =
       await allArgs.option("password").toString();
