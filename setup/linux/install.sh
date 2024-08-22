@@ -18,8 +18,6 @@ SERVICE_EXEC="/DAEMON-LINUX"
 AGENT_INSTALLATION_DIR="/usr/share/ocsinventory-agent"
 SYMBOLIC_LINK="/usr/bin/ocsinventory-agent-ng"
 
-
-
 # Function to display usage information
 usage() {
 	echo "Usage: $0 [-l Link] [-u USERNAME] [-p PASSWORD] [-v LOG_LEVEL ] [-c CERTIFICATE] [-s] [-n] [-h]"
