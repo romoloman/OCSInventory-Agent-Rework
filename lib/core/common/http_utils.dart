@@ -50,7 +50,8 @@ class HTTPUtils {
 
   /// Create https client
   IOClient createHttpsClient() {
-    if (config.getInventoryConfig("bypass_certificate") == "true") {
+    bool bypassCertificate = config.getInventoryConfig("bypass_certificate").toString() == "true";
+    if (bypassCertificate) {
       SecurityContext context = SecurityContext(withTrustedRoots: false);
       String certificate =
           File(config.getInventoryConfig("certificate")).readAsStringSync();

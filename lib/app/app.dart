@@ -139,34 +139,42 @@ Future<void> main(List<String> args) async {
     exit(1);
   }
 
-  late int logLevel;
+  int logLevel = 2;
   if (allArgs.wasParsed("log_level")) {
     logLevel = int.parse(allArgs.option("log_level").toString());
     if (logLevel < 0 || logLevel > 3) {
       stdout
           .writeln("Log level must be between 0 and 3 so it has been set to 2");
-      logLevel = 2;
     }
   }
 
-  late int mode;
+  int mode = 4;
   if (allArgs.wasParsed("mode")) {
     mode = int.parse(allArgs.option("mode").toString());
     if (mode < 0 || mode > 4) {
       stdout.writeln(
           "Mode must be between 0 and 4 so it has been set to 4 (Local without template)");
-      mode = 4;
     }
   }
 
-  late bool logFile;
+  bool logFile = false;
   if (allArgs.wasParsed("log_file")) {
     logFile = allArgs.option("log_file").toString() == "true";
     if (allArgs.option("log_file").toString() != "true" &&
         allArgs.option("log_file").toString() != "false") {
       stdout.writeln(
           "Log file must be true or false so it has been set to false");
-      logFile = false;
+    }
+  }
+
+  bool bypassCertificate = false;
+  if (allArgs.wasParsed("bypass_certificate")) {
+    bypassCertificate =
+        allArgs.option("bypass_certificate").toString() == "true";
+    if (allArgs.option("bypass_certificate").toString() != "true" &&
+        allArgs.option("bypass_certificate").toString() != "false") {
+      stdout.writeln(
+          "Bypass certificate must be true or false so it has been set to false");
     }
   }
 
@@ -186,8 +194,7 @@ Future<void> main(List<String> args) async {
   invenroryConfigurations['log_level'] = logLevel;
   invenroryConfigurations['certificate'] =
       await allArgs.option("certificate").toString();
-  invenroryConfigurations["bypass_certificate"] =
-      await allArgs.option("bypass_certificate").toString();
+  invenroryConfigurations["bypass_certificate"] = bypassCertificate;
 
   config = await Config(
       configDirectory, jsonEncode(invenroryConfigurations).toString());
