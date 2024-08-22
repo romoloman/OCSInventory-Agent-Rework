@@ -142,17 +142,27 @@ Future<void> main(List<String> args) async {
   late int logLevel;
   if (allArgs.wasParsed("log_level")) {
     logLevel = int.parse(allArgs.option("log_level").toString());
-    if (logLevel >= 0 || logLevel <= 3) {
+    if (logLevel < 0 || logLevel > 3) {
       stdout
           .writeln("Log level must be between 0 and 3 so it has been set to 2");
       logLevel = 2;
     }
   }
 
+  late int mode;
+  if (allArgs.wasParsed("mode")) {
+    mode = int.parse(allArgs.option("mode").toString());
+    if (mode < 0 || mode > 4) {
+      stdout.writeln(
+          "Mode must be between 0 and 4 so it has been set to 4 (Local without template)");
+      mode = 4;
+    }
+  }
+
   Map<String, dynamic> invenroryConfigurations = {};
   invenroryConfigurations['log_file'] =
       await allArgs.option("log_file").toString();
-  invenroryConfigurations['mode'] = await allArgs.option("mode").toString();
+  invenroryConfigurations['mode'] = mode;
   invenroryConfigurations['password'] =
       await allArgs.option("password").toString();
   invenroryConfigurations['token'] = "";

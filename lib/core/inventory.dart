@@ -104,7 +104,7 @@ class Inventory {
 
   /// Get the running mode of the agent.
   int getMode() {
-    return int.parse(config.getInventoryConfig("mode"));
+    return config.getInventoryConfig("mode");
   }
 
   /// Check if api is working and generate token if not.
@@ -124,7 +124,6 @@ class Inventory {
 
     var response =
         await httpUtils.get(Uri.parse(url), httpUtils.getHeader(config));
-    
 
     if (response["status_code"] == 200) {
       logger.verbose(this.runtimeType.toString(), response["message"]);
