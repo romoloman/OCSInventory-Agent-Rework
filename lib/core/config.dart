@@ -78,17 +78,13 @@ class Config {
   }
 
   /// return [key] content in inventory file.
-  String getInventoryConfig(String key) {
+  dynamic getInventoryConfig(String key) {
     var returnValue = jsonUtils.getContentFromFileByKey(inventory, key);
-    if (returnValue is int) {
-      return returnValue.toString();
-    } else {
-      return returnValue;
-    }
+    return returnValue;
   }
 
   /// Update inventory config file by [_index] and [_value].
-  void updateInventoryConfig(String _index, String _value) {
+  void updateInventoryConfig(String _index, dynamic _value) {
     String str = jsonUtils.setContentFromFile(inventory, _index, _value);
     filesUtils.rewriteFile(inventory, str);
   }

@@ -55,7 +55,7 @@ class JsonUtils {
   }
 
   /// Set new [_value] from [_index] in Json [file].
-  String setContentFromFile(File file, String _index, String _value) {
+  String setContentFromFile(File file, String _index, dynamic _value) {
     var jsonContent = file.readAsStringSync();
     Map<String, dynamic> json = jsonDecode(jsonContent);
     json.forEach((key, value) {
@@ -83,10 +83,18 @@ class JsonUtils {
         if (Platform.isWindows) {
           value = escapeBackslashes(value);
         }
-        if (n >= json.length) {
-          str += "\t\"$key\":\"$value\"\n";
-        } else {
-          str += "\t\"$key\":\"$value\",\n";
+        if(value is String) {
+          if (n >= json.length) {
+            str += "\t\"$key\":\"$value\"\n";
+          } else {
+            str += "\t\"$key\":\"$value\",\n";
+          }
+        }else{
+          if (n >= json.length) {
+            str += "\t\"$key\":$value\n";
+          } else {
+            str += "\t\"$key\":$value,\n";
+          }
         }
         n++;
       });
