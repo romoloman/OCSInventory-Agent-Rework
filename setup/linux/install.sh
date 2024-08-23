@@ -38,7 +38,6 @@ SERVICE=false
 NOW=false # if true, we run the agent now with mode 2
 CERTIFICATE="null"
 
-
 # Parse command-line arguments
 while getopts "l:u:p:v:c:snh" opt; do
 	case ${opt} in
@@ -207,7 +206,7 @@ run_interactive() {
 	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL"
 	copy_agent_contents
 	run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICATE"
-	
+
 }
 
 # Check if all required parameters are provided for silent mode

@@ -52,8 +52,6 @@ if [ -z "$URL" ] || [ -z "$USERNAME" ] || [ -z "$PASSWORD" ] || [ -z "$LOG_LEVEL
 	usage
 fi
 
-
-
 # Save the configuration to /tmp/installer_config_file.txt
 cat <<EOF | sudo tee "/tmp/installer_config.txt" >/dev/null
 server=${URL}
