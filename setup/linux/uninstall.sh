@@ -12,7 +12,7 @@ SYMBOLIC_LINK="/usr/bin/ocsinventory-agent-ng"
 # Function to display usage information
 usage() {
 	echo "Usage: $0 [-y]"
-	echo "  -y            Automatically confirm uninstallation without prompting"
+	echo "  -y  Automatically confirm uninstallation without prompting"
 	exit 1
 }
 
@@ -63,9 +63,9 @@ uninstall_agent() {
 
 # Function to prompt for confirmation
 prompt_confirmation() {
-	echo -n "Are you sure you want to uninstall OCS Inventory NG Agent (y/n)? "
+	echo -n "Are you sure you want to uninstall OCS Inventory NG Agent ([y]/n)? "
 	read -r confirm
-	if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
+	if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ] || [ -z "$confirm" ]; then
 		uninstall_agent
 	else
 		echo "Uninstallation cancelled."

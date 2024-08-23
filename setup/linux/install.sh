@@ -77,9 +77,9 @@ check_parameters() {
 # Function to check if the agent is alread -ry installed
 check_installed_agent() {
 	if [ -d "$AGENT_INSTALLATION_DIR" ] || [ -f "/etc/systemd/system/${SERVICE_NAME}.service" ] || [ -d "$CONFIG_PATH" ] || [ -f "$LOG_PATH" ]; then
-		echo -n "The agent is already installed, do you want to remove it first ? (y/n) "
+		echo -n "The agent is already installed, do you want to remove it first ? ([y]/n) "
 		read -r remove_choice
-		if [ "$remove_choice" = "y" ] || [ "$remove_choice" = "Y" ]; then
+		if [ "$remove_choice" = "y" ] || [ "$remove_choice" = "Y" ] || [ -z "$remove_choice" ]; then
 			echo "Uninstalling the existing agent..."
 			sudo sh "${WORKING_DIRECTORY}/uninstall.sh" -y
 		fi
@@ -181,14 +181,14 @@ run_interactive() {
 	read -r LOG_LEVEL
 	echo -n "Enter the certificate path"
 	read -r CERTIFICATE
-	echo -n "Do you register the service - agent must be launched automatically (y/n)? "
+	echo -n "Do you register the service - agent must be launched automatically ([y]/n)? "
 	read -r service_choice
-	if [ "$service_choice" = "y" ] || [ "$service_choice" = "Y" ]; then
+	if [ "$service_choice" = "y" ] || [ "$service_choice" = "Y" ] || [ -z "$service_choice" ]; then
 		SERVICE=true
 	fi
-	echo -n "Do you want to run the agent now (y/n)? "
+	echo -n "Do you want to run the agent now ([y]/n)? "
 	read -r now_choice
-	if [ "$now_choice" = "y" ] || [ "$now_choice" = "Y" ]; then
+	if [ "$now_choice" = "y" ] || [ "$now_choice" = "Y" ] || [ -z "$now_choice" ]; then
 		NOW=true
 	fi
 
