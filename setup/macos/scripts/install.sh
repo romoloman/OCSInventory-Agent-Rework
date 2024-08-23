@@ -52,11 +52,7 @@ if [ -z "$URL" ] || [ -z "$USERNAME" ] || [ -z "$PASSWORD" ] || [ -z "$LOG_LEVEL
 	usage
 fi
 
-# Check if the certificate file exists
-if [ ! -f "$CERTIFICATE" ]; then
-	echo "Certificate file not found: $CERTIFICATE"
-	exit 1
-fi
+
 
 # Save the configuration to /tmp/installer_config_file.txt
 cat <<EOF | sudo tee "/tmp/installer_config.txt" >/dev/null

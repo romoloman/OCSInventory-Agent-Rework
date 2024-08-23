@@ -3,7 +3,7 @@
 # Constants
 SERVICE_NAME="ocsinventory-agent"
 CONFIG_PATH="/etc/ocsinventory-agent"
-LOG_PATH="/var/log/ocsinventory-agent/ocsinventory-agent.log"
+LOG_PATH="/var/log/ocsinventory-agent"
 STRORE_DATA_PATH="/var/lib/ocsinventory-data"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 AGENT_INSTALLATION_DIR="/usr/share/ocsinventory-agent"
@@ -43,7 +43,7 @@ uninstall_agent() {
 	sudo rm -rf ${CONFIG_PATH}
 
 	echo "Removing log file..."
-	sudo rm -f ${LOG_PATH}
+	sudo rm -rf ${LOG_PATH}
 
 	echo "Removing store data directory..."
 	sudo rm -rf ${STRORE_DATA_PATH}

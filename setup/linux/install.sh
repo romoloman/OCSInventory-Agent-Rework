@@ -38,6 +38,7 @@ SERVICE=false
 NOW=false # if true, we run the agent now with mode 2
 CERTIFICATE="null"
 
+
 # Parse command-line arguments
 while getopts "l:u:p:v:c:snh" opt; do
 	case ${opt} in
@@ -58,7 +59,7 @@ check_parameters() {
 	local url="$1"
 	local username="$2"
 	local password="$3"
-	local certificate="$4"
+	local log_level="$4"
 
 	if [ -z "$url" ]; then
 		echo "Server URL is required"
@@ -73,6 +74,19 @@ check_parameters() {
 		usage
 	fi
 
+	# Check if the log level empty
+	if [ -z "$log_level" ]; then
+		echo "Log level is set 2 by default"
+		LOG_LEVEL=2
+	else
+		# Check if the log level is a number
+		if ! echo "$log_level" | grep -qE '^[0-9]+$'; then
+			echo "Log level must be a number, so it is set to the default value 2"
+			LOG_LEVEL=2
+		else
+			echo "Log level is set to $log_level"
+		fi
+	fi
 }
 # Function to check if the agent is alread -ry installed
 check_installed_agent() {
@@ -154,12 +168,10 @@ run_silent() {
 	echo "+----------------------------------------------------------+"
 	echo
 
-	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$CERTIFICATE"
+	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL"
 	copy_agent_contents
 	run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICATE"
-	if [ "$SERVICE" = "true" ]; then
-		register_service
-	fi
+
 }
 
 # Function to run in interactive mode
@@ -192,12 +204,10 @@ run_interactive() {
 		NOW=true
 	fi
 
-	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$CERTIFICATE"
+	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL"
 	copy_agent_contents
 	run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICATE"
-	if [ "$SERVICE" = "true" ]; then
-		register_service
-	fi
+	
 }
 
 # Check if all required parameters are provided for silent mode
@@ -213,7 +223,10 @@ else
 fi
 
 # Check if all are created successfully
-if [ -f "/etc/systemd/system/${SERVICE_NAME}.service" ] && [ -d "$CONFIG_PATH" ] && [ -f "$LOG_PATH" ]; then
+if [ -d "$CONFIG_PATH" ] && [ -f "$LOG_PATH" ] && [ -d "$AGENT_INSTALLATION_DIR" ] && [ -f "$SYMBOLIC_LINK" ]; then
+	if [ "$SERVICE" = "true" ]; then
+		register_service
+	fi
 	echo
 	echo "+------------------------------------------------------------------------------+"
 	echo "|   OK, OCS Inventory NG Agent for Unix/Linux has been successfully            |"
@@ -230,7 +243,12 @@ if [ -f "/etc/systemd/system/${SERVICE_NAME}.service" ] && [ -d "$CONFIG_PATH" ]
 	echo
 
 else
-	echo "The agent installation failed"
+	echo
+	echo
+	echo "*** ERROR: Install of agent failed, please look at error and fix !"
+	echo
+	echo "Installation aborted !"
+	exit 1
 fi
 
 exit 0
