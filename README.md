@@ -61,7 +61,7 @@ After installing the agent, there is a config forlder and the file `inventory.js
 In this file, there are properties to configure the agent:
 
 |      Property      |                                                                                        Description                                                                                        |
-|:------------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+| :----------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
 |   data_directory   |                                                                     Folder where the agent will store inventory data.                                                                     |
 |     log_level      |                                                                      0: Error 1: Warning 2: Info (default) 3 Verbose                                                                      |
 |      log_file      |                   Default to false, the logs will be written in the terminal you'r using. Set to true, you'll need to specify a log file where you want to write logs.                    |
@@ -76,21 +76,31 @@ In this file, there are properties to configure the agent:
 
 ```text
 {
-    "log_file": "true",
-    "mode": "2",
+    "log_file": true,
+    "mode": 2,
     "password": "password",
     "token": "token value",
     "username": "username",
     "url": "Server ip and port",
     "data_directory": "/var/lib/ocsinventory-data",
     "log_file_path": "/var/log/ocsinventory-agent/ocsinventory-agent.log",
-    "log_level": "3",
+    "log_level": 3,
     "certificate": "/certificate path/file_name.pem"
-    "bypass_certificate": "false"
+    "bypass_certificate": false
 }
 ```
 
-If you want to bypass the Certificat SSL verification, you have to run the the agent with `-b true` option or replace bypass_certificate value to true.
+### SSL
+
+- HTTP
+
+If your OCS Inventory backend is running with the HTTP protocol, you do not need a certificate file to install the agent.
+
+- HTTPS
+
+If your OCS Inventory backend is running with the HTTPS protocol, you must have a certificate file, even if it is self-signed, to install the agent.
+
+You can bypass SSL certificate verification (if the certificate is self-signed) by running the agent with the `-b true` option or by setting the `bypass_certificate` value to true in the configuration file.
 
 ## Step 5: Installing the Agent
 
