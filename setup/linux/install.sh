@@ -20,10 +20,11 @@ SYMBOLIC_LINK="/usr/bin/ocsinventory-agent-ng"
 
 # Function to display usage information
 usage() {
-	echo "Usage: $0 [-l Link] [-u USERNAME] [-p PASSWORD] [-v LOG_LEVEL ] [-c CERTIFICATE] [-s] [-n] [-h]"
+	echo "Usage: $0 [-l Link] [-u USERNAME] [-p PASSWORD] [-m MODE] [-v LOG_LEVEL ] [-c CERTIFICATE] [-s] [-n] [-h]"
 	echo "  -l Link             Link of the OCS Inventory NG server"
 	echo "  -u USERNAME         Username"
 	echo "  -p PASSWORD         Password"
+	echo "  -m MODE             Inventory mode"
 	echo "  -v LOG_LEVEL        Log level"
 	echo "  -c CERTIFICATE      Path to the certificate file"
 	echo "  -s                  Service mode (register service)"
@@ -39,11 +40,12 @@ NOW=false # if true, we run the agent now with mode 2
 CERTIFICATE="null"
 
 # Parse command-line arguments
-while getopts "l:u:p:v:c:snh" opt; do
+while getopts "l:u:p:m:v:c:snh" opt; do
 	case ${opt} in
 	l) URL=$OPTARG ;;
 	u) USERNAME=$OPTARG ;;
 	p) PASSWORD=$OPTARG ;;
+	m) INVENTORY_MODE=$OPTARG ;;
 	v) LOG_LEVEL=$OPTARG ;;
 	c) CERTIFICATE=$OPTARG ;;
 	s) SERVICE=true ;;
@@ -59,6 +61,7 @@ check_parameters() {
 	local username="$2"
 	local password="$3"
 	local log_level="$4"
+	local inventory_mode="$5"
 
 	if [ -z "$url" ]; then
 		echo "Server URL is required"
@@ -86,7 +89,22 @@ check_parameters() {
 			echo "Log level is set to $log_level"
 		fi
 	fi
+
+	# Check if the inventory mode empty
+	if [ -z "$inventory_mode" ]; then
+		echo "Inventory mode is set 2 by default"
+		INVENTORY_MODE=2
+	else
+		# Check if the inventory mode is a number
+		if ! echo "$inventory_mode" | grep -qE '^[0-9]+$'; then
+			echo "Inventory mode must be a number, so it is set to the default value 2"
+			INVENTORY_MODE=2
+		else
+			echo "Inventory mode is set to $inventory_mode"
+		fi
+	fi
 }
+
 # Function to check if the agent is alread -ry installed
 check_installed_agent() {
 	if [ -d "$AGENT_INSTALLATION_DIR" ] || [ -f "/etc/systemd/system/${SERVICE_NAME}.service" ] || [ -d "$CONFIG_PATH" ] || [ -f "$LOG_PATH" ]; then
@@ -130,6 +148,7 @@ run_executable() {
 	local log_level="$4"
 	local run_now="$5"
 	local certificate="$6"
+	local inventory_mode="$7"
 
 	# Construct command for running executable
 	command_install="$WORKING_DIRECTORY$EXEC_AGENT -f true -m 0 -p $password -u $username -s $url -l $LOG_PATH -d $STRORE_DATA_PATH -v $log_level -c $certificate"
@@ -138,7 +157,7 @@ run_executable() {
 
 	if [ "$run_now" = "true" ]; then
 		echo "Running the agent now..."
-		command_run="$WORKING_DIRECTORY$EXEC_AGENT -f true -m 2 -p $password -u $username -s $url -l $LOG_PATH -d $STRORE_DATA_PATH -v $log_level -c $certificate"
+		command_run="$WORKING_DIRECTORY$EXEC_AGENT -f true -m $inventory_mode -p $password -u $username -s $url -l $LOG_PATH -d $STRORE_DATA_PATH -v $log_level -c $certificate"
 		$command_run
 	fi
 }
@@ -167,9 +186,9 @@ run_silent() {
 	echo "+----------------------------------------------------------+"
 	echo
 
-	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL"
+	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$INVENTORY_MODE"
 	copy_agent_contents
-	run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICATE"
+	run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICATE" "$INVENTORY_MODE"
 
 }
 
@@ -188,6 +207,8 @@ run_interactive() {
 	read -r USERNAME
 	echo -n "Enter password: "
 	read -r PASSWORD
+	echo -n "Enter the inventory mode (default is 2 = Remote without template): "
+	read -r INVENTORY_MODE
 	echo -n "Enter the log level (default is 2 = Info): "
 	read -r LOG_LEVEL
 	echo -n "Enter the certificate path"
@@ -203,9 +224,9 @@ run_interactive() {
 		NOW=true
 	fi
 
-	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL"
+	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$INVENTORY_MODE"
 	copy_agent_contents
-	run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICATE"
+	run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICATE" "$INVENTORY_MODE"
 
 }
 
