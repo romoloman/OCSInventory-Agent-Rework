@@ -76,21 +76,31 @@ In this file, there are properties to configure the agent:
 
 ```text
 {
-    "log_file": "true",
-    "mode": "2",
+    "log_file": true,
+    "mode": 2,
     "password": "password",
     "token": "token value",
     "username": "username",
     "url": "Server ip and port",
     "data_directory": "/var/lib/ocsinventory-data",
     "log_file_path": "/var/log/ocsinventory-agent/ocsinventory-agent.log",
-    "log_level": "3",
+    "log_level": 3,
     "certificate": "/certificate path/file_name.pem"
-    "bypass_certificate": "false"
+    "bypass_certificate": false
 }
 ```
 
-If you want to bypass the Certificat SSL verification, you have to run the the agent with `-b true` option or replace bypass_certificate value to true.
+### SSL
+
+- HTTP
+
+If your OCS Inventory backend is running with the HTTP protocol, you do not need a certificate file to install the agent.
+
+- HTTPS
+
+If your OCS Inventory backend is running with the HTTPS protocol, you must have a certificate file, even if it is self-signed, to install the agent.
+
+You can bypass SSL certificate verification (if the certificate is self-signed) by running the agent with the `-b true` option or by setting the `bypass_certificate` value to true in the configuration file.
 
 ## Step 5: Installing the Agent
 
@@ -122,19 +132,19 @@ Ensure that you have something like this:
 To install the agent in non-interactive mode, you have to run the linux `install.sh` script with a set of launch arguments to allow to set all configuration options as you can do in interactive mode.
 This is a list of all available `install.sh` script arguments:
 
-- -h : set host url of the OCS Inventory NG server
+- -l : set link of the OCS Inventory NG server
 - -u : set username
 - -p : set password
+- -m : set inventory mode
 - -v : set level of the log
-- -l : set local mode (do not register service)
 - -s : set service mode (register service)
 - -n : set to run the agent now
 - -c : set certificate path
 
-For example, if you want to install OCS Inventory Agent in non-interactive mode and set server adress, set password, set username, set log level, register the service and run the agent now, you have to run this command:
+For example, if you want to install OCS Inventory Agent in non-interactive mode and set server adress, set password,set inventory mode, set username, set log level, register the service and run the agent now, you have to run this command:
 
 ```text
-sudo sh install.sh -h Server_ip_and_port -u username -p password -v 3 -s -n -c -c /path of the certificate/cert.pem
+sudo sh install.sh -l Server_ip_and_port -u username -p password -m 2 -v 3 -s -n -c -c /path of the certificate/cert.pem
 ```
 
 #### 3. Installing the agent interactively
@@ -148,6 +158,8 @@ Enter server URL:
 Enter username:
 
 Enter password:
+
+Enter the inventory mode (default is 2 = Remote without template):
 
 Enter the log level (default is 2 = Info):
 
@@ -231,11 +243,10 @@ This is a list of all available `OCS-NG` script arguments:
 
 - /VERYSILENT : run in silent mode
 - LOG="\path to store\setup.log" : log file of the installation process
-- /URL=Server ip and port : host url of the OCS Inventory NG server
+- /URL=Server ip and port : link of the OCS Inventory NG server
 - /USERNAME=username : set username
 - /PASSWORD=password : set password
 - /LOGLEVEL=3 : set level of the log
-- /LOCAL=False : set local mode (do not register service)
 - /SERVICE=True : set service mode (register service)
 - /NOW=True : set to run the agent now
 - /CERTIFICATE="\path of the certificate\cert.pem" : set certificate path
@@ -323,7 +334,7 @@ Ensure that you have something like this:
 To install the agent in non-interactive mode, you have to run the MacOS `install.sh` script with a set of launch arguments to allow to set all configuration options as you can do in interactive mode.
 This is a list of all available `install.sh` script arguments:
 
-- -h : set host url of the OCS Inventory NG server
+- -l : set link of the OCS Inventory NG server
 - -u : set username
 - -p : set password
 - -v : set level of the log
@@ -334,7 +345,7 @@ This is a list of all available `install.sh` script arguments:
 For example, if you want to install OCS Inventory Agent in non-interactive mode and set server adress, set password, set username, set log level, register the service and run the agent now, you have to run this command:
 
 ```text
-sudo sh install.sh -h Server_ip_and_port -u username -p password -v 3 -s -n -c -c /path of the certificate/cert.pem
+sudo sh install.sh -l Server_ip_and_port -u username -p password -v 3 -s -n -c -c /path of the certificate/cert.pem
 ```
 
 #### 5. Installing the agent interactively

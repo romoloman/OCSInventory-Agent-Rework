@@ -46,9 +46,9 @@ class Logger {
   Logger(Config config) {
     this.config = config;
 
-    _isFile = (config.getInventoryConfig("log_file").toLowerCase() == 'true');
+    _isFile = config.getInventoryConfig("log_file");
     _url = config.getInventoryConfig("url");
-    _logLevel = int.parse(config.getInventoryConfig("log_level"));
+    _logLevel = config.getInventoryConfig("log_level");
 
     if (_isFile) {
       file = File(config.getInventoryConfig("log_file_path"));

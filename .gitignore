@@ -59,3 +59,5 @@ config/template.json
 pubspec.lock
 hiveData/testbox.lock
 hiveData/testbox.hive
+setup/linux/AGENT-LINUX
+setup/linux/DAEMON-LINUX

@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Check if the script is run as root
+if [ "$(id -u)" != "0" ]; then
+	echo "Please run the installation as root"
+	exit 1
+fi
+
 # Constants
 WORKING_DIRECTORY=$(dirname "$(realpath "$0")")
 WORKING_DIRECTORY_EXEC_PATH="/setup/linux"
@@ -8,41 +14,43 @@ CONFIG_PATH="/etc/ocsinventory-agent"
 LOG_PATH="/var/log/ocsinventory-agent/ocsinventory-agent.log"
 STRORE_DATA_PATH="/var/lib/ocsinventory-data"
 SERVICE_NAME="ocsinventory-agent"
-SERVICE_DESCRIPTION="OCS Inventory Agent"
 SERVICE_EXEC="/DAEMON-LINUX"
 AGENT_INSTALLATION_DIR="/usr/share/ocsinventory-agent"
 SYMBOLIC_LINK="/usr/bin/ocsinventory-agent-ng"
 
 # Function to display usage information
 usage() {
-	echo "Usage: $0 [-h URL] [-u USERNAME] [-p PASSWORD] [-v LOG_LEVEL ] [-c CERTIFICATE] [-s] [-n] [-h]"
-	echo "  -h HOST       host URL of the OCS Inventory NG server"
-	echo "  -u USERNAME   Username"
-	echo "  -p PASSWORD   Password"
-	echo "  -v LOG_LEVEL  Log level"
-	echo "  -c CERTIFICATE Path to the certificate file"
-	echo "  -s            Service mode (register service)"
-	echo "  -n            Run the agent now"
+	echo "Usage: $0 [-l Link] [-u USERNAME] [-p PASSWORD] [-m MODE] [-v LOG_LEVEL ] [-c CERTIFICATE] [-s] [-n] [-h]"
+	echo "  -l Link             Link of the OCS Inventory NG server"
+	echo "  -u USERNAME         Username"
+	echo "  -p PASSWORD         Password"
+	echo "  -m MODE             Inventory mode"
+	echo "  -v LOG_LEVEL        Log level"
+	echo "  -c CERTIFICATE      Path to the certificate file"
+	echo "  -s                  Service mode (register service)"
+	echo "  -n                  Run the agent now"
+	echo "  -h			        Display this help message"
 	exit 1
 }
 
 # Default values
 SILENT=false
-LOCAL=false
 SERVICE=false
 NOW=false # if true, we run the agent now with mode 2
+CERTIFICATE="null"
 
 # Parse command-line arguments
-while getopts "h:u:p:v:c:lsnih" opt; do
+while getopts "l:u:p:m:v:c:snh" opt; do
 	case ${opt} in
-	h) URL=$OPTARG ;;
+	l) URL=$OPTARG ;;
 	u) USERNAME=$OPTARG ;;
 	p) PASSWORD=$OPTARG ;;
+	m) INVENTORY_MODE=$OPTARG ;;
 	v) LOG_LEVEL=$OPTARG ;;
 	c) CERTIFICATE=$OPTARG ;;
-	l) LOCAL=true ;;
 	s) SERVICE=true ;;
 	n) NOW=true ;;
+	h) usage ;;
 	*) usage ;;
 	esac
 done
@@ -52,7 +60,8 @@ check_parameters() {
 	local url="$1"
 	local username="$2"
 	local password="$3"
-	local certificate="$4"
+	local log_level="$4"
+	local inventory_mode="$5"
 
 	if [ -z "$url" ]; then
 		echo "Server URL is required"
@@ -66,17 +75,42 @@ check_parameters() {
 		echo "Password is required"
 		usage
 	fi
-	if [ -z "$certificate" ]; then
-		echo "Certificate is required"
-		usage
+
+	# Check if the log level empty
+	if [ -z "$log_level" ]; then
+		echo "Log level is set 2 by default"
+		LOG_LEVEL=2
+	else
+		# Check if the log level is a number
+		if ! echo "$log_level" | grep -qE '^[0-9]+$'; then
+			echo "Log level must be a number, so it is set to the default value 2"
+			LOG_LEVEL=2
+		else
+			echo "Log level is set to $log_level"
+		fi
+	fi
+
+	# Check if the inventory mode empty
+	if [ -z "$inventory_mode" ]; then
+		echo "Inventory mode is set 2 by default"
+		INVENTORY_MODE=2
+	else
+		# Check if the inventory mode is a number
+		if ! echo "$inventory_mode" | grep -qE '^[0-9]+$'; then
+			echo "Inventory mode must be a number, so it is set to the default value 2"
+			INVENTORY_MODE=2
+		else
+			echo "Inventory mode is set to $inventory_mode"
+		fi
 	fi
 }
+
 # Function to check if the agent is alread -ry installed
 check_installed_agent() {
 	if [ -d "$AGENT_INSTALLATION_DIR" ] || [ -f "/etc/systemd/system/${SERVICE_NAME}.service" ] || [ -d "$CONFIG_PATH" ] || [ -f "$LOG_PATH" ]; then
-		echo -n "The agent is already installed, do you want to remove it first ? (y/n) "
+		echo -n "The agent is already installed, do you want to remove it first ? ([y]/n) "
 		read -r remove_choice
-		if [ "$remove_choice" = "y" ] || [ "$remove_choice" = "Y" ]; then
+		if [ "$remove_choice" = "y" ] || [ "$remove_choice" = "Y" ] || [ -z "$remove_choice" ]; then
 			echo "Uninstalling the existing agent..."
 			sudo sh "${WORKING_DIRECTORY}/uninstall.sh" -y
 		fi
@@ -114,6 +148,7 @@ run_executable() {
 	local log_level="$4"
 	local run_now="$5"
 	local certificate="$6"
+	local inventory_mode="$7"
 
 	# Construct command for running executable
 	command_install="$WORKING_DIRECTORY$EXEC_AGENT -f true -m 0 -p $password -u $username -s $url -l $LOG_PATH -d $STRORE_DATA_PATH -v $log_level -c $certificate"
@@ -122,7 +157,7 @@ run_executable() {
 
 	if [ "$run_now" = "true" ]; then
 		echo "Running the agent now..."
-		command_run="$WORKING_DIRECTORY$EXEC_AGENT -f true -m 2 -p $password -u $username -s $url -l $LOG_PATH -d $STRORE_DATA_PATH -v $log_level -c $certificate"
+		command_run="$WORKING_DIRECTORY$EXEC_AGENT -f true -m $inventory_mode -p $password -u $username -s $url -l $LOG_PATH -d $STRORE_DATA_PATH -v $log_level -c $certificate"
 		$command_run
 	fi
 }
@@ -131,28 +166,8 @@ run_executable() {
 register_service() {
 	# create service file
 	echo "Creating ${SERVICE_NAME} service file..."
-	sudo tee "/etc/systemd/system/${SERVICE_NAME}.service" >/dev/null <<EOF
-[Unit]
-Description=${SERVICE_DESCRIPTION}
-After=network.target
+	sudo cp "${WORKING_DIRECTORY}/ocsinventory-agent.service" "/etc/systemd/system/${SERVICE_NAME}.service"
 
-[Service]
-ExecStart=${AGENT_INSTALLATION_DIR}${WORKING_DIRECTORY_EXEC_PATH}${SERVICE_EXEC}
-User=root
-Group=root
-RestartSec=60
-StartLimitInterval=1800
-StartLimitBurst=3
-WorkingDirectory=${AGENT_INSTALLATION_DIR}${WORKING_DIRECTORY_EXEC_PATH}
-
-# Ensure that PID file and logging directories are set if needed
-PIDFile=/var/run/${SERVICE_NAME}.pid
-StandardOutput=syslog
-StandardError=syslog
-
-[Install]
-WantedBy=multi-user.target
-EOF
 	# restart daemon, enable and start service
 	echo "Reloading daemon and enabling service"
 	sudo systemctl daemon-reload
@@ -171,18 +186,10 @@ run_silent() {
 	echo "+----------------------------------------------------------+"
 	echo
 
-	# Check if the CERTIFICATE file exists
-	if [ ! -f "$CERTIFICATE" ]; then
-		echo "Certificate file does not exist"
-		usage
-	fi
-
-	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$CERTIFICATE"
+	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$INVENTORY_MODE"
 	copy_agent_contents
-	run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICATE"
-	if [ "$SERVICE" = "true" ] && [ "$LOCAL" = "false" ]; then
-		register_service
-	fi
+	run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICATE" "$INVENTORY_MODE"
+
 }
 
 # Function to run in interactive mode
@@ -200,35 +207,27 @@ run_interactive() {
 	read -r USERNAME
 	echo -n "Enter password: "
 	read -r PASSWORD
+	echo -n "Enter the inventory mode (default is 2 = Remote without template): "
+	read -r INVENTORY_MODE
 	echo -n "Enter the log level (default is 2 = Info): "
 	read -r LOG_LEVEL
 	echo -n "Enter the certificate path"
 	read -r CERTIFICATE
-	echo -n "Do you register the service - agent must be launched automatically (y/n)? "
+	echo -n "Do you register the service - agent must be launched automatically ([y]/n)? "
 	read -r service_choice
-	if [ "$service_choice" = "y" ] || [ "$service_choice" = "Y" ]; then
+	if [ "$service_choice" = "y" ] || [ "$service_choice" = "Y" ] || [ -z "$service_choice" ]; then
 		SERVICE=true
-	else
-		LOCAL=true
 	fi
-	echo -n "Do you want to run the agent now (y/n)? "
+	echo -n "Do you want to run the agent now ([y]/n)? "
 	read -r now_choice
-	if [ "$now_choice" = "y" ] || [ "$now_choice" = "Y" ]; then
+	if [ "$now_choice" = "y" ] || [ "$now_choice" = "Y" ] || [ -z "$now_choice" ]; then
 		NOW=true
 	fi
 
-	# Check if the CERTIFICATE file exists
-	if [ ! -f "$CERTIFICATE" ]; then
-		echo "Certificate file does not exist"
-		usage
-	fi
-
-	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$CERTIFICATE"
+	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$INVENTORY_MODE"
 	copy_agent_contents
-	run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICATE"
-	if [ "$SERVICE" = "true" ]; then
-		register_service
-	fi
+	run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICATE" "$INVENTORY_MODE"
+
 }
 
 # Check if all required parameters are provided for silent mode
@@ -244,7 +243,10 @@ else
 fi
 
 # Check if all are created successfully
-if [ -f "/etc/systemd/system/${SERVICE_NAME}.service" ] && [ -d "$CONFIG_PATH" ] && [ -f "$LOG_PATH" ]; then
+if [ -d "$CONFIG_PATH" ] && [ -f "$LOG_PATH" ] && [ -d "$AGENT_INSTALLATION_DIR" ] && [ -f "$SYMBOLIC_LINK" ]; then
+	if [ "$SERVICE" = "true" ]; then
+		register_service
+	fi
 	echo
 	echo "+------------------------------------------------------------------------------+"
 	echo "|   OK, OCS Inventory NG Agent for Unix/Linux has been successfully            |"
@@ -261,7 +263,12 @@ if [ -f "/etc/systemd/system/${SERVICE_NAME}.service" ] && [ -d "$CONFIG_PATH" ]
 	echo
 
 else
-	echo "The agent installation failed"
+	echo
+	echo
+	echo "*** ERROR: Install of agent failed, please look at error and fix !"
+	echo
+	echo "Installation aborted !"
+	exit 1
 fi
 
 exit 0

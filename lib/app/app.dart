@@ -16,7 +16,7 @@
 
 // External package imports
 import 'dart:convert';
-import 'dart:io' show Platform, exit, stdout;
+import 'dart:io' show File, Platform, exit, stdout;
 import 'package:sprintf/sprintf.dart';
 import 'package:args/args.dart';
 
@@ -139,10 +139,48 @@ Future<void> main(List<String> args) async {
     exit(1);
   }
 
+  int logLevel = 2;
+  if (allArgs.wasParsed("log_level")) {
+    logLevel = int.parse(allArgs.option("log_level").toString());
+    if (logLevel < 0 || logLevel > 3) {
+      stdout
+          .writeln("Log level must be between 0 and 3 so it has been set to 2");
+    }
+  }
+
+  int mode = 4;
+  if (allArgs.wasParsed("mode")) {
+    mode = int.parse(allArgs.option("mode").toString());
+    if (mode < 0 || mode > 4) {
+      stdout.writeln(
+          "Mode must be between 0 and 4 so it has been set to 4 (Local without template)");
+    }
+  }
+
+  bool logFile = false;
+  if (allArgs.wasParsed("log_file")) {
+    logFile = allArgs.option("log_file").toString() == "true";
+    if (allArgs.option("log_file").toString() != "true" &&
+        allArgs.option("log_file").toString() != "false") {
+      stdout.writeln(
+          "Log file must be true or false so it has been set to false");
+    }
+  }
+
+  bool bypassCertificate = false;
+  if (allArgs.wasParsed("bypass_certificate")) {
+    bypassCertificate =
+        allArgs.option("bypass_certificate").toString() == "true";
+    if (allArgs.option("bypass_certificate").toString() != "true" &&
+        allArgs.option("bypass_certificate").toString() != "false") {
+      stdout.writeln(
+          "Bypass certificate must be true or false so it has been set to false");
+    }
+  }
+
   Map<String, dynamic> invenroryConfigurations = {};
-  invenroryConfigurations['log_file'] =
-      await allArgs.option("log_file").toString();
-  invenroryConfigurations['mode'] = await allArgs.option("mode").toString();
+  invenroryConfigurations['log_file'] = logFile;
+  invenroryConfigurations['mode'] = mode;
   invenroryConfigurations['password'] =
       await allArgs.option("password").toString();
   invenroryConfigurations['token'] = "";
@@ -153,21 +191,33 @@ Future<void> main(List<String> args) async {
       await allArgs.option("data_directory").toString();
   invenroryConfigurations['log_file_path'] =
       await allArgs.option("log_file_path").toString();
-  invenroryConfigurations['log_level'] =
-      await allArgs.option("log_level").toString();
+  invenroryConfigurations['log_level'] = logLevel;
   invenroryConfigurations['certificate'] =
       await allArgs.option("certificate").toString();
-  invenroryConfigurations["bypass_certificate"] =
-      await allArgs.option("bypass_certificate").toString();
+  invenroryConfigurations["bypass_certificate"] = bypassCertificate;
 
   config = await Config(
       configDirectory, jsonEncode(invenroryConfigurations).toString());
+
+  if (allArgs.wasParsed("certificate")) {
+    File certificate = File(allArgs.option("certificate").toString());
+    if (certificate.existsSync()) {
+      // Copy the certificate to the config directory
+      String certificatePath = configDirectory + "/cert.pem";
+      if (Platform.isWindows) {
+        certificatePath = configDirectory + "\\cert.pem";
+      }
+
+      certificate.copySync(certificatePath);
+      invenroryConfigurations["certificate"] = certificatePath;
+    }
+  }
 
   // Iterate allArgs and update inventory config with the provided values
   if (allArgs.options.isNotEmpty) {
     invenroryConfigurations.forEach((key, value) {
       if (allArgs.wasParsed(key)) {
-        config.updateInventoryConfig(key, allArgs.option(key).toString());
+        config.updateInventoryConfig(key, value);
       }
     });
   }
