@@ -82,18 +82,33 @@ class BaseLinux {
       }
     }
 
-    dynamic interface = (await linuxCommand.commandShell(
+    dynamic interfaces = (await linuxCommand.commandShell(
             "ip route show default", true))["value"]
         .toString()
-        .split(" ")[4];
+        .split("\n");
 
-    dynamic getmacAdress = (await linuxCommand.commandShell(
-            "ip link show " + interface.toString(), true))["value"]
-        .toString();
-    RegExp exp = RegExp(r'link\/ether (?<mac>[\S\s]+?) ');
-    RegExpMatch? match = exp.firstMatch(getmacAdress);
-    String macAdress =
-        match![0].toString().substring(11, match[0].toString().length).trim();
+    String? macAddress;
+    for (final route in interfaces) {
+      if (route.isNotEmpty) {
+        dynamic interface = route.split(" ")[4];
+        dynamic getMacAddress = (await linuxCommand.commandShell(
+                "ip link show $interface", true))["value"]
+            .toString();
+        RegExp exp = RegExp(r'link\/ether (?<mac>[\S\s]+?) ');
+        RegExpMatch? match = exp.firstMatch(getMacAddress);
+        if (match != null) {
+          macAddress = match.namedGroup("mac")?.trim();
+          if (macAddress != null) {
+            break;
+          }
+        }
+      }
+    }
+
+    if (macAddress == null) {
+      logger.error(this.runtimeType.toString(), "No valid MAC address found.");
+      return null;
+    }
 
     // Get name
     String name = (await linuxCommand.commandShell("hostname", true))["value"]
@@ -110,11 +125,11 @@ class BaseLinux {
           .toString(),
       "osname": osRelease["NAME"].toString(),
       "osversion": osRelease["VERSION_ID"].toString(),
-      "uuid": await _getUUID(name, macAdress),
+      "uuid": await _getUUID(name, macAddress),
       "srcip": (await linuxCommand.commandShell("hostname -I", true))["value"]
           .toString()
           .split(" ")[0],
-      "srcmac": macAdress,
+      "srcmac": macAddress,
       "domain": (await linuxCommand.commandShell("hostname -d", true))["value"]
           .toString(),
     });
@@ -125,7 +140,7 @@ class BaseLinux {
   }
 
   /// Get UUID or generate one if not available and save it in a uuid file
-  Future<String> _getUUID(String name, String macAdress) async {
+  Future<String> _getUUID(String name, String macAddress) async {
     String uuid = (await linuxCommand.commandShell(
             "sudo dmidecode -s system-uuid", true))["value"]
         .toString();
@@ -142,7 +157,7 @@ class BaseLinux {
 
       if (containerLinux.isNotEmpty &&
           containerLinux.containsValue(name) &&
-          containerLinux.containsValue(macAdress)) {
+          containerLinux.containsValue(macAddress)) {
         uuid = containerLinux["uuid"];
         logger.info(this.runtimeType.toString(),
             "UUID has been retrieved from the uuid file.");
@@ -154,7 +169,7 @@ class BaseLinux {
         dynamic baseAdded = {};
         baseAdded["name"] = name;
         baseAdded["uuid"] = uuid;
-        baseAdded["MAC"] = macAdress;
+        baseAdded["MAC"] = macAddress;
 
         JsonEncoder encoder = new JsonEncoder.withIndent('  ');
         String str = encoder.convert(baseAdded);
