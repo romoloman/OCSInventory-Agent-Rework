@@ -56,12 +56,12 @@ Future<void> main(List<String> args) async {
   // Add the arguments options
   parser.addOption("log_file",
       abbr: "f",
-      help: "Enalbe or disable the log file",
+      help: "Enable or disable logging to a file",
       valueHelp: "true/false",
       defaultsTo: "false");
   parser.addOption("mode",
       abbr: "m",
-      help: "Agent execution mode",
+      help: "Specify the agent's execution mode",
       valueHelp:
           "0: Installer mode 1: Remote with template 2: Remote without template 3: Local with template 4: Local without template",
       defaultsTo: "1");
@@ -78,45 +78,46 @@ Future<void> main(List<String> args) async {
       defaultsTo: "http://ocsinventory-server:port");
   parser.addOption("data_directory",
       abbr: "d",
-      help: "Path to the inventory data",
-      valueHelp: "/path_to_store_inventory_data/folder-name",
+      help: "Inventory directory path",
+      valueHelp: "/path_to_inventory_data/folder-name",
       defaultsTo: "inventory");
   parser.addOption("log_file_path",
       abbr: "l",
-      help: "Path to the log file",
-      valueHelp: "/path_to_store_log_file/file-name.log",
+      help: "Log file path",
+      valueHelp: "/path_to_log_file/file-name.log",
       defaultsTo: "ocs-agent.log");
   parser.addOption("log_level",
       abbr: "v",
-      help: "Log level",
+      help: "Log verbosity level",
       valueHelp: "0: Error 1: Warning 2: Info 3: Verbose",
       defaultsTo: "2");
   parser.addOption("certificate",
       abbr: "c",
-      help: "Path to the certificate file",
-      valueHelp: "/path_to_store_certificate_file/cert.pem",
+      help: "SSL certificate path",
+      valueHelp: "/path_to_certificate_file/cert.pem",
       defaultsTo: "/etc/ocsinventory-agent/ocsinventory-agent.pem");
   parser.addOption("bypass_certificate",
       abbr: "b",
-      help: "Bypass certificate validation",
+      help: "Bypass SSL certificate validation",
       valueHelp: "true/false",
       defaultsTo: "false");
   parser.addOption("service",
       help: "Check if the agent is running as a service",
-      valueHelp: "This parameter is only used by the daemon",
+      valueHelp: "Used only by the daemon",
       defaultsTo: "false");
-  parser.addFlag("help", abbr: "h", help: "Show this help", negatable: false);
+  parser.addFlag("help",
+      abbr: "h", help: "Display this help message", negatable: false);
 
   try {
     allArgs = parser.parse(args);
   } on ArgParserException catch (ex) {
-    stdout.writeln("Failed while parsing arguments");
+    stdout.writeln("Error: Failed to parse arguments.");
 
     stdout.writeln(ex.message);
     stdout.writeln(parser.usage);
     exit(1);
   } catch (ex) {
-    stdout.writeln("Something went wrong while parsing arguments!");
+    stdout.writeln("Error: An issue occurred while parsing arguments.");
     stdout.writeln(ex);
     stdout.writeln(parser.usage);
     exit(1);
@@ -135,7 +136,7 @@ Future<void> main(List<String> args) async {
   } else if (Platform.isWindows) {
     configDirectory = "C:\\ProgramData\\Agent-OCS\\config";
   } else {
-    stdout.writeln("Unsupported platform");
+    stdout.writeln("Unsupported platform detected.");
     exit(1);
   }
 
@@ -143,8 +144,7 @@ Future<void> main(List<String> args) async {
   if (allArgs.wasParsed("log_level")) {
     logLevel = int.parse(allArgs.option("log_level").toString());
     if (logLevel < 0 || logLevel > 3) {
-      stdout
-          .writeln("Log level must be between 0 and 3 so it has been set to 2");
+      stdout.writeln("Log level must be between 0 and 3. Defaulted to 2.");
     }
   }
 
@@ -153,7 +153,7 @@ Future<void> main(List<String> args) async {
     mode = int.parse(allArgs.option("mode").toString());
     if (mode < 0 || mode > 4) {
       stdout.writeln(
-          "Mode must be between 0 and 4 so it has been set to 4 (Local without template)");
+          "Mode must be between 0 and 4. Defaulted to 4 (Local without template).");
     }
   }
 
@@ -162,8 +162,8 @@ Future<void> main(List<String> args) async {
     logFile = allArgs.option("log_file").toString() == "true";
     if (allArgs.option("log_file").toString() != "true" &&
         allArgs.option("log_file").toString() != "false") {
-      stdout.writeln(
-          "Log file must be true or false so it has been set to false");
+      stdout
+          .writeln("Log file should be 'true' or 'false'. Defaulted to false.");
     }
   }
 
@@ -174,30 +174,30 @@ Future<void> main(List<String> args) async {
     if (allArgs.option("bypass_certificate").toString() != "true" &&
         allArgs.option("bypass_certificate").toString() != "false") {
       stdout.writeln(
-          "Bypass certificate must be true or false so it has been set to false");
+          "Bypass certificate should be 'true' or 'false'. Defaulted to false.");
     }
   }
 
-  Map<String, dynamic> invenroryConfigurations = {};
-  invenroryConfigurations['log_file'] = logFile;
-  invenroryConfigurations['mode'] = mode;
-  invenroryConfigurations['password'] =
+  Map<String, dynamic> inventoryConfigurations = {};
+  inventoryConfigurations['log_file'] = logFile;
+  inventoryConfigurations['mode'] = mode;
+  inventoryConfigurations['password'] =
       await allArgs.option("password").toString();
-  invenroryConfigurations['token'] = "";
-  invenroryConfigurations['username'] =
+  inventoryConfigurations['token'] = "";
+  inventoryConfigurations['username'] =
       await allArgs.option("username").toString();
-  invenroryConfigurations['url'] = await allArgs.option("url").toString();
-  invenroryConfigurations['data_directory'] =
+  inventoryConfigurations['url'] = await allArgs.option("url").toString();
+  inventoryConfigurations['data_directory'] =
       await allArgs.option("data_directory").toString();
-  invenroryConfigurations['log_file_path'] =
+  inventoryConfigurations['log_file_path'] =
       await allArgs.option("log_file_path").toString();
-  invenroryConfigurations['log_level'] = logLevel;
-  invenroryConfigurations['certificate'] =
+  inventoryConfigurations['log_level'] = logLevel;
+  inventoryConfigurations['certificate'] =
       await allArgs.option("certificate").toString();
-  invenroryConfigurations["bypass_certificate"] = bypassCertificate;
+  inventoryConfigurations["bypass_certificate"] = bypassCertificate;
 
   config = await Config(
-      configDirectory, jsonEncode(invenroryConfigurations).toString());
+      configDirectory, jsonEncode(inventoryConfigurations).toString());
 
   if (allArgs.wasParsed("certificate")) {
     File certificate = File(allArgs.option("certificate").toString());
@@ -209,13 +209,13 @@ Future<void> main(List<String> args) async {
       }
 
       certificate.copySync(certificatePath);
-      invenroryConfigurations["certificate"] = certificatePath;
+      inventoryConfigurations["certificate"] = certificatePath;
     }
   }
 
   // Iterate allArgs and update inventory config with the provided values
   if (allArgs.options.isNotEmpty) {
-    invenroryConfigurations.forEach((key, value) {
+    inventoryConfigurations.forEach((key, value) {
       if (allArgs.wasParsed(key)) {
         config.updateInventoryConfig(key, value);
       }
@@ -282,8 +282,7 @@ Future<void> main(List<String> args) async {
     body = await baseWindows.getBody();
     os = "WIN";
   } else {
-    logger.error("APP",
-        "OS does not match any of the supported OSs! (Check Plateform class return)");
+    logger.error("APP", "The detected operating system is unsupported.");
   }
 
   if (inventory.getMode() == 0 ||
@@ -330,5 +329,5 @@ Future<void> main(List<String> args) async {
     }
   }
 
-  logger.info("APP", "Agent's process has ended!\n");
+  logger.info("APP", "Agent process completed successfully.\n");
 }
