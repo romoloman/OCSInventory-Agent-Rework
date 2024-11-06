@@ -13,19 +13,19 @@ void main(List<String> args) async {
       help: "Directory where the executable agent is located",
       valueHelp: "path_to_agent_directory/agent_unix_ocs.exe",
       defaultsTo: workingDirectory);
-  parser.addFlag("help", abbr: "h", help: "Show this help", negatable: false);
+  parser.addFlag("help",
+      abbr: "h", help: "Display this help message", negatable: false);
 
   // Parse the arguments
   try {
     allArgs = parser.parse(args);
   } on ArgParserException catch (ex) {
-    stdout.writeln("Failed while parsing arguments");
-
+    stdout.writeln("Error: Argument parsing failed.");
     stdout.writeln(ex.message);
     stdout.writeln(parser.usage);
     exit(1);
   } catch (ex) {
-    stdout.writeln("Something went wrong while parsing arguments!");
+    stdout.writeln("Error: An issue occurred while parsing arguments.");
     stdout.writeln(ex);
     stdout.writeln(parser.usage);
     exit(1);
@@ -75,28 +75,27 @@ Future<ProcessResult> runMainScript(String CurrentDirectory) async {
     // Define the command to execute
     var executable = CurrentDirectory + agentName;
     // Execute the compiled binary with arguments
-    var arguments = ["--service=true" ];
+    var arguments = ["--service=true"];
     var result = await Process.run(executable, arguments);
 
     // Check if the process succeededAgent MAcOS
     if (result.exitCode == 0) {
-      stdout.writeln('OCS Inventory Agent executed successfully as a service');
+      stdout.writeln('OCS Inventory Agent executed successfully as a service.');
       stdout.writeln(
           'The agent will run again in ${result.stdout.toString().trim()} hours');
     } else {
-      stdout.writeln('OCS Inventory Agent execution failed');
-      stdout.writeln('Error: ${result.stderr}');
+      stdout.writeln('Error: OCS Inventory Agent execution failed.');
+      stdout.writeln('Details: ${result.stderr}');
     }
 
     return result;
   } catch (e) {
-    stdout.writeln('An error occurred while executing the Agent: $e');
+    stdout.writeln('Error: An issue occurred while executing the agent: $e');
     return ProcessResult(0, 1, '', e.toString());
   }
 }
 
 int? parseInterval(String output) {
   // Extract the interval from the output
-
   return int.tryParse(output.trim());
 }
