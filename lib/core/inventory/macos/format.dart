@@ -59,8 +59,9 @@ class MacOSFormat {
         }
       } catch (e) {
         json[element] = null;
+        // wym??
         logger.verbose(this.runtimeType.toString(),
-            "Next Json object won't be well formated!");
+            "Next JSON object won't be well formatted!");
       }
     });
 
@@ -180,7 +181,7 @@ class MacOSFormat {
         json[element] = resultCommand[element]['result'];
       } catch (e) {
         logger.verbose(this.runtimeType.toString(),
-            "Next Grep object won't be well formated!");
+            "Next Grep object won't be well formatted!");
       }
     });
 

@@ -59,7 +59,7 @@ class MacOSCommand {
         logger.verbose(
             this.runtimeType.toString(), "Command executed: $commandLine");
         if (processData["value"] == "") {
-          processData["value"] = "Command '$commandLine' has no output.";
+          processData["value"] = "No output for command '$commandLine'";
         }
       }
     } on ProcessException catch (e) {
