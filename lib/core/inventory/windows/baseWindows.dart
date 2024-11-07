@@ -44,9 +44,9 @@ class BaseWindows {
 
   ///This fonction return the body for the asset/bases
   dynamic getBody() async {
-    logger.info(this.runtimeType.toString(), "Plateform: WINDOWS");
+    logger.info(this.runtimeType.toString(), "Platform: WINDOWS");
 
-    logger.info(this.runtimeType.toString(), "Getting OS body...");
+    logger.info(this.runtimeType.toString(), "Retrieving OS body...");
 
     /// Command get the mac address list
     dynamic macAddr;
