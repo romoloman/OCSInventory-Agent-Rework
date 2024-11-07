@@ -65,7 +65,7 @@ class LinuxCommand {
         logger.verbose(
             this.runtimeType.toString(), "Executed command: '$commandLine'");
         if (processData["value"] == "") {
-          processData["value"] = "Command '$commandLine' has no output.";
+          processData["value"] = "No output for command '$commandLine'.";
         }
       }
     } on ProcessException catch (e) {
@@ -106,7 +106,7 @@ class LinuxCommand {
         logger.verbose(
             this.runtimeType.toString(), "File executed successfully: $path");
         if (processData["value"] == "") {
-          processData["value"] = "File '$path' has no output.";
+          processData["value"] = "No output for file '$path'.";
         }
       }
     } on ProcessException catch (e) {
