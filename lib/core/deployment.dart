@@ -69,19 +69,19 @@ class Deployment {
   /// Check the configuration of the deployment module.
   Future<bool> checkConfig() async {
     logger.info(this.runtimeType.toString(),
-        "Enabling and Checking deployment module configuration...");
+        "Enabling deployment module and checking its configuration...");
 
     // Check if the URL is set
     if (url == null) {
       logger.error(this.runtimeType.toString(),
-          "URL is not set in the configuration file!");
+          "URL is missing in the configuration file.");
       return false;
     }
 
     // Check if the URL is valid
     if (!Uri.parse(url).isAbsolute) {
       logger.error(this.runtimeType.toString(),
-          "URL is not valid in the configuration file!");
+          "URL in the configuration file is not valid.");
       return false;
     }
 
@@ -89,12 +89,12 @@ class Deployment {
     var response = await httpUtils.get(
         Uri.parse(url + "/deployment/results/"), httpUtils.getHeader(config));
     if (response["status_code"] == 200) {
-      logger.info(this.runtimeType.toString(),
-          "Deployment module configuration is valid!");
+      logger.info(
+          this.runtimeType.toString(), "Deployment endpoint is reachable.");
       return true;
     } else {
-      logger.error(this.runtimeType.toString(),
-          "Deployment module configuration is not valid!");
+      logger.error(
+          this.runtimeType.toString(), "Deployment endpoint is not reachable.");
       return false;
     }
   }
@@ -110,7 +110,7 @@ class Deployment {
 
     if (response["status_code"] == 200 &&
         jsonDecode(response["body"]).isNotEmpty) {
-      logger.info(this.runtimeType.toString(), "Assigned packages found!");
+      logger.info(this.runtimeType.toString(), "Found assigned packages.");
 
       // Get the list of assigned packages
       results = jsonDecode(response["body"]);
@@ -128,7 +128,7 @@ class Deployment {
       return true;
     } else {
       logger.info(this.runtimeType.toString(),
-          "Any package has been found on the server.");
+          "No assigned packages found for this asset.");
       return false;
     }
   }
@@ -159,16 +159,19 @@ class Deployment {
           logger.serverLogger(
               assetID,
               7,
-              "Actions collected on package " +
+              "Collected actions from the server for the package " +
                   element["package"].toString() +
                   ".");
         } else {
-          logger.error(this.runtimeType.toString(),
-              "Can't collect actions from the server.");
+          logger.error(
+              this.runtimeType.toString(),
+              "Failed to collect actions from the server for the package " +
+                  element["package"].toString() +
+                  ".");
           logger.serverLogger(
               assetID,
               8,
-              "Can't collect actions from the server for the package " +
+              "Failed to collect actions from the server for the package " +
                   element["package"].toString() +
                   ".");
           return false;
@@ -179,7 +182,7 @@ class Deployment {
         return false;
       }
     }
-    logger.info(this.runtimeType.toString(), "Actions collected");
+    logger.info(this.runtimeType.toString(), "Actions collected successfully.");
     return true;
   }
 
@@ -212,10 +215,10 @@ class Deployment {
                 : status = 1;
             if (status == 0) {
               logger.info(this.runtimeType.toString(),
-                  "Command executed successfully!");
+                  "Command executed successfully.");
             } else {
               logger.error(this.runtimeType.toString(),
-                  "Error while executing command!");
+                  "Error while executing command.");
             }
             break;
           case "STORE":
@@ -226,17 +229,17 @@ class Deployment {
                 : status = 1;
             if (status == 0) {
               logger.info(this.runtimeType.toString(),
-                  "File downloaded and stored successfully!");
+                  "File has been successfully downloaded and saved.");
               // Delete the package directory after storing the file
               var packageDirectory = Directory(packagePath);
               if (packageDirectory.existsSync()) {
                 await packageDirectory.delete(recursive: true);
                 logger.verbose(this.runtimeType.toString(),
-                    "Package directory deleted: '$packagePath'");
+                    "Deleted package directory at: '$packagePath'");
               }
             } else {
               logger.error(this.runtimeType.toString(),
-                  "Error while downloading and storing file!");
+                  "Error while downloading and saving the file.");
             }
             break;
           case "LAUNCH":
@@ -244,28 +247,24 @@ class Deployment {
                 action["file"], action["action_type"]);
             if (status == 0) {
               logger.info(
-                  this.runtimeType.toString(), "File launched successfully!");
+                  this.runtimeType.toString(), "File launched successfully.");
             } else {
               logger.error(
-                  this.runtimeType.toString(), "Error while launching file!");
+                  this.runtimeType.toString(), "Error while launching file.");
             }
             // Delete the package directory after launching the file
             var packageDirectory = Directory(packagePath);
             if (packageDirectory.existsSync()) {
               await packageDirectory.delete(recursive: true);
               logger.verbose(this.runtimeType.toString(),
-                  "Package directory deleted: '$packagePath'");
+                  "Deleted package directory at: '$packagePath'");
             }
             break;
           default:
             logger.error(this.runtimeType.toString(),
-                "Canno't read correctly the action type!");
-            logger.serverLogger(
-                assetID,
-                8,
-                "Can't get type from the action " +
-                    action["name"].toString() +
-                    ".");
+                "Unknown action type: " + action["action_type"].toString());
+            logger.serverLogger(assetID, 8,
+                "Unknown action type: " + action["action_type"].toString());
             break;
         }
       }
@@ -281,9 +280,9 @@ class Deployment {
               this.runtimeType.toString(), responseSuccess["message"]);
           if (responseSuccess["status_code"] == 200) {
             logger.info(this.runtimeType.toString(),
-                "Package $id was completed successfully!");
+                "Package $id has been successfully processed.");
             logger.serverLogger(
-                assetID, 7, "Package $id was completed successfully!");
+                assetID, 7, "Package $id has been successfully processed.");
           }
         } catch (exception) {
           logger.error(this.runtimeType.toString(),
@@ -299,9 +298,9 @@ class Deployment {
           logger.verbose(this.runtimeType.toString(), responseFail["message"]);
           if (responseFail["status_code"] == 200) {
             logger.error(this.runtimeType.toString(),
-                "Package $id was not completed successfully!");
-            logger.serverLogger(
-                assetID, 8, "Package $id was not completed successfully!");
+                "Something went wrong while processing package $id.");
+            logger.serverLogger(assetID, 8,
+                "Something went wrong while processing package $id.");
           }
         } catch (exception) {
           logger.error(this.runtimeType.toString(),
@@ -395,8 +394,7 @@ class Deployment {
           });
           break;
         default:
-          logger.error(this.runtimeType.toString(),
-              "OS does not match any of the supported OSs! (Check Plateform class return)");
+          logger.error(this.runtimeType.toString(), "Unsupported OS detected.");
 
           break;
       }
@@ -405,7 +403,7 @@ class Deployment {
           result["status"] == false &&
           retryCounter > 0) {
         logger.error(this.runtimeType.toString(),
-            "Failed to execute command with retry ${retryCounter}: ${result["value"].toString()}");
+            "Command execution failed on retry #${retryCounter}: ${result["value"].toString()}");
       }
       retryCounter++;
     } while (result["status"] == false &&
@@ -444,7 +442,7 @@ class Deployment {
     await extractArchiveToDiskAsync(archive, extractedPath).then((value) {
       // Log verbose message indicating successful extraction
       logger.verbose(this.runtimeType.toString(),
-          "File extracted in the path: '$extractedPath'");
+          "File has been extracted at: '$extractedPath'");
 
       // Delete the __MACOSX directory if it exists
       var metaDataDirectory = Directory(metaDataPath);
@@ -460,7 +458,7 @@ class Deployment {
       // Handle extraction error
       status = false;
       logger.error(this.runtimeType.toString(),
-          "Error while extracting file in the path: $onError");
+          "Error occurred while extracting file at path: $onError");
     });
     return status;
   }
@@ -494,7 +492,7 @@ class Deployment {
         break;
       default:
         logger.error(this.runtimeType.toString(),
-            "OS does not match any of the supported OSs! (Check Plateform class return)");
+            "Unsupported OS detected while extracting tar file.");
         break;
     }
 
@@ -506,7 +504,7 @@ class Deployment {
       if (savedFile.existsSync()) {
         // Log verbose message indicating successful extraction
         logger.verbose(this.runtimeType.toString(),
-            "File extracted in the path: '$extractedPath'");
+            "File has been extracted at: '$extractedPath'");
 
         savedFile.deleteSync();
         return value;
@@ -516,7 +514,7 @@ class Deployment {
     }).catchError((onError) {
       // Handle extraction error
       logger.error(this.runtimeType.toString(),
-          "Error while extracting file in the path: $onError");
+          "Error occurred while extracting file at path: $onError");
 
       return {"value": "", "status": false};
     });
@@ -544,12 +542,13 @@ class Deployment {
   ///   - 1: Failure
   Future<bool> storeFile(int package, String filePath, String pathToStore,
       String actionType, String os) async {
-    logger.info(this.runtimeType.toString(), "Downloading and storing file...");
+    logger.info(this.runtimeType.toString(), "Downloading and saving file...");
 
     // Get the package directory or create one if not exist
-    var packageDirectory = Directory(config.getInventoryConfig("data_directory") +
-        "/deployment/" +
-        package.toString());
+    var packageDirectory = Directory(
+        config.getInventoryConfig("data_directory") +
+            "/deployment/" +
+            package.toString());
     if (!packageDirectory.existsSync()) {
       packageDirectory.createSync(recursive: true);
     }
@@ -582,8 +581,8 @@ class Deployment {
           return request.close();
         }).then((HttpClientResponse response) {
           if (response.statusCode == HttpStatus.ok) {
-            logger.verbose(
-                this.runtimeType.toString(), "Downloaded file $filePath");
+            logger.verbose(this.runtimeType.toString(),
+                "Successfully downloaded file: $filePath");
             response.pipe(fileSaveLocal.openWrite()).then((fileAdded) async {
               // Save the file directly if not zipped
 
@@ -614,7 +613,7 @@ class Deployment {
                       }
                       if (filePath.endsWith('.zip')) {
                         logger.error(this.runtimeType.toString(),
-                            "Extract zip file is not supported for Linux OS: $filePath");
+                            "Zip format is not supported for Linux: $filePath");
                         responseStreamStatus = false;
                       }
                       break;
@@ -637,7 +636,7 @@ class Deployment {
                       }
                       if (filePath.endsWith('.zip')) {
                         logger.error(this.runtimeType.toString(),
-                            "Extract zip file is not supported for Mac OS: $filePath");
+                            "Zip format is not supported for MacOS: $filePath");
                         responseStreamStatus = false;
                       }
                       break;
@@ -660,19 +659,19 @@ class Deployment {
                       if (filePath.endsWith('.tar') ||
                           filePath.endsWith('.tar.gz')) {
                         logger.error(this.runtimeType.toString(),
-                            "Extract tar file is not supported for Windows OS: $filePath");
+                            "Tar format is not supported for Windows: $filePath");
                         responseStreamStatus = false;
                       }
                       break;
 
                     default:
                       logger.error(this.runtimeType.toString(),
-                          "OS does not match any of the supported OSs!");
+                          "Unsupported OS detected while storing file: $filePath");
                       responseStreamStatus = false;
                   }
                 } else {
                   logger.verbose(this.runtimeType.toString(),
-                      "$filePath is stored in the agent directory: '$localPath'");
+                      "The file $filePath has been saved in the agent directory at: '$localPath'");
                   if (actionType == "LAUNCH") {
                     // Make the file executable
                     String chmodCommand = "chmod +x ${fileAdded.path}";
@@ -685,18 +684,18 @@ class Deployment {
                     if (remoteFile.existsSync() &&
                         remoteFile.lengthSync() == fileAdded.lengthSync()) {
                       logger.verbose(this.runtimeType.toString(),
-                          "$filePath is stored in the specified path: '$specifiedPath'");
+                          "The file $filePath has been successfully saved at the specified path: '$specifiedPath'");
                       responseStreamStatus = true;
                     } else {
                       logger.error(this.runtimeType.toString(),
-                          "Error while storing file in the specified path: $fileAdded");
+                          "Error encountered while saving the file to the specified path: $fileAdded");
                       responseStreamStatus = false;
                     }
                   }
                 }
               } else {
                 logger.error(this.runtimeType.toString(),
-                    "Error while storing file in the agent directory: $fileAdded");
+                    "An error occurred while attempting to save the file to the agent directory: $fileAdded");
                 responseStreamStatus = false;
               }
 
@@ -726,7 +725,7 @@ class Deployment {
                 responseStreamStatus == false &&
                 retryCounter > 0) {
               logger.error(this.runtimeType.toString(),
-                  "Failed to store file with retry ${retryCounter}: ${response.reasonPhrase} ${filePath}");
+                  "File save failed on retry #${retryCounter}: ${response.reasonPhrase} ${filePath}");
               responseStreamStatus = false;
               return response.drain();
             } else {
@@ -751,7 +750,7 @@ class Deployment {
         }
       }).catchError((error) {
         logger.error(this.runtimeType.toString(),
-            "Failed to download and store the file!");
+            "Failed to download and save file: $error");
         status = false;
       });
 

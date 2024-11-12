@@ -44,9 +44,9 @@ class BaseLinux {
 
   ///This fonction return the body for to asset/bases
   dynamic getBody() async {
-    logger.info(this.runtimeType.toString(), "Plateform: LINUX");
+    logger.info(this.runtimeType.toString(), "Platform: LINUX");
 
-    logger.info(this.runtimeType.toString(), "Getting OS body...");
+    logger.info(this.runtimeType.toString(), "Retrieving OS body...");
 
     dynamic getOSRelease =
         (await linuxCommand.readFile("/etc/os-release", true))["value"]
@@ -134,7 +134,7 @@ class BaseLinux {
           .toString(),
     });
 
-    logger.info(this.runtimeType.toString(), "OS body has been retrieved!");
+    logger.info(this.runtimeType.toString(), "OS body retrieved successfully.");
 
     return body;
   }

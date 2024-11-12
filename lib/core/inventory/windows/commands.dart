@@ -60,7 +60,7 @@ class WindowsCommand {
         logger.verbose(
             this.runtimeType.toString(), "Command executed: $commandLine");
         if (processData["value"] == "") {
-          processData["value"] = "Command '$commandLine' has no output.";
+          processData["value"] = "No output for command '$commandLine'";
         }
       }
     } on ProcessException catch (e) {
@@ -105,7 +105,7 @@ class WindowsCommand {
         logger.verbose(
             this.runtimeType.toString(), "Command executed: $commandLine");
         if (processData["value"] == "") {
-          processData["value"] = "Command '$commandLine' has no output.";
+          processData["value"] = "No output for command '$commandLine'";
         }
       }
     } on ProcessException catch (e) {
@@ -146,7 +146,7 @@ class WindowsCommand {
         logger.verbose(
             this.runtimeType.toString(), "File executed successfully: $path");
         if (processData["value"] == "") {
-          processData["value"] = "File '$path' has no output.";
+          processData["value"] = "No output for file '$path'";
         }
       }
     } on ProcessException catch (e) {
