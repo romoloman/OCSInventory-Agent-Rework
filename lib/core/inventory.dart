@@ -427,10 +427,7 @@ class Inventory {
           Map<String, dynamic> newBody = new Map();
           newBody["template"] = jsonDecode(responseGET["body"])[0]["id"];
           var responsePUT = await httpUtils.patch(
-              Uri.parse(url +
-                  "/asset/bases/" +
-                  jsonDecode(responseAsset["body"])[0]["id"].toString() +
-                  "/"),
+              Uri.parse(url + "/asset/collection/"),
               httpUtils.getHeader(config),
               jsonEncode(newBody));
           logger.verbose(this.runtimeType.toString(), responsePUT["message"]);
@@ -689,7 +686,7 @@ class Inventory {
           var id = jsonDecode(response["body"])[0]['id'];
           // API call
           var responsePut = await httpUtils.put(
-              Uri.parse(url + "/asset/bases/$id/"),
+              Uri.parse(url + "/asset/collection/"),
               httpUtils.getHeader(config),
               jsonEncode(body));
           logger.verbose(this.runtimeType.toString(), responsePut["message"]);
@@ -718,8 +715,10 @@ class Inventory {
       // Create the inventory
       logger.info(this.runtimeType.toString(), "Creating new inventory...");
       // API call
-      var responsePost = await httpUtils.post(Uri.parse(url + "/asset/bases/"),
-          httpUtils.getHeader(config), jsonEncode(body));
+      var responsePost = await httpUtils.post(
+          Uri.parse(url + "/asset/collection/"),
+          httpUtils.getHeader(config),
+          jsonEncode(body));
       logger.verbose(this.runtimeType.toString(), responsePost["message"]);
       if (responsePost["status_code"] == 200) {
         logger.info(
