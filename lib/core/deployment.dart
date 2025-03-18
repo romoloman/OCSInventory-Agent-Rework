@@ -196,6 +196,9 @@ class Deployment {
     // For each action, try to execute the command in the action object
     for (var element in actions.values) {
       for (var action in element) {
+        logger.verbose(this.runtimeType.toString(),
+            "Processing action: ${action.toString()}");
+
         results.forEach((resultElement) {
           if (resultElement["package"] == action["package"]) {
             id = resultElement["id"];
@@ -543,6 +546,18 @@ class Deployment {
   Future<bool> storeFile(int package, String filePath, String pathToStore,
       String actionType, String os) async {
     logger.info(this.runtimeType.toString(), "Downloading and saving file...");
+    logger.verbose(
+        this.runtimeType.toString(), "File path structure: $filePath");
+
+    // extract actual URL if filePath is a Map
+    String fileUrl;
+    if (filePath is Map<String, dynamic>) {
+      fileUrl = (filePath as Map<String, dynamic>)["file"] as String;
+      logger.verbose(
+          this.runtimeType.toString(), "Extracted file URL: $fileUrl");
+    } else {
+      fileUrl = filePath;
+    }
 
     // Get the package directory or create one if not exist
     var packageDirectory = Directory(
@@ -558,12 +573,12 @@ class Deployment {
     int retryCounter = 0;
 
     Future<String> completerValue = Future.value("");
-    // Store the file in the agent directory
+    // Store the file in the agent directory - use the last part of the URL for filename
     String localPath = config.getInventoryConfig("data_directory") +
         "/deployment/" +
         package.toString() +
         "/";
-    var fileSaveLocal = new File(localPath + filePath.split("/").last);
+    var fileSaveLocal = new File(localPath + fileUrl.split("/").last);
 
     String specifiedPath =
         pathToStore.endsWith("/") ? pathToStore : pathToStore + "/";
@@ -577,72 +592,72 @@ class Deployment {
         client = HttpClient();
         status = false;
 
-        client.getUrl(Uri.parse(filePath)).then((HttpClientRequest request) {
+        client.getUrl(Uri.parse(fileUrl)).then((HttpClientRequest request) {
           return request.close();
         }).then((HttpClientResponse response) {
           if (response.statusCode == HttpStatus.ok) {
             logger.verbose(this.runtimeType.toString(),
-                "Successfully downloaded file: $filePath");
+                "Successfully downloaded file: $fileUrl");
             response.pipe(fileSaveLocal.openWrite()).then((fileAdded) async {
               // Save the file directly if not zipped
 
               if (fileAdded.existsSync()) {
                 responseStreamStatus = true;
-                if (filePath.endsWith('.tar') ||
-                    filePath.endsWith('.tar.gz') ||
-                    filePath.endsWith('.zip') ||
-                    filePath.endsWith('.tar.xz') ||
-                    filePath.endsWith('.tgz') ||
-                    filePath.endsWith('.tar.bz2')) {
+                if (fileUrl.endsWith('.tar') ||
+                    fileUrl.endsWith('.tar.gz') ||
+                    fileUrl.endsWith('.zip') ||
+                    fileUrl.endsWith('.tar.xz') ||
+                    fileUrl.endsWith('.tgz') ||
+                    fileUrl.endsWith('.tar.bz2')) {
                   switch (os) {
                     case "LIN":
-                      if ((filePath.endsWith('.tar') ||
-                              filePath.endsWith('.tar.gz') ||
-                              filePath.endsWith('.tar.xz') ||
-                              filePath.endsWith('.tgz') ||
-                              filePath.endsWith('.tar.bz2')) &&
+                      if ((fileUrl.endsWith('.tar') ||
+                              fileUrl.endsWith('.tar.gz') ||
+                              fileUrl.endsWith('.tar.xz') ||
+                              fileUrl.endsWith('.tgz') ||
+                              fileUrl.endsWith('.tar.bz2')) &&
                           responseStreamStatus == true) {
                         // Decompress the tar archive
                         await extractTarFile(
-                                localPath + filePath.split("/").last,
+                                localPath + fileUrl.split("/").last,
                                 specifiedPath,
                                 fileSaveLocal,
                                 responseStreamStatus,
                                 os)
                             .then((value) => responseStreamStatus = value);
                       }
-                      if (filePath.endsWith('.zip')) {
+                      if (fileUrl.endsWith('.zip')) {
                         logger.error(this.runtimeType.toString(),
-                            "Zip format is not supported for Linux: $filePath");
+                            "Zip format is not supported for Linux: $fileUrl");
                         responseStreamStatus = false;
                       }
                       break;
 
                     case "MAC":
-                      if ((filePath.endsWith('.tar') ||
-                              filePath.endsWith('.tar.gz') ||
-                              filePath.endsWith('.tar.xz') ||
-                              filePath.endsWith('.tgz') ||
-                              filePath.endsWith('.tar.bz2')) &&
+                      if ((fileUrl.endsWith('.tar') ||
+                              fileUrl.endsWith('.tar.gz') ||
+                              fileUrl.endsWith('.tar.xz') ||
+                              fileUrl.endsWith('.tgz') ||
+                              fileUrl.endsWith('.tar.bz2')) &&
                           responseStreamStatus == true) {
                         // Decompress the tar archive
                         await extractTarFile(
-                                localPath + filePath.split("/").last,
+                                localPath + fileUrl.split("/").last,
                                 specifiedPath,
                                 fileSaveLocal,
                                 responseStreamStatus,
                                 os)
                             .then((value) => responseStreamStatus = value);
                       }
-                      if (filePath.endsWith('.zip')) {
+                      if (fileUrl.endsWith('.zip')) {
                         logger.error(this.runtimeType.toString(),
-                            "Zip format is not supported for MacOS: $filePath");
+                            "Zip format is not supported for MacOS: $fileUrl");
                         responseStreamStatus = false;
                       }
                       break;
 
                     case "WIN":
-                      if ((filePath.endsWith('.zip')) &&
+                      if ((fileUrl.endsWith('.zip')) &&
                           responseStreamStatus == true) {
                         // Determine the local path to th meta data directory
                         String metaDataPath = localPath + "/__MACOSX";
@@ -656,22 +671,22 @@ class Deployment {
                                 responseStreamStatus)
                             .then((value) => responseStreamStatus = value);
                       }
-                      if (filePath.endsWith('.tar') ||
-                          filePath.endsWith('.tar.gz')) {
+                      if (fileUrl.endsWith('.tar') ||
+                          fileUrl.endsWith('.tar.gz')) {
                         logger.error(this.runtimeType.toString(),
-                            "Tar format is not supported for Windows: $filePath");
+                            "Tar format is not supported for Windows: $fileUrl");
                         responseStreamStatus = false;
                       }
                       break;
 
                     default:
                       logger.error(this.runtimeType.toString(),
-                          "Unsupported OS detected while storing file: $filePath");
+                          "Unsupported OS detected while storing file: $fileUrl");
                       responseStreamStatus = false;
                   }
                 } else {
                   logger.verbose(this.runtimeType.toString(),
-                      "The file $filePath has been saved in the agent directory at: '$localPath'");
+                      "The file $fileUrl has been saved in the agent directory at: '$localPath'");
                   if (actionType == "LAUNCH") {
                     // Make the file executable
                     String chmodCommand = "chmod +x ${fileAdded.path}";
@@ -680,11 +695,11 @@ class Deployment {
 
                   if (actionType == "STORE") {
                     File remoteFile = await fileAdded
-                        .copySync(specifiedPath + filePath.split("/").last);
+                        .copySync(specifiedPath + fileUrl.split("/").last);
                     if (remoteFile.existsSync() &&
                         remoteFile.lengthSync() == fileAdded.lengthSync()) {
                       logger.verbose(this.runtimeType.toString(),
-                          "The file $filePath has been successfully saved at the specified path: '$specifiedPath'");
+                          "The file $fileUrl has been successfully saved at the specified path: '$specifiedPath'");
                       responseStreamStatus = true;
                     } else {
                       logger.error(this.runtimeType.toString(),
@@ -725,12 +740,12 @@ class Deployment {
                 responseStreamStatus == false &&
                 retryCounter > 0) {
               logger.error(this.runtimeType.toString(),
-                  "File save failed on retry #${retryCounter}: ${response.reasonPhrase} ${filePath}");
+                  "File save failed on retry #${retryCounter}: ${response.reasonPhrase} ${fileUrl}");
               responseStreamStatus = false;
               return response.drain();
             } else {
               logger.error(this.runtimeType.toString(),
-                  "Failed to download file: ${response.reasonPhrase} ${filePath}");
+                  "Failed to download file: ${response.reasonPhrase} ${fileUrl}");
               responseStreamStatus = false;
               return response.drain();
             }
@@ -763,21 +778,16 @@ class Deployment {
 
   /// Store the specified file and execute it.
   Future<int> launchFile(String os, int package, String actionCommand,
-      String filePath, String actionType) async {
+      dynamic filePath, String actionType) async {
     logger.info(this.runtimeType.toString(), "Launching file...");
+    logger.verbose(this.runtimeType.toString(),
+        "Launch file parameters - Command: $actionCommand, File: $filePath");
+    var fileToStore =
+        filePath is Map ? filePath["file"] as String : filePath.toString();
+
     bool storeStatus =
-        await storeFile(package, filePath, actionCommand, actionType, os);
+        await storeFile(package, fileToStore, actionCommand, actionType, os);
     bool execStatus = await executeCommand(os, package, actionCommand);
-    int status = 0;
-    if (storeStatus) {
-      if (execStatus) {
-        status = 0;
-      } else {
-        status = 1;
-      }
-    } else {
-      status = 1;
-    }
-    return status;
+    return (storeStatus && execStatus) ? 0 : 1;
   }
 }
