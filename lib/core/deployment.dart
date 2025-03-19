@@ -192,9 +192,19 @@ class Deployment {
 
     int id = 0;
     int status = 0;
+    int packageCount = 0;
 
-    // For each action, try to execute the command in the action object
     for (var element in actions.values) {
+      // delay between pkgs
+      if (packageCount > 0) {
+        int latencySeconds =
+            config.getCoreConfig("deployment", "period_latency");
+        logger.info(this.runtimeType.toString(),
+            "Waiting $latencySeconds seconds before processing next package...");
+        await Future.delayed(Duration(seconds: latencySeconds));
+      }
+      packageCount++;
+
       for (var action in element) {
         logger.verbose(this.runtimeType.toString(),
             "Processing action: ${action.toString()}");
@@ -280,7 +290,7 @@ class Deployment {
           var responseSuccess = await httpUtils.patch(
               Uri.parse(url + "/deployment/results/$id/"),
               httpUtils.getHeader(config),
-              "{\"status\": 1, \"comment\": \"Success\"}");
+              "{\"status\": 0, \"comment\": \"Success\"}");
           logger.verbose(
               this.runtimeType.toString(), responseSuccess["message"]);
           if (responseSuccess["status_code"] == 200) {
