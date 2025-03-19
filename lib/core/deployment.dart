@@ -103,7 +103,7 @@ class Deployment {
   Future<bool> checkDownload(int assetID) async {
     // API call: Check if there is assigned packages
     var response = await httpUtils.get(
-        Uri.parse(url + "/deployment/results/?asset=$assetID&status=0"),
+        Uri.parse(url + "/deployment/results/?asset=$assetID&status=1"),
         httpUtils.getHeader(config));
     // VERBOSE: show result of the query in verbose mode
     logger.verbose(this.runtimeType.toString(), response["message"]);
