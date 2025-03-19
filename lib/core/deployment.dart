@@ -225,8 +225,9 @@ class Deployment {
             }
             break;
           case "STORE":
-            await storeFile(action["package"], action["file"],
-                        action["command"], action["action_type"], os) ==
+            String fileUrl = action["file"]["file"];
+            await storeFile(action["package"], fileUrl, action["command"],
+                        action["action_type"], os) ==
                     true
                 ? status = 0
                 : status = 1;
@@ -246,8 +247,9 @@ class Deployment {
             }
             break;
           case "LAUNCH":
+            String fileUrl = action["file"]["file"];
             status = await launchFile(os, action["package"], action["command"],
-                action["file"], action["action_type"]);
+                fileUrl, action["action_type"]);
             if (status == 0) {
               logger.info(
                   this.runtimeType.toString(), "File launched successfully.");
