@@ -501,6 +501,9 @@ class Deployment {
         break;
     }
 
+    logger.verbose(this.runtimeType.toString(),
+        "Extracting tar file: '$filePath' to path: '$extractedPath'");
+
     // Execute the tar command to extract the archive file
     var result = await command
         .commandShell("tar -xvf $filePath -C $extractedPath", true)
@@ -784,12 +787,52 @@ class Deployment {
     logger.info(this.runtimeType.toString(), "Launching file...");
     logger.verbose(this.runtimeType.toString(),
         "Launch file parameters - Command: $actionCommand, File: $filePath");
-    var fileToStore =
-        filePath is Map ? filePath["file"] as String : filePath.toString();
+
+    // use package dir as extract path
+    String packagePath = config.getInventoryConfig("data_directory") +
+        "/deployment/" +
+        package.toString() +
+        "/";
+
+    logger.verbose(this.runtimeType.toString(),
+        "Using package directory for extraction: '$packagePath'");
 
     bool storeStatus =
-        await storeFile(package, fileToStore, actionCommand, actionType, os);
+        await storeFile(package, filePath, packagePath, actionType, os);
+
+    logger.verbose(this.runtimeType.toString(),
+        "File store operation result: ${storeStatus ? 'Success' : 'Failed'}");
+
+    //  listing files to ensure extraction went well
+    List<String> extractedFiles = [];
+    try {
+      var files = Directory(packagePath).listSync();
+      extractedFiles = files.map((f) => f.path.split('/').last).toList();
+      logger.verbose(this.runtimeType.toString(),
+          "Files in package directory: ${extractedFiles.join(', ')}");
+    } catch (e) {
+      logger.error(this.runtimeType.toString(),
+          "Error listing files in package directory: $e");
+    }
+
+    // keeping the current dir
+    String originalDir = Directory.current.path;
+
+    // then switching to the pkg dir for contextual exec
+    Directory.current = Directory(packagePath);
+    logger.verbose(this.runtimeType.toString(),
+        "Changed working directory to: '${Directory.current.path}'");
+
     bool execStatus = await executeCommand(os, package, actionCommand);
+
+    // back to the original dir
+    Directory.current = Directory(originalDir);
+    logger.verbose(this.runtimeType.toString(),
+        "Restored working directory to: '${Directory.current.path}'");
+
+    logger.verbose(this.runtimeType.toString(),
+        "Command execution result: ${execStatus ? 'Success' : 'Failed'}");
+
     return (storeStatus && execStatus) ? 0 : 1;
   }
 }
