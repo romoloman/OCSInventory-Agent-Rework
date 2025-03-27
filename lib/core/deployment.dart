@@ -121,7 +121,7 @@ class Deployment {
             Uri.parse(
                 url + "/deployment/results/" + element["id"].toString() + "/"),
             httpUtils.getHeader(config),
-            "{\"comment\": \"Notified\"}");
+            "{\"status\": 2, \"comment\": \"Notified\"}");
         logger.verbose(
             this.runtimeType.toString(), responseNotified["message"]);
       }
@@ -350,7 +350,7 @@ class Deployment {
           var responseFail = await httpUtils.patch(
               Uri.parse(url + "/deployment/results/$id/"),
               httpUtils.getHeader(config),
-              "{\"status\": 2, \"comment\": ${jsonEncode(formattedErrorComment)}}");
+              "{\"status\": 3, \"comment\": ${jsonEncode(formattedErrorComment)}}");
           logger.verbose(this.runtimeType.toString(), responseFail["message"]);
           if (responseFail["status_code"] == 200) {
             logger.error(this.runtimeType.toString(),
