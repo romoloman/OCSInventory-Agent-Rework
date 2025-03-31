@@ -483,8 +483,8 @@ class Deployment {
   /// directory if it exists.
   ///
   /// Parameters:
-  ///   - _downloadData: The byte data of the zip archive.
   ///   - extractedPath: The path where the contents of the zip archive will be extracted.
+  ///   - savedFile: The file object representing the zip archive file.
   ///   - metaDataPath: The path to the metadata directory to be deleted.
   ///   - status: The status indicator. If an error occurs during extraction,
   ///             status will be set to 1.
@@ -494,17 +494,15 @@ class Deployment {
   ///
   /// Throws:
   ///   Any error that occurs during the extraction process.
-  Future<Map<String, dynamic>> extractZipFile(
-      List<int> _downloadData,
-      String extractedPath,
-      File savedFile,
-      String metaDataPath,
-      bool status) async {
+  Future<Map<String, dynamic>> extractZipFile(String extractedPath,
+      File savedFile, String metaDataPath, bool status) async {
     Map<String, dynamic> result = {"status": false, "error": ""};
 
     try {
+      // read saved file
+      List<int> fileBytes = await savedFile.readAsBytes();
       // Decompress the zip archive
-      var archive = await ZipDecoder().decodeBytes(_downloadData);
+      var archive = ZipDecoder().decodeBytes(fileBytes);
       await extractArchiveToDiskAsync(archive, extractedPath).then((value) {
         // Log verbose message indicating successful extraction
         logger.verbose(this.runtimeType.toString(),
@@ -679,7 +677,6 @@ class Deployment {
       bool responseStreamStatus = false;
       Completer<String> completer = Completer<String>();
       try {
-        List<int> _downloadData = [];
         client = HttpClient();
         result["status"] = false;
         result["error"] = "";
@@ -763,17 +760,13 @@ class Deployment {
                     case "WIN":
                       if ((fileUrl.endsWith('.zip')) &&
                           responseStreamStatus == true) {
-                        // Determine the local path to th meta data directory
+                        // Determine the local path to the meta data directory
                         String metaDataPath = localPath + "/__MACOSX";
 
                         // Decompress the zip archive
                         Map<String, dynamic> extractResult =
-                            await extractZipFile(
-                                _downloadData,
-                                specifiedPath,
-                                fileSaveLocal,
-                                metaDataPath,
-                                responseStreamStatus);
+                            await extractZipFile(specifiedPath, fileSaveLocal,
+                                metaDataPath, responseStreamStatus);
                         responseStreamStatus = extractResult["status"];
                         if (!responseStreamStatus) {
                           result["error"] = extractResult["error"];
