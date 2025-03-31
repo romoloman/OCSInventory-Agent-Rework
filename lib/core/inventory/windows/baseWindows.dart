@@ -80,7 +80,7 @@ class BaseWindows {
     dynamic body = ({
       "name": name,
       "description": (await windowsCommand.commandPowershell(
-              "(Get-WMIObject -Class Win32_ComputerSystemProduct).Description",
+              "[System.Text.Encoding]::UTF8.GetString([System.Text.Encoding]::Default.GetBytes((Get-WMIObject -Class Win32_ComputerSystemProduct).Description))",
               true))["value"]
           .toString(),
       "serial": (await windowsCommand.commandPowershell(
