@@ -53,10 +53,13 @@ class WindowsCommand {
       if (process.exitCode != 0) {
         processData["value"] = "";
         processData["status"] = false;
+        processData["error"] =
+            utf8.decode(utf8.encode(process.stderr.toString().trim()));
         logger.error(this.runtimeType.toString(),
             "Executing command $commandLine : ${process.stderr}");
       } else {
         processData["status"] = true;
+        processData["error"] = "";
         logger.verbose(
             this.runtimeType.toString(), "Command executed: $commandLine");
         if (processData["value"] == "") {
@@ -66,12 +69,14 @@ class WindowsCommand {
     } on ProcessException catch (e) {
       processData["value"] = "";
       processData["status"] = false;
+      processData["error"] = utf8.decode(utf8.encode(e.toString()));
       // Handle the specific error
       logger.error(this.runtimeType.toString(),
           "This command '$command' could not be found : $e");
     } catch (e) {
       processData["value"] = "";
       processData["status"] = false;
+      processData["error"] = utf8.decode(utf8.encode(e.toString()));
       // Handle other errors
       logger.error(this.runtimeType.toString(), 'An error occurred : $e');
     }
@@ -98,10 +103,13 @@ class WindowsCommand {
       if (process.exitCode != 0) {
         processData["value"] = "";
         processData["status"] = false;
+        processData["error"] =
+            utf8.decode(utf8.encode(process.stderr.toString().trim()));
         logger.error(this.runtimeType.toString(),
             "Executing command '$commandLine' - ${process.stderr}");
       } else {
         processData["status"] = true;
+        processData["error"] = "";
         logger.verbose(
             this.runtimeType.toString(), "Command executed: $commandLine");
         if (processData["value"] == "") {
@@ -111,12 +119,14 @@ class WindowsCommand {
     } on ProcessException catch (e) {
       processData["value"] = "";
       processData["status"] = false;
+      processData["error"] = utf8.decode(utf8.encode(e.toString()));
       // Handle the specific error
       logger.error(this.runtimeType.toString(),
           "This command '$command' could not be found : $e");
     } catch (e) {
       processData["value"] = "";
       processData["status"] = false;
+      processData["error"] = utf8.decode(utf8.encode(e.toString()));
       // Handle other errors
       logger.error(this.runtimeType.toString(), 'An error occurred : $e');
     }
@@ -139,10 +149,13 @@ class WindowsCommand {
       if (process.exitCode != 0) {
         processData["value"] = "";
         processData["status"] = false;
+        processData["error"] =
+            utf8.decode(utf8.encode(process.stderr.toString().trim()));
         logger.error(this.runtimeType.toString(),
             "Executing file '$path' - ${process.stderr}");
       } else {
         processData["status"] = true;
+        processData["error"] = "";
         logger.verbose(
             this.runtimeType.toString(), "File executed successfully: $path");
         if (processData["value"] == "") {
@@ -152,12 +165,14 @@ class WindowsCommand {
     } on ProcessException catch (e) {
       processData["value"] = "";
       processData["status"] = false;
+      processData["error"] = utf8.decode(utf8.encode(e.toString()));
       // Handle the specific error
       logger.error(this.runtimeType.toString(),
           "This file '$path' could not be found : $e");
     } catch (e) {
       processData["value"] = "";
       processData["status"] = false;
+      processData["error"] = utf8.decode(utf8.encode(e.toString()));
       // Handle other errors
       logger.error(this.runtimeType.toString(), 'An error occurred : $e');
     }
