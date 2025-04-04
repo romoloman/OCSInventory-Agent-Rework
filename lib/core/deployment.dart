@@ -748,12 +748,19 @@ class Deployment {
                           result["error"] = extractResult["error"];
                         }
                       }
-                      if (fileUrl.endsWith('.zip')) {
-                        result["error"] =
-                            "Zip format is not supported for MacOS: $fileUrl";
-                        logger.error(
-                            this.runtimeType.toString(), result["error"]);
-                        responseStreamStatus = false;
+                      if (fileUrl.endsWith('.zip') &&
+                          responseStreamStatus == true) {
+                        // Determine the local path to the meta data directory
+                        String metaDataPath = localPath + "/__MACOSX";
+
+                        // Decompress the zip archive
+                        Map<String, dynamic> extractResult =
+                            await extractZipFile(specifiedPath, fileSaveLocal,
+                                metaDataPath, responseStreamStatus);
+                        responseStreamStatus = extractResult["status"];
+                        if (!responseStreamStatus) {
+                          result["error"] = extractResult["error"];
+                        }
                       }
                       break;
 
