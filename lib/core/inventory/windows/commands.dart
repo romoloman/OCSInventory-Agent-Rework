@@ -90,10 +90,17 @@ class WindowsCommand {
     List<String> args = commandLine.split(" ");
     String command = "powershell.exe";
 
+    // utf8 encoding
+    args = [
+      "-Command",
+      "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; " + commandLine
+    ];
+
     Map<String, Object> processData = {};
     try {
       // Attempt to run the command
-      var process = await Process.run(command, args, stdoutEncoding: utf8);
+      var process = await Process.run(command, args,
+          stdoutEncoding: utf8, stderrEncoding: utf8);
       if (normalization) {
         processData["value"] = await process.stdout.toString().trim();
       } else {
