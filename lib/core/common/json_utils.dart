@@ -75,30 +75,8 @@ class JsonUtils {
 
   /// Serialize and write [file] with [json].
   String serializeJson(File file, Map<String, dynamic> json) {
-    String str = "";
     try {
-      int n = 1;
-      str += "{\n";
-      json.forEach((key, value) {
-        if (Platform.isWindows) {
-          value = escapeBackslashes(value);
-        }
-        if(value is String) {
-          if (n >= json.length) {
-            str += "\t\"$key\":\"$value\"\n";
-          } else {
-            str += "\t\"$key\":\"$value\",\n";
-          }
-        }else{
-          if (n >= json.length) {
-            str += "\t\"$key\":$value\n";
-          } else {
-            str += "\t\"$key\":$value,\n";
-          }
-        }
-        n++;
-      });
-      str += "}\n";
+      String str = jsonEncode(json);
       return str;
     } catch (e) {
       print(e);

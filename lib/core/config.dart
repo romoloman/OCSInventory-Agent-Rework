@@ -86,7 +86,9 @@ class Config {
   /// Update inventory config file by [_index] and [_value].
   void updateInventoryConfig(String _index, dynamic _value) {
     String str = jsonUtils.setContentFromFile(inventory, _index, _value);
-    filesUtils.rewriteFile(inventory, str);
+    if (!str.isEmpty) {
+      filesUtils.rewriteFile(inventory, str);
+    }
   }
 
   /// Return all content in core config file.
@@ -112,7 +114,9 @@ class Config {
   /// Update core config file by [_index] and [_value].
   void updateCoreConfig(String _index, String _value) {
     String str = jsonUtils.setContentFromFile(core, _index, _value);
-    filesUtils.rewriteFile(core, str);
+    if (!str.isEmpty) {
+      filesUtils.rewriteFile(core, str);
+    }
   }
 
   /// Update all core file.
@@ -133,7 +137,9 @@ class Config {
   /// Update core template file by [_index] and [_value].
   void updateTemplate(String _index, String _value) {
     String str = jsonUtils.setContentFromFile(template, _index, _value);
-    filesUtils.rewriteFile(template, str);
+    if (!str.isEmpty) {
+      filesUtils.rewriteFile(template, str);
+    }
   }
 
   /// Update all template file.

@@ -122,17 +122,23 @@ class Inventory {
     await generateToken(username, password, localToken);
     logger.info(this.runtimeType.toString(), "Checking API availability...");
 
-    var response =
+    try {
+      var response =
         await httpUtils.get(Uri.parse(url), httpUtils.getHeader(config));
-
-    if (response["status_code"] == 200) {
-      logger.verbose(this.runtimeType.toString(), response["message"]);
-      logger.info(this.runtimeType.toString(), "API is online!");
-      return true;
-    } else {
-      logger.verbose(this.runtimeType.toString(),
-          "Check username or password in the configuration file.");
-      logger.error(this.runtimeType.toString(), "API connection failed!");
+      
+      if (response["status_code"] == 200) {
+        logger.verbose(this.runtimeType.toString(), response["message"]);
+        logger.info(this.runtimeType.toString(), "API is online!");
+        return true;
+      } else {
+        logger.verbose(this.runtimeType.toString(),
+            "Check username or password in the configuration file.");
+        logger.error(this.runtimeType.toString(), "API connection failed!");
+        return false;
+      }
+    } catch (e) {
+      logger.error(
+          this.runtimeType.toString(), "Exception during API availibility check: $e");
       return false;
     }
   }
@@ -159,10 +165,9 @@ class Inventory {
             this.runtimeType.toString(), "Token retrieved successfully.");
         // Get the token from the response body and compare with the local token
         // If tokens are not the same, replace the local token with the server one
-        if (jsonUtils.getContentFromStringByKey(response["body"], "token") !=
-            localToken) {
-          config.updateInventoryConfig("token",
-              jsonUtils.getContentFromStringByKey(response["body"], "token"));
+        var newToken = jsonUtils.getContentFromStringByKey(response["body"], "token");
+        if (newToken != localToken) {
+          config.updateInventoryConfig("token", newToken);
           logger.info(this.runtimeType.toString(),
               "Local token updated with server token.");
           return true;
@@ -325,7 +330,7 @@ class Inventory {
 
         var id = remoteInfo["id"];
         var response = await httpUtils.get(
-            Uri.parse(url + "/templates/$id/"), httpUtils.getHeader(config));
+            Uri.parse(url + "/templates/$id/?expand=*"), httpUtils.getHeader(config));
         logger.verbose(this.runtimeType.toString(), response["message"]);
         if (response["status_code"] == 200) {
           // Save remote template locally
@@ -397,7 +402,7 @@ class Inventory {
           Uri.parse(url +
               "/templates/" +
               jsonDecode(responseAsset["body"])[0]['template'].toString() +
-              "/"),
+              "/?expand=*"),
           httpUtils.getHeader(config));
       logger.verbose(this.runtimeType.toString(), responseTemplate["message"]);
       if (responseTemplate["status_code"] == 200) {
@@ -424,7 +429,7 @@ class Inventory {
               "Unsupported OS detected. Failed to find a matching template.");
         }
         var responseGET = await httpUtils.get(
-            Uri.parse(url + "/templates/?os=" + os),
+            Uri.parse(url + "/templates/?expand=*&os=" + os),
             httpUtils.getHeader(config));
 
         if (responseGET["status_code"] == 200 &&
@@ -447,7 +452,7 @@ class Inventory {
             // API call
             var responseTemplate = await httpUtils.get(
                 Uri.parse(
-                    url + "/templates/" + newBody['template'].toString() + "/"),
+                    url + "/templates/" + newBody['template'].toString() + "/?expand=*"),
                 httpUtils.getHeader(config));
             logger.verbose(
                 this.runtimeType.toString(), responseTemplate["message"]);
