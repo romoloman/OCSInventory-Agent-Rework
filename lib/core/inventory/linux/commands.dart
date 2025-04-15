@@ -16,6 +16,7 @@
 
 // External package imports
 import 'dart:io';
+import 'dart:convert';
 
 // Core imports
 import 'package:ocs_agent/core/log.dart';
@@ -58,10 +59,13 @@ class LinuxCommand {
       if (process.exitCode != 0) {
         processData["value"] = "";
         processData["status"] = false;
+        processData["error"] =
+            utf8.decode(utf8.encode(process.stderr.toString().trim()));
         logger.error(this.runtimeType.toString(),
             "Executing command '$commandLine' - ${process.stderr}");
       } else {
         processData["status"] = true;
+        processData["error"] = "";
         logger.verbose(
             this.runtimeType.toString(), "Executed command: '$commandLine'");
         if (processData["value"] == "") {
@@ -71,12 +75,14 @@ class LinuxCommand {
     } on ProcessException catch (e) {
       processData["value"] = "";
       processData["status"] = false;
+      processData["error"] = utf8.decode(utf8.encode(e.toString()));
       // Handle the specific error
       logger.error(this.runtimeType.toString(),
           "This command '$command' could not be found : $e");
     } catch (e) {
       processData["value"] = "";
       processData["status"] = false;
+      processData["error"] = utf8.decode(utf8.encode(e.toString()));
       // Handle other errors
       logger.error(this.runtimeType.toString(), 'An error occurred : $e');
     }

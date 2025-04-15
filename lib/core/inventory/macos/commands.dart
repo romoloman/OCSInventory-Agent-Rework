@@ -16,6 +16,7 @@
 
 // External package imports
 import 'dart:io';
+import 'dart:convert';
 
 // Core imports
 import 'package:ocs_agent/core/log.dart';
@@ -52,10 +53,13 @@ class MacOSCommand {
       if (process.exitCode != 0) {
         processData["value"] = "";
         processData["status"] = false;
+        processData["error"] =
+            utf8.decode(utf8.encode(process.stderr.toString().trim()));
         logger.error(this.runtimeType.toString(),
             "Executing command '$commandLine' - ${process.stderr}");
       } else {
         processData["status"] = true;
+        processData["error"] = "";
         logger.verbose(
             this.runtimeType.toString(), "Command executed: $commandLine");
         if (processData["value"] == "") {
@@ -65,13 +69,15 @@ class MacOSCommand {
     } on ProcessException catch (e) {
       processData["value"] = "";
       processData["status"] = false;
+      processData["error"] = utf8.decode(utf8.encode(e.toString()));
       // Handle the specific error
       logger.error(this.runtimeType.toString(),
           "This command '$command' could not be found : $e");
     } catch (e) {
       processData["value"] = "";
       processData["status"] = false;
-      // Handle other errors
+      processData["error"] = utf8.decode(utf8.encode(e.toString()));
+      // handle other errors
       logger.error(this.runtimeType.toString(), 'An error occurred : $e');
     }
 
@@ -79,18 +85,48 @@ class MacOSCommand {
   }
 
   /// Return [path] file content.
-  Future<String> readFile(String path, bool normalization) async {
-    var process;
-    if (normalization) {
-      late String processNormalization;
-      await Process.run("cat", [path])
-          .then((value) => processNormalization = value.stdout);
-      process = processNormalization.trim();
-    } else {
-      await Process.run("cat", [path]).then((value) => process = value.stdout);
+  Future<Map<String, Object>> readFile(String path, bool normalization) async {
+    Map<String, Object> processData = {};
+    try {
+      // run cmd
+      var process = await Process.run("cat", [path]);
+      if (normalization) {
+        processData["value"] = await process.stdout.toString().trim();
+      } else {
+        processData["value"] = await process.stdout.toString();
+      }
+
+      if (process.exitCode != 0) {
+        processData["value"] = "";
+        processData["status"] = false;
+        processData["error"] =
+            utf8.decode(utf8.encode(process.stderr.toString().trim()));
+        logger.error(this.runtimeType.toString(),
+            "Executing file '$path' - ${process.stderr}");
+      } else {
+        processData["status"] = true;
+        processData["error"] = "";
+        logger.verbose(
+            this.runtimeType.toString(), "File executed successfully: $path");
+        if (processData["value"] == "") {
+          processData["value"] = "No output for file '$path'";
+        }
+      }
+    } on ProcessException catch (e) {
+      processData["value"] = "";
+      processData["status"] = false;
+      processData["error"] = utf8.decode(utf8.encode(e.toString()));
+      // handle error
+      logger.error(this.runtimeType.toString(),
+          "This file '$path' could not be found : $e");
+    } catch (e) {
+      processData["value"] = "";
+      processData["status"] = false;
+      processData["error"] = utf8.decode(utf8.encode(e.toString()));
+      logger.error(this.runtimeType.toString(), 'An error occurred : $e');
     }
 
-    return process;
+    return processData;
   }
 
   /// Execute or read [command] in terms of [type].
@@ -98,13 +134,13 @@ class MacOSCommand {
   Future<String?> getResult(String command, String type) async {
     switch (type) {
       case "FILE":
-        return await this.readFile(command, true);
+        return (await this.readFile(command, true))["value"].toString();
       case "CMD":
-        return await this.commandShell(command, true).toString();
+        return (await this.commandShell(command, true))["value"].toString();
       case "BASH":
-        return await this.commandShell(command, true).toString();
+        return (await this.commandShell(command, true))["value"].toString();
       case "ZSH":
-        return await this.commandShell(command, true).toString();
+        return (await this.commandShell(command, true))["value"].toString();
     }
     return null;
   }
