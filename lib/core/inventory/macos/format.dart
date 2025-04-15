@@ -61,7 +61,7 @@ class MacOSFormat {
         json[element] = null;
         // wym??
         logger.verbose(this.runtimeType.toString(),
-            "Next JSON object won't be well formatted!");
+            "Failed to parse JSON data for element '$element': ${e.toString()}");
       }
     });
 
@@ -181,7 +181,7 @@ class MacOSFormat {
         json[element] = resultCommand[element]['result'];
       } catch (e) {
         logger.verbose(this.runtimeType.toString(),
-            "Next Grep object won't be well formatted!");
+            "Failed to parse grep output for element '$element': ${e.toString()}");
       }
     });
 

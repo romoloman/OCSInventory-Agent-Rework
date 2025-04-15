@@ -85,7 +85,7 @@ class WindowsFormat {
       } catch (e) {
         json[element] = null;
         logger.verbose(this.runtimeType.toString(),
-            "Next Json object won't be well formated!");
+            "Failed to parse JSON data for element '$element': ${e.toString()}");
       }
     });
 
