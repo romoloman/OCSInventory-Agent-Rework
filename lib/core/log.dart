@@ -92,7 +92,7 @@ class Logger {
   void _logMessage(String level, String className, String message) {
     var now = DateTime.now();
     String date = dateFormat.format(now);
-    String txt = "[$date] [$level] [$className] $message\n";
+    String txt = "[$date] [$level] [$className] $message";
     if (_isFile) {
       file.writeAsStringSync(txt, mode: FileMode.append);
     } else {
