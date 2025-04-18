@@ -105,12 +105,13 @@ Enter the inventory mode (default is 2 = Remote without template):
 
 Enter the log level (default is 2 = Info):
 
-Enter the certificate path
+Enter the certificate path:
 
 Do you register the service - agent must be launched automatically (y/n)?
 
 Do you want to run the agent now (y/n)?
 ```
+For the server URL field, the expected URL is `http://<Server ip:port>`
 
 #### 4. Additionnal information
 
@@ -141,17 +142,17 @@ sudo ocsinventory-agent-ng -v 3
 #### 1. Compilation
 
 Go to the linux setup directory: `/setup/windows/`
-You need to compile the entry point `app.dart` and the daemon `daemon.dart` using the following command
+You need to download `NSSM - the Non-Sucking Service Manager` for handling services
+
+- [NSSM Installation last release](https://nssm.cc/download)
+  Extract the file, navigate until win64 folder and copy nssm.exe file into your windows setup folder `/setup/windows/`
+
+After adding the NSSM executable file in the setup directory, you need to compile the entry point `app.dart` and the daemon `daemon.dart` using the following command
 
 ```text
 dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o AGENT-WINDOWS.exe
 dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/daemon.dart -o DAEMON-WINDOWS.exe
 ```
-
-You need to download `NSSM - the Non-Sucking Service Manager` for handling services
-
-- [NSSM Installation last release](https://nssm.cc/download)
-  Extract the file, navigate until win64 folder and copy nssm.exe file into your windows setup folder `/setup/windows/`
 
 Ensure that you have something like this:
 
@@ -172,7 +173,7 @@ You can create your package (if needed) with Inno setup by using `Setup OCS Inve
 - Build the package using Inno Setup's build feature
 - The resulting installer will be created in `/setup/windows/` directory
 
-For esample, if you want to create your own package, you need to adjust the agent path according to your local setup like this:
+For example, if you want to create your own package, you need to adjust the agent path according to your local setup like this:
 
 ```text
 #define AgentPath "path where your agent are located\OCSInventory-Agent-Rework"
