@@ -44,65 +44,7 @@ Go to the agent directory and run this command :
 flutter pub get
 ```
 
-## Step 4: Agent configuration
-
-### Linux and macos
-
-- Configuration directory : `/etc/ocsinventory-agent`
-- Log file in directory : `/var/log/ocsinventory-agent/ocsinventory-agent.log`
-- Data inventories : `/var/lib/ocsinventory-data`
-
-### Windows
-
-- Configuration directory, log file and data inventories are in the same directory : `C:\ProgramData\Agent-OCS`
-
-After installing the agent, there is a config forlder and the file `inventory.json` inside.
-
-In this file, there are properties to configure the agent:
-
-|      Property      |                                                                                        Description                                                                                        |
-|:------------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
-|   data_directory   |                                                                     Folder where the agent will store inventory data.                                                                     |
-|     log_level      |                                                                      0: Error 1: Warning 2: Info (default) 3 Verbose                                                                      |
-|      log_file      |                   Default to false, the logs will be written in the terminal you'r using. Set to true, you'll need to specify a log file where you want to write logs.                    |
-|   log_file_path    |               This property is to set the log file path. Only define it if you put log_file to true.<br>**Warning**: It will not create the file. You'll need to create it.               |
-|        mode        | This is the working mode property of the agent, there is 5 modes: 0- Installation mode 1-Remote with template 2- Remote without template 3- Local with template 4- Local without template |
-|      password      |                                                By default in remote inventory mode, set the password to connect to the backend server api.                                                |
-|       token        |                                                  Will be automatically replace to store the retreived token from the backend server api.                                                  |
-|      username      |                                                By default in remote inventory mode, set the username to connect to the backend server api.                                                |
-|        url         |                                                                                  Backend server api url.                                                                                  |
-|    certificate     |                                                                      specify the path to the certificate file (.pem)                                                                      |
-| bypass_certificate |                                                                    Bypass certificate verification (false by default)                                                                     |
-
-```text
-{
-    "log_file": true,
-    "mode": 2,
-    "password": "password",
-    "token": "token value",
-    "username": "username",
-    "url": "Server ip and port",
-    "data_directory": "/var/lib/ocsinventory-data",
-    "log_file_path": "/var/log/ocsinventory-agent/ocsinventory-agent.log",
-    "log_level": 3,
-    "certificate": "/certificate path/file_name.pem"
-    "bypass_certificate": false
-}
-```
-
-### SSL
-
-- HTTP
-
-If your OCS Inventory backend is running with the HTTP protocol, you do not need a certificate file to install the agent.
-
-- HTTPS
-
-If your OCS Inventory backend is running with the HTTPS protocol, you must have a certificate file, even if it is self-signed, to install the agent.
-
-You can bypass SSL certificate verification (if the certificate is self-signed) by running the agent with the `-b true` option or by setting the `bypass_certificate` value to true in the configuration file.
-
-## Step 5: Installing the Agent
+## Step 4: Installing the Agent
 
 ### Installing the agent on Linux
 
@@ -348,7 +290,7 @@ For example, if you want to install OCS Inventory Agent in non-interactive mode 
 sudo sh install.sh -l Server_ip_and_port -u username -p password -v 3 -s -n -c -c /path of the certificate/cert.pem
 ```
 
-#### 5. Installing the agent interactively
+#### 4. Installing the agent interactively
 
 To install the agent in interactive mode, you have to run the `OCS Inventory Agent.mpkg` package and set all configuration fields.
 
@@ -357,6 +299,64 @@ To install the agent in interactive mode, you have to run the `OCS Inventory Age
 - The is installed in `/Applications/OCS-NG`
 
 - If you set up the service, it will be in `/Library/LaunchDaemons/org.ocsinventory.agent.plist`
+
+## Step 5: Agent configuration
+
+### Linux and macos
+
+- Configuration directory : `/etc/ocsinventory-agent`
+- Log file in directory : `/var/log/ocsinventory-agent/ocsinventory-agent.log`
+- Data inventories : `/var/lib/ocsinventory-data`
+
+### Windows
+
+- Configuration directory, log file and data inventories are in the same directory : `C:\ProgramData\Agent-OCS`
+
+After installing the agent, there is a config forlder and the file `inventory.json` inside.
+
+In this file, there are properties to configure the agent:
+
+|      Property      |                                                                                        Description                                                                                        |
+|:------------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+|   data_directory   |                                                                     Folder where the agent will store inventory data.                                                                     |
+|     log_level      |                                                                      0: Error 1: Warning 2: Info (default) 3 Verbose                                                                      |
+|      log_file      |                   Default to false, the logs will be written in the terminal you'r using. Set to true, you'll need to specify a log file where you want to write logs.                    |
+|   log_file_path    |               This property is to set the log file path. Only define it if you put log_file to true.<br>**Warning**: It will not create the file. You'll need to create it.               |
+|        mode        | This is the working mode property of the agent, there is 5 modes: 0- Installation mode 1-Remote with template 2- Remote without template 3- Local with template 4- Local without template |
+|      password      |                                                By default in remote inventory mode, set the password to connect to the backend server api.                                                |
+|       token        |                                                  Will be automatically replace to store the retreived token from the backend server api.                                                  |
+|      username      |                                                By default in remote inventory mode, set the username to connect to the backend server api.                                                |
+|        url         |                                                                                  Backend server api url.                                                                                  |
+|    certificate     |                                                                      specify the path to the certificate file (.pem)                                                                      |
+| bypass_certificate |                                                                    Bypass certificate verification (false by default)                                                                     |
+
+```text
+{
+    "log_file": true,
+    "mode": 2,
+    "password": "password",
+    "token": "token value",
+    "username": "username",
+    "url": "Server ip and port",
+    "data_directory": "/var/lib/ocsinventory-data",
+    "log_file_path": "/var/log/ocsinventory-agent/ocsinventory-agent.log",
+    "log_level": 3,
+    "certificate": "/certificate path/file_name.pem"
+    "bypass_certificate": false
+}
+```
+
+### SSL
+
+- HTTP
+
+If your OCS Inventory backend is running with the HTTP protocol, you do not need a certificate file to install the agent.
+
+- HTTPS
+
+If your OCS Inventory backend is running with the HTTPS protocol, you must have a certificate file, even if it is self-signed, to install the agent.
+
+You can bypass SSL certificate verification (if the certificate is self-signed) by running the agent with the `-b true` option or by setting the `bypass_certificate` value to true in the configuration file.
 
 ## Step 6: Uninstalling the agent
 
