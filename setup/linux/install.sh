@@ -12,7 +12,7 @@ WORKING_DIRECTORY_EXEC_PATH="/setup/linux"
 EXEC_AGENT="/AGENT-LINUX"
 CONFIG_PATH="/etc/ocsinventory-agent"
 LOG_PATH="/var/log/ocsinventory-agent/ocsinventory-agent.log"
-STRORE_DATA_PATH="/var/lib/ocsinventory-data"
+STORE_DATA_PATH="/var/lib/ocsinventory-data"
 SERVICE_NAME="ocsinventory-agent"
 SERVICE_EXEC="/DAEMON-LINUX"
 AGENT_INSTALLATION_DIR="/usr/share/ocsinventory-agent"
@@ -151,13 +151,13 @@ run_executable() {
 	local inventory_mode="$7"
 
 	# Construct command for running executable
-	command_install="$WORKING_DIRECTORY$EXEC_AGENT -f true -m 0 -p $password -u $username -s $url -l $LOG_PATH -d $STRORE_DATA_PATH -v $log_level -c $certificate"
+	command_install="$WORKING_DIRECTORY$EXEC_AGENT -f true -m 0 -p $password -u $username -s $url -l $LOG_PATH -d $STORE_DATA_PATH -v $log_level -c $certificate"
 	# echo "Executing command: $command"
 	$command_install
 
 	if [ "$run_now" = "true" ]; then
 		echo "Running the agent now..."
-		command_run="$WORKING_DIRECTORY$EXEC_AGENT -f true -m $inventory_mode -p $password -u $username -s $url -l $LOG_PATH -d $STRORE_DATA_PATH -v $log_level -c $certificate"
+		command_run="$WORKING_DIRECTORY$EXEC_AGENT -f true -m $inventory_mode -p $password -u $username -s $url -l $LOG_PATH -d $STORE_DATA_PATH -v $log_level -c $certificate"
 		$command_run
 	fi
 }
