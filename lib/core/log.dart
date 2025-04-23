@@ -51,9 +51,13 @@ class Logger {
     _logLevel = config.getInventoryConfig("log_level");
 
     if (_isFile) {
-      file = File(config.getInventoryConfig("log_file_path"));
-      if (!file.existsSync()) {
-        file.createSync(recursive: true);
+      try {
+        file = File(config.getInventoryConfig("log_file_path"));
+        if (!file.existsSync()) {
+          file.createSync(recursive: true);
+        }
+      } catch (e) {
+        error(this.runtimeType.toString(), "Error creating log file: $e");
       }
     }
 
@@ -92,11 +96,19 @@ class Logger {
   void _logMessage(String level, String className, String message) {
     var now = DateTime.now();
     String date = dateFormat.format(now);
-    String txt = "[$date] [$level] [$className] $message";
-    if (_isFile) {
-      file.writeAsStringSync(txt, mode: FileMode.append);
-    } else {
-      print(txt);
+    String txt;
+
+    try {
+      txt = "[$date] [$level] [$className] $message";
+
+      if (_isFile) {
+        file.writeAsStringSync(txt, mode: FileMode.append);
+      } else {
+        print(txt);
+      }
+    } catch (e) {
+      error(this.runtimeType.toString(),
+          sprintf("Error writing to log: %s", [e.toString().trim()]));
     }
   }
 
@@ -119,11 +131,13 @@ class Logger {
         11: "TEMPLATE_UPDATE",
         12: "TEMPLATE_ERR"
       };
+
       String token = config.getInventoryConfig("token");
       Map<String, dynamic> content = new Map();
       content["asset"] = assetID;
       content["scope"] = errorCodes[errorCode];
       content["comment"] = comment;
+
       try {
         await query.post(
             Uri.parse("$_url/asset/logs/"),
