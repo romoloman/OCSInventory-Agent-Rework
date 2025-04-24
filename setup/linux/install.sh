@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# Check if the script is run as root
 if [ "$(id -u)" != "0" ]; then
-	echo "Please run the installation as root"
+	echo "The installation script requires elevated privileges, please run as root" >&2
 	exit 1
 fi
 
@@ -139,12 +138,12 @@ check_parameters() {
 
 	# Check if the log level empty
 	if [ -z "$log_level" ]; then
-		echo "Log level is set 2 by default"
+		echo "Log level will be set to 2 by default"
 		LOG_LEVEL=2
 	else
 		# Check if the log level is a number
 		if ! echo "$log_level" | grep -qE '^[0-9]+$'; then
-			echo "Log level must be a number, so it is set to the default value 2"
+			echo "Log level must be a number, using default value 2 (Info)"
 			LOG_LEVEL=2
 		else
 			echo "Log level is set to $log_level"
@@ -153,12 +152,12 @@ check_parameters() {
 
 	# Check if the inventory mode empty
 	if [ -z "$inventory_mode" ]; then
-		echo "Inventory mode is set 2 by default"
+		echo "Inventory mode will be set to 2 by default (Remote without template)"
 		INVENTORY_MODE=2
 	else
 		# Check if the inventory mode is a number
 		if ! echo "$inventory_mode" | grep -qE '^[0-9]+$'; then
-			echo "Inventory mode must be a number, so it is set to the default value 2"
+			echo "Inventory mode must be a number, using default value 2 (Remote without template)"
 			INVENTORY_MODE=2
 		else
 			echo "Inventory mode is set to $inventory_mode"
@@ -166,19 +165,31 @@ check_parameters() {
 	fi
 }
 
-# Function to check if the agent is alread -ry installed
+# Function to check if the agent is already installed
 check_installed_agent() {
+	# Check if any standard agent installation artifacts exist
 	if [ -d "$AGENT_INSTALLATION_DIR" ] || [ -f "/etc/systemd/system/${SERVICE_NAME}.service" ] || [ -d "$CONFIG_PATH" ] || [ -f "$LOG_PATH" ]; then
-		echo -n "The agent is already installed, do you want to remove it first ? ([y]/n) "
-		read -r remove_choice
-		if [ "$remove_choice" = "y" ] || [ "$remove_choice" = "Y" ] || [ -z "$remove_choice" ]; then
-			echo "Uninstalling the existing agent..."
+		# check if running in silent mode
+		if [ "$SILENT" = "true" ]; then
+			echo "Existing agent installation detected in silent mode. Automatically uninstalling..."
+			# automatically uninstall in silent mode
 			sudo sh "${WORKING_DIRECTORY}/uninstall.sh" -y
+		else
+			# prompt the user in interactive mode
+			echo -n "The agent is already installed, do you want to remove it first? ([y]/n) "
+			read -r remove_choice
+			if [ "$remove_choice" = "y" ] || [ "$remove_choice" = "Y" ] || [ -z "$remove_choice" ]; then
+				echo "Uninstalling the existing agent..."
+				sudo sh "${WORKING_DIRECTORY}/uninstall.sh" -y
+			# if the user chose 'n', we inform them the script will likely overwrite files
+			else
+				echo "Proceeding with installation without removing the existing one. Files may be overwritten."
+			fi
 		fi
 	fi
 }
 
-# Check if the agent is alread -ry installed
+# Check if the agent is already installed
 check_installed_agent
 
 # Function to copy agent contents to /usr/share/ocsinventory-agent
@@ -242,12 +253,12 @@ run_silent() {
 	echo
 	echo "+----------------------------------------------------------+"
 	echo "|                                                          |"
-	echo "|  Welcome to OCS Inventory NG Agent in silent mode... !   |"
+	echo "|   Installing OCS Inventory Agent in silent mode...       |"
 	echo "|                                                          |"
 	echo "+----------------------------------------------------------+"
 	echo
 
-	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$INVENTORY_MODE"
+	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$INVENTORY_MODE" true
 	copy_agent_contents
 	run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICATE" "$INVENTORY_MODE"
 
@@ -258,43 +269,59 @@ run_interactive() {
 	echo
 	echo "+---------------------------------------------------------------+"
 	echo "|                                                               |"
-	echo "|  Welcome to OCS Inventory NG Agent in interactive mode... !   |"
+	echo "|   Installing OCS Inventory Agent in interactive mode...       |"
 	echo "|                                                               |"
 	echo "+---------------------------------------------------------------+"
 	echo
-	echo -n "Enter server URL: "
-	read -r URL
-	echo -n "Enter username: "
-	read -r USERNAME
-	echo -n "Enter password: "
-	read -r PASSWORD
-	echo -n "Enter the inventory mode (default is 2 = Remote without template): "
-	read -r INVENTORY_MODE
-	echo -n "Enter the log level (default is 2 = Info): "
-	read -r LOG_LEVEL
-	echo -n "Enter the certificate path"
-	read -r CERTIFICATE
-	echo -n "Do you register the service - agent must be launched automatically ([y]/n)? "
-	read -r service_choice
-	if [ "$service_choice" = "y" ] || [ "$service_choice" = "Y" ] || [ -z "$service_choice" ]; then
-		SERVICE=true
+	# only prompting if the var has not been set by an arg already
+	if [ -z "$URL" ]; then
+		echo -n "Enter server URL: "
+		read -r URL
 	fi
-	echo -n "Do you want to run the agent now ([y]/n)? "
-	read -r now_choice
-	if [ "$now_choice" = "y" ] || [ "$now_choice" = "Y" ] || [ -z "$now_choice" ]; then
-		NOW=true
+	if [ -z "$USERNAME" ]; then
+		echo -n "Enter username: "
+		read -r USERNAME
+	fi
+	if [ -z "$PASSWORD" ]; then
+		echo -n "Enter password: "
+		read -r PASSWORD
+	fi
+	if [ -z "$INVENTORY_MODE" ]; then
+		echo -n "Enter the inventory mode (default is 2 = Remote without template): "
+		read -r INVENTORY_MODE
+	fi
+	if [ -z "$LOG_LEVEL" ]; then
+		echo -n "Enter the log level (default is 2 = Info): "
+		read -r LOG_LEVEL
+	fi
+	if [ "$CERTIFICATE" = "null" ]; then
+		echo -n "Enter the certificate path (leave empty if none): "
+		read -r cert_input
+		if [ -n "$cert_input" ]; then
+			CERTIFICATE="$cert_input"
+		fi
+	fi
+	if [ "$SERVICE" = "false" ]; then
+		echo -n "Should the agent be registered as a systemd service? ([y]/n):"
+		read -r service_choice
+		if [ "$service_choice" = "y" ] || [ "$service_choice" = "Y" ] || [ -z "$service_choice" ]; then
+			SERVICE=true
+		fi
 	fi
 
-	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$INVENTORY_MODE"
+	if [ "$NOW" = "false" ]; then
+		echo -n "Do you want the agent to run immediately after installation? ([y]/n):"
+		read -r now_choice
+		if [ "$now_choice" = "y" ] || [ "$now_choice" = "Y" ] || [ -z "$now_choice" ]; then
+			NOW=true
+		fi
+	fi
+
+	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$INVENTORY_MODE" false
 	copy_agent_contents
 	run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICATE" "$INVENTORY_MODE"
 
 }
-
-# Check if all required parameters are provided for silent mode
-if [ -n "$URL" ] && [ -n "$USERNAME" ] && [ -n "$PASSWORD" ]; then
-	SILENT=true
-fi
 
 # Run in the appropriate mode
 if [ "$SILENT" = "true" ]; then
@@ -310,25 +337,23 @@ if [ -d "$CONFIG_PATH" ] && [ -f "$LOG_PATH" ] && [ -d "$AGENT_INSTALLATION_DIR"
 	fi
 	echo
 	echo "+------------------------------------------------------------------------------+"
-	echo "|   OK, OCS Inventory NG Agent for Unix/Linux has been successfully            |"
-	echo "|                    installed and configured.                                 |"
+	echo "|   OCS Inventory Agent has been successfully installed and configured.        |"
 	echo "|                                                                              |"
-	echo "|   Configuration files are located in /etc/ocsinventory-agent                 |"
-	echo "|   Log file is located in /var/log/ocsinventory-agent/ocsinventory-agent.log  |"
-	echo "|   Store Data Path is located in /var/lib/ocsinventory-data                   |"
-	echo "|   Agent Installation Directory is located in /usr/share/ocsinventory-agent   |"
+	echo "|   Configuration files are located at $CONFIG_PATH"
+	echo "|   Log file is located at $LOG_PATH"
+	echo "|   Agent data storage is located at $STORE_DATA_PATH"
+	echo "|   Agent installation directory is located at $AGENT_INSTALLATION_DIR"
 	echo "|                                                                              |"
-	echo "|                                                                              |"
-	echo "|   Enjoy OCS Inventory NG Agent ;-)                                           |"
+	echo "|   Please refer to the documentation for more information                     |"
 	echo "+------------------------------------------------------------------------------+"
 	echo
 
 else
 	echo
 	echo
-	echo "*** ERROR: Install of agent failed, please look at error and fix !"
+	echo "*** ERROR: Installation failed, please check the logs for more information" >&2
 	echo
-	echo "Installation aborted !"
+	echo "Installation aborted !" >&2
 	exit 1
 fi
 
