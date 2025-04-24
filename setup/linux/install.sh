@@ -20,38 +20,95 @@ SYMBOLIC_LINK="/usr/bin/ocsinventory-agent-ng"
 
 # Function to display usage information
 usage() {
-	echo "Usage: $0 [-l Link] [-u USERNAME] [-p PASSWORD] [-m MODE] [-v LOG_LEVEL ] [-c CERTIFICATE] [-s] [-n] [-h]"
-	echo "  -l Link             Link of the OCS Inventory NG server"
-	echo "  -u USERNAME         Username"
-	echo "  -p PASSWORD         Password"
-	echo "  -m MODE             Inventory mode"
-	echo "  -v LOG_LEVEL        Log level"
-	echo "  -c CERTIFICATE      Path to the certificate file"
-	echo "  -s                  Service mode (register service)"
-	echo "  -n                  Run the agent now"
-	echo "  -h			        Display this help message"
+	echo "Usage: $0 [OPTIONS]"
+	echo "Options:"
+	echo "  -S, --silent              Enable silent mode (requires --url, --username, --password)"
+	echo "  -U, --url URL             URL of the OCS Inventory server (required for silent mode)"
+	echo "  -u, --username USERNAME   Username (required for silent mode)"
+	echo "  -p, --password PASSWORD   Password (required for silent mode)"
+	echo "  -m, --mode MODE           Inventory mode (default: 2 = Remote without template)"
+	echo "  -l, --log-level LEVEL     Log level (default: 2 = Info)"
+	echo "  -c, --certificate CERT    Path to the certificate file (default: null)"
+	echo "  -s, --service             Register the agent as a systemd service"
+	echo "  -n, --now                 Run the agent inventory immediately after installation"
+	echo "  -h, --help                Display this help message"
 	exit 1
 }
 
 # Default values
 SILENT=false
+URL=""
+USERNAME=""
+PASSWORD=""
+INVENTORY_MODE=""
+LOG_LEVEL=""
 SERVICE=false
 NOW=false # if true, we run the agent now with mode 2
 CERTIFICATE="null"
 
-# Parse command-line arguments
-while getopts "l:u:p:m:v:c:snh" opt; do
-	case ${opt} in
-	l) URL=$OPTARG ;;
-	u) USERNAME=$OPTARG ;;
-	p) PASSWORD=$OPTARG ;;
-	m) INVENTORY_MODE=$OPTARG ;;
-	v) LOG_LEVEL=$OPTARG ;;
-	c) CERTIFICATE=$OPTARG ;;
-	s) SERVICE=true ;;
-	n) NOW=true ;;
-	h) usage ;;
-	*) usage ;;
+# options
+SHORT_OPTS="hSnU:u:p:m:l:c:s"
+LONG_OPTS="help,silent,now,url:,username:,password:,mode:,log-level:,certificate:,service"
+
+# parse options
+PARSED_OPTIONS=$(getopt --options $SHORT_OPTS --longoptions $LONG_OPTS --name "$0" -- "$@")
+if [ $? -ne 0 ]; then
+	usage
+fi
+
+eval set -- "$PARSED_OPTIONS"
+unset PARSED_OPTIONS
+
+# process options
+while true; do
+	case "$1" in
+	-S | --silent)
+		SILENT=true
+		shift
+		;;
+	-U | --url)
+		URL="$2"
+		shift 2
+		;;
+	-u | --username)
+		USERNAME="$2"
+		shift 2
+		;;
+	-p | --password)
+		PASSWORD="$2"
+		shift 2
+		;;
+	-m | --mode)
+		INVENTORY_MODE="$2"
+		shift 2
+		;;
+	-l | --log-level)
+		LOG_LEVEL="$2"
+		shift 2
+		;;
+	-c | --certificate)
+		CERTIFICATE="$2"
+		shift 2
+		;;
+	-s | --service)
+		SERVICE=true
+		shift
+		;;
+	-n | --now)
+		NOW=true
+		shift
+		;;
+	-h | --help)
+		usage
+		;;
+	--)
+		shift
+		break
+		;;
+	*)
+		echo "Internal error!" >&2
+		exit 1
+		;;
 	esac
 done
 
@@ -62,18 +119,22 @@ check_parameters() {
 	local password="$3"
 	local log_level="$4"
 	local inventory_mode="$5"
+	local is_silent="$6"
 
-	if [ -z "$url" ]; then
-		echo "Server URL is required"
-		usage
-	fi
-	if [ -z "$username" ]; then
-		echo "Username is required"
-		usage
-	fi
-	if [ -z "$password" ]; then
-		echo "Password is required"
-		usage
+	# check required params in silend mode only
+	if [ "$is_silent" = "true" ]; then
+		if [ -z "$url" ]; then
+			echo "Server URL is required in silent mode (-U, --url)" >&2
+			usage
+		fi
+		if [ -z "$username" ]; then
+			echo "Username is required in silent mode (-u, --username)" >&2
+			usage
+		fi
+		if [ -z "$password" ]; then
+			echo "Password is required in silent mode (-p, --password)" >&2
+			usage
+		fi
 	fi
 
 	# Check if the log level empty
