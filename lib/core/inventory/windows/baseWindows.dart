@@ -84,7 +84,7 @@ class BaseWindows {
               true))["value"]
           .toString(),
       "serial": (await windowsCommand.commandPowershell(
-              "(Get-WMIObject win32_operatingsystem).SerialNumber",
+              "(Get-WMIObject win32_Bios).SerialNumber",
               true))["value"]
           .toString(),
       "osname": (await windowsCommand.commandPowershell(
@@ -96,7 +96,9 @@ class BaseWindows {
           .toString(),
       "uuid": await _getUUID(name, getMacAddr),
       "srcip": await getIP,
-      "srcmac": await getMacAddr,
+      "srcmac": (await windowsCommand.commandPowershell(
+        r'(Get-NetAdapter | Where-Object {$_.Name -like "*Ethernet*" -and $_.Status -eq "Up"}).MacAddress', true))["value"]
+        .toString(),
       "domain": (await windowsCommand.commandPowershell(
               "(Get-WMIObject -Class Win32_ComputerSystem).Domain",
               true))["value"]
