@@ -107,6 +107,8 @@ Future<void> main(List<String> args) async {
       defaultsTo: "false");
   parser.addFlag("help",
       abbr: "h", help: "Display this help message", negatable: false);
+  parser.addOption("overwrite_config",
+      help: "overwrite_config", valueHelp: "Overwrite the configuration file if true, default to false", defaultsTo: "false");
 
   try {
     allArgs = parser.parse(args);
@@ -199,6 +201,10 @@ Future<void> main(List<String> args) async {
   config = await Config(
       configDirectory, jsonEncode(inventoryConfigurations).toString());
 
+if (allArgs.wasParsed("username") || allArgs.wasParsed("password")) {
+  config.updateInventoryConfig("token", "");
+}
+
   if (allArgs.wasParsed("certificate")) {
     File certificate = File(allArgs.option("certificate").toString());
     if (certificate.existsSync()) {
@@ -214,12 +220,14 @@ Future<void> main(List<String> args) async {
   }
 
   // Iterate allArgs and update inventory config with the provided values
-  if (allArgs.options.isNotEmpty) {
-    inventoryConfigurations.forEach((key, value) {
-      if (allArgs.wasParsed(key)) {
-        config.updateInventoryConfig(key, value);
-      }
-    });
+  if(allArgs.option("overwrite_config") == "true") {
+    if (allArgs.options.isNotEmpty) {
+      inventoryConfigurations.forEach((key, value) {
+        if (allArgs.wasParsed(key)) {
+          config.updateInventoryConfig(key, value);
+        }
+      });
+    }
   }
 
   // Initiate logger
