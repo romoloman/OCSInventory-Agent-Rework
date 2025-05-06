@@ -56,8 +56,12 @@ config/core.json
 config/inventory.json
 config/template.json
 
+# Default datadir
+inventory/
+
 pubspec.lock
 hiveData/testbox.lock
 hiveData/testbox.hive
 setup/linux/AGENT-LINUX
 setup/linux/DAEMON-LINUX
+
