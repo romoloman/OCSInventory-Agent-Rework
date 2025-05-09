@@ -17,6 +17,7 @@
 // External package imports
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'package:sprintf/sprintf.dart';
 
 // Core imports
@@ -32,6 +33,7 @@ class BaseLinux {
   late LinuxCommand linuxCommand;
   late FilesUtils filesUtils;
   late JsonUtils jsonUtils;
+  final String serialFileName = "/serialNumber.json";
 
   /// Constructor
   BaseLinux(Logger logger, LinuxCommand linuxCommand, FilesUtils filesUtils,
@@ -44,6 +46,7 @@ class BaseLinux {
 
   ///This fonction return the body for to asset/bases
   dynamic getBody() async {
+
     logger.info(this.runtimeType.toString(), "Platform: LINUX");
 
     logger.info(this.runtimeType.toString(), "Retrieving OS body...");
@@ -120,9 +123,7 @@ class BaseLinux {
       "description": osRelease["PRETTY_NAME"].toString() +
           " " +
           hostnamectl["Architecture"].toString(),
-      "serial": (await linuxCommand.commandShell(
-              "sudo dmidecode -s system-serial-number", true))["value"]
-          .toString(),
+      "serial": await _getSerialNumber(name, macAddress),
       "osname": osRelease["NAME"].toString(),
       "osversion": osRelease["VERSION_ID"].toString(),
       "uuid": await _getUUID(name, macAddress),
@@ -181,4 +182,36 @@ class BaseLinux {
     }
     return uuid;
   }
+
+  Future<String> _getSerialNumber(String name, String macAddress) async{
+    String serialResult = (await linuxCommand.commandShell(
+              "sudo dmidecode -s system-serial-number", true))["value"].toString();
+
+    String path = "/etc/ocsinventory-agent"+serialFileName;
+
+    File fileSn = File(path);
+
+    bool existFile = await fileSn.exists();
+
+    if(serialResult == ""){
+      if(!existFile){
+        serialResult = "OCS-GEN-"+macAddress.split(':').last+_randMac()+macAddress.split(':').first;
+        filesUtils.writeFile(fileSn, serialResult);
+      }else {
+        var read = await linuxCommand.readFile(path,false);
+        serialResult = read["value"].toString();
+      }
+    }
+    return serialResult;
+  }
+
+  String _randMac(){
+    String result = "";
+
+    for(int i = 0; i < 10; i++){
+      result += Random().nextInt(10).toString();
+    }
+    return result;
+  }
+
 }
