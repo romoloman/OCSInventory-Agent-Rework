@@ -336,6 +336,7 @@ class Inventory {
           // Save remote template locally
           logger.info(this.runtimeType.toString(), "Remote template found.");
           Map<String, dynamic> template = json.decode(response["body"]);
+
           var encoder = new JsonEncoder.withIndent("\t");
           config.setTemplate(encoder.convert(template));
           logger.info(
@@ -348,16 +349,26 @@ class Inventory {
           logger.serverLogger(assetID, 12, "Remote template not found.");
           return false;
         }
-      } else {
-        logger.error(
-            this.runtimeType.toString(), "Template comparison failed.");
-        return false;
       }
     } else {
-      logger.error(this.runtimeType.toString(),
-          "Unable to retrieve local or remote template.");
-      return false;
+      logger.info(this.runtimeType.toString(), "Creating new template...");
+      // If either template is missing, we need to create a new one
+      var id = remoteInfo["id"];
+      var response = await httpUtils.get(
+          Uri.parse(url + "/templates/$id/?expand=*"), httpUtils.getHeader(config));
+      if (response["status_code"] == 200) {
+        Map<String, dynamic> template = json.decode(response["body"]);
+        if (!template.containsKey("id") || !template.containsKey("last_update")) {
+          logger.error(this.runtimeType.toString(), "Invalid template structure received from server");
+          return false;
+        }
+        var encoder = new JsonEncoder.withIndent("\t");
+        config.setTemplate(encoder.convert(template));
+        logger.info(this.runtimeType.toString(), "New template created successfully.");
+        return true;
+      }
     }
+    return false;
   }
 
   /// Check if a local template exists.
@@ -522,23 +533,35 @@ class Inventory {
   int compareTemplate(
       Map<String, String> localInfo, Map<String, String> remoteInfo) {
     logger.info(this.runtimeType.toString(), "Comparing templates...");
+    
     // Compare both templates info
-    if (remoteInfo["id"] == localInfo["id"]) {
-      logger.info(
-          this.runtimeType.toString(), "Local template exists on the server.");
-      if (remoteInfo["last_update"] == localInfo["last_update"]) {
-        logger.info(
-            this.runtimeType.toString(), "Local template is up-to-date.");
-        return 0;
-      } else {
-        logger.info(this.runtimeType.toString(), "Local template is outdated.");
-        return 1;
-      }
-    } else {
-      logger.info(this.runtimeType.toString(),
-          "Local template does not exist on the server.");
+    if (localInfo["return"] == "false" || remoteInfo["return"] == "false") {
+      logger.info(this.runtimeType.toString(), "One of the templates is missing, update required.");
       return 2;
     }
+
+    if (remoteInfo["id"]?.trim() != localInfo["id"]?.trim()) {
+      logger.info(this.runtimeType.toString(), 
+          "Template IDs differ - Local: ${localInfo["id"]}, Remote: ${remoteInfo["id"]}");
+      return 2;
+    }
+
+    if (remoteInfo["last_update"]?.trim() != localInfo["last_update"]?.trim()) {
+      logger.info(this.runtimeType.toString(), 
+          "Template versions differ - Local: ${localInfo["last_update"]}, Remote: ${remoteInfo["last_update"]}");
+      return 1;
+    }
+
+    Map<String, dynamic> localTemplate = config.getTemplate();
+    Map<String, dynamic> remoteTemplate = json.decode(remoteInfo["content"] ?? "{}");
+    
+    if (localTemplate.toString() != remoteTemplate.toString()) {
+      logger.info(this.runtimeType.toString(), "Template content differs, update required.");
+      return 1;
+    }
+
+    logger.info(this.runtimeType.toString(), "Templates are identical, no update needed.");
+    return 0;
   }
 
   /// Process the template and format template inventory.
