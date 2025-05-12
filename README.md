@@ -1,5 +1,22 @@
 # Getting started
 
+## Table of Contents
+- [Step 1: Flutter installation](#step-1-flutter-installation)
+  - [Download Flutter packages](#download-flutter-packages)
+  - [Add Flutter application to path](#add-flutter-application-to-path)
+- [Step 2: Clone of the project](#step-2-clone-of-the-project)
+- [Step 3: Getting dependencies](#step-3-getting-dependencies)
+- [Step 4: Installing the Agent](#step-4-installing-the-agent)
+  - [Installing the agent on Linux](#installing-the-agent-on-linux)
+  - [Installing the agent on Windows](#installing-the-agent-on-windows)
+  - [Installing the agent on MacOS](#installing-the-agent-on-macos)
+- [Step 5: Agent configuration](#step-5-agent-configuration)
+  - [Linux and macos](#linux-and-macos)
+  - [Windows](#windows)
+  - [SSL](#ssl)
+- [Step 6: Uninstalling the agent](#step-6-uninstalling-the-agent)
+- [Step 7: Troubleshooting](#step-7-troubleshooting)
+
 ## Step 1: Flutter installation
 
 ### Download Flutter packages
