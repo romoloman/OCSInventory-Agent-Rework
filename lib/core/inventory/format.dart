@@ -18,21 +18,16 @@
 import 'dart:convert';
 
 // Core imports
-import 'package:ocs_agent/core/inventory/linux/commands.dart';
-import 'package:ocs_agent/core/inventory/macos/commands.dart';
-import 'package:ocs_agent/core/inventory/windows/commands.dart';
+import 'package:ocs_agent/core/inventory/commands.dart';
 import 'package:ocs_agent/core/log.dart';
 
-/// Format command result by type for Linux.
+/// Format command result by type.
 class InventoryFormat {
   late Logger logger;
-  late LinuxCommand linuxCommand;
-  late MacOSCommand macOSCommand;
-  late WindowsCommand windowsCommand;
+  late InventoryCommands inventoryCommands;
 
   /// Constructor.
-  InventoryFormat(
-      this.logger, this.linuxCommand, this.macOSCommand, this.windowsCommand);
+  InventoryFormat(this.logger, this.inventoryCommands);
 
   /// Get the sub-inventory of [resultCommand] for each [fields] based on [method].
   List<dynamic> getByMethod(

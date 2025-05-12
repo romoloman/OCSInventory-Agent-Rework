@@ -24,10 +24,7 @@ import 'package:sprintf/sprintf.dart';
 import 'package:ocs_agent/core/log.dart';
 import 'package:ocs_agent/core/config.dart';
 
-import 'package:ocs_agent/core/inventory/linux/commands.dart';
-import 'package:ocs_agent/core/inventory/macos/commands.dart';
-import 'package:ocs_agent/core/inventory/windows/commands.dart';
-
+import 'package:ocs_agent/core/inventory/commands.dart';
 import 'package:ocs_agent/core/inventory/format.dart';
 
 // Common imports
@@ -41,9 +38,7 @@ class Inventory {
   late FilesUtils filesUtils;
   late HTTPUtils httpUtils;
   late JsonUtils jsonUtils;
-  late LinuxCommand linuxCommand;
-  late MacOSCommand macOSCommand;
-  late WindowsCommand windowsCommand;
+  late InventoryCommands inventoryCommands;
   late InventoryFormat inventoryFormat;
 
   late var baseUrl;
@@ -65,9 +60,7 @@ class Inventory {
     this.filesUtils,
     this.httpUtils,
     this.jsonUtils,
-    this.linuxCommand,
-    this.macOSCommand,
-    this.windowsCommand,
+    this.inventoryCommands,
     this.inventoryFormat,
   ) {
     List<String> configFields = ["url", "data_directory"];
@@ -609,30 +602,19 @@ class Inventory {
   /// Get the result
   Future<Map<String, dynamic>> getResult(String os,
       Map<String, dynamic> template, Map<String, dynamic> section) async {
-    late var command;
     Map<String, dynamic> result = {};
     Map<String, dynamic> main = {};
     Map<String, dynamic> options = {};
     String mainRes;
 
     try {
-      // Check the os platform
-      if (os == "LIN") {
-        command = this.linuxCommand;
-      } else if (template["os"] == "WIN" && Platform.isWindows) {
-        command = this.windowsCommand;
-      } else if (template["os"] == "MAC" && Platform.isMacOS) {
-        command = this.macOSCommand;
-      } else {
-        logError("Unsupported OS detected.");
-      }
-
       if (section['options'] != null) {
         options = section['options'];
       }
 
-      mainRes = await command.getResult(
-          section["target"], section['retrival_method']);
+      mainRes = await this
+          .inventoryCommands
+          .getResult(section['retrival_method'], section["target"]);
     } catch (e) {
       logError("Unable to get results: $e");
       return result;
@@ -652,7 +634,7 @@ class Inventory {
       String res;
 
       try {
-        res = await command.getResult(
+        res = await inventoryCommands.getResult(
             field['retrival_method'], field["new_target"]);
       } catch (e) {
         logError("Error processing field override: $e");

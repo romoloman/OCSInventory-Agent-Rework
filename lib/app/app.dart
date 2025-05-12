@@ -30,14 +30,10 @@ import 'package:ocs_agent/core/config.dart';
 import 'package:ocs_agent/core/log.dart';
 
 import 'package:ocs_agent/core/inventory/linux/baseLinux.dart';
-import 'package:ocs_agent/core/inventory/linux/commands.dart';
-
 import 'package:ocs_agent/core/inventory/macos/baseMacOS.dart';
-import 'package:ocs_agent/core/inventory/macos/commands.dart';
-
 import 'package:ocs_agent/core/inventory/windows/baseWindows.dart';
-import 'package:ocs_agent/core/inventory/windows/commands.dart';
 
+import 'package:ocs_agent/core/inventory/commands.dart';
 import 'package:ocs_agent/core/inventory/format.dart';
 
 // Modules imports
@@ -230,22 +226,20 @@ Future<void> main(List<String> args) async {
   JsonUtils jsonUtils = new JsonUtils();
 
   // Initiate core
-  LinuxCommand linuxCommand = new LinuxCommand(logger);
+  InventoryCommands inventoryCommands = new InventoryCommands(logger);
   BaseLinux baseLinux =
-      new BaseLinux(logger, linuxCommand, filesUtils, jsonUtils);
-  MacOSCommand macOSCommand = new MacOSCommand(logger);
-  BaseMacOS baseMacOS = new BaseMacOS(logger, macOSCommand);
-  WindowsCommand windowsCommand = new WindowsCommand(logger);
+      new BaseLinux(logger, inventoryCommands, filesUtils, jsonUtils);
+  BaseMacOS baseMacOS = new BaseMacOS(logger, inventoryCommands);
   BaseWindows baseWindows =
-      new BaseWindows(logger, windowsCommand, filesUtils, jsonUtils);
+      new BaseWindows(logger, inventoryCommands, filesUtils, jsonUtils);
   InventoryFormat inventoryFormat =
-      new InventoryFormat(logger, linuxCommand, macOSCommand, windowsCommand);
+      new InventoryFormat(logger, inventoryCommands);
 
   // Initiate modules
   Inventory inventory = new Inventory(logger, config, filesUtils, httpUtils,
-      jsonUtils, linuxCommand, macOSCommand, windowsCommand, inventoryFormat);
-  Deployment deployment = new Deployment(
-      logger, config, httpUtils, linuxCommand, macOSCommand, windowsCommand);
+      jsonUtils, inventoryCommands, inventoryFormat);
+  Deployment deployment =
+      new Deployment(logger, config, httpUtils, inventoryCommands);
 
   // Get the agent execution mode
   Map<int, String> enumMode = {
