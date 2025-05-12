@@ -211,7 +211,7 @@ run_interactive() {
 	read -r INVENTORY_MODE
 	echo -n "Enter the log level (default is 2 = Info): "
 	read -r LOG_LEVEL
-	echo -n "Enter the certificate path"
+	echo -n "Enter the certificate path: "
 	read -r CERTIFICATE
 	echo -n "Do you register the service - agent must be launched automatically ([y]/n)? "
 	read -r service_choice

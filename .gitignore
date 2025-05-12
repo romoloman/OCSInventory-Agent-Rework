@@ -65,3 +65,6 @@ hiveData/testbox.hive
 setup/linux/AGENT-LINUX
 setup/linux/DAEMON-LINUX
 
+# VS Code
+.vscode/
+
