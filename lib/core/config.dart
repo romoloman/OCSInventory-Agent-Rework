@@ -52,7 +52,7 @@ class Config {
         this.inventory.createSync(recursive: true);
         this.inventory.writeAsStringSync(inventoryContent);
       }
-      await createOthersConfigFiles(configPath);
+      createOthersConfigFiles(configPath);
     } catch (e) {
       print('Error creating inventory config file: ${e.toString()}');
       rethrow;
@@ -159,7 +159,8 @@ class Config {
       });
       return result;
     } catch (e) {
-      print('Error reading core config for module $module and key $key: ${e.toString()}');
+      print(
+          'Error reading core config for module $module and key $key: ${e.toString()}');
       return false;
     }
   }
