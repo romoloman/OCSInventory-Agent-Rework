@@ -226,20 +226,20 @@ Future<void> main(List<String> args) async {
   JsonUtils jsonUtils = new JsonUtils();
 
   // Initiate core
-  InventoryCommands inventoryCommands = new InventoryCommands(logger);
+  Commands commands = new Commands(logger);
   BaseLinux baseLinux =
-      new BaseLinux(logger, inventoryCommands, filesUtils, jsonUtils);
-  BaseMacOS baseMacOS = new BaseMacOS(logger, inventoryCommands);
+      new BaseLinux(logger, commands, filesUtils, jsonUtils);
+  BaseMacOS baseMacOS = new BaseMacOS(logger, commands);
   BaseWindows baseWindows =
-      new BaseWindows(logger, inventoryCommands, filesUtils, jsonUtils);
-  InventoryFormat inventoryFormat =
-      new InventoryFormat(logger, inventoryCommands);
+      new BaseWindows(logger, commands, filesUtils, jsonUtils);
+  Format format =
+      new Format(logger, commands);
 
   // Initiate modules
   Inventory inventory = new Inventory(logger, config, filesUtils, httpUtils,
-      jsonUtils, inventoryCommands, inventoryFormat);
+      jsonUtils, commands, format);
   Deployment deployment =
-      new Deployment(logger, config, httpUtils, inventoryCommands);
+      new Deployment(logger, config, httpUtils, commands);
 
   // Get the agent execution mode
   Map<int, String> enumMode = {

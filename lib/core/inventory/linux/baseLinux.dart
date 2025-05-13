@@ -29,13 +29,13 @@ import 'package:ocs_agent/core/common/json_utils.dart';
 
 class BaseLinux {
   late Logger logger;
-  late InventoryCommands inventoryCommands;
+  late Commands commands;
   FilesUtils filesUtils;
   JsonUtils jsonUtils;
 
   /// Constructor
   BaseLinux(
-      this.logger, this.inventoryCommands, this.filesUtils, this.jsonUtils);
+      this.logger, this.commands, this.filesUtils, this.jsonUtils);
 
   ///This fonction return the body for to asset/bases
   dynamic getBody() async {
@@ -43,7 +43,7 @@ class BaseLinux {
 
     logger.info(this.runtimeType.toString(), "Retrieving OS body...");
 
-    dynamic getOSRelease = (await inventoryCommands.processTarget(
+    dynamic getOSRelease = (await commands.processTarget(
             "FILE", "/etc/os-release"))["value"]
         .toString()
         .split("\n");
@@ -61,7 +61,7 @@ class BaseLinux {
     }
 
     dynamic getHostnamectl =
-        (await inventoryCommands.processTarget("BASH", "hostnamectl"))["value"]
+        (await commands.processTarget("BASH", "hostnamectl"))["value"]
             .toString()
             .split("\n");
     Map<String, String> hostnamectl = {};
@@ -77,7 +77,7 @@ class BaseLinux {
       }
     }
 
-    dynamic interfaces = (await inventoryCommands.processTarget(
+    dynamic interfaces = (await commands.processTarget(
             "BASH", "ip route show default"))["value"]
         .toString()
         .split("\n");
@@ -86,7 +86,7 @@ class BaseLinux {
     for (final route in interfaces) {
       if (route.isNotEmpty) {
         dynamic interface = route.split(" ")[4];
-        dynamic getMacAddress = (await inventoryCommands.processTarget(
+        dynamic getMacAddress = (await commands.processTarget(
                 "BASH", "ip link show $interface"))["value"]
             .toString();
         RegExp exp = RegExp(r'link\/ether (?<mac>[\S\s]+?) ');
@@ -107,7 +107,7 @@ class BaseLinux {
 
     // Get name
     String name =
-        (await inventoryCommands.processTarget("BASH", "hostname"))["value"]
+        (await commands.processTarget("BASH", "hostname"))["value"]
             .toString()
             .trim();
 
@@ -116,18 +116,18 @@ class BaseLinux {
       "description": osRelease["PRETTY_NAME"].toString() +
           " " +
           hostnamectl["Architecture"].toString(),
-      "serial": (await inventoryCommands.processTarget(
+      "serial": (await commands.processTarget(
               "BASH", "sudo dmidecode -s system-serial-number"))["value"]
           .toString(),
       "osname": osRelease["NAME"].toString(),
       "osversion": osRelease["VERSION_ID"].toString(),
       "uuid": await _getUUID(name, macAddress),
-      "srcip": (await inventoryCommands.processTarget(
+      "srcip": (await commands.processTarget(
               "BASH", "hostname -I"))["value"]
           .toString()
           .split(" ")[0],
       "srcmac": macAddress,
-      "domain": (await inventoryCommands.processTarget(
+      "domain": (await commands.processTarget(
               "BASH", "hostname -d"))["value"]
           .toString(),
     });
@@ -139,7 +139,7 @@ class BaseLinux {
 
   /// Get UUID or generate one if not available and save it in a uuid file
   Future<String> _getUUID(String name, String macAddress) async {
-    String uuid = (await inventoryCommands.processTarget(
+    String uuid = (await commands.processTarget(
             "BASH", "sudo dmidecode -s system-uuid"))["value"]
         .toString();
 
@@ -163,7 +163,7 @@ class BaseLinux {
         logger.info(this.runtimeType.toString(),
             "UUID not found, generating a new one...");
         uuid =
-            (await inventoryCommands.processTarget("BASH", "uuidgen"))["value"]
+            (await commands.processTarget("BASH", "uuidgen"))["value"]
                 .toString();
         dynamic baseAdded = {};
         baseAdded["name"] = name;

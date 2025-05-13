@@ -21,11 +21,11 @@ import 'dart:io';
 import 'package:ocs_agent/core/log.dart';
 
 /// Class for execute command.
-class InventoryCommands {
+class Commands {
   late Logger logger;
 
   /// Constructor
-  InventoryCommands(this.logger);
+  Commands(this.logger);
 
   /// Process the given target based on the [method].
   Future<Map<String, Object>> processTarget(

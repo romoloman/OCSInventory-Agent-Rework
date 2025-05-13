@@ -22,10 +22,10 @@ import 'package:ocs_agent/core/inventory/commands.dart';
 
 class BaseMacOS {
   late Logger logger;
-  late InventoryCommands inventoryCommands;
+  late Commands commands;
 
   /// Constructor
-  BaseMacOS(this.logger, this.inventoryCommands);
+  BaseMacOS(this.logger, this.commands);
 
   ///This fonction return the body for to asset/bases
   dynamic getBody() async {
@@ -35,7 +35,7 @@ class BaseMacOS {
 
     /// This command [commandSerialUUID] display list Serial and UUID
     String commandSerialUUID;
-    commandSerialUUID = (await inventoryCommands.processTarget(
+    commandSerialUUID = (await commands.processTarget(
             "BASH", "system_profiler SPHardwareDataType"))["value"]
         .toString();
 
@@ -53,7 +53,7 @@ class BaseMacOS {
 
     /// Get default route, regExp to Interface for [srcip] and [srcmac]
     String getDefaultRoute;
-    getDefaultRoute = (await inventoryCommands.processTarget(
+    getDefaultRoute = (await commands.processTarget(
             "BASH", "route get default"))["value"]
         .toString();
     RegExp regexpInterface;
@@ -64,7 +64,7 @@ class BaseMacOS {
     /// Get domains list and apply this Regex to get domain
     String listDomains;
     listDomains =
-        (await inventoryCommands.processTarget("BASH", "scutil --dns"))["value"]
+        (await commands.processTarget("BASH", "scutil --dns"))["value"]
             .toString();
     RegExp regexpDomain;
     regexpDomain = RegExp(r'(?<=search\sdomain\[0\]\s:\s)\w*.[a-z]{0,4}');
@@ -73,23 +73,23 @@ class BaseMacOS {
 
     dynamic body = ({
       "name":
-          (await inventoryCommands.processTarget("BASH", "hostname"))["value"]
+          (await commands.processTarget("BASH", "hostname"))["value"]
               .toString(),
       "description":
-          (await inventoryCommands.processTarget("BASH", "uname -m"))["value"]
+          (await commands.processTarget("BASH", "uname -m"))["value"]
               .toString(),
       "serial": getSerial,
-      "osname": (await inventoryCommands.processTarget(
+      "osname": (await commands.processTarget(
               "BASH", "sw_vers -productName"))["value"]
           .toString(),
-      "osversion": (await inventoryCommands.processTarget(
+      "osversion": (await commands.processTarget(
               "BASH", "sw_vers -productVersion"))["value"]
           .toString(),
       "uuid": getUUID,
-      "srcip": (await inventoryCommands.processTarget(
+      "srcip": (await commands.processTarget(
               "BASH", "ipconfig getifaddr $getInterface"))["value"]
           .toString(),
-      "srcmac": (await inventoryCommands.processTarget(
+      "srcmac": (await commands.processTarget(
               "BASH", "networksetup -getmacaddress $getInterface"))["value"]
           .toString()
           .split(" ")[2],

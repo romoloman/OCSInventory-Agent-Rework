@@ -33,7 +33,7 @@ class Deployment {
   late Config config;
   late Logger logger;
   late HTTPUtils httpUtils;
-  late InventoryCommands inventoryCommands;
+  late Commands commands;
 
   late var url;
 
@@ -42,7 +42,7 @@ class Deployment {
   late List<dynamic> sortedActions;
 
   /// Constructor.
-  Deployment(this.logger, this.config, this.httpUtils, this.inventoryCommands) {
+  Deployment(this.logger, this.config, this.httpUtils, this.commands) {
     url = config.getInventoryConfig("url");
     actions = Map();
     sortedActions = [];
@@ -388,7 +388,7 @@ class Deployment {
           break;
       }
 
-      result = await inventoryCommands
+      result = await commands
           .processTarget(method, actionCommand)
           .then((value) {
         return value;
@@ -509,7 +509,7 @@ class Deployment {
 
     try {
       // Execute the tar command to extract the archive file
-      var cmdResult = await inventoryCommands.processTarget(
+      var cmdResult = await commands.processTarget(
           "BASH", "tar -xvf $filePath -C $extractedPath");
 
       if (cmdResult["status"] == true) {

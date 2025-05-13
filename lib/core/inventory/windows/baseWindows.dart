@@ -29,13 +29,13 @@ import 'package:ocs_agent/core/common/json_utils.dart';
 
 class BaseWindows {
   late Logger logger;
-  late InventoryCommands inventoryCommands;
+  late Commands commands;
   late FilesUtils filesUtils;
   late JsonUtils jsonUtils;
 
   /// Constructor
   BaseWindows(
-      this.logger, this.inventoryCommands, this.filesUtils, this.jsonUtils);
+      this.logger, this.commands, this.filesUtils, this.jsonUtils);
 
   ///This fonction return the body for the asset/bases
   dynamic getBody() async {
@@ -45,7 +45,7 @@ class BaseWindows {
 
     /// Command get the mac address list
     dynamic macAddr;
-    macAddr = (await inventoryCommands.processTarget("CMD", "getmac"))["value"];
+    macAddr = (await commands.processTarget("CMD", "getmac"))["value"];
 
     /// RegExp to match mac address
     RegExp regexMacAddr;
@@ -57,7 +57,7 @@ class BaseWindows {
 
     /// Command get to get the IP
     String ip;
-    ip = (await inventoryCommands.processTarget("CMD", "ipconfig"))["value"]
+    ip = (await commands.processTarget("CMD", "ipconfig"))["value"]
         .toString();
 
     /// RegExp to match IP
@@ -70,29 +70,29 @@ class BaseWindows {
 
     // Get the name of the computer
     String name =
-        (await inventoryCommands.processTarget("CMD", "hostname"))["value"]
+        (await commands.processTarget("CMD", "hostname"))["value"]
             .toString();
 
     dynamic body = ({
       "name": name,
-      "description": (await inventoryCommands.processTarget("PW",
+      "description": (await commands.processTarget("PW",
                   "(Get-WMIObject -Class Win32_ComputerSystemProduct).Description"))[
               "value"]
           .toString(),
-      "serial": (await inventoryCommands.processTarget("PW",
+      "serial": (await commands.processTarget("PW",
               "(Get-WMIObject win32_operatingsystem).SerialNumber"))["value"]
           .toString(),
-      "osname": (await inventoryCommands.processTarget(
+      "osname": (await commands.processTarget(
               "PW", "(Get-WMIObject win32_operatingsystem).name"))["value"]
           .toString()
           .split("|")[0],
-      "osversion": (await inventoryCommands.processTarget(
+      "osversion": (await commands.processTarget(
               "PW", "(Get-WMIObject win32_operatingsystem).Version"))["value"]
           .toString(),
       "uuid": await _getUUID(name, getMacAddr),
       "srcip": await getIP,
       "srcmac": await getMacAddr,
-      "domain": (await inventoryCommands.processTarget("PW",
+      "domain": (await commands.processTarget("PW",
               "(Get-WMIObject -Class Win32_ComputerSystem).Domain"))["value"]
           .toString(),
     });
@@ -104,14 +104,14 @@ class BaseWindows {
 
   /// Get UUID or generate one if not available and save it in a uuid file
   Future<String> _getUUID(String name, String macAdress) async {
-    String uuid = (await inventoryCommands.processTarget("PW",
+    String uuid = (await commands.processTarget("PW",
             "(Get-WMIObject -Class Win32_ComputerSystemProduct).UUID"))["value"]
         .toString();
 
     if (uuid == "") {
       logger.info(this.runtimeType.toString(),
           "UUID not found, generating a new one...");
-      uuid = (await inventoryCommands.processTarget(
+      uuid = (await commands.processTarget(
               "PW", "[guid]::NewGuid().ToString()"))["value"]
           .toString();
       String containerFileName = sprintf('%s.json', ["generated_uuid"]);

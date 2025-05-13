@@ -38,8 +38,8 @@ class Inventory {
   late FilesUtils filesUtils;
   late HTTPUtils httpUtils;
   late JsonUtils jsonUtils;
-  late InventoryCommands inventoryCommands;
-  late InventoryFormat inventoryFormat;
+  late Commands commands;
+  late Format format;
 
   late var baseUrl;
   late bool inventoryCheck;
@@ -60,8 +60,8 @@ class Inventory {
     this.filesUtils,
     this.httpUtils,
     this.jsonUtils,
-    this.inventoryCommands,
-    this.inventoryFormat,
+    this.commands,
+    this.format,
   ) {
     List<String> configFields = ["url", "data_directory"];
     String? dataDirectory;
@@ -542,7 +542,6 @@ class Inventory {
       Map<String, dynamic> template, String os) async {
     Map<String, dynamic> inventoryResult = {};
     List<dynamic> sections = [];
-    var format = inventoryFormat;
 
     try {
       sections = template['sections'];
@@ -613,7 +612,7 @@ class Inventory {
       }
 
       mainRes = await this
-          .inventoryCommands
+          .commands
           .getResult(section['retrival_method'], section["target"]);
     } catch (e) {
       logError("Unable to get results: $e");
@@ -634,7 +633,7 @@ class Inventory {
       String res;
 
       try {
-        res = await inventoryCommands.getResult(
+        res = await commands.getResult(
             field['retrival_method'], field["new_target"]);
       } catch (e) {
         logError("Error processing field override: $e");

@@ -22,12 +22,12 @@ import 'package:ocs_agent/core/inventory/commands.dart';
 import 'package:ocs_agent/core/log.dart';
 
 /// Format command result by type.
-class InventoryFormat {
+class Format {
   late Logger logger;
-  late InventoryCommands inventoryCommands;
+  late Commands commands;
 
   /// Constructor.
-  InventoryFormat(this.logger, this.inventoryCommands);
+  Format(this.logger, this.commands);
 
   /// Get the sub-inventory of [resultCommand] for each [fields] based on [method].
   List<dynamic> getByMethod(
