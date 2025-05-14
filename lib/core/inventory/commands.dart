@@ -46,10 +46,6 @@ class Commands {
 
     if (method != "BASH") processData["error"] = (exitCode == 0) ? stderr : "";
 
-    if (stdout.isEmpty)
-      logger.error(this.runtimeType.toString(),
-          "No output for $commentSubject '$target'.");
-
     logger.verbose(
         this.runtimeType.toString(), "Executed $commentSubject: '$target'");
 
@@ -57,13 +53,17 @@ class Commands {
       logger.error(this.runtimeType.toString(),
           "Executing $commentSubject '$target' - Error: ${stderr}");
 
+    if (stdout.isEmpty)
+      logger.error(this.runtimeType.toString(),
+          "No output for $commentSubject '$target'.");
+
     return processData;
   }
 
   /// Get the parameters based on [method] and [target].
   Future<Map<String, dynamic>> getMethodParameters(
       String method, String target) async {
-    late ProcessResult? process;
+    ProcessResult? process;
     String? executable;
     List<String>? commandArguments;
     late String commentSubject;
@@ -119,7 +119,7 @@ class Commands {
   // Exécution unifiée avec gestion des erreurs
   Future<ProcessResult?> executeTarget(
       String target, String executable, List<String> commandArguments) async {
-    late ProcessResult? process;
+    ProcessResult? process;
 
     try {
       process = await Process.run(executable, commandArguments);
@@ -130,6 +130,7 @@ class Commands {
       );
     } catch (e) {
       logger.error(runtimeType.toString(), 'An error occurred : $e');
+      process = null;
     }
 
     return process;
