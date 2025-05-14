@@ -81,36 +81,63 @@ class Deployment {
     }
   }
 
+  /// Make an API call to the deployment endpoint and handle the response
+  Future<Map<String, dynamic>> _makeDeploymentApiCall(
+      String endpoint, Map<String, String> params) async {
+    var uri = Uri.parse(url + endpoint).replace(queryParameters: params);
+    var response = await httpUtils.get(uri, httpUtils.getHeader(config));
+    logger.verbose(this.runtimeType.toString(), response["message"]);
+
+    return {
+      "status_code": response["status_code"],
+      "body": response["body"],
+      "success": response["status_code"] == 200
+    };
+  }
+
   /// Check if there is packages to download.
   Future<bool> checkDownload(int assetID) async {
     // API call: Check if there is assigned packages
-    var response = await httpUtils.get(
-        Uri.parse(url + "/deployment/results/?asset=$assetID&status=1"),
-        httpUtils.getHeader(config));
-    // VERBOSE: show result of the query in verbose mode
-    logger.verbose(this.runtimeType.toString(), response["message"]);
+    try {
+      var response = await _makeDeploymentApiCall(
+          "/deployment/results/", {"asset": assetID.toString(), "status": "1"});
 
-    if (response["status_code"] == 200 &&
-        jsonDecode(response["body"]).isNotEmpty) {
-      logger.info(this.runtimeType.toString(), "Found assigned packages.");
+      if (response["status_code"] == 200 &&
+          jsonDecode(response["body"]).isNotEmpty) {
+        logger.info(this.runtimeType.toString(), "Found assigned packages.");
 
-      // Get the list of assigned packages
-      results = jsonDecode(response["body"]);
+        // Get the list of assigned packages
+        results = jsonDecode(response["body"]);
 
-      // For each package, change state of the package to Notified
-      for (var element in results) {
-        var responseNotified = await httpUtils.patch(
-            Uri.parse(
-                url + "/deployment/results/" + element["id"].toString() + "/"),
-            httpUtils.getHeader(config),
-            "{\"status\": 2, \"comment\": \"Notified\"}");
-        logger.verbose(
-            this.runtimeType.toString(), responseNotified["message"]);
+        // For each package, change state of the package to Notified
+        for (var element in results) {
+          try {
+            var responseNotified = await httpUtils.patch(
+                Uri.parse(url +
+                    "/deployment/results/" +
+                    element["id"].toString() +
+                    "/"),
+                httpUtils.getHeader(config),
+                "{\"status\": 2, \"comment\": \"Notified\"}");
+            logger.verbose(
+                this.runtimeType.toString(), responseNotified["message"]);
+          } catch (exception) {
+            logger.error(
+                this.runtimeType.toString(),
+                sprintf("Failed to update package status: %s",
+                    [exception.toString().trim()]));
+            return false;
+          }
+        }
+        return true;
+      } else {
+        logger.info(this.runtimeType.toString(),
+            "No assigned packages found for this asset.");
+        return false;
       }
-      return true;
-    } else {
-      logger.info(this.runtimeType.toString(),
-          "No assigned packages found for this asset.");
+    } catch (exception) {
+      logger.error(this.runtimeType.toString(),
+          sprintf("HTTP query: %s", [exception.toString().trim()]));
       return false;
     }
   }
@@ -123,13 +150,8 @@ class Deployment {
     for (var element in results) {
       try {
         // API call: get the list of actions
-        var response = await httpUtils.get(
-            Uri.parse(url +
-                "/deployment/actions/?package=" +
-                element["package"].toString()),
-            httpUtils.getHeader(config));
-        // VERBOSE: show result of the query in verbose mode
-        logger.verbose(this.runtimeType.toString(), response["message"]);
+        var response = await _makeDeploymentApiCall(
+            "/deployment/actions/", {"package": element["package"].toString()});
 
         if (response["status_code"] == 200) {
           // Sort the actions by priority
@@ -168,6 +190,33 @@ class Deployment {
     return true;
   }
 
+  /// Handle the result of an action execution
+  /// Returns a map containing the action status and any error message
+  Map<String, dynamic> handleActionResult({
+    required String actionType,
+    required Map<String, dynamic> result,
+    required String successMessage,
+    required int actionId,
+    required Map<String, String> actionErrors,
+  }) {
+    int actionStatus = result["status"] == true ? 0 : 1;
+    String errorComment = "Error";
+
+    if (actionStatus == 0) {
+      logger.info(this.runtimeType.toString(), successMessage);
+    } else {
+      errorComment = "Error $actionType: ${result["error"]}";
+      logger.error(this.runtimeType.toString(), errorComment);
+      actionErrors["$actionId"] = result["error"];
+    }
+
+    return {
+      "actionStatus": actionStatus,
+      "errorComment": errorComment,
+      "status": actionStatus == 0 ? 0 : 1
+    };
+  }
+
   /// Execute actions from assigned packages.
   Future<void> executeActions(String os, int assetID) async {
     logger.info(this.runtimeType.toString(), "Executing actions...");
@@ -177,6 +226,16 @@ class Deployment {
     int packageCount = 0;
     String errorComment = "Error";
     Map<String, String> actionErrors = {};
+
+    if (os != "WIN" && os != "MAC" && os != "LIN") {
+      logger.error(this.runtimeType.toString(), "Unsupported OS detected.");
+      return;
+    }
+
+    if (assetID < 0) {
+      logger.error(this.runtimeType.toString(), "Invalid asset ID detected.");
+      return;
+    }
 
     for (var element in actions.values) {
       // delay between pkgs
@@ -217,17 +276,16 @@ class Deployment {
           case "EXEC":
             Map<String, dynamic> execResult =
                 await executeCommand(os, action["package"], action["command"]);
-            actionStatus = execResult["status"] == true ? 0 : 1;
-            if (actionStatus == 0) {
-              logger.info(this.runtimeType.toString(),
-                  "Command executed successfully.");
-            } else {
-              errorComment = "Error executing command: ${execResult["error"]}";
-              logger.error(this.runtimeType.toString(), errorComment);
-              // store error
-              actionErrors["${action["id"]}"] = execResult["error"];
-              status = 1;
-            }
+            var result = handleActionResult(
+              actionType: "executing command",
+              result: execResult,
+              successMessage: "Command executed successfully.",
+              actionId: action["id"],
+              actionErrors: actionErrors,
+            );
+            actionStatus = result["actionStatus"];
+            errorComment = result["errorComment"];
+            status = result["status"];
             break;
           case "STORE":
             String fileUrl = action["file"]["file"];
@@ -237,23 +295,33 @@ class Deployment {
                 action["command"],
                 action["action_type"],
                 os);
-            actionStatus = storeResult["status"] == true ? 0 : 1;
+            var result = handleActionResult(
+              actionType: "storing file",
+              result: storeResult,
+              successMessage:
+                  "File has been successfully downloaded and saved.",
+              actionId: action["id"],
+              actionErrors: actionErrors,
+            );
+            actionStatus = result["actionStatus"];
+            errorComment = result["errorComment"];
+            status = result["status"];
+
             if (actionStatus == 0) {
-              logger.info(this.runtimeType.toString(),
-                  "File has been successfully downloaded and saved.");
               // Delete the package directory after storing the file
               var packageDirectory = Directory(packagePath);
               if (packageDirectory.existsSync()) {
-                await packageDirectory.delete(recursive: true);
-                logger.verbose(this.runtimeType.toString(),
-                    "Deleted package directory at: '$packagePath'");
+                try {
+                  await packageDirectory.delete(recursive: true);
+                  logger.verbose(this.runtimeType.toString(),
+                      "Deleted package directory at: '$packagePath'");
+                } catch (exception) {
+                  logger.error(
+                      this.runtimeType.toString(),
+                      sprintf("Failed to delete package directory: %s",
+                          [exception.toString().trim()]));
+                }
               }
-            } else {
-              errorComment = "Error storing file: ${storeResult["error"]}";
-              logger.error(this.runtimeType.toString(), errorComment);
-              // store error
-              actionErrors["${action["id"]}"] = storeResult["error"];
-              status = 1;
             }
             break;
           case "LAUNCH":
@@ -264,23 +332,30 @@ class Deployment {
                 action["command"],
                 fileUrl,
                 action["action_type"]);
-            actionStatus = launchResult["status"];
-            if (actionStatus == 0) {
-              logger.info(
-                  this.runtimeType.toString(), "File launched successfully.");
-            } else {
-              errorComment = "Error launching file: ${launchResult["error"]}";
-              logger.error(this.runtimeType.toString(), errorComment);
-              // store error
-              actionErrors["${action["id"]}"] = launchResult["error"];
-              status = 1;
-            }
+            var result = handleActionResult(
+              actionType: "launching file",
+              result: launchResult,
+              successMessage: "File launched successfully.",
+              actionId: action["id"],
+              actionErrors: actionErrors,
+            );
+            actionStatus = result["actionStatus"];
+            errorComment = result["errorComment"];
+            status = result["status"];
+
             // Delete the package directory after launching the file
             var packageDirectory = Directory(packagePath);
             if (packageDirectory.existsSync()) {
-              await packageDirectory.delete(recursive: true);
-              logger.verbose(this.runtimeType.toString(),
-                  "Deleted package directory at: '$packagePath'");
+              try {
+                await packageDirectory.delete(recursive: true);
+                logger.verbose(this.runtimeType.toString(),
+                    "Deleted package directory at: '$packagePath'");
+              } catch (exception) {
+                logger.error(
+                    this.runtimeType.toString(),
+                    sprintf("Failed to delete package directory: %s",
+                        [exception.toString().trim()]));
+              }
             }
             break;
           default:
@@ -388,9 +463,8 @@ class Deployment {
           break;
       }
 
-      result = await commands
-          .processTarget(method, actionCommand)
-          .then((value) {
+      result =
+          await commands.processTarget(method, actionCommand).then((value) {
         return value;
       }).catchError((onError) {
         logger.error(this.runtimeType.toString(),
@@ -503,6 +577,12 @@ class Deployment {
   Future<Map<String, dynamic>> extractTarFile(String filePath,
       String extractedPath, File savedFile, bool status, String os) async {
     Map<String, dynamic> result = {"status": false, "error": ""};
+
+    if (os != "LIN" || os != "MAC") {
+      result["error"] = "Unsupported OS detected while extracting tar file.";
+      logger.error(this.runtimeType.toString(), result["error"]);
+      return result;
+    }
 
     logger.verbose(this.runtimeType.toString(),
         "Extracting tar file: '$filePath' to path: '$extractedPath'");
