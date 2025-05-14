@@ -67,28 +67,28 @@ class Logger {
   /// Print error message only.
   void error(String className, String error) {
     if (_logLevel >= 0) {
-      _logMessage("ERROR", className, error);
+      _logMessage("\x1B[31m" + "ERROR" + "\x1B[0m", className, error);
     }
   }
 
   /// Print error and warning messages.
   void warning(String className, String warning) {
     if (_logLevel >= 1) {
-      _logMessage("WARNING", className, warning);
+      _logMessage("\x1B[33m" + "WARNING" + "\x1B[0m", className, warning);
     }
   }
 
   /// Print info, warning, and error messages.
   void info(String className, String info) {
     if (_logLevel >= 2) {
-      _logMessage("INFO", className, info);
+      _logMessage("\x1B[32m" + "INFO" + "\x1B[0m", className, info);
     }
   }
 
   /// Print verbose message.
   void verbose(String className, String verbose) {
     if (_logLevel >= 3) {
-      _logMessage("VERBOSE", className, verbose);
+      _logMessage("\x1B[34m" + "VERBOSE" + "\x1B[0m", className, verbose);
     }
   }
 
