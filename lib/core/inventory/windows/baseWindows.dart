@@ -97,7 +97,7 @@ class BaseWindows {
       "uuid": await _getUUID(name, getMacAddr),
       "srcip": await getIP,
       "srcmac": (await windowsCommand.commandPowershell(
-        r'(Get-NetAdapter | Where-Object {$_.Name -like "*Ethernet*" -and $_.Status -eq "Up"}).MacAddress', true))["value"]
+        r'Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | Select-Object -ExpandProperty MacAddress', true))["value"]
         .toString(),
       "domain": (await windowsCommand.commandPowershell(
               "(Get-WMIObject -Class Win32_ComputerSystem).Domain",
