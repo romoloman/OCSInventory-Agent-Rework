@@ -36,48 +36,34 @@ class Config {
 
   /// Constructor.
   Config(String configPath, String inventoryContent) {
-    createInventoryConfigFile(configPath, inventoryContent);
+    generateConfigFile(configPath, inventoryContent);
   }
 
-  /// Create inventory config file and set the content.
-  void createInventoryConfigFile(String configPath, String inventoryContent) {
+  /// Create config file at [configPath] and set the content with [inventoryContent].
+  void generateConfigFile(String configPath, String inventoryContent) {
     try {
       Directory configDir = Directory(configPath);
-      if (!configDir.existsSync()) {
-        configDir.createSync(recursive: true);
-      }
       this.inventory = File(configPath + this.inventoryFilename);
-      if (!this.inventory.existsSync()) {
-        // Create the file and write the default content to {}
-        this.inventory.createSync(recursive: true);
-        this.inventory.writeAsStringSync(inventoryContent);
-      }
-      createOthersConfigFiles(configPath);
+      this.core = File(configPath + this.coreFilename);
+      this.template = File(configPath + this.templateFilename);
+
+      if (!configDir.existsSync()) configDir.createSync(recursive: true);
+
+      writeConfigFile(this.inventory, inventoryContent);
+      writeConfigFile(this.core, "[]");
+      writeConfigFile(this.template, "{}");
     } catch (e) {
-      print('Error creating inventory config file: ${e.toString()}');
+      print('Error creating config files: ${e.toString()}');
       rethrow;
     }
   }
 
-  /// Create core and template config files.
-  Future<void> createOthersConfigFiles(String configPath) async {
-    try {
-      this.core = File(configPath + this.coreFilename);
-      if (!this.core.existsSync()) {
-        // Create the file and write the default content to []
-        this.core.createSync(recursive: true);
-        this.core.writeAsStringSync("[]");
-      }
-
-      this.template = File(configPath + this.templateFilename);
-      if (!this.template.existsSync()) {
-        // Create the file and write the default content to {}
-        this.template.createSync(recursive: true);
-        this.template.writeAsStringSync("{}");
-      }
-    } catch (e) {
-      print('Error creating other config files: ${e.toString()}');
-      rethrow;
+  /// Create and write config files with a [configFile] name and their [fileContent] content.
+  Future<void> writeConfigFile(File configFile, String fileContent) async {
+    if (!configFile.existsSync()) {
+      // Create the file and write the default content at empty
+      configFile.createSync(recursive: true);
+      configFile.writeAsStringSync(fileContent);
     }
   }
 
@@ -85,9 +71,8 @@ class Config {
   void updateConfigFile(File file, String key, dynamic value) {
     try {
       String str = this.jsonUtils.setContentFromFile(file, key, value);
-      if (!str.isEmpty) {
-        this.filesUtils.rewriteFile(file, str);
-      }
+
+      if (!str.isEmpty) this.filesUtils.rewriteFile(file, str);
     } catch (e) {
       print('Error updating config file: ${e.toString()}');
       rethrow;
