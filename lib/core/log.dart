@@ -102,7 +102,7 @@ class Logger {
       txt = "[$date] [$level] [$className] $message";
 
       if (_isFile) {
-        file.writeAsStringSync(txt, mode: FileMode.append);
+        file.writeAsStringSync(txt + "\n", mode: FileMode.append);
       } else {
         print(txt);
       }
