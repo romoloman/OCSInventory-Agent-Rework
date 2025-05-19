@@ -17,6 +17,7 @@
 // External package imports
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'package:sprintf/sprintf.dart';
 
 // Core imports
@@ -32,10 +33,10 @@ class BaseLinux {
   late Commands commands;
   FilesUtils filesUtils;
   JsonUtils jsonUtils;
+  final String serialFileName = "/serialNumber.json";
 
   /// Constructor
-  BaseLinux(
-      this.logger, this.commands, this.filesUtils, this.jsonUtils);
+  BaseLinux(this.logger, this.commands, this.filesUtils, this.jsonUtils);
 
   ///This fonction return the body for to asset/bases
   dynamic getBody() async {
@@ -43,10 +44,10 @@ class BaseLinux {
 
     logger.info(this.runtimeType.toString(), "Retrieving OS body...");
 
-    dynamic getOSRelease = (await commands.processTarget(
-            "FILE", "/etc/os-release"))["value"]
-        .toString()
-        .split("\n");
+    dynamic getOSRelease =
+        (await commands.processTarget("FILE", "/etc/os-release"))["value"]
+            .toString()
+            .split("\n");
     Map<String, String> osRelease = {};
     for (final info in getOSRelease) {
       RegExp exp = RegExp(r'(?<key>[\S]+?)="(?<value>[\S\s]+?)"');
@@ -77,10 +78,10 @@ class BaseLinux {
       }
     }
 
-    dynamic interfaces = (await commands.processTarget(
-            "BASH", "ip route show default"))["value"]
-        .toString()
-        .split("\n");
+    dynamic interfaces =
+        (await commands.processTarget("BASH", "ip route show default"))["value"]
+            .toString()
+            .split("\n");
 
     String? macAddress;
     for (final route in interfaces) {
@@ -106,30 +107,24 @@ class BaseLinux {
     }
 
     // Get name
-    String name =
-        (await commands.processTarget("BASH", "hostname"))["value"]
-            .toString()
-            .trim();
+    String name = (await commands.processTarget("BASH", "hostname"))["value"]
+        .toString()
+        .trim();
 
     dynamic body = ({
       "name": name,
       "description": osRelease["PRETTY_NAME"].toString() +
           " " +
           hostnamectl["Architecture"].toString(),
-      "serial": (await commands.processTarget(
-              "BASH", "sudo dmidecode -s system-serial-number"))["value"]
-          .toString(),
+      "serial": await _getSerialNumber(name, macAddress),
       "osname": osRelease["NAME"].toString(),
       "osversion": osRelease["VERSION_ID"].toString(),
       "uuid": await _getUUID(name, macAddress),
-      "srcip": (await commands.processTarget(
-              "BASH", "hostname -I"))["value"]
+      "srcip": (await commands.processTarget("BASH", "hostname -I"))["value"]
           .toString()
           .split(" ")[0],
       "srcmac": macAddress,
-      "domain": (await commands.processTarget(
-              "BASH", "hostname -d"))["value"]
-          .toString(),
+      "domain": (await commands.processTarget("BASH", "hostname -d"))["value"]
     });
 
     logger.info(this.runtimeType.toString(), "OS body retrieved successfully.");
@@ -157,14 +152,12 @@ class BaseLinux {
           containerLinux.containsValue(name) &&
           containerLinux.containsValue(macAddress)) {
         uuid = containerLinux["uuid"];
-        logger.info(this.runtimeType.toString(),
-            "UUID has been retrieved from the uuid file.");
+        logger.info(this.runtimeType.toString(), "UUID file found.");
       } else {
-        logger.info(this.runtimeType.toString(),
-            "UUID not found, generating a new one...");
-        uuid =
-            (await commands.processTarget("BASH", "uuidgen"))["value"]
-                .toString();
+        logger.info(
+            this.runtimeType.toString(), "No system UUID, generating new one.");
+        uuid = (await commands.processTarget("BASH", "uuidgen"))["value"]
+            .toString();
         dynamic baseAdded = {};
         baseAdded["name"] = name;
         baseAdded["uuid"] = uuid;
@@ -174,10 +167,49 @@ class BaseLinux {
         String str = encoder.convert(baseAdded);
         FilesUtils filesUtils = new FilesUtils();
         filesUtils.rewriteFile(containerLinuxFile, str);
-        logger.info(this.runtimeType.toString(),
-            "UUID has been generated and saved in the uuid file.");
+        logger.info(this.runtimeType.toString(), "New UUID saved to file.");
       }
     }
     return uuid;
+  }
+
+  Future<String> _getSerialNumber(String name, String macAddress) async {
+    String serialResult = (await commands.processTarget(
+            "BASH", "sudo dmidecode -s system-uuid"))["value"]
+        .toString();
+
+    String path = "/etc/ocsinventory-agent" + serialFileName;
+
+    File fileSn = File(path);
+
+    bool existFile = await fileSn.exists();
+
+    if (serialResult == "") {
+      logger.info(this.runtimeType.toString(),
+          "No system serial number from dmidecode, checking serial number file...");
+      if (!existFile) {
+        logger.info(this.runtimeType.toString(),
+            "Serial number file not found, generating new serial number.");
+        serialResult = "OCS-GEN-" +
+            macAddress.split(':').last +
+            _randNumbers() +
+            macAddress.split(':').first;
+        filesUtils.writeFile(fileSn, serialResult);
+      } else {
+        Map<String, dynamic> serialData = jsonUtils.getContentFromFile(fileSn);
+        serialResult = serialData["serial"] ?? serialResult;
+        logger.info(this.runtimeType.toString(), "Serial number file found.");
+      }
+    }
+    return serialResult;
+  }
+
+  String _randNumbers() {
+    String result = "";
+
+    for (int i = 0; i < 10; i++) {
+      result += Random().nextInt(10).toString();
+    }
+    return result;
   }
 }
