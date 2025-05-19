@@ -17,6 +17,7 @@
 // External package imports
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'package:sprintf/sprintf.dart';
 
 // Core imports
@@ -32,6 +33,7 @@ class BaseLinux {
   late LinuxCommand linuxCommand;
   late FilesUtils filesUtils;
   late JsonUtils jsonUtils;
+  final String serialFileName = "/serialNumber.json";
 
   /// Constructor
   BaseLinux(Logger logger, LinuxCommand linuxCommand, FilesUtils filesUtils,
@@ -44,6 +46,7 @@ class BaseLinux {
 
   ///This fonction return the body for to asset/bases
   dynamic getBody() async {
+
     logger.info(this.runtimeType.toString(), "Platform: LINUX");
 
     logger.info(this.runtimeType.toString(), "Retrieving OS body...");
@@ -120,9 +123,7 @@ class BaseLinux {
       "description": osRelease["PRETTY_NAME"].toString() +
           " " +
           hostnamectl["Architecture"].toString(),
-      "serial": (await linuxCommand.commandShell(
-              "sudo dmidecode -s system-serial-number", true))["value"]
-          .toString(),
+      "serial": await _getSerialNumber(name, macAddress),
       "osname": osRelease["NAME"].toString(),
       "osversion": osRelease["VERSION_ID"].toString(),
       "uuid": await _getUUID(name, macAddress),
@@ -159,11 +160,10 @@ class BaseLinux {
           containerLinux.containsValue(name) &&
           containerLinux.containsValue(macAddress)) {
         uuid = containerLinux["uuid"];
-        logger.info(this.runtimeType.toString(),
-            "UUID has been retrieved from the uuid file.");
+        logger.info(this.runtimeType.toString(), "UUID file found.");
       } else {
-        logger.info(this.runtimeType.toString(),
-            "UUID not found, generating a new one...");
+        logger.info(
+            this.runtimeType.toString(), "No system UUID, generating new one.");
         uuid = (await linuxCommand.commandShell("uuidgen", true))["value"]
             .toString();
         dynamic baseAdded = {};
@@ -175,10 +175,49 @@ class BaseLinux {
         String str = encoder.convert(baseAdded);
         FilesUtils filesUtils = new FilesUtils();
         filesUtils.rewriteFile(containerLinuxFile, str);
-        logger.info(this.runtimeType.toString(),
-            "UUID has been generated and saved in the uuid file.");
+        logger.info(this.runtimeType.toString(), "New UUID saved to file.");
       }
     }
     return uuid;
+  }
+
+  Future<String> _getSerialNumber(String name, String macAddress) async {
+    String serialResult = (await linuxCommand.commandShell(
+            "sudo dmidecode -s system-serial-number", true))["value"]
+        .toString();
+
+    String path = "/etc/ocsinventory-agent" + serialFileName;
+
+    File fileSn = File(path);
+
+    bool existFile = await fileSn.exists();
+
+    if (serialResult == "") {
+      logger.info(this.runtimeType.toString(),
+          "No system serial number from dmidecode, checking serial number file...");
+      if (!existFile) {
+        logger.info(this.runtimeType.toString(),
+            "Serial number file not found, generating new serial number.");
+        serialResult = "OCS-GEN-" +
+            macAddress.split(':').last +
+            _randNumbers() +
+            macAddress.split(':').first;
+        filesUtils.writeFile(fileSn, serialResult);
+      } else {
+        var read = await linuxCommand.readFile(path, false);
+        serialResult = read["value"].toString();
+        logger.info(this.runtimeType.toString(), "Serial number file found.");
+      }
+    }
+    return serialResult;
+  }
+
+  String _randNumbers() {
+    String result = "";
+
+    for (int i = 0; i < 10; i++) {
+      result += Random().nextInt(10).toString();
+    }
+    return result;
   }
 }
