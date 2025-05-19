@@ -578,7 +578,7 @@ class Deployment {
       String extractedPath, File savedFile, bool status, String os) async {
     Map<String, dynamic> result = {"status": false, "error": ""};
 
-    if (os != "LIN" || os != "MAC") {
+    if (os != "LIN" && os != "MAC") {
       result["error"] = "Unsupported OS detected while extracting tar file.";
       logger.error(this.runtimeType.toString(), result["error"]);
       return result;
