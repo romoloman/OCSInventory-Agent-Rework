@@ -24,14 +24,8 @@ import 'package:sprintf/sprintf.dart';
 import 'package:ocs_agent/core/log.dart';
 import 'package:ocs_agent/core/config.dart';
 
-import 'package:ocs_agent/core/inventory/linux/commands.dart';
-import 'package:ocs_agent/core/inventory/linux/format.dart';
-
-import 'package:ocs_agent/core/inventory/macos/commands.dart';
-import 'package:ocs_agent/core/inventory/macos/format.dart';
-
-import 'package:ocs_agent/core/inventory/windows/commands.dart';
-import 'package:ocs_agent/core/inventory/windows/format.dart';
+import 'package:ocs_agent/core/inventory/commands.dart';
+import 'package:ocs_agent/core/inventory/format.dart';
 
 // Common imports
 import 'package:ocs_agent/core/common/files_utils.dart';
@@ -44,12 +38,8 @@ class Inventory {
   late FilesUtils filesUtils;
   late HTTPUtils httpUtils;
   late JsonUtils jsonUtils;
-  late LinuxCommand linuxCommand;
-  late LinuxFormat linuxFormat;
-  late MacOSCommand macOSCommand;
-  late MacOSFormat macOSFormat;
-  late WindowsCommand windowsCommand;
-  late WindowsFormat windowsFormat;
+  late Commands commands;
+  late Format format;
 
   late var url;
   late bool inventoryCheck;
@@ -61,45 +51,40 @@ class Inventory {
 
   late Map<int, String> errorCodes;
 
+  final JsonEncoder encoder = JsonEncoder.withIndent("\t");
+
   /// Constructor.
   Inventory(
-    Logger logger,
-    Config config,
-    FilesUtils filesUtils,
-    HTTPUtils httpUtils,
-    JsonUtils jsonUtils,
-    LinuxCommand linuxCommand,
-    LinuxFormat linuxFormat,
-    MacOSCommand macOSCommand,
-    MacOSFormat macOSFormat,
-    WindowsCommand windowsCommand,
-    WindowsFormat windowsFormat,
+    this.logger,
+    this.config,
+    this.filesUtils,
+    this.httpUtils,
+    this.jsonUtils,
+    this.commands,
+    this.format,
   ) {
-    this.logger = logger;
-    this.config = config;
-    this.filesUtils = filesUtils;
-    this.httpUtils = httpUtils;
-    this.jsonUtils = jsonUtils;
-    this.linuxCommand = linuxCommand;
-    this.linuxFormat = linuxFormat;
-    this.macOSCommand = macOSCommand;
-    this.macOSFormat = macOSFormat;
-    this.windowsCommand = windowsCommand;
-    this.windowsFormat = windowsFormat;
+    String? dataDirectory;
 
-    this.url = config.getInventoryConfig("url");
+    try {
+      dataDirectory = config.getInventoryConfig("data_directory");
+      this.url = config.getInventoryConfig("url");
+    } catch (e) {
+      logger.error(
+          this.runtimeType.toString(), "Missing configuration fields: $e");
+    }
+
     this.inventoryCheck = false;
     this.assetID = 0;
 
     this.inventoryFileName = sprintf('%s/%s.json', [
-      config.getInventoryConfig("data_directory"),
+      dataDirectory,
       DateFormat("yyyy-MM-dd_HH-mm-ss").format(DateTime.now())
     ]);
     this.inventoryFile = File(inventoryFileName);
-    this.inventoryBase64 = File(sprintf(
-        '%s/%s.json', [config.getInventoryConfig("data_directory"), "Base64"]));
+    this.inventoryBase64 =
+        File(sprintf('%s/%s.json', [dataDirectory, "Base64"]));
 
-    this.errorCodes = new Map();
+    this.errorCodes = {};
   }
 
   /// Get the running mode of the agent.
@@ -107,107 +92,120 @@ class Inventory {
     return config.getInventoryConfig("mode");
   }
 
-  /// Check if api is working and generate token if not.
+  /// Check if API is working and generate a token if it doesn't exist.
   Future<bool> checkApi() async {
-    // Get data from inventory.json file
-    String username = config.getInventoryConfig("username");
-    String password = config.getInventoryConfig("password");
-    String localToken = config.getInventoryConfig("token");
+    String username, password, localToken;
+    dynamic responseGet;
 
-    // Try to check OCS API
-    // If the status is up, return true
-    // If not dislay an error message and if there is an error, return query error
+    try {
+      username = config.getInventoryConfig("username");
+      password = config.getInventoryConfig("password");
 
-    // API call
-    await generateToken(username, password, localToken);
+      // Optional retrieval of the token (can be empty on first run)
+      localToken = config.getInventoryConfig("token");
+
+      await generateToken(username, password, localToken);
+    } catch (e) {
+      logger.verbose(this.runtimeType.toString(),
+          "Check username or password in the configuration file.");
+      logger.error(this.runtimeType.toString(),
+          "Configuration error when generating token: $e");
+    }
+
+    // Check OCS API status
     logger.info(this.runtimeType.toString(), "Checking API availability...");
 
     try {
-      var response =
-        await httpUtils.get(Uri.parse(url), httpUtils.getHeader(config));
-      
-      if (response["status_code"] == 200) {
-        logger.verbose(this.runtimeType.toString(), response["message"]);
+      responseGet =
+          await httpUtils.get(Uri.parse(url), httpUtils.getHeader(config));
+
+      if (responseGet?["status_code"] == 200) {
+        logger.verbose(this.runtimeType.toString(), responseGet["message"]);
         logger.info(this.runtimeType.toString(), "API is online!");
+
         return true;
       } else {
-        logger.verbose(this.runtimeType.toString(),
-            "Check username or password in the configuration file.");
         logger.error(this.runtimeType.toString(), "API connection failed!");
-        return false;
       }
     } catch (e) {
-      logger.error(
-          this.runtimeType.toString(), "Exception during API availibility check: $e");
-      return false;
+      logger.error(this.runtimeType.toString(),
+          "Exception during API availibility check: $e");
     }
+
+    return false;
   }
 
-  /// Send to Api the username and password and
-  /// save the token retreived in inventory.json.
+  /// Send to API the [username] and [password] and save the token retreived in inventory.json.
   Future<bool> generateToken(
       String username, String password, String localToken) async {
-    try {
-      logger.info(this.runtimeType.toString(), "Generating token...");
-      // Try to get the token generated by the server
-      // If the token is retrieved, it will be saved to inventory.json file
-      // If not dislay an error message and if there is an error, return query error
+    dynamic responsePost;
+    var newToken;
 
-      // API call
-      var response = await httpUtils.post(
-          Uri.parse(url + "/api-auth/token"),
+    // API call
+    logger.info(this.runtimeType.toString(), "Generating token...");
+
+    try {
+      responsePost = await httpUtils.post(
+          Uri.parse("$url/api-auth/token"),
           {HttpHeaders.contentTypeHeader: 'application/json'},
           jsonEncode({'username': username, 'password': password}));
-
-      if (response["status_code"] == 200) {
-        logger.verbose(this.runtimeType.toString(), response["message"]);
-        logger.info(
-            this.runtimeType.toString(), "Token retrieved successfully.");
-        // Get the token from the response body and compare with the local token
-        // If tokens are not the same, replace the local token with the server one
-        var newToken = jsonUtils.getContentFromStringByKey(response["body"], "token");
-        if (newToken != localToken) {
-          config.updateInventoryConfig("token", newToken);
-          logger.info(this.runtimeType.toString(),
-              "Local token updated with server token.");
-          return true;
-        } else {
-          logger.info(this.runtimeType.toString(),
-              "Local token matches server token. No update required.");
-          return true;
-        }
-      } else {
-        logger.verbose(this.runtimeType.toString(),
-            "Check username or password in the configuration file.");
-        logger.error(this.runtimeType.toString(), "Token generation failed!");
-        return false;
-      }
     } catch (e) {
       logger.error(
-          this.runtimeType.toString(), "Exception during token generation: $e");
+          this.runtimeType.toString(), "Exception during API call: $e");
+    }
+
+    if (responsePost?["status_code"] == 200) {
+      logger.verbose(this.runtimeType.toString(), responsePost["message"]);
+      logger.info(this.runtimeType.toString(), "Token retrieved successfully.");
+
+      // Get the token from the response body and compare with the local token
+      // If tokens are not the same, replace the local token with the server one
+      newToken =
+          jsonUtils.getContentFromStringByKey(responsePost["body"], "token");
+
+      if (newToken != localToken) {
+        config.updateInventoryConfig("token", newToken);
+        logger.info(this.runtimeType.toString(),
+            "Local token updated with server token.");
+      } else {
+        logger.info(this.runtimeType.toString(),
+            "Local token matches server token. No update required.");
+      }
+
+      return true;
+    } else {
+      logger.verbose(
+          this.runtimeType.toString(), "Unable to get token from server.");
+      logger.error(this.runtimeType.toString(), "Token generation failed!");
+
       return false;
     }
   }
 
   /// Verify if an inventory already exists on the server.
   Future<void> checkInventoryExist(Map<String, dynamic> body) async {
-    String uuid = body['uuid'];
-    uuid = uuid.isEmpty ? 'none' : uuid;
-
-    logger.info(this.runtimeType.toString(),
-        "Checking if device inventory already exists...");
-    // Try to get an existing inventory
-    // If an inventory is retrieved, return true
-    // If not dislay an error message and if there is an error, return query error
+    String uuid;
+    dynamic responseGet;
 
     // API call
-    var response = await httpUtils.get(
-        Uri.parse(url + "/asset/bases/?uuid=$uuid"),
-        httpUtils.getHeader(config));
-    logger.verbose(this.runtimeType.toString(), response["message"]);
-    if (response["status_code"] == 200 && response["body"].contains(uuid)) {
+    logger.info(this.runtimeType.toString(),
+        "Checking if device inventory already exists...");
+    uuid = body['uuid'].isEmpty ? 'none' : body['uuid'];
+
+    try {
+      responseGet = await httpUtils.get(
+          Uri.parse("$url/asset/bases/?uuid=$uuid"),
+          httpUtils.getHeader(config));
+      logger.verbose(this.runtimeType.toString(), responseGet["message"]);
+    } catch (e) {
+      logger.error(
+          this.runtimeType.toString(), "Exception during API call: $e");
+    }
+
+    if (responseGet?["status_code"] == 200 &&
+        responseGet["body"].contains(uuid)) {
       logger.info(this.runtimeType.toString(), "Existing inventory found!");
-      assetID = jsonDecode(response["body"])[0]["id"];
+      assetID = jsonDecode(responseGet["body"])[0]?["id"];
       inventoryCheck = true;
     } else {
       logger.info(this.runtimeType.toString(), "No existing inventory found.");
@@ -218,12 +216,16 @@ class Inventory {
 
   /// Check if config file exists and save it if not
   Future<void> checkAndApplyConfig() async {
+    List<dynamic> localConfig;
+
     logger.info(this.runtimeType.toString(), "Loading local configuration...");
+
     // Get data from core.json file
-    List<dynamic> localConfig = config.getCoreConfigs();
+    localConfig = config.getCoreConfigs();
 
     logger.info(
         this.runtimeType.toString(), "Verifying local configuration...");
+
     // If the config file is empty, we get an existing config from the API and save it locally
     if (localConfig.isEmpty) {
       logger.info(this.runtimeType.toString(),
@@ -237,43 +239,50 @@ class Inventory {
 
   /// Save the server configs in config/core.json
   Future<void> getConfig() async {
-    // save the existing config locally
-    List<dynamic> config = await getRemoteConfig();
-    if (config.isEmpty) {
+    List<dynamic> remoteConfig = await getRemoteConfig();
+
+    if (remoteConfig.isEmpty) {
       logger.error(this.runtimeType.toString(),
           "Unable to retrieve remote configuration.");
     } else {
-      var encoder = new JsonEncoder.withIndent("\t");
-      this.config.setCore(encoder.convert(config));
       logger.info(
           this.runtimeType.toString(), "Remote configuration saved locally.");
       logger.serverLogger(assetID, 9, "Remote configuration saved locally.");
+      this.config.setCore(encoder.convert(remoteConfig));
     }
   }
 
-  /// Get remote config
+  /// Get remote config from the server to save it in the core.json file
   Future<List<dynamic>> getRemoteConfig() async {
-    logger.info(
-        this.runtimeType.toString(), "Retrieving remote configuration...");
-    // Try to get an existing config from the server
-    // If a config is retrieved, it will be saved to core.json file
-    // If not dislay an error message and if there is an error, return query error
+    dynamic responseGet;
+    List<dynamic> remoteConfig = [];
 
     // API call
-    var response = await httpUtils.get(
-        Uri.parse(url + "/asset/configs/"), httpUtils.getHeader(config));
-    logger.verbose(this.runtimeType.toString(), response["message"]);
-    if (response["status_code"] == 200) {
+    logger.info(
+        this.runtimeType.toString(), "Retrieving remote configuration...");
+
+    try {
+      responseGet = await httpUtils.get(
+          Uri.parse("$url/asset/configs/"), httpUtils.getHeader(config));
+      logger.verbose(this.runtimeType.toString(), responseGet["message"]);
+    } catch (e) {
+      logger.error(
+          this.runtimeType.toString(), "Exception during API call: $e");
+    }
+
+    if (responseGet?["status_code"] == 200) {
       logger.info(this.runtimeType.toString(), "Remote configuration found.");
-      // save the existing config locally
-      List<dynamic> config = json.decode(response["body"]);
-      var encoder = new JsonEncoder.withIndent("\t");
-      return json.decode(encoder.convert(config));
+
+      // Save the existing config locally
+      remoteConfig = json.decode(responseGet["body"]);
+
+      return json.decode(encoder.convert(remoteConfig));
     } else {
       logger.error(
           this.runtimeType.toString(), "Remote configuration not found.");
       logger.serverLogger(assetID, 10, "Remote configuration not found.");
-      return [];
+
+      return remoteConfig;
     }
   }
 
@@ -289,11 +298,13 @@ class Inventory {
     if (localConfig.isNotEmpty || remoteConfig.isNotEmpty) {
       logger.verbose(this.runtimeType.toString(), localConfig.toString());
       logger.verbose(this.runtimeType.toString(), remoteConfig.toString());
+
       if (localConfig.toString() != remoteConfig.toString()) {
         logger.info(this.runtimeType.toString(),
             "Local configuration differs from the remote configuration. Updating...");
-        var encoder = new JsonEncoder.withIndent("\t");
+
         config.setCore(encoder.convert(remoteConfig));
+
         logger.info(
             this.runtimeType.toString(), "Local configuration updated.");
         logger.serverLogger(assetID, 9, "Local configuration updated.");
@@ -310,81 +321,119 @@ class Inventory {
   /// Get the remote template values to create or update the local template.
   Future<bool> getRemoteTemplate(Map<String, dynamic> body) async {
     // Get templates data
-    var remoteInfo = await getRemoteTemplateInfo(body);
-    var localInfo = getLocalTemplateInfo();
+    var remoteInfo, localInfo, id;
+    int compareResult;
+    dynamic responseGet;
+    Map<String, dynamic> template;
 
-    if (remoteInfo["return"] != "false" || localInfo["return"] != "false") {
-      var compareResult = compareTemplate(localInfo, remoteInfo);
+    try {
+      remoteInfo = await getRemoteTemplateInfo(body);
+      localInfo = getLocalTemplateInfo();
+    } catch (e) {
+      logger.error(this.runtimeType.toString(),
+          "Unable to retrieve local or remote template: $e");
+
+      return false;
+    }
+
+    if (remoteInfo["return"] != false || localInfo["return"] != false) {
+      compareResult = compareTemplate(localInfo, remoteInfo);
+
       // Depending on result, update the template or not
       if (compareResult == 0) {
         logger.info(
             this.runtimeType.toString(), "Current template is up-to-date.");
+
         return true;
       } else if (compareResult == 1 || compareResult == 2) {
-        // Try to get the remote template
-        // If templates are retrieved, save remote template locally
-        // If not dislay an error message and if there is an error, return query error
+        // Try to get the remote template to save it locally
+        id = remoteInfo["id"];
 
+        // API call
         logger.info(this.runtimeType.toString(),
             "Creating or updating local template with the remote version...");
 
-        var id = remoteInfo["id"];
-        var response = await httpUtils.get(
-            Uri.parse(url + "/templates/$id/?expand=*"), httpUtils.getHeader(config));
-        logger.verbose(this.runtimeType.toString(), response["message"]);
-        if (response["status_code"] == 200) {
+        try {
+          responseGet = await httpUtils.get(
+              Uri.parse("$url/templates/$id/?expand=*"),
+              httpUtils.getHeader(config));
+          logger.verbose(this.runtimeType.toString(), responseGet["message"]);
+        } catch (e) {
+          logger.error(
+              this.runtimeType.toString(), "Exception during API call: $e");
+        }
+
+        if (responseGet?["status_code"] == 200) {
           // Save remote template locally
           logger.info(this.runtimeType.toString(), "Remote template found.");
-          Map<String, dynamic> template = json.decode(response["body"]);
 
-          var encoder = new JsonEncoder.withIndent("\t");
+          template = json.decode(responseGet["body"]);
           config.setTemplate(encoder.convert(template));
+
           logger.info(
               this.runtimeType.toString(), "Remote template saved locally.");
           logger.serverLogger(assetID, 11, "Remote template saved locally.");
+
           return true;
         } else {
           logger.error(
               this.runtimeType.toString(), "Remote template not found.");
           logger.serverLogger(assetID, 12, "Remote template not found.");
+
           return false;
         }
       }
     } else {
-      logger.info(this.runtimeType.toString(), "Creating new template...");
       // If either template is missing, we need to create a new one
-      var id = remoteInfo["id"];
-      var response = await httpUtils.get(
-          Uri.parse(url + "/templates/$id/?expand=*"), httpUtils.getHeader(config));
-      if (response["status_code"] == 200) {
-        Map<String, dynamic> template = json.decode(response["body"]);
-        if (!template.containsKey("id") || !template.containsKey("last_update")) {
-          logger.error(this.runtimeType.toString(), "Invalid template structure received from server");
+      logger.info(this.runtimeType.toString(), "Creating new template...");
+
+      try {
+        responseGet = await httpUtils.get(
+            Uri.parse("$url/templates/$id/?expand=*"),
+            httpUtils.getHeader(config));
+      } catch (e) {
+        logger.error(
+            this.runtimeType.toString(), "Exception during API call: $e");
+      }
+
+      if (responseGet?["status_code"] == 200) {
+        template = json.decode(responseGet["body"]);
+
+        if (!template.containsKey("id") ||
+            !template.containsKey("last_update")) {
+          logger.error(this.runtimeType.toString(),
+              "Invalid template structure received from server");
           return false;
         }
-        var encoder = new JsonEncoder.withIndent("\t");
+
         config.setTemplate(encoder.convert(template));
-        logger.info(this.runtimeType.toString(), "New template created successfully.");
+        logger.info(
+            this.runtimeType.toString(), "New template created successfully.");
+
         return true;
       }
     }
+
     return false;
   }
 
   /// Check if a local template exists.
   bool getLocalTemplate() {
+    Map<String, dynamic> template;
+
     logger.info(this.runtimeType.toString(), "Loading local template...");
 
-    Map<String, dynamic> template = config.getTemplate();
+    template = config.getTemplate();
     // Check if the local template exists
     if (template.isNotEmpty ||
         template.values.isNotEmpty ||
-        template.keys.isNotEmpty ||
-        template.length != 0) {
+        template.keys.isNotEmpty) {
       logger.info(this.runtimeType.toString(), "Local template found.");
+
       return true;
     } else {
       logger.error(this.runtimeType.toString(), "Local template not found");
+
       return false;
     }
   }
@@ -392,185 +441,189 @@ class Inventory {
   /// Get the remote template id and last update.
   Future<Map<String, String>> getRemoteTemplateInfo(
       Map<String, dynamic> body) async {
-    String uuid = await body['uuid'];
-    uuid = uuid.isEmpty ? 'none' : uuid;
-    logger.info(this.runtimeType.toString(),
-        "Retrieving remote template information...");
-    // Try to get remote template info
-    // If info are retrieved, return info
-    // If not dislay an error message and if there is an error, return query error
+    String uuid;
+    dynamic assetMap, templateMap;
+    dynamic responseAsset, responseTemplate;
 
     // API call
-    var responseAsset = await httpUtils.get(
-        Uri.parse(url + "/asset/bases/?uuid=" + uuid),
-        httpUtils.getHeader(config));
-    logger.verbose(this.runtimeType.toString(), responseAsset["message"]);
-    if (responseAsset["status_code"] == 200 &&
-        jsonDecode(responseAsset["body"]).isNotEmpty) {
-      logger.info(this.runtimeType.toString(), "Base inventory found.");
-      // API call
-      var responseTemplate = await httpUtils.get(
-          Uri.parse(url +
-              "/templates/" +
-              jsonDecode(responseAsset["body"])[0]['template'].toString() +
-              "/?expand=*"),
+    logger.info(this.runtimeType.toString(),
+        "Retrieving remote template information...");
+    uuid = body['uuid'].isNotEmpty ? body['uuid'] : 'none';
+
+    try {
+      responseAsset = await httpUtils.get(
+          Uri.parse("$url/asset/bases/?uuid=$uuid"),
           httpUtils.getHeader(config));
-      logger.verbose(this.runtimeType.toString(), responseTemplate["message"]);
-      if (responseTemplate["status_code"] == 200) {
+      logger.verbose(this.runtimeType.toString(), responseAsset["message"]);
+
+      assetMap = jsonDecode(responseAsset?["body"]);
+    } catch (e) {
+      logger.error(
+          this.runtimeType.toString(), "Exception during API call: $e");
+    }
+
+    if (responseAsset?["status_code"] == 200 && assetMap.isNotEmpty) {
+      // API call
+      logger.info(this.runtimeType.toString(), "Base inventory found.");
+
+      try {
+        responseTemplate = await httpUtils.get(
+            Uri.parse(
+                "$url/templates/${assetMap[0]['template'].toString()}/?expand=*"),
+            httpUtils.getHeader(config));
+        logger.verbose(
+            this.runtimeType.toString(), responseTemplate["message"]);
+        templateMap = jsonDecode(responseTemplate?["body"]);
+      } catch (e) {
+        logger.error(
+            this.runtimeType.toString(), "Exception during API call: $e");
+      }
+
+      if (responseTemplate?["status_code"] == 200) {
         // Create info object
         logger.info(this.runtimeType.toString(), "Remote template found.");
+
         return {
-          "id": jsonDecode(responseTemplate["body"])['id'].toString(),
-          "last_update":
-              jsonDecode(responseTemplate["body"])['last_update'].toString(),
+          "id": templateMap['id'].toString(),
+          "last_update": templateMap['last_update'].toString(),
           "return": "true",
         };
       } else {
         logger.error(this.runtimeType.toString(), "Remote template not found.");
-        return {
-          "return": "false",
-        };
       }
     } else {
       logger.error(this.runtimeType.toString(), "Asset base not found.");
-      return {
-        "return": "false",
-      };
     }
+
+    return {"return": "false"};
   }
 
   /// Get the local template id and last update.
   Map<String, String> getLocalTemplateInfo() {
-    Map<String, String> info;
-    if (getLocalTemplate()) {
-      // Create info object
-      var template = config.getTemplate();
-      info = {
-        "id": template["id"].toString(),
-        "last_update": template["last_update"].toString(),
-        "return": "true",
-      };
-    } else {
-      info = {
-        "return": "false",
-      };
+    bool localTemplateFound = getLocalTemplate();
+    Map<String, dynamic> template = config.getTemplate();
+    Map<String, String> result = {"return": localTemplateFound.toString()};
+
+    if (localTemplateFound) {
+      result["id"] = template["id"].toString();
+      result["last_update"] = template["last_update"].toString();
     }
-    return info;
+
+    return result;
   }
 
-  /// Compare both templates to know if we need to create or update the local template.
+  /// Compare both templates based on [localInfo] and [remoteInfo] to create or update the local template.
   int compareTemplate(
       Map<String, String> localInfo, Map<String, String> remoteInfo) {
+    Map<String, dynamic> localTemplate = config.getTemplate();
+    Map<String, dynamic> remoteTemplate =
+        json.decode(remoteInfo["content"] ?? "{}");
+
     logger.info(this.runtimeType.toString(), "Comparing templates...");
-    
+
     // Compare both templates info
     if (localInfo["return"] == "false" || remoteInfo["return"] == "false") {
-      logger.info(this.runtimeType.toString(), "One of the templates is missing, update required.");
+      logger.info(this.runtimeType.toString(),
+          "One of the templates is missing, update required.");
       return 2;
     }
 
     if (remoteInfo["id"]?.trim() != localInfo["id"]?.trim()) {
-      logger.info(this.runtimeType.toString(), 
+      logger.info(this.runtimeType.toString(),
           "Template IDs differ - Local: ${localInfo["id"]}, Remote: ${remoteInfo["id"]}");
       return 2;
     }
 
     if (remoteInfo["last_update"]?.trim() != localInfo["last_update"]?.trim()) {
-      logger.info(this.runtimeType.toString(), 
+      logger.info(this.runtimeType.toString(),
           "Template versions differ - Local: ${localInfo["last_update"]}, Remote: ${remoteInfo["last_update"]}");
       return 1;
     }
 
-    Map<String, dynamic> localTemplate = config.getTemplate();
-    Map<String, dynamic> remoteTemplate = json.decode(remoteInfo["content"] ?? "{}");
-    
     if (localTemplate.toString() != remoteTemplate.toString()) {
-      logger.info(this.runtimeType.toString(), "Template content differs, update required.");
+      logger.info(this.runtimeType.toString(),
+          "Template content differs, update required.");
       return 1;
     }
 
-    logger.info(this.runtimeType.toString(), "Templates are identical, no update needed.");
+    logger.info(this.runtimeType.toString(),
+        "Templates are identical, no update needed.");
     return 0;
   }
 
   /// Process the template and format template inventory.
   Future<Map<String, dynamic>> processTemplate() async {
-    // Get the template from template.json
-    var template = config.getTemplate();
+    Map<String, dynamic> template, value;
+    bool processValid;
+
     logger.info(this.runtimeType.toString(), "Processing template...");
-    var value = await getInventoryResult(template, template["os"]);
-    var templateInventory;
-    // If the value isn't empty, it creates an object with data
-    // If not, return an error
-    if (value.isNotEmpty) {
-      templateInventory = {
-        "values": value,
-        "return": "true",
-      };
+
+    template = config.getTemplate();
+    value = await getInventoryResult(template, template["os"]);
+    processValid = value.isNotEmpty;
+
+    if (processValid) {
       logger.info(
           this.runtimeType.toString(), "Template processed successfully.");
     } else {
-      templateInventory = {
-        "return": "false",
-      };
       logger.error(this.runtimeType.toString(),
           "Failed to process template. Template is empty.");
     }
-    return templateInventory;
+
+    return {
+      if (processValid) "values": value,
+      "return": processValid,
+    };
   }
 
   /// Get all informations present in the local [template]
   /// with a [os] verification and format it in json.
   Future<Map<String, dynamic>> getInventoryResult(
       Map<String, dynamic> template, String os) async {
-    var format;
+    List<dynamic> sections = [];
+    Map<String, dynamic> result = {};
+    Map<String, dynamic> inventoryResult = {};
+    var valueTarget;
 
-    // Check the os platform
-    if (os == "LIN") {
-      format = linuxFormat;
-    } else if (template["os"] == "WIN" && Platform.isWindows) {
-      format = windowsFormat;
-    } else if (template["os"] == "MAC" && Platform.isMacOS) {
-      format = macOSFormat;
-    } else {
-      logger.error(this.runtimeType.toString(), "Unsupported OS detected.");
+    try {
+      sections = template['sections'];
+    } catch (e) {
+      logger.error(this.runtimeType.toString(),
+          "Error while assigning format or reading sections: $e");
     }
 
-    Map<String, dynamic> inventoryResult = new Map();
+    if (sections.isNotEmpty) {
+      for (var section in sections) {
+        result = await getResult(os, template, section);
 
-    List<dynamic> sections = template['sections'];
+        switch (section['retrival_output']) {
+          case "JSON":
+            if (os == "MAC") {
+              valueTarget = format.getByMethod(section['retrival_output'],
+                  section["fields"], result, section["target"]);
+            } else {
+              valueTarget = format.getByMethod(
+                  section['retrival_output'], section["fields"], result);
+            }
+            break;
 
-    for (var section in sections) {
-      Map<String, dynamic> result = await getResult(os, template, section);
-      var valueTarget;
+          case "TBLE":
+          case "PTXT":
+          case "REGX":
+          case "GREP":
+            valueTarget = format.getByMethod(
+                section['retrival_output'], section["fields"], result);
+            break;
 
-      // Choose the retrieval format
-      switch (section['retrival_output']) {
-        case "TBLE":
-          valueTarget = format.getByArray(section["fields"], result);
-          break;
-        case "JSON":
-          if (os == "MAC") {
-            valueTarget =
-                format.getByJson(section["fields"], result, section["target"]);
-          } else {
-            valueTarget = format.getByJson(section["fields"], result);
-          }
-          break;
-        case "PTXT":
-          valueTarget = await format.getByPtxt(section["fields"], result);
-          break;
-        case "REGX":
-          valueTarget = format.getByRegx(section["fields"], result);
-          break;
-        case "GREP":
-          valueTarget = format.getByGrep(section["fields"], result);
-          break;
-        default:
-          valueTarget = null;
-          break;
+          default:
+            logger.error(
+                this.runtimeType.toString(), "Retrival format unknown.");
+            valueTarget = null;
+            break;
+        }
+
+        inventoryResult.putIfAbsent(section['name'], () => valueTarget);
       }
-      inventoryResult.putIfAbsent(section['name'], () => valueTarget);
     }
 
     return inventoryResult;
@@ -579,40 +632,43 @@ class Inventory {
   /// Get the result
   Future<Map<String, dynamic>> getResult(String os,
       Map<String, dynamic> template, Map<String, dynamic> section) async {
-    late var command;
-    Map<String, dynamic> result = new Map();
+    Map<String, dynamic> options = section['options'] ?? {};
+    String mainRes, res;
+    Map<String, dynamic> result = {};
+    Map<String, dynamic> main = {};
+    Map<String, dynamic> sub = {};
+    List<dynamic> fields = section['fields'] ?? [];
+    var fieldOver;
 
-    // Check the os platform
-    if (os == "LIN") {
-      command = this.linuxCommand;
-    } else if (template["os"] == "WIN" && Platform.isWindows) {
-      command = this.windowsCommand;
-    } else if (template["os"] == "MAC" && Platform.isMacOS) {
-      command = this.macOSCommand;
-    } else {
-      logger.error(this.runtimeType.toString(), "Unsupported OS detected.");
+    try {
+      mainRes = await this
+          .commands
+          .getResult(section['retrival_method'], section["target"]);
+    } catch (e) {
+      logger.error(this.runtimeType.toString(), "Unable to get results: $e");
+
+      return result;
     }
 
-    Map<String, dynamic> main = new Map<String, dynamic>();
-    Map<String, dynamic> options = new Map<String, dynamic>();
-    if (section['options'] != null) {
-      options = section['options'];
-    }
-
-    String mainRes =
-        await command.getResult(section["target"], section['retrival_method']);
     main.putIfAbsent('name', () => section['name']);
     main.putIfAbsent('type', () => section['retrival_output']);
     main.putIfAbsent('options', () => options);
     main.putIfAbsent('result', () => mainRes);
     result.putIfAbsent('main', () => main);
-    List<dynamic> test = section['fields'];
-    var fieldOver = test.where((element) => element["override_target"]);
+
+    fieldOver = fields.where((element) => element["override_target"]);
 
     for (var field in fieldOver) {
-      Map<String, dynamic> sub = new Map<String, dynamic>();
-      String res = await command.getResult(
-          field["new_target"], field['retrival_method']);
+      try {
+        res = await commands.getResult(
+            field['retrival_method'], field["new_target"]);
+      } catch (e) {
+        logger.error(
+            this.runtimeType.toString(), "Error processing field override: $e");
+
+        return result;
+      }
+
       sub.putIfAbsent('name', () => field['name']);
       sub.putIfAbsent('type', () => field['retrival_output']);
       sub.putIfAbsent('options', () => field['options']);
@@ -625,37 +681,48 @@ class Inventory {
 
   /// Create or update the inventory and send it to the server.
   Future<void> sendRemoteBaseInventory(Map<String, dynamic> body) async {
-    if (inventoryCheck) {
-      String uuid = await body['uuid'];
-      uuid = uuid.isEmpty ? 'none' : uuid;
+    String uuid;
+    dynamic responseGet, responsePut, responsePost;
 
-      logger.info(
-          this.runtimeType.toString(), "Sending base inventory to server...");
+    if (inventoryCheck) {
       // Try to get the existing inventory
       // If an inventory is retrieved, check its uuid
       // If an uuid exists, update the current inventory or create one if not
       // If not dislay an error message and if there is an error, return query error
 
       // API call
-      var response = await httpUtils.get(
-          Uri.parse(url + "/asset/bases/?uuid=$uuid"),
-          httpUtils.getHeader(config));
-      logger.verbose(this.runtimeType.toString(), response["message"]);
+      logger.info(
+          this.runtimeType.toString(), "Sending base inventory to server...");
+      uuid = body['uuid'].isEmpty ? 'none' : body['uuid'];
 
-      if (response["status_code"] == 200) {
+      try {
+        responseGet = await httpUtils.get(
+            Uri.parse("$url/asset/bases/?uuid=$uuid"),
+            httpUtils.getHeader(config));
+        logger.verbose(this.runtimeType.toString(), responseGet["message"]);
+      } catch (e) {
+        logger.error(
+            this.runtimeType.toString(), "Exception during API call: $e");
+      }
+
+      if (responseGet?["status_code"] == 200) {
         // Check if the uuid exists
-        if (response["body"].contains(uuid)) {
-          // Update the inventory
-          logger.info(this.runtimeType.toString(), "Updating inventory...");
-          var id = jsonDecode(response["body"])[0]['id'];
+        if (responseGet["body"].contains(uuid)) {
           // API call
-          var responsePut = await httpUtils.put(
-              Uri.parse(url + "/asset/collection/"),
-              httpUtils.getHeader(config),
-              jsonEncode(body));
-          logger.verbose(this.runtimeType.toString(), responsePut["message"]);
+          logger.info(this.runtimeType.toString(), "Updating inventory...");
 
-          if (responsePut["status_code"] == 200) {
+          try {
+            responsePut = await httpUtils.put(
+                Uri.parse("$url/asset/collection/"),
+                httpUtils.getHeader(config),
+                jsonEncode(body));
+            logger.verbose(this.runtimeType.toString(), responsePut["message"]);
+          } catch (e) {
+            logger.error(
+                this.runtimeType.toString(), "Exception during API call: $e");
+          }
+
+          if (responsePut?["status_code"] == 200) {
             logger.info(
                 this.runtimeType.toString(), "Inventory updated successfully.");
             logger.serverLogger(assetID, 2, "Inventory updated successfully.");
@@ -676,15 +743,17 @@ class Inventory {
         logger.serverLogger(assetID, 5, "Failed to get inventory from server.");
       }
     } else {
-      // Create the inventory
-      logger.info(this.runtimeType.toString(), "Creating new inventory...");
       // API call
-      var responsePost = await httpUtils.post(
-          Uri.parse(url + "/asset/collection/"),
-          httpUtils.getHeader(config),
-          jsonEncode(body));
-      logger.verbose(this.runtimeType.toString(), responsePost["message"]);
-      if (responsePost["status_code"] == 200) {
+      try {
+        responsePost = await httpUtils.post(Uri.parse("$url/asset/collection/"),
+            httpUtils.getHeader(config), jsonEncode(body));
+        logger.verbose(this.runtimeType.toString(), responsePost["message"]);
+      } catch (e) {
+        logger.error(
+            this.runtimeType.toString(), "Exception during API call: $e");
+      }
+
+      if (responsePost?["status_code"] == 200) {
         logger.info(
             this.runtimeType.toString(), "Inventory created successfully.");
         logger.serverLogger(assetID, 1, "Inventory created successfully.");
@@ -697,95 +766,123 @@ class Inventory {
 
   /// Update the remote inventory to add template inventory
   Future<void> sendRemoteTemplateInventory(Map<String, dynamic> body) async {
+    String uuid;
+    dynamic responseGet, inventoryExist, responsePatch, responsePut;
+    Map<dynamic, dynamic> updatedInventory = {};
+    late var templateInventory,
+        content,
+        sectionBase64,
+        sectionBytes,
+        sectionJson;
+
     if (await getRemoteTemplate(body)) {
-      var templateInventory = await processTemplate();
+      templateInventory = await processTemplate();
+
       logger.info(this.runtimeType.toString(),
           "Sending template inventory to server...");
-      if (templateInventory["return"] != false) {
+
+      if (templateInventory["return"]) {
+        // API call
         logger.info(
             this.runtimeType.toString(), "Retrieving remote base inventory...");
-        String uuid = await body['uuid'];
-        uuid = uuid.isEmpty ? 'none' : uuid;
+        uuid = body['uuid'].isEmpty ? 'none' : body['uuid'];
 
-        // API call
-        var response = await httpUtils.get(
-            Uri.parse(url + "/asset/bases/?uuid=$uuid"),
-            httpUtils.getHeader(config));
-        logger.verbose(this.runtimeType.toString(), response["message"]);
-        if (response["status_code"] == 200) {
+        try {
+          responseGet = await httpUtils.get(
+              Uri.parse("$url/asset/bases/?uuid=$uuid"),
+              httpUtils.getHeader(config));
+          logger.verbose(this.runtimeType.toString(), responseGet["message"]);
+        } catch (e) {
+          logger.error(
+              this.runtimeType.toString(), "Exception during API call: $e");
+        }
+
+        if (responseGet?["status_code"] == 200) {
           logger.info(
               this.runtimeType.toString(), "Remote base inventory found.");
+
           // If there is a uuid in the inventory, update the current inventory
           // Else, return an error
-          if (response["body"].contains(uuid)) {
+          if (responseGet["body"].contains(uuid)) {
             logger.info(
                 this.runtimeType.toString(), "Updating base inventory...");
-            var content = jsonDecode(response["body"])[0];
-            var encoder = new JsonEncoder.withIndent("\t");
+
+            content = jsonDecode(responseGet["body"])[0];
             content["template_inventory"] = templateInventory["values"];
-            var updatedInventory = new Map();
+
             if (config.getCoreConfig("agent", "inventory_checksum")) {
-              late var sectionBase64, sectionBytes, sectionJson;
-              sectionJson = new Map();
+              sectionJson = {};
+
               content["template_inventory"].keys.forEach((element) {
                 sectionBytes = utf8
                     .encode(content["template_inventory"][element].toString());
                 sectionBase64 = base64.encode(sectionBytes);
                 sectionJson[element] = sectionBase64;
               });
+
               if (!inventoryBase64.existsSync()) {
                 logger.error(this.runtimeType.toString(),
                     "Can't find base64 file, creating one...");
                 inventoryBase64.createSync(recursive: true);
                 filesUtils.writeFile(inventoryBase64, "{}");
               }
+
               logger.info(this.runtimeType.toString(), "Base64 file found.");
               var fileBase64 = jsonDecode(inventoryBase64.readAsStringSync());
-              sectionJson.keys.forEach((newKey) {
-                fileBase64.keys.forEach((oldKey) {
-                  if (newKey == oldKey) {
-                    if (sectionJson[newKey] == fileBase64[oldKey]) {
-                      logger.verbose(
-                          this.runtimeType.toString(),
-                          sprintf(
-                              "%s section has not changed since last inventory.",
-                              [newKey.toString()]));
-                    } else {
-                      logger.verbose(
-                          this.runtimeType.toString(),
-                          sprintf("%s section will be updated.",
-                              [newKey.toString()]));
-                      updatedInventory[newKey] =
-                          content["template_inventory"][newKey];
-                    }
-                  }
-                });
+
+              sectionJson.forEach((newKey, newValue) {
                 if (!fileBase64.containsKey(newKey)) {
-                  logger.verbose(
-                      this.runtimeType.toString(),
-                      sprintf("%s section added to the inventory.",
-                          [newKey.toString()]));
+                  logger.verbose(this.runtimeType.toString(),
+                      sprintf("%s section added to the inventory.", [newKey]));
                   updatedInventory[newKey] =
                       content["template_inventory"][newKey];
+                } else if (fileBase64[newKey] != newValue) {
+                  logger.verbose(this.runtimeType.toString(),
+                      sprintf("%s section will be updated.", [newKey]));
+                  updatedInventory[newKey] =
+                      content["template_inventory"][newKey];
+                } else {
+                  logger.verbose(
+                      this.runtimeType.toString(),
+                      sprintf(
+                          "%s section has not changed since last inventory.",
+                          [newKey]));
                 }
               });
+
               filesUtils.writeFile(
                   inventoryBase64, encoder.convert(sectionJson));
             }
-            var inventoryExist = await httpUtils.get(
-                Uri.parse(url + "/asset/sections/?base=$assetID"),
-                httpUtils.getHeader(config));
-            if (inventoryExist["status_code"] == 200) {
+
+            // API call
+            try {
+              inventoryExist = await httpUtils.get(
+                  Uri.parse("$url/asset/sections/?base=$assetID"),
+                  httpUtils.getHeader(config));
+            } catch (e) {
+              logger.error(
+                  this.runtimeType.toString(), "Exception during API call: $e");
+            }
+
+            if (inventoryExist?["status_code"] == 200) {
               if (config.getCoreConfig("agent", "inventory_checksum")) {
                 content["template_inventory"] = updatedInventory;
               }
-              var responsePatch = await httpUtils.patch(
-                  Uri.parse("$url/asset/collection/"),
-                  httpUtils.getHeader(config),
-                  encoder.convert(content));
-              logger.verbose(
-                  this.runtimeType.toString(), responsePatch["message"]);
-              if (responsePatch["status_code"] == 200) {
+
+              // API call
+              try {
+                responsePatch = await httpUtils.patch(
+                    Uri.parse("$url/asset/collection/"),
+                    httpUtils.getHeader(config),
+                    encoder.convert(content));
+                logger.verbose(
+                    this.runtimeType.toString(), responsePatch["message"]);
+              } catch (e) {
+                logger.error(this.runtimeType.toString(),
+                    "Exception during API call: $e");
+              }
+
+              if (responsePatch?["status_code"] == 200) {
                 logger.info(this.runtimeType.toString(),
                     "Template inventory updated successfully.");
                 logger.serverLogger(
@@ -798,13 +895,19 @@ class Inventory {
               }
             } else {
               // API call
-              var responsePut = await httpUtils.put(
-                  Uri.parse(url + "/asset/collection/"),
-                  httpUtils.getHeader(config),
-                  encoder.convert(content));
-              logger.verbose(
-                  this.runtimeType.toString(), responsePut["message"]);
-              if (responsePut["status_code"] == 200) {
+              try {
+                responsePut = await httpUtils.put(
+                    Uri.parse("$url/asset/collection/"),
+                    httpUtils.getHeader(config),
+                    encoder.convert(content));
+                logger.verbose(
+                    this.runtimeType.toString(), responsePut["message"]);
+              } catch (e) {
+                logger.error(this.runtimeType.toString(),
+                    "Exception during API call: $e");
+              }
+
+              if (responsePut?["status_code"] == 200) {
                 logger.info(this.runtimeType.toString(),
                     "Template inventory updated successfully.");
                 logger.serverLogger(
@@ -837,37 +940,55 @@ class Inventory {
 
   /// Create a local inventory in the JSON format.
   Future<void> sendLocalBaseInventory(Map<String, dynamic> body) async {
+    var encoder;
+
     logger.info(this.runtimeType.toString(), "Creating base inventory file...");
     logger.info(
         this.runtimeType.toString(), "Writing base inventory locally...");
+
     // Create a file to save the new inventory
-    await inventoryFile.create(recursive: true);
-    var encoder = await JsonEncoder.withIndent("\t");
-    // Write the new inventory inside
-    filesUtils.writeFile(inventoryFile, encoder.convert(body));
-    logger.info(this.runtimeType.toString(),
-        sprintf("New base inventory created in %s", [inventoryFileName]));
+    try {
+      await inventoryFile.create(recursive: true);
+      encoder = await JsonEncoder.withIndent("\t");
+
+      // Write the new inventory inside
+      filesUtils.writeFile(inventoryFile, encoder.convert(body));
+      logger.info(this.runtimeType.toString(),
+          sprintf("New base inventory created in %s", [inventoryFileName]));
+    } catch (e) {
+      logger.error(this.runtimeType.toString(), "Error getting inventory: $e");
+    }
   }
 
   /// Update the local inventory to add template inventory
   Future<void> sendLocalTemplateInventory() async {
+    var templateInventory;
+    var content;
+
     logger.info(this.runtimeType.toString(),
         "Adding template inventory to local inventory...");
 
     if (getLocalTemplate()) {
-      var templateInventory = await processTemplate();
+      templateInventory = await processTemplate();
 
-      if (templateInventory["return"] != false) {
+      if (templateInventory["return"]) {
         // Get the local inventory
-        var content = jsonDecode(inventoryFile.readAsStringSync());
-        var encoder = new JsonEncoder.withIndent("\t");
+        content = jsonDecode(inventoryFile.readAsStringSync());
         content["template_inventory"] = templateInventory["values"];
+
         logger.verbose(this.runtimeType.toString(),
             content["template_inventory"].toString());
-        // Write into inventory file
-        filesUtils.writeFile(inventoryFile, encoder.convert(content));
-        logger.info(this.runtimeType.toString(),
-            "Template inventory added to base inventory!");
+
+        try {
+          // Write into inventory file
+          filesUtils.writeFile(inventoryFile, encoder.convert(content));
+
+          logger.info(this.runtimeType.toString(),
+              "Template inventory added to base inventory!");
+        } catch (e) {
+          logger.error(
+              this.runtimeType.toString(), "Error writing to file: $e");
+        }
       } else {
         logger.error(
             this.runtimeType.toString(), "Failed to process template.");

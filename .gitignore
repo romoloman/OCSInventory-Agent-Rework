@@ -57,7 +57,7 @@ config/inventory.json
 config/template.json
 
 # Default datadir
-inventory/
+/inventory/
 
 pubspec.lock
 hiveData/testbox.lock
