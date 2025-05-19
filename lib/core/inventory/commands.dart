@@ -43,8 +43,7 @@ class Commands {
 
     processData["value"] = (exitCode == 0) ? stdout : "";
     processData["status"] = (exitCode == 0);
-
-    if (method != "BASH") processData["error"] = (exitCode == 0) ? stderr : "";
+    processData["error"] = stderr;
 
     logger.verbose(
         this.runtimeType.toString(), "Executed $commentSubject: '$target'");
