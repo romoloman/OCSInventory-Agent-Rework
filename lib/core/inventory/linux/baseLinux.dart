@@ -181,25 +181,30 @@ class BaseLinux {
     return uuid;
   }
 
-  Future<String> _getSerialNumber(String name, String macAddress) async{
+  Future<String> _getSerialNumber(String name, String macAddress) async {
     String serialResult = (await linuxCommand.commandShell(
-              "sudo dmidecode -s system-serial-number", true))["value"].toString();
+            "sudo dmidecode -s system-serial-number", true))["value"]
+        .toString();
 
-    String path = "/etc/ocsinventory-agent"+serialFileName;
+    String path = "/etc/ocsinventory-agent" + serialFileName;
 
     File fileSn = File(path);
 
     bool existFile = await fileSn.exists();
 
-    if(serialResult == ""){
+    if (serialResult == "") {
       logger.info(this.runtimeType.toString(),
           "No system serial number from dmidecode, checking serial number file...");
-      if(!existFile){
+      if (!existFile) {
         logger.info(this.runtimeType.toString(),
             "Serial number file not found, generating new serial number.");
+        serialResult = "OCS-GEN-" +
+            macAddress.split(':').last +
+            _randNumbers() +
+            macAddress.split(':').first;
         filesUtils.writeFile(fileSn, serialResult);
-      }else {
-        var read = await linuxCommand.readFile(path,false);
+      } else {
+        var read = await linuxCommand.readFile(path, false);
         serialResult = read["value"].toString();
         logger.info(this.runtimeType.toString(), "Serial number file found.");
       }
@@ -207,13 +212,12 @@ class BaseLinux {
     return serialResult;
   }
 
-  String _randNumbers(){
+  String _randNumbers() {
     String result = "";
 
-    for(int i = 0; i < 10; i++){
+    for (int i = 0; i < 10; i++) {
       result += Random().nextInt(10).toString();
     }
     return result;
   }
-
 }
