@@ -69,7 +69,7 @@ class Deployment {
   /// Check the configuration of the deployment module.
   Future<bool> checkConfig() async {
     logger.info(this.runtimeType.toString(),
-        "Enabling deployment module and checking its configuration...");
+        "Checking deployment module configuration...");
 
     // Check if the URL is set
     if (url == null) {
