@@ -1045,4 +1045,22 @@ class Deployment {
     result["status"] = (storeStatus && execStatus) ? 0 : 1;
     return result;
   }
+
+  /// check if deployment is enabled then process packages and actions
+  Future<void> processDeployment(String os, int assetID) async {
+    if (config.getCoreConfig("deployment", "enabled")) {
+      logger.info(this.runtimeType.toString(),
+          "Deployment is enabled in server configuration.");
+      if (await checkConfig()) {
+        if (await checkDownload(assetID)) {
+          if (await getActions(assetID)) {
+            await executeActions(os, assetID);
+          }
+        }
+      }
+    } else {
+      logger.info(this.runtimeType.toString(),
+          "Deployment is disabled in server configuration.");
+    }
+  }
 }
