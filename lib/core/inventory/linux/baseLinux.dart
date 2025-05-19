@@ -195,21 +195,16 @@ class BaseLinux {
 
     if(serialResult == ""){
       logger.info(this.runtimeType.toString(),
-            "Local serial number not found, searching for the serial number file...");
+          "No system serial number from dmidecode, checking serial number file...");
       if(!existFile){
         logger.info(this.runtimeType.toString(),
-            "File not found, creating a new one with random serial number.");
-        serialResult = "OCS-GEN-"+macAddress.split(':').last+_randNumbers()+macAddress.split(':').first;
+            "Serial number file not found, generating new serial number.");
         filesUtils.writeFile(fileSn, serialResult);
       }else {
         var read = await linuxCommand.readFile(path,false);
         serialResult = read["value"].toString();
-        logger.info(this.runtimeType.toString(),
-            "Serial number file found");
+        logger.info(this.runtimeType.toString(), "Serial number file found.");
       }
-    } else {
-      logger.info(this.runtimeType.toString(),
-            "Local serial number found...");
     }
     return serialResult;
   }
