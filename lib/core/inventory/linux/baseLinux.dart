@@ -160,11 +160,10 @@ class BaseLinux {
           containerLinux.containsValue(name) &&
           containerLinux.containsValue(macAddress)) {
         uuid = containerLinux["uuid"];
-        logger.info(this.runtimeType.toString(),
-            "UUID has been retrieved from the uuid file.");
+        logger.info(this.runtimeType.toString(), "UUID file found.");
       } else {
-        logger.info(this.runtimeType.toString(),
-            "UUID not found, generating a new one...");
+        logger.info(
+            this.runtimeType.toString(), "No system UUID, generating new one.");
         uuid = (await linuxCommand.commandShell("uuidgen", true))["value"]
             .toString();
         dynamic baseAdded = {};
@@ -176,8 +175,7 @@ class BaseLinux {
         String str = encoder.convert(baseAdded);
         FilesUtils filesUtils = new FilesUtils();
         filesUtils.rewriteFile(containerLinuxFile, str);
-        logger.info(this.runtimeType.toString(),
-            "UUID has been generated and saved in the uuid file.");
+        logger.info(this.runtimeType.toString(), "New UUID saved to file.");
       }
     }
     return uuid;
