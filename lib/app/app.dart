@@ -201,9 +201,6 @@ Future<void> main(List<String> args) async {
   config = await Config(
       configDirectory, jsonEncode(inventoryConfigurations).toString());
 
-if (allArgs.wasParsed("username") || allArgs.wasParsed("password")) {
-  config.updateInventoryConfig("token", "");
-}
 
   if (allArgs.wasParsed("certificate")) {
     File certificate = File(allArgs.option("certificate").toString());
@@ -219,16 +216,17 @@ if (allArgs.wasParsed("username") || allArgs.wasParsed("password")) {
     }
   }
 
-  // Iterate allArgs and update inventory config with the provided values
-  if(allArgs.option("overwrite_config") == "true") {
-    if (allArgs.options.isNotEmpty) {
-      inventoryConfigurations.forEach((key, value) {
-        if (allArgs.wasParsed(key)) {
-          config.updateInventoryConfig(key, value);
-        }
-      });
-    }
+  File configFile = File(configDirectory+"/inventory.json");
+  Map<String, dynamic> inventoryConfigurationsTemp = config.getConfigContent(configFile, inventoryConfigurations);
+  
+  if(allArgs.options.isNotEmpty){
+    inventoryConfigurations.forEach((key, value) {
+      if (allArgs.wasParsed(key)) {
+        config.updateInventoryConfig(key, value);
+      }
+    });
   }
+
 
   // Initiate logger
   Logger logger = new Logger(config);
@@ -337,5 +335,14 @@ if (allArgs.wasParsed("username") || allArgs.wasParsed("password")) {
     }
   }
 
+  // Iterate allArgs and update inventory config with the provided values
+  if(allArgs.option("overwrite_config") == "false") {
+    inventoryConfigurationsTemp.forEach((key, value) {
+      if (allArgs.wasParsed(key)) {
+        config.updateInventoryConfig(key, value);
+      }
+    });
+  }
+  
   logger.info("APP", "Agent process completed successfully.\n");
 }
