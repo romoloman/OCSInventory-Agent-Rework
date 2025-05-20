@@ -100,7 +100,7 @@ class Format {
         ? (resultCommand[field['name']]?['result'])
         : (resultCommand['main']?['result']);
     mainResultValid = !(mainResult == null || mainResult.isEmpty);
-    mainOptions = (method == "TBLE" || method == "REGX")
+    mainOptions = (method == "TBLE" || method == "JSON" || method == "REGX")
         ? (resultCommand['main']?['options'])
         : null;
 
@@ -123,14 +123,8 @@ class Format {
 
       case "JSON":
         try {
-          if (commandTarget == null) {
-            processedResults = [jsonDecode(mainResult)];
-          } else {
-            // If the OS is MacOS
-            Map<String, dynamic> decodedResult = jsonDecode(mainResult);
-            List<dynamic> targetResult = decodedResult[commandTarget];
-            processedResults = targetResult.cast<Map<String, dynamic>>();
-          }
+          final decodedMainResult = jsonDecode(mainResult);
+          processedResults = getJsonSubmap(decodedMainResult, mainOptions, commandTarget);
         } catch (e) {
           logger.warning(
             this.runtimeType.toString(),
@@ -326,6 +320,43 @@ class Format {
     });
 
     return jsonResult;
+  }
+
+  List<Map<String, dynamic>> getJsonSubmap(dynamic decodedMainResult, dynamic mainOptions, dynamic commandTarget) {
+    List<dynamic> targetResult;
+    String? submap = mainOptions?["submap"] ?? null;
+    late List<Map<String, dynamic>> decodedMainResults;
+    List<Map<String, dynamic>> processedResults = [];
+    late List<Map<String, dynamic>> subResults;
+
+    // If the OS is MacOS
+    if (commandTarget != null) {
+      targetResult = decodedMainResult[commandTarget];
+      decodedMainResults = targetResult.cast<Map<String, dynamic>>();
+    } else {
+      decodedMainResults = [decodedMainResult];
+    }
+
+    if (submap != null) {
+      for (var key in submap.split('.')) {
+        subResults = [];
+
+        for (var decodedMainResult in decodedMainResults) {
+          if (decodedMainResult.containsKey(key)) {
+            var subElement = decodedMainResult[key];
+            subResults.addAll(subElement.cast<Map<String, dynamic>>());
+          } else {
+            logger.warning(this.runtimeType.toString(), 'Unable to find the "$key" submap.');
+          }
+        }
+
+        processedResults = subResults;
+      }
+    } else {
+      processedResults = decodedMainResults;
+    }
+
+    return processedResults;
   }
 
   /// Format [mainResult] based on [mainOptions].
