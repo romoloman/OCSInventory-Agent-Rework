@@ -99,7 +99,7 @@ class Inventory {
     String username = "", password = "";
 
     // Check OCS API status
-    logger.info("Checking API availability...");
+    logger.info(this.runtimeType.toString(),"Checking API availability...");
     dynamic responseGet = await httpUtils.get(Uri.parse(baseUrl), {HttpHeaders.contentTypeHeader: 'application/json'});
 
     try {
