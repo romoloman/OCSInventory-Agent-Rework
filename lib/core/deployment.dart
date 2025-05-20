@@ -24,10 +24,7 @@ import 'package:sprintf/sprintf.dart';
 // Core imports
 import 'package:ocs_agent/core/log.dart';
 import 'package:ocs_agent/core/config.dart';
-
-import 'package:ocs_agent/core/inventory/linux/commands.dart';
-import 'package:ocs_agent/core/inventory/macos/commands.dart';
-import 'package:ocs_agent/core/inventory/windows/commands.dart';
+import 'package:ocs_agent/core/inventory/commands.dart';
 
 // Common imports
 import 'package:ocs_agent/core/common/http_utils.dart';
@@ -36,9 +33,7 @@ class Deployment {
   late Config config;
   late Logger logger;
   late HTTPUtils httpUtils;
-  late LinuxCommand linuxCommand;
-  late MacOSCommand macOSCommand;
-  late WindowsCommand windowsCommand;
+  late Commands commands;
 
   late var url;
 
@@ -47,20 +42,7 @@ class Deployment {
   late List<dynamic> sortedActions;
 
   /// Constructor.
-  Deployment(
-      Logger logger,
-      Config config,
-      HTTPUtils httpUtils,
-      LinuxCommand linuxCommand,
-      MacOSCommand macOSCommand,
-      WindowsCommand windowsCommand) {
-    this.logger = logger;
-    this.config = config;
-    this.httpUtils = httpUtils;
-    this.linuxCommand = linuxCommand;
-    this.macOSCommand = macOSCommand;
-    this.windowsCommand = windowsCommand;
-
+  Deployment(this.logger, this.config, this.httpUtils, this.commands) {
     url = config.getInventoryConfig("url");
     actions = Map();
     sortedActions = [];
@@ -100,11 +82,12 @@ class Deployment {
   }
 
   /// Make an API call to the deployment endpoint and handle the response
-  Future<Map<String, dynamic>> _makeDeploymentApiCall(String endpoint, Map<String, String> params) async {
+  Future<Map<String, dynamic>> _makeDeploymentApiCall(
+      String endpoint, Map<String, String> params) async {
     var uri = Uri.parse(url + endpoint).replace(queryParameters: params);
     var response = await httpUtils.get(uri, httpUtils.getHeader(config));
     logger.verbose(this.runtimeType.toString(), response["message"]);
-    
+
     return {
       "status_code": response["status_code"],
       "body": response["body"],
@@ -117,9 +100,7 @@ class Deployment {
     // API call: Check if there is assigned packages
     try {
       var response = await _makeDeploymentApiCall(
-        "/deployment/results/",
-        {"asset": assetID.toString(), "status": "1"}
-      );
+          "/deployment/results/", {"asset": assetID.toString(), "status": "1"});
 
       if (response["status_code"] == 200 &&
           jsonDecode(response["body"]).isNotEmpty) {
@@ -132,15 +113,19 @@ class Deployment {
         for (var element in results) {
           try {
             var responseNotified = await httpUtils.patch(
-                Uri.parse(
-                    url + "/deployment/results/" + element["id"].toString() + "/"),
-              httpUtils.getHeader(config),
-              "{\"status\": 2, \"comment\": \"Notified\"}");
+                Uri.parse(url +
+                    "/deployment/results/" +
+                    element["id"].toString() +
+                    "/"),
+                httpUtils.getHeader(config),
+                "{\"status\": 2, \"comment\": \"Notified\"}");
             logger.verbose(
                 this.runtimeType.toString(), responseNotified["message"]);
           } catch (exception) {
-            logger.error(this.runtimeType.toString(),
-                sprintf("Failed to update package status: %s", [exception.toString().trim()]));
+            logger.error(
+                this.runtimeType.toString(),
+                sprintf("Failed to update package status: %s",
+                    [exception.toString().trim()]));
             return false;
           }
         }
@@ -150,10 +135,10 @@ class Deployment {
             "No assigned packages found for this asset.");
         return false;
       }
-    }catch (exception) {
+    } catch (exception) {
       logger.error(this.runtimeType.toString(),
-            sprintf("HTTP query: %s", [exception.toString().trim()]));
-        return false;
+          sprintf("HTTP query: %s", [exception.toString().trim()]));
+      return false;
     }
   }
 
@@ -166,9 +151,7 @@ class Deployment {
       try {
         // API call: get the list of actions
         var response = await _makeDeploymentApiCall(
-          "/deployment/actions/",
-          {"package": element["package"].toString()}
-        );
+            "/deployment/actions/", {"package": element["package"].toString()});
 
         if (response["status_code"] == 200) {
           // Sort the actions by priority
@@ -218,7 +201,7 @@ class Deployment {
   }) {
     int actionStatus = result["status"] == true ? 0 : 1;
     String errorComment = "Error";
-    
+
     if (actionStatus == 0) {
       logger.info(this.runtimeType.toString(), successMessage);
     } else {
@@ -226,7 +209,7 @@ class Deployment {
       logger.error(this.runtimeType.toString(), errorComment);
       actionErrors["$actionId"] = result["error"];
     }
-    
+
     return {
       "actionStatus": actionStatus,
       "errorComment": errorComment,
@@ -244,12 +227,12 @@ class Deployment {
     String errorComment = "Error";
     Map<String, String> actionErrors = {};
 
-    if(os != "WIN" && os != "MAC" && os != "LIN") {
+    if (os != "WIN" && os != "MAC" && os != "LIN") {
       logger.error(this.runtimeType.toString(), "Unsupported OS detected.");
       return;
     }
 
-    if(assetID == null || assetID < 0) {
+    if (assetID < 0) {
       logger.error(this.runtimeType.toString(), "Invalid asset ID detected.");
       return;
     }
@@ -315,25 +298,28 @@ class Deployment {
             var result = handleActionResult(
               actionType: "storing file",
               result: storeResult,
-              successMessage: "File has been successfully downloaded and saved.",
+              successMessage:
+                  "File has been successfully downloaded and saved.",
               actionId: action["id"],
               actionErrors: actionErrors,
             );
             actionStatus = result["actionStatus"];
             errorComment = result["errorComment"];
             status = result["status"];
-            
+
             if (actionStatus == 0) {
               // Delete the package directory after storing the file
               var packageDirectory = Directory(packagePath);
               if (packageDirectory.existsSync()) {
-                try{
+                try {
                   await packageDirectory.delete(recursive: true);
                   logger.verbose(this.runtimeType.toString(),
                       "Deleted package directory at: '$packagePath'");
                 } catch (exception) {
-                  logger.error(this.runtimeType.toString(),
-                      sprintf("Failed to delete package directory: %s", [exception.toString().trim()]));
+                  logger.error(
+                      this.runtimeType.toString(),
+                      sprintf("Failed to delete package directory: %s",
+                          [exception.toString().trim()]));
                 }
               }
             }
@@ -356,7 +342,7 @@ class Deployment {
             actionStatus = result["actionStatus"];
             errorComment = result["errorComment"];
             status = result["status"];
-            
+
             // Delete the package directory after launching the file
             var packageDirectory = Directory(packagePath);
             if (packageDirectory.existsSync()) {
@@ -365,8 +351,10 @@ class Deployment {
                 logger.verbose(this.runtimeType.toString(),
                     "Deleted package directory at: '$packagePath'");
               } catch (exception) {
-                logger.error(this.runtimeType.toString(),
-                    sprintf("Failed to delete package directory: %s", [exception.toString().trim()]));
+                logger.error(
+                    this.runtimeType.toString(),
+                    sprintf("Failed to delete package directory: %s",
+                        [exception.toString().trim()]));
               }
             }
             break;
@@ -459,72 +447,39 @@ class Deployment {
       result = {"value": "", "status": false, "error": ""};
 
       // Depending of the plateform, execute a command with appropriate CLI
+      String method = "";
+
       switch (os) {
         case "LIN":
-          result = await linuxCommand
-              .commandShell(actionCommand, true)
-              .then((value) {
-            return value;
-          }).catchError((onError) {
-            logger.error(this.runtimeType.toString(),
-                "Error while executing action command: $onError");
-            return {"value": "", "status": false, "error": onError.toString()};
-          }).timeout(
-                  Duration(
-                      days: config.getCoreConfig(
-                    "deployment",
-                    "execution_timeout",
-                  )), onTimeout: () {
-            logger.error(this.runtimeType.toString(),
-                "Error while executing action command: TIMEOUT");
-            return {"value": "", "status": false, "error": "TIMEOUT"};
-          });
-          break;
         case "MAC":
-          result = await macOSCommand
-              .commandShell(actionCommand, true)
-              .then((value) {
-            return value;
-          }).catchError((onError) {
-            logger.error(this.runtimeType.toString(),
-                "Error while executing action command: $onError");
-            return {"value": "", "status": false, "error": onError.toString()};
-          }).timeout(
-                  Duration(
-                      days: config.getCoreConfig(
-                    "deployment",
-                    "execution_timeout",
-                  )), onTimeout: () {
-            logger.error(this.runtimeType.toString(),
-                "Error while executing action command: TIMEOUT");
-            return {"value": "", "status": false, "error": "TIMEOUT"};
-          });
-          break;
+          method = "BASH";
+
         case "WIN":
-          result = await windowsCommand
-              .commandPowershell(actionCommand, true)
-              .then((value) {
-            return value;
-          }).catchError((onError) {
-            logger.error(this.runtimeType.toString(),
-                "Error while executing action command: $onError");
-            return {"value": "", "status": false, "error": onError.toString()};
-          }).timeout(
-                  Duration(
-                      days: config.getCoreConfig(
-                    "deployment",
-                    "execution_timeout",
-                  )), onTimeout: () {
-            logger.error(this.runtimeType.toString(),
-                "Error while executing action command: TIMEOUT");
-            return {"value": "", "status": false, "error": "TIMEOUT"};
-          });
-          break;
+          method = "PW";
+
         default:
           logger.error(this.runtimeType.toString(), "Unsupported OS detected.");
           result["error"] = "Unsupported OS detected.";
           break;
       }
+
+      result =
+          await commands.processTarget(method, actionCommand).then((value) {
+        return value;
+      }).catchError((onError) {
+        logger.error(this.runtimeType.toString(),
+            "Error while executing action command: $onError");
+        return {"value": "", "status": false, "error": onError.toString()};
+      }).timeout(
+              Duration(
+                  days: config.getCoreConfig(
+                "deployment",
+                "execution_timeout",
+              )), onTimeout: () {
+        logger.error(this.runtimeType.toString(),
+            "Error while executing action command: TIMEOUT");
+        return {"value": "", "status": false, "error": "TIMEOUT"};
+      });
 
       if (config.getCoreConfig("deployment", "max_retry") >= retryCounter &&
           config.getCoreConfig("deployment", "auto_retry") &&
@@ -623,18 +578,10 @@ class Deployment {
       String extractedPath, File savedFile, bool status, String os) async {
     Map<String, dynamic> result = {"status": false, "error": ""};
 
-    late var command;
-    switch (os) {
-      case "LIN":
-        command = linuxCommand;
-        break;
-      case "MAC":
-        command = macOSCommand;
-        break;
-      default:
-        result["error"] = "Unsupported OS detected while extracting tar file.";
-        logger.error(this.runtimeType.toString(), result["error"]);
-        return result;
+    if (os != "LIN" && os != "MAC") {
+      result["error"] = "Unsupported OS detected while extracting tar file.";
+      logger.error(this.runtimeType.toString(), result["error"]);
+      return result;
     }
 
     logger.verbose(this.runtimeType.toString(),
@@ -642,8 +589,8 @@ class Deployment {
 
     try {
       // Execute the tar command to extract the archive file
-      var cmdResult = await command.commandShell(
-          "tar -xvf $filePath -C $extractedPath", true);
+      var cmdResult = await commands.processTarget(
+          "BASH", "tar -xvf $filePath -C $extractedPath");
 
       if (cmdResult["status"] == true) {
         // Delete the archive file after extracting it
