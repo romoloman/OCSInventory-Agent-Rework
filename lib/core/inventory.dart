@@ -338,7 +338,6 @@ class Inventory {
 
     if (remoteInfo["return"] != false || localInfo["return"] != false) {
       compareResult = compareTemplate(localInfo, remoteInfo);
-      print(compareResult);
       // Depending on result, update the template or not
       if (compareResult == 0) {
         logger.info(
