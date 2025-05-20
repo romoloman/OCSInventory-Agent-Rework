@@ -338,7 +338,7 @@ class Inventory {
 
     if (remoteInfo["return"] != false || localInfo["return"] != false) {
       compareResult = compareTemplate(localInfo, remoteInfo);
-
+      print(compareResult);
       // Depending on result, update the template or not
       if (compareResult == 0) {
         logger.info(
@@ -515,8 +515,6 @@ class Inventory {
   /// Compare both templates based on [localInfo] and [remoteInfo] to create or update the local template.
   int compareTemplate(
       Map<String, String> localInfo, Map<String, String> remoteInfo) {
-    Map<String, dynamic> localTemplate = config.getTemplate();
-    Map<String, dynamic> remoteTemplate =
         json.decode(remoteInfo["content"] ?? "{}");
 
     logger.info(this.runtimeType.toString(), "Comparing templates...");
@@ -537,12 +535,6 @@ class Inventory {
     if (remoteInfo["last_update"]?.trim() != localInfo["last_update"]?.trim()) {
       logger.info(this.runtimeType.toString(),
           "Template versions differ - Local: ${localInfo["last_update"]}, Remote: ${remoteInfo["last_update"]}");
-      return 1;
-    }
-
-    if (localTemplate.toString() != remoteTemplate.toString()) {
-      logger.info(this.runtimeType.toString(),
-          "Template content differs, update required.");
       return 1;
     }
 
