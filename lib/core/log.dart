@@ -132,7 +132,7 @@ class Logger {
         12: "TEMPLATE_ERR"
       };
 
-      String token = config.getInventoryConfig("token");
+      String token = Config.token;
       Map<String, dynamic> content = new Map();
       content["asset"] = assetID;
       content["scope"] = errorCodes[errorCode];

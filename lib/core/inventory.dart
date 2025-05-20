@@ -41,7 +41,7 @@ class Inventory {
   late Commands commands;
   late Format format;
 
-  late var url;
+  late var baseUrl;
   late bool inventoryCheck;
   late int assetID;
 
@@ -67,7 +67,7 @@ class Inventory {
 
     try {
       dataDirectory = config.getInventoryConfig("data_directory");
-      this.url = config.getInventoryConfig("url");
+      this.baseUrl = config.getInventoryConfig("url");
     } catch (e) {
       logger.error(
           this.runtimeType.toString(), "Missing configuration fields: $e");
@@ -94,89 +94,83 @@ class Inventory {
 
   /// Check if API is working and generate a token if it doesn't exist.
   Future<bool> checkApi() async {
-    String username, password, localToken;
-    dynamic responseGet;
 
-    try {
-      username = config.getInventoryConfig("username");
-      password = config.getInventoryConfig("password");
-
-      // Optional retrieval of the token (can be empty on first run)
-      localToken = config.getInventoryConfig("token");
-
-      await generateToken(username, password, localToken);
-    } catch (e) {
-      logger.verbose(this.runtimeType.toString(),
-          "Check username or password in the configuration file.");
-      logger.error(this.runtimeType.toString(),
-          "Configuration error when generating token: $e");
-    }
+    List<String> requiredFields = ["username", "password"];
+    String username = "", password = "";
 
     // Check OCS API status
-    logger.info(this.runtimeType.toString(), "Checking API availability...");
+    logInfo("Checking API availability...");
+    dynamic responseGet = await sendApiRequest("GET", baseUrl, headers: {HttpHeaders.contentTypeHeader: 'application/json'});
 
     try {
-      responseGet =
-          await httpUtils.get(Uri.parse(url), httpUtils.getHeader(config));
-
-      if (responseGet?["status_code"] == 200) {
-        logger.verbose(this.runtimeType.toString(), responseGet["message"]);
-        logger.info(this.runtimeType.toString(), "API is online!");
-
-        return true;
+      List<String> inventoryData = getInventoryData(requiredFields);
+      if (inventoryData.length == 2) {
+        username = inventoryData[0];
+        password = inventoryData[1];
       } else {
-        logger.error(this.runtimeType.toString(), "API connection failed!");
-      }
-    } catch (e) {
-      logger.error(this.runtimeType.toString(),
-          "Exception during API availibility check: $e");
-    }
-
-    return false;
-  }
-
-  /// Send to API the [username] and [password] and save the token retreived in inventory.json.
-  Future<bool> generateToken(
-      String username, String password, String localToken) async {
-    dynamic responsePost;
-    var newToken;
-
-    // API call
-    logger.info(this.runtimeType.toString(), "Generating token...");
-
-    try {
-      responsePost = await httpUtils.post(
-          Uri.parse("$url/api-auth/token"),
-          {HttpHeaders.contentTypeHeader: 'application/json'},
-          jsonEncode({'username': username, 'password': password}));
-    } catch (e) {
-      logger.error(
-          this.runtimeType.toString(), "Exception during API call: $e");
-    }
-
-    if (responsePost?["status_code"] == 200) {
-      logger.verbose(this.runtimeType.toString(), responsePost["message"]);
-      logger.info(this.runtimeType.toString(), "Token retrieved successfully.");
-
-      // Get the token from the response body and compare with the local token
-      // If tokens are not the same, replace the local token with the server one
-      newToken =
-          jsonUtils.getContentFromStringByKey(responsePost["body"], "token");
-
-      if (newToken != localToken) {
-        config.updateInventoryConfig("token", newToken);
-        logger.info(this.runtimeType.toString(),
-            "Local token updated with server token.");
-      } else {
-        logger.info(this.runtimeType.toString(),
-            "Local token matches server token. No update required.");
+        throw ("Invalid number of config fields.");
       }
 
+      await generateToken(username, password);
+
+    } catch (e) {
+      logError("Configuration error: $e");
+    }
+
+    if (responseGet != null) {
+      logInfo("API is online!");
       return true;
     } else {
-      logger.verbose(
-          this.runtimeType.toString(), "Unable to get token from server.");
-      logger.error(this.runtimeType.toString(), "Token generation failed!");
+      logVerbose("Check username or password in the configuration file.");
+      logError("API connection failed!");
+
+      return false;
+    }
+  }
+
+  /// Get one or more inventory config values as a String.
+  List<String> getInventoryData(List<String> keys) {
+    try {
+      return keys.map((key) {
+        String dataResult = config.getInventoryConfig(key) ?? "";
+
+        if (dataResult.isEmpty) {
+          throw ("Configuration missing field for key: $key");
+        }
+
+        return dataResult;
+      }).toList();
+    } catch (e) {
+      logError("Error getting inventory config: $e");
+      return [];
+    }
+  }
+
+  /// Send to API the username and password and
+  /// save the token retreived in inventory.json.
+  Future<bool> generateToken(
+      String username, String password) async {
+    logInfo("Generating token...");
+    // Try to get the token generated by the server to save it in the inventory.json file
+
+    // API call
+    String url = baseUrl + "/api-auth/token";
+    var header = {HttpHeaders.contentTypeHeader: 'application/json'};
+    String jsonEncoded =
+        jsonEncode({'username': username, 'password': password});
+    dynamic responsePost =
+        await sendApiRequest("POST", url, headers: header, body: jsonEncoded);
+
+    if (responsePost != null && responsePost["status_code"] == 200) {
+      logVerbose(responsePost["message"]);
+      logInfo("Token retrieved successfully.");
+
+      var sessionToken =
+          jsonUtils.getContentFromStringByKey(responsePost["body"], "token");
+      Config.token = sessionToken;
+      return true;
+    } else {
+      logError("Token generation failed!");
 
       return false;
     }
@@ -194,8 +188,8 @@ class Inventory {
 
     try {
       responseGet = await httpUtils.get(
-          Uri.parse("$url/asset/bases/?uuid=$uuid"),
-          httpUtils.getHeader(config));
+          Uri.parse("$baseUrl/asset/bases/?uuid=$uuid"),
+          httpUtils.getHeader());
       logger.verbose(this.runtimeType.toString(), responseGet["message"]);
     } catch (e) {
       logger.error(
@@ -263,7 +257,7 @@ class Inventory {
 
     try {
       responseGet = await httpUtils.get(
-          Uri.parse("$url/asset/configs/"), httpUtils.getHeader(config));
+          Uri.parse("$baseUrl/asset/configs/"), httpUtils.getHeader());
       logger.verbose(this.runtimeType.toString(), responseGet["message"]);
     } catch (e) {
       logger.error(
@@ -355,8 +349,8 @@ class Inventory {
 
         try {
           responseGet = await httpUtils.get(
-              Uri.parse("$url/templates/$id/?expand=*"),
-              httpUtils.getHeader(config));
+              Uri.parse("$baseUrl/templates/$id/?expand=*"),
+              httpUtils.getHeader());
           logger.verbose(this.runtimeType.toString(), responseGet["message"]);
         } catch (e) {
           logger.error(
@@ -389,8 +383,8 @@ class Inventory {
 
       try {
         responseGet = await httpUtils.get(
-            Uri.parse("$url/templates/$id/?expand=*"),
-            httpUtils.getHeader(config));
+            Uri.parse("$baseUrl/templates/$id/?expand=*"),
+            httpUtils.getHeader());
       } catch (e) {
         logger.error(
             this.runtimeType.toString(), "Exception during API call: $e");
@@ -452,8 +446,8 @@ class Inventory {
 
     try {
       responseAsset = await httpUtils.get(
-          Uri.parse("$url/asset/bases/?uuid=$uuid"),
-          httpUtils.getHeader(config));
+          Uri.parse("$baseUrl/asset/bases/?uuid=$uuid"),
+          httpUtils.getHeader());
       logger.verbose(this.runtimeType.toString(), responseAsset["message"]);
 
       assetMap = jsonDecode(responseAsset?["body"]);
@@ -469,8 +463,8 @@ class Inventory {
       try {
         responseTemplate = await httpUtils.get(
             Uri.parse(
-                "$url/templates/${assetMap[0]['template'].toString()}/?expand=*"),
-            httpUtils.getHeader(config));
+                "$baseUrl/templates/${assetMap[0]['template'].toString()}/?expand=*"),
+            httpUtils.getHeader());
         logger.verbose(
             this.runtimeType.toString(), responseTemplate["message"]);
         templateMap = jsonDecode(responseTemplate?["body"]);
@@ -698,8 +692,8 @@ class Inventory {
 
       try {
         responseGet = await httpUtils.get(
-            Uri.parse("$url/asset/bases/?uuid=$uuid"),
-            httpUtils.getHeader(config));
+            Uri.parse("$baseUrl/asset/bases/?uuid=$uuid"),
+            httpUtils.getHeader());
         logger.verbose(this.runtimeType.toString(), responseGet["message"]);
       } catch (e) {
         logger.error(
@@ -714,8 +708,8 @@ class Inventory {
 
           try {
             responsePut = await httpUtils.put(
-                Uri.parse("$url/asset/collection/"),
-                httpUtils.getHeader(config),
+                Uri.parse("$baseUrl/asset/collection/"),
+                httpUtils.getHeader(),
                 jsonEncode(body));
             logger.verbose(this.runtimeType.toString(), responsePut["message"]);
           } catch (e) {
@@ -746,8 +740,8 @@ class Inventory {
     } else {
       // API call
       try {
-        responsePost = await httpUtils.post(Uri.parse("$url/asset/collection/"),
-            httpUtils.getHeader(config), jsonEncode(body));
+        responsePost = await httpUtils.post(Uri.parse("$baseUrl/asset/collection/"),
+            httpUtils.getHeader(), jsonEncode(body));
         logger.verbose(this.runtimeType.toString(), responsePost["message"]);
       } catch (e) {
         logger.error(
@@ -790,8 +784,8 @@ class Inventory {
 
         try {
           responseGet = await httpUtils.get(
-              Uri.parse("$url/asset/bases/?uuid=$uuid"),
-              httpUtils.getHeader(config));
+              Uri.parse("$baseUrl/asset/bases/?uuid=$uuid"),
+              httpUtils.getHeader());
           logger.verbose(this.runtimeType.toString(), responseGet["message"]);
         } catch (e) {
           logger.error(
@@ -858,8 +852,8 @@ class Inventory {
             // API call
             try {
               inventoryExist = await httpUtils.get(
-                  Uri.parse("$url/asset/sections/?base=$assetID"),
-                  httpUtils.getHeader(config));
+                  Uri.parse("$baseUrl/asset/sections/?base=$assetID"),
+                  httpUtils.getHeader());
             } catch (e) {
               logger.error(
                   this.runtimeType.toString(), "Exception during API call: $e");
@@ -873,8 +867,8 @@ class Inventory {
               // API call
               try {
                 responsePatch = await httpUtils.patch(
-                    Uri.parse("$url/asset/collection/"),
-                    httpUtils.getHeader(config),
+                    Uri.parse("$baseUrl/asset/collection/"),
+                    httpUtils.getHeader(),
                     encoder.convert(content));
                 logger.verbose(
                     this.runtimeType.toString(), responsePatch["message"]);
@@ -898,8 +892,8 @@ class Inventory {
               // API call
               try {
                 responsePut = await httpUtils.put(
-                    Uri.parse("$url/asset/collection/"),
-                    httpUtils.getHeader(config),
+                    Uri.parse("$baseUrl/asset/collection/"),
+                    httpUtils.getHeader(),
                     encoder.convert(content));
                 logger.verbose(
                     this.runtimeType.toString(), responsePut["message"]);
@@ -999,4 +993,43 @@ class Inventory {
           this.runtimeType.toString(), "Failed to retrieve local template.");
     }
   }
+
+  Future<dynamic> sendApiRequest(
+    String method,
+    String url, {
+    Map<String, String>? headers,
+    dynamic body,
+  }) async {
+    try {
+      var uri = Uri.parse(url);
+      var h = headers ?? httpUtils.getHeader();
+      switch (method.toUpperCase()) {
+        case "GET":
+          return await httpUtils.get(uri, h);
+
+        case "POST":
+          return await httpUtils.post(uri, h, body);
+
+        case "PUT":
+          return await httpUtils.put(uri, h, body);
+
+        case "PATCH":
+          return await httpUtils.patch(uri, h, body);
+
+        default:
+          logError("Unsupported HTTP method: $method");
+
+          return null;
+      }
+      
+    } catch (e) {
+      logError("API $method call failed: $e");
+      return null;
+    }
+  }
+
+  void logInfo(String msg) => logger.info(runtimeType.toString(), msg);
+  void logError(String msg) => logger.error(runtimeType.toString(), msg);
+  void logVerbose(String msg) => logger.verbose(runtimeType.toString(), msg);
+
 }

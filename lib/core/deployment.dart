@@ -69,7 +69,7 @@ class Deployment {
 
     // Check if the URL is reachable
     var response = await httpUtils.get(
-        Uri.parse(url + "/deployment/results/"), httpUtils.getHeader(config));
+        Uri.parse(url + "/deployment/results/"), httpUtils.getHeader());
     if (response["status_code"] == 200) {
       logger.info(
           this.runtimeType.toString(), "Deployment endpoint is reachable.");
@@ -85,7 +85,7 @@ class Deployment {
   Future<Map<String, dynamic>> _makeDeploymentApiCall(
       String endpoint, Map<String, String> params) async {
     var uri = Uri.parse(url + endpoint).replace(queryParameters: params);
-    var response = await httpUtils.get(uri, httpUtils.getHeader(config));
+    var response = await httpUtils.get(uri, httpUtils.getHeader());
     logger.verbose(this.runtimeType.toString(), response["message"]);
 
     return {
@@ -117,7 +117,7 @@ class Deployment {
                     "/deployment/results/" +
                     element["id"].toString() +
                     "/"),
-                httpUtils.getHeader(config),
+                httpUtils.getHeader(),
                 "{\"status\": 2, \"comment\": \"Notified\"}");
             logger.verbose(
                 this.runtimeType.toString(), responseNotified["message"]);
@@ -376,7 +376,7 @@ class Deployment {
           // API call: send success to server if the package is installed
           var responseSuccess = await httpUtils.patch(
               Uri.parse(url + "/deployment/results/$id/"),
-              httpUtils.getHeader(config),
+              httpUtils.getHeader(),
               "{\"status\": 0, \"comment\": \"Success\"}");
           logger.verbose(
               this.runtimeType.toString(), responseSuccess["message"]);
@@ -406,7 +406,7 @@ class Deployment {
           // API call: send error to server if the package isn't installed
           var responseFail = await httpUtils.patch(
               Uri.parse(url + "/deployment/results/$id/"),
-              httpUtils.getHeader(config),
+              httpUtils.getHeader(),
               "{\"status\": 3, \"comment\": ${jsonEncode(formattedErrorComment)}}");
           logger.verbose(this.runtimeType.toString(), responseFail["message"]);
           if (responseFail["status_code"] == 200) {
