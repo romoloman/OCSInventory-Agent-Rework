@@ -121,9 +121,7 @@ class Inventory {
       logger.info(this.runtimeType.toString(),"API is online!");
       return true;
     } else {
-      logger.verbose(this.runtimeType.toString(),"Check username or password in the configuration file.");
-      logger.error(this.runtimeType.toString(),"API connection failed!");
-
+      logger.error(this.runtimeType.toString(), "API connection failed!");
       return false;
     }
   }
