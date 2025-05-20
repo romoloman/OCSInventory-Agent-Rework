@@ -67,36 +67,38 @@ class Logger {
   /// Print error message only.
   void error(String className, String error) {
     if (_logLevel >= 0) {
-      _logMessage("\x1B[31m" + "ERROR" + "\x1B[0m", className, error);
+      _logMessage("\x1B[31m", "ERROR", className, error);
     }
   }
 
   /// Print error and warning messages.
   void warning(String className, String warning) {
     if (_logLevel >= 1) {
-      _logMessage("\x1B[33m" + "WARNING" + "\x1B[0m", className, warning);
+      _logMessage("\x1B[33m", "WARNING", className, warning);
     }
   }
 
   /// Print info, warning, and error messages.
   void info(String className, String info) {
     if (_logLevel >= 2) {
-      _logMessage("\x1B[32m" + "INFO" + "\x1B[0m", className, info);
+      _logMessage("\x1B[32m", "INFO", className, info);
     }
   }
 
   /// Print verbose message.
   void verbose(String className, String verbose) {
     if (_logLevel >= 3) {
-      _logMessage("\x1B[34m" + "VERBOSE" + "\x1B[0m", className, verbose);
+      _logMessage("\x1B[34m", "VERBOSE", className, verbose);
     }
   }
 
   /// Log message based on the specified level.
-  void _logMessage(String level, String className, String message) {
+  void _logMessage(String color, String level, String className, String message) {
     var now = DateTime.now();
     String date = dateFormat.format(now);
     String txt;
+
+    if (!_isFile) level = color + level + "\x1B[0m";
 
     try {
       txt = "[$date] [$level] [$className] $message";
