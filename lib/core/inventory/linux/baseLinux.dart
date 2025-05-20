@@ -102,7 +102,8 @@ class BaseLinux {
     }
 
     if (macAddress == null) {
-      logger.warning(this.runtimeType.toString(), "No valid MAC address found.");
+      logger.warning(
+          this.runtimeType.toString(), "No valid MAC address found.");
       return null;
     }
 
@@ -135,7 +136,7 @@ class BaseLinux {
   /// Get UUID or generate one if not available and save it in a uuid file
   Future<String> _getUUID(String name, String macAddress) async {
     String uuid = (await commands.processTarget(
-            "BASH", "sudo dmidecode -s system-uuid"))["value"]
+            "BASH", "dmidecode -s system-uuid"))["value"]
         .toString();
 
     if (uuid == "") {
@@ -175,7 +176,7 @@ class BaseLinux {
 
   Future<String> _getSerialNumber(String name, String macAddress) async {
     String serialResult = (await commands.processTarget(
-            "BASH", "sudo dmidecode -s system-uuid"))["value"]
+            "BASH", "dmidecode -s system-uuid"))["value"]
         .toString();
 
     String path = "/etc/ocsinventory-agent" + serialFileName;
