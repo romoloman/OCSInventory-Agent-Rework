@@ -124,7 +124,8 @@ class Format {
       case "JSON":
         try {
           final decodedMainResult = jsonDecode(mainResult);
-          processedResults = getJsonSubmap(decodedMainResult, mainOptions, commandTarget);
+          processedResults =
+              getJsonSubmap(decodedMainResult, mainOptions, commandTarget);
         } catch (e) {
           logger.warning(
             this.runtimeType.toString(),
@@ -227,7 +228,8 @@ class Format {
           break;
 
         default:
-          logger.warning(this.runtimeType.toString(), "Unknown method : $method");
+          logger.warning(
+              this.runtimeType.toString(), "Unknown method : $method");
           break;
       }
 
@@ -322,7 +324,8 @@ class Format {
     return jsonResult;
   }
 
-  List<Map<String, dynamic>> getJsonSubmap(dynamic decodedMainResult, dynamic mainOptions, dynamic commandTarget) {
+  List<Map<String, dynamic>> getJsonSubmap(
+      dynamic decodedMainResult, dynamic mainOptions, dynamic commandTarget) {
     List<dynamic> targetResult;
     String? submap = mainOptions?["submap"] ?? null;
     late List<Map<String, dynamic>> decodedMainResults;
@@ -346,7 +349,8 @@ class Format {
             var subElement = decodedMainResult[key];
             subResults.addAll(subElement.cast<Map<String, dynamic>>());
           } else {
-            logger.warning(this.runtimeType.toString(), 'Unable to find the "$key" submap.');
+            logger.warning(this.runtimeType.toString(),
+                'Unable to find the "$key" submap.');
           }
         }
 
