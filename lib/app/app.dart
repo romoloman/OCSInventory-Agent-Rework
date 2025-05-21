@@ -30,16 +30,11 @@ import 'package:ocs_agent/core/config.dart';
 import 'package:ocs_agent/core/log.dart';
 
 import 'package:ocs_agent/core/inventory/linux/baseLinux.dart';
-import 'package:ocs_agent/core/inventory/linux/commands.dart';
-import 'package:ocs_agent/core/inventory/linux/format.dart';
-
 import 'package:ocs_agent/core/inventory/macos/baseMacOS.dart';
-import 'package:ocs_agent/core/inventory/macos/commands.dart';
-import 'package:ocs_agent/core/inventory/macos/format.dart';
-
 import 'package:ocs_agent/core/inventory/windows/baseWindows.dart';
-import 'package:ocs_agent/core/inventory/windows/commands.dart';
-import 'package:ocs_agent/core/inventory/windows/format.dart';
+
+import 'package:ocs_agent/core/inventory/commands.dart';
+import 'package:ocs_agent/core/inventory/format.dart';
 
 // Modules imports
 import 'package:ocs_agent/core/inventory.dart';
@@ -67,8 +62,6 @@ Future<void> main(List<String> args) async {
       defaultsTo: "1");
   parser.addOption("password",
       abbr: "p", help: "Password", valueHelp: "password", defaultsTo: "admin");
-  parser.addOption("token",
-      abbr: "t", help: "Token", valueHelp: "token", defaultsTo: "");
   parser.addOption("username",
       abbr: "u", help: "Username", valueHelp: "username", defaultsTo: "admin");
   parser.addOption("url",
@@ -183,7 +176,6 @@ Future<void> main(List<String> args) async {
   inventoryConfigurations['mode'] = mode;
   inventoryConfigurations['password'] =
       await allArgs.option("password").toString();
-  inventoryConfigurations['token'] = "";
   inventoryConfigurations['username'] =
       await allArgs.option("username").toString();
   inventoryConfigurations['url'] = await allArgs.option("url").toString();
@@ -231,33 +223,20 @@ Future<void> main(List<String> args) async {
   JsonUtils jsonUtils = new JsonUtils();
 
   // Initiate core
-  LinuxCommand linuxCommand = new LinuxCommand(logger);
-  LinuxFormat linuxFormat = new LinuxFormat(logger, linuxCommand);
+  Commands commands = new Commands(logger);
   BaseLinux baseLinux =
-      new BaseLinux(logger, linuxCommand, filesUtils, jsonUtils);
-  MacOSCommand macOSCommand = new MacOSCommand(logger);
-  MacOSFormat macOSFormat = new MacOSFormat(logger, macOSCommand);
-  BaseMacOS baseMacOS = new BaseMacOS(logger, macOSCommand);
-  WindowsCommand windowsCommand = new WindowsCommand(logger);
-  WindowsFormat windowsFormat = new WindowsFormat(logger, windowsCommand);
+      new BaseLinux(logger, commands, filesUtils, jsonUtils);
+  BaseMacOS baseMacOS = new BaseMacOS(logger, commands);
   BaseWindows baseWindows =
-      new BaseWindows(logger, windowsCommand, filesUtils, jsonUtils);
+      new BaseWindows(logger, commands, filesUtils, jsonUtils);
+  Format format =
+      new Format(logger, commands);
 
   // Initiate modules
-  Inventory inventory = new Inventory(
-      logger,
-      config,
-      filesUtils,
-      httpUtils,
-      jsonUtils,
-      linuxCommand,
-      linuxFormat,
-      macOSCommand,
-      macOSFormat,
-      windowsCommand,
-      windowsFormat);
-  Deployment deployment = new Deployment(
-      logger, config, httpUtils, linuxCommand, macOSCommand, windowsCommand);
+  Inventory inventory = new Inventory(logger, config, filesUtils, httpUtils,
+      jsonUtils, commands, format);
+  Deployment deployment =
+      new Deployment(logger, config, httpUtils, commands);
 
   // Get the agent execution mode
   Map<int, String> enumMode = {
