@@ -514,7 +514,6 @@ class Inventory {
   /// Compare both templates based on [localInfo] and [remoteInfo] to create or update the local template.
   int compareTemplate(
       Map<String, String> localInfo, Map<String, String> remoteInfo) {
-        json.decode(remoteInfo["content"] ?? "{}");
 
     logger.info(this.runtimeType.toString(), "Comparing templates...");
 
