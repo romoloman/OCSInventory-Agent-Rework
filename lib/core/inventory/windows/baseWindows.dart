@@ -80,7 +80,7 @@ class BaseWindows {
               "value"]
           .toString(),
       "serial": (await commands.processTarget("PW",
-              "(Get-WMIObject win32_operatingsystem).SerialNumber"))["value"]
+              "(Get-WMIObject win32_Bios).SerialNumber"))["value"]
           .toString(),
       "osname": (await commands.processTarget(
               "PW", "(Get-WMIObject win32_operatingsystem).name"))["value"]
@@ -91,7 +91,9 @@ class BaseWindows {
           .toString(),
       "uuid": await _getUUID(name, getMacAddr),
       "srcip": await getIP,
-      "srcmac": await getMacAddr,
+      "srcmac": (await commands.processTarget("PW",
+              "Get-NetAdapter | Where-Object {\$_.Status -eq 'Up'} | Select-Object -ExpandProperty MacAddress"))["value"]
+          .toString(),
       "domain": (await commands.processTarget("PW",
               "(Get-WMIObject -Class Win32_ComputerSystem).Domain"))["value"]
           .toString(),
