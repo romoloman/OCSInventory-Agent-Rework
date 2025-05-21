@@ -92,7 +92,7 @@ class BaseWindows {
       "uuid": await _getUUID(name, getMacAddr),
       "srcip": await getIP,
       "srcmac": (await commands.processTarget("PW",
-              "Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | Select-Object -ExpandProperty MacAddress"))["value"]
+              "Get-NetAdapter | Where-Object {\$_.Status -eq 'Up'} | Select-Object -ExpandProperty MacAddress"))["value"]
           .toString(),
       "domain": (await commands.processTarget("PW",
               "(Get-WMIObject -Class Win32_ComputerSystem).Domain"))["value"]
