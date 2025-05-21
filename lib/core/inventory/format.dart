@@ -189,10 +189,19 @@ class Format {
             retrivalValue = null;
           }
 
-          dynamic match = retrivalValue.firstMatch(processedResult);
+          dynamic match = retrivalValue?.firstMatch(processedResult);
           condition =
               retrivalValue != null && retrivalValue.hasMatch(processedResult);
-          function = match != null ? match.group(1) : "null";
+
+          if (match != null) {
+            if ((match.groupCount >= 1) && (match.group(1) != null)) {
+              function = match.group(1);
+            } else {
+              function = match.group(0);
+            }
+          } else {
+            function = "null";
+          }
           break;
 
         case "PTXT":
@@ -233,7 +242,8 @@ class Format {
           break;
 
         default:
-          logger.warning(this.runtimeType.toString(), "Unknown method : $method");
+          logger.warning(
+              this.runtimeType.toString(), "Unknown method : $method");
           break;
       }
 
