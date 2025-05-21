@@ -123,9 +123,17 @@ class Format {
 
       case "JSON":
         try {
-          final decodedMainResult = jsonDecode(mainResult);
-          processedResults =
-              getJsonSubmap(decodedMainResult, mainOptions, commandTarget);
+          dynamic decodedMainResult = jsonDecode(mainResult);
+          String? submap = mainOptions?["submap"] ?? null;
+
+          decodedMainResult = decodedMainResult is Map
+              ? [decodedMainResult]
+              : decodedMainResult;
+
+          processedResults = (commandTarget != null || submap != null)
+              ? getJsonSubmap(
+                  decodedMainResult, mainOptions, commandTarget, submap)
+              : decodedMainResult;
         } catch (e) {
           logger.warning(
             this.runtimeType.toString(),
@@ -324,19 +332,18 @@ class Format {
     return jsonResult;
   }
 
-  List<Map<String, dynamic>> getJsonSubmap(
-      dynamic decodedMainResult, dynamic mainOptions, dynamic commandTarget) {
+  /// Extract [commandTarget] or [submap] from [decodedMainResult] based on [mainOptions].
+  List<Map<String, dynamic>> getJsonSubmap(dynamic decodedMainResult,
+      dynamic mainOptions, dynamic commandTarget, String? submap) {
     Map<String, dynamic> formattedResult;
-    String? submap = mainOptions?["submap"] ?? null;
     List<Map<String, dynamic>> formattedResultList = [];
     List<Map<String, dynamic>> processedResults = [];
     late List<Map<String, dynamic>> subResults;
 
     // If the OS is MacOS
-    decodedMainResult = decodedMainResult is Map ? [decodedMainResult] : decodedMainResult;
-    
     for (Map<String, dynamic> element in decodedMainResult) {
-      formattedResult = commandTarget != null ? element[commandTarget] : element;
+      formattedResult =
+          commandTarget != null ? element[commandTarget] : element;
       formattedResultList.add(formattedResult);
     }
 
