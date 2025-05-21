@@ -326,27 +326,27 @@ class Format {
 
   List<Map<String, dynamic>> getJsonSubmap(
       dynamic decodedMainResult, dynamic mainOptions, dynamic commandTarget) {
-    List<dynamic> targetResult;
+    Map<String, dynamic> formattedResult;
     String? submap = mainOptions?["submap"] ?? null;
-    late List<Map<String, dynamic>> decodedMainResults;
+    List<Map<String, dynamic>> formattedResultList = [];
     List<Map<String, dynamic>> processedResults = [];
     late List<Map<String, dynamic>> subResults;
 
     // If the OS is MacOS
-    if (commandTarget != null) {
-      targetResult = decodedMainResult[commandTarget];
-      decodedMainResults = targetResult.cast<Map<String, dynamic>>();
-    } else {
-      decodedMainResults = [decodedMainResult];
+    decodedMainResult = decodedMainResult is Map ? [decodedMainResult] : decodedMainResult;
+    
+    for (Map<String, dynamic> element in decodedMainResult) {
+      formattedResult = commandTarget != null ? element[commandTarget] : element;
+      formattedResultList.add(formattedResult);
     }
 
     if (submap != null) {
       for (var key in submap.split('.')) {
         subResults = [];
 
-        for (var decodedMainResult in decodedMainResults) {
-          if (decodedMainResult.containsKey(key)) {
-            var subElement = decodedMainResult[key];
+        for (var element in formattedResultList) {
+          if (element.containsKey(key)) {
+            var subElement = element[key];
             subResults.addAll(subElement.cast<Map<String, dynamic>>());
           } else {
             logger.warning(this.runtimeType.toString(),
@@ -357,7 +357,7 @@ class Format {
         processedResults = subResults;
       }
     } else {
-      processedResults = decodedMainResults;
+      processedResults = formattedResultList;
     }
 
     return processedResults;
