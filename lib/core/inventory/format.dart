@@ -34,12 +34,11 @@ class Format {
       String method, List<dynamic> fields, Map<String, dynamic> resultCommand,
       [String? commandLine]) {
     late final commandTarget;
-    late dynamic refField;
-    late bool fieldNameExists;
     late dynamic resultCommandData;
     late dynamic mainResult;
     late bool mainResultValid;
     late dynamic mainOptions;
+    late List<Map<String, dynamic>> overrideResults;
     late List<dynamic> processedResults;
     List<dynamic> subInventory = [];
     late Map<String, dynamic> result;
@@ -56,15 +55,12 @@ class Format {
       return subInventory;
     }
 
-    refField = fields.firstWhere((f) => resultCommand.containsKey(f['name']),
-        orElse: () => fields.first);
-
-    fieldNameExists = resultCommand.containsKey(refField['name']);
     resultCommandData = this.getDataFromResultCommand(
-        method, resultCommand, refField, fieldNameExists);
+        method, resultCommand);
     mainResult = resultCommandData['mainResult'];
     mainResultValid = resultCommandData['mainResultValid'];
     mainOptions = resultCommandData['mainOptions'];
+    overrideResults = resultCommandData['overrideResults'];
 
     if (!mainResultValid) {
       logger.warning(this.runtimeType.toString(),
@@ -78,36 +74,42 @@ class Format {
     for (var processedResult in processedResults) {
       result = {};
 
-      this.processFieldRetrival(method, fields, resultCommand, fieldNameExists,
+      this.processFieldRetrival(method, fields, resultCommand,
           processedResult, result);
 
       if (result.isNotEmpty) subInventory.add(result);
     }
+
+    overrideSubInventoryFields(overrideResults, subInventory);
 
     logger.verbose(this.runtimeType.toString(), subInventory.toString());
 
     return subInventory;
   }
 
-  /// Extract the result and options from [resultCommand] with [method], [field] and [fieldNameExists].
+  /// Extract the result and options from [resultCommand] with [method].
   Map<String, dynamic> getDataFromResultCommand(String method,
-      Map<String, dynamic> resultCommand, dynamic field, bool fieldNameExists) {
+      Map<String, dynamic> resultCommand) {
     late dynamic mainResult;
     late bool mainResultValid;
     late dynamic mainOptions;
+    late List<Map<String, dynamic>>? overrideResults;
 
-    mainResult = fieldNameExists
-        ? (resultCommand[field['name']]?['result'])
-        : (resultCommand['main']?['result']);
+    mainResult = resultCommand['main']?['result'];
     mainResultValid = !(mainResult == null || mainResult.isEmpty);
     mainOptions = (method == "TBLE" || method == "JSON" || method == "REGX")
         ? (resultCommand['main']?['options'])
         : null;
+    overrideResults = resultCommand['override'];
+
+    if (overrideResults == null || resultCommand['override'].isEmpty)
+      overrideResults = [];
 
     return {
       'mainResult': mainResult,
       'mainResultValid': mainResultValid,
       'mainOptions': mainOptions,
+      'overrideResults': overrideResults,
     };
   }
 
@@ -157,12 +159,11 @@ class Format {
     return processedResults;
   }
 
-  /// Process sub-inventory build based on [method], [fields], [resultCommand], [fieldNameExists], [processedResult] and [result] parameters.
+  /// Process sub-inventory build based on [method], [fields], [resultCommand], [processedResult] and [result] parameters.
   void processFieldRetrival(
       String method,
       dynamic fields,
       Map<String, dynamic> resultCommand,
-      bool fieldNameExists,
       dynamic processedResult,
       Map<String, dynamic> result) {
     dynamic retrivalValue;
@@ -250,8 +251,6 @@ class Format {
           break;
       }
 
-      if (fieldNameExists) condition = true;
-
       this.getSubInventoryResult(result, field, condition, function);
     });
   }
@@ -264,6 +263,28 @@ class Format {
         field['name'],
         () => function,
       );
+    }
+  }
+
+  void overrideSubInventoryFields(
+      List<Map<String, dynamic>> overrideResults, List<dynamic> subInventory) {
+    String overrideName;
+
+    if (overrideResults.isEmpty) return;
+
+    for (var overriddenField in overrideResults) {
+print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA Type de overriddenField: ${overriddenField.runtimeType}");
+      overrideName = overriddenField['name'];
+
+      for (var subInventoryField in subInventory) {
+        for (var key in subInventoryField.keys) {
+          if (overrideName == key) {
+            subInventoryField[key] = overriddenField['result'];
+            logger.verbose(this.runtimeType.toString(),
+                'Field "$key" successfully update with "${overriddenField['result']}"');
+          }
+        }
+      }
     }
   }
 
