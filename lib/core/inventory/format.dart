@@ -38,10 +38,8 @@ class Format {
     late dynamic mainResult;
     late bool mainResultValid;
     late dynamic mainOptions;
-    late List<Map<String, dynamic>> overrideResults;
-    late List<dynamic> processedResults;
+    late List<Map<String, dynamic>> overrideResultList;
     List<dynamic> subInventory = [];
-    late Map<String, dynamic> result;
 
     // For MacOS
     try {
@@ -55,12 +53,11 @@ class Format {
       return subInventory;
     }
 
-    resultCommandData = this.getDataFromResultCommand(
-        method, resultCommand);
+    resultCommandData = this.getDataFromResultCommand(method, resultCommand);
     mainResult = resultCommandData['mainResult'];
     mainResultValid = resultCommandData['mainResultValid'];
     mainOptions = resultCommandData['mainOptions'];
-    overrideResults = resultCommandData['overrideResults'];
+    overrideResultList = resultCommandData['overrideResultList'];
 
     if (!mainResultValid) {
       logger.warning(this.runtimeType.toString(),
@@ -68,19 +65,13 @@ class Format {
       return subInventory;
     }
 
-    processedResults =
-        getProcessedResults(method, mainResult, mainOptions, commandTarget);
+    handleFieldExtraction(method, fields, resultCommand, mainResult,
+        mainOptions, commandTarget, subInventory, false);
 
-    for (var processedResult in processedResults) {
-      result = {};
-
-      this.processFieldRetrival(method, fields, resultCommand,
-          processedResult, result);
-
-      if (result.isNotEmpty) subInventory.add(result);
+    if (overrideResultList.isNotEmpty) {
+      overrideSubInventoryFields(method, fields, resultCommand,
+          overrideResultList, commandTarget, subInventory);
     }
-
-    overrideSubInventoryFields(overrideResults, subInventory);
 
     logger.verbose(this.runtimeType.toString(), subInventory.toString());
 
@@ -88,45 +79,71 @@ class Format {
   }
 
   /// Extract the result and options from [resultCommand] with [method].
-  Map<String, dynamic> getDataFromResultCommand(String method,
-      Map<String, dynamic> resultCommand) {
+  Map<String, dynamic> getDataFromResultCommand(
+      String method, Map<String, dynamic> resultCommand) {
     late dynamic mainResult;
     late bool mainResultValid;
     late dynamic mainOptions;
-    late List<Map<String, dynamic>>? overrideResults;
+    late List<Map<String, dynamic>>? overrideResultList;
 
     mainResult = resultCommand['main']?['result'];
     mainResultValid = !(mainResult == null || mainResult.isEmpty);
+
     mainOptions = (method == "TBLE" || method == "JSON" || method == "REGX")
         ? (resultCommand['main']?['options'])
         : null;
-    overrideResults = resultCommand['override'];
 
-    if (overrideResults == null || resultCommand['override'].isEmpty)
-      overrideResults = [];
+    overrideResultList =
+        resultCommand['override'] != null ? resultCommand['override'] : [];
 
     return {
       'mainResult': mainResult,
       'mainResultValid': mainResultValid,
       'mainOptions': mainOptions,
-      'overrideResults': overrideResults,
+      'overrideResultList': overrideResultList,
     };
   }
 
-  /// Process the [mainResult] based on [method], [mainOptions] and [commandTarget] for MacOS.
-  List<dynamic> getProcessedResults(String method, dynamic mainResult,
-      dynamic mainOptions, String? commandTarget) {
+  /// Handle all the process of fields extraction
+  void handleFieldExtraction(
+      String method,
+      List<dynamic> fields,
+      Map<String, dynamic> resultCommand,
+      dynamic resultToProcess,
+      dynamic optionsToApply,
+      String? commandTarget,
+      List<dynamic> subInventory,
+      bool override) {
+    late List<dynamic> processedResults;
+    late Map<String, dynamic> result;
+
+    processedResults = getProcessedResults(
+        method, resultToProcess, optionsToApply, commandTarget);
+
+    for (var processedResult in processedResults) {
+      result = {};
+
+      this.processFieldRetrival(
+          method, fields, resultCommand, processedResult, result, override);
+
+      if (result.isNotEmpty) subInventory.add(result);
+    }
+  }
+
+  /// Process the [resultToProcess] based on [method], [optionsToApply] and [commandTarget] for MacOS.
+  List<dynamic> getProcessedResults(String method, dynamic resultToProcess,
+      dynamic optionsToApply, String? commandTarget) {
     List<dynamic> processedResults = [];
 
     switch (method) {
       case "TBLE":
-        processedResults = this.formatArray(mainResult, mainOptions);
+        processedResults = this.formatArray(resultToProcess, optionsToApply);
         break;
 
       case "JSON":
         try {
-          dynamic decodedMainResult = jsonDecode(mainResult);
-          String? submap = mainOptions?["submap"] ?? null;
+          dynamic decodedMainResult = jsonDecode(resultToProcess);
+          String? submap = optionsToApply?["submap"] ?? null;
 
           decodedMainResult = decodedMainResult is Map
               ? [decodedMainResult]
@@ -134,22 +151,22 @@ class Format {
 
           processedResults = (commandTarget != null || submap != null)
               ? getJsonSubmap(
-                  decodedMainResult, mainOptions, commandTarget, submap)
+                  decodedMainResult, optionsToApply, commandTarget, submap)
               : decodedMainResult;
-        } catch (e) {
+        } catch (e, stackTrace) {
           logger.warning(
             this.runtimeType.toString(),
-            "Skip due to invalid or malformed JSON. $e",
+            "Skip due to invalid or malformed JSON. $e, $stackTrace",
           );
         }
         break;
 
       case "REGX":
-        processedResults = formatRegx(mainResult, mainOptions);
+        processedResults = formatRegx(resultToProcess, optionsToApply);
 
       case "PTXT":
       case "GREP":
-        processedResults = mainResult.split("\n").toList();
+        processedResults = resultToProcess.split("\n").toList();
         break;
 
       default:
@@ -165,7 +182,8 @@ class Format {
       dynamic fields,
       Map<String, dynamic> resultCommand,
       dynamic processedResult,
-      Map<String, dynamic> result) {
+      Map<String, dynamic> result,
+      bool override) {
     dynamic retrivalValue;
     late bool condition;
     late dynamic function;
@@ -266,27 +284,6 @@ class Format {
     }
   }
 
-  void overrideSubInventoryFields(
-      List<Map<String, dynamic>> overrideResults, List<dynamic> subInventory) {
-    String overrideName;
-
-    if (overrideResults.isEmpty) return;
-
-    for (var overriddenField in overrideResults) {
-      overrideName = overriddenField['name'];
-
-      for (var subInventoryField in subInventory) {
-        for (var key in subInventoryField.keys) {
-          if (overrideName == key) {
-            subInventoryField[key] = overriddenField['result'];
-            logger.verbose(this.runtimeType.toString(),
-                'Field "$key" successfully update with "${overriddenField['result']}"');
-          }
-        }
-      }
-    }
-  }
-
   /// Format [result] string to a list of json.
   List<Map<String, dynamic>> formatArray(
     String result,
@@ -375,7 +372,8 @@ class Format {
           commandTarget != null ? element[commandTarget] : element;
 
       if (formattedResult is List) {
-        formattedResultList.addAll(formattedResult.cast<Map<String, dynamic>>());
+        formattedResultList
+            .addAll(formattedResult.cast<Map<String, dynamic>>());
       } else {
         formattedResultList.add(formattedResult);
       }
@@ -388,7 +386,11 @@ class Format {
         for (var element in formattedResultList) {
           if (element.containsKey(key)) {
             var subElement = element[key];
-            subResults.addAll(subElement.cast<Map<String, dynamic>>());
+            if (subElement is List) {
+              subResults.addAll(subElement.cast<Map<String, dynamic>>());
+            } else {
+              subResults.add(subElement);
+            }
           } else {
             logger.warning(this.runtimeType.toString(),
                 'Unable to find the "$key" submap.');
@@ -423,5 +425,41 @@ class Format {
       blocksList = blocksList.expand((block) => block.split('\n')).toList();
 
     return blocksList;
+  }
+
+  void overrideSubInventoryFields(
+      String method,
+      List<dynamic> fields,
+      Map<String, dynamic> resultCommand,
+      List<Map<String, dynamic>> overrideResultList,
+      String? commandTarget,
+      List<dynamic> subInventory) {
+    dynamic overrideResult;
+    dynamic overrideOptions;
+    List<dynamic> overrideSubInventory = [];
+
+    for (var element in overrideResultList) {
+      overrideResult = element['result'];
+      overrideOptions = element['options'];
+
+      handleFieldExtraction(method, fields, resultCommand, overrideResult,
+          overrideOptions, commandTarget, overrideSubInventory, true);
+    }
+
+    for (var overrideField in overrideSubInventory) {
+      overrideField.forEach((key, overrideValue) {
+        overrideValue = overrideValue.toString() != "null" ? overrideValue : "";
+
+        if (overrideValue.isNotEmpty) {
+          for (var subField in subInventory) {
+            if (subField.containsKey(key)) {
+              subField[key] = overrideValue;
+              logger.verbose(this.runtimeType.toString(),
+                  'Field "$key" update with "$overrideValue"');
+            }
+          }
+        }
+      });
+    }
   }
 }
