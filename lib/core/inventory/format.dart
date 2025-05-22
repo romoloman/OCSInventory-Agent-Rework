@@ -139,7 +139,7 @@ class Format {
         } catch (e) {
           logger.warning(
             this.runtimeType.toString(),
-            "Skip due to invalid or malformed JSON.",
+            "Skip due to invalid or malformed JSON. $e",
           );
         }
         break;
@@ -273,7 +273,6 @@ class Format {
     if (overrideResults.isEmpty) return;
 
     for (var overriddenField in overrideResults) {
-print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA Type de overriddenField: ${overriddenField.runtimeType}");
       overrideName = overriddenField['name'];
 
       for (var subInventoryField in subInventory) {
@@ -363,18 +362,23 @@ print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
   }
 
   /// Extract [commandTarget] or [submap] from [decodedMainResult] based on [mainOptions].
-  List<Map<String, dynamic>> getJsonSubmap(dynamic decodedMainResult,
+  List<Map<String, dynamic>> getJsonSubmap(List<dynamic> decodedMainResult,
       dynamic mainOptions, dynamic commandTarget, String? submap) {
-    Map<String, dynamic> formattedResult;
+    dynamic formattedResult;
     List<Map<String, dynamic>> formattedResultList = [];
     List<Map<String, dynamic>> processedResults = [];
     late List<Map<String, dynamic>> subResults;
 
-    // If the OS is MacOS
+    // If the OS is MacOS, we need to access to element[commandTarget]
     for (Map<String, dynamic> element in decodedMainResult) {
       formattedResult =
           commandTarget != null ? element[commandTarget] : element;
-      formattedResultList.add(formattedResult);
+
+      if (formattedResult is List) {
+        formattedResultList.addAll(formattedResult.cast<Map<String, dynamic>>());
+      } else {
+        formattedResultList.add(formattedResult);
+      }
     }
 
     if (submap != null) {
