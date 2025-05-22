@@ -1,5 +1,5 @@
 // OCSInventory Agent
-// Copyright (C) OCSInventory-NG
+// Copyright (C) OCSInventory
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -622,29 +622,34 @@ class Inventory {
     List<dynamic> fields = section['fields'] ?? [];
     var fieldOver;
 
-    try {
-      mainRes = await this
-          .commands
-          .getResult(section['retrival_method'], section["target"]);
-    } catch (e) {
-      logger.warning(this.runtimeType.toString(),
-          "Unable to get results for ${section["target"]}: $e");
+    for(var field in fields){
+      try {
+        logger.verbose(this.runtimeType.toString(),
+            "Executing command");
 
-      return result;
+          mainRes = await this
+            .commands
+            .getResult(section['retrival_method'], section["target"], section["name"], field["name"]);
+        
+      } catch (e) {
+        logger.warning(this.runtimeType.toString(),
+            "Unable to get results for ${section["target"]}: $e");
+
+        return result;
+      }
+      main.putIfAbsent('name', () => section['name']);
+      main.putIfAbsent('type', () => section['retrival_output']);
+      main.putIfAbsent('options', () => options);
+      main.putIfAbsent('result', () => mainRes);
+      result.putIfAbsent('main', () => main);
     }
-
-    main.putIfAbsent('name', () => section['name']);
-    main.putIfAbsent('type', () => section['retrival_output']);
-    main.putIfAbsent('options', () => options);
-    main.putIfAbsent('result', () => mainRes);
-    result.putIfAbsent('main', () => main);
 
     fieldOver = fields.where((element) => element["override_target"]);
 
     for (var field in fieldOver) {
       try {
         res = await commands.getResult(
-            field['retrival_method'], field["new_target"]);
+            field['retrival_method'], field["new_target"],section["name"],field["name"]);
       } catch (e) {
         logger.warning(
             this.runtimeType.toString(), "Error processing field override: $e");

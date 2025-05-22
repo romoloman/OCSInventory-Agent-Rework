@@ -45,7 +45,7 @@ class BaseWindows {
 
     /// Command get the mac address list
     dynamic macAddr;
-    macAddr = (await commands.processTarget("CMD", "getmac"))["value"];
+    macAddr = (await commands.processTarget("CMD", "getmac", "BaseInventory","MAC ADDRESS"))["value"];
 
     /// RegExp to match mac address
     RegExp regexMacAddr;
@@ -57,7 +57,7 @@ class BaseWindows {
 
     /// Command get to get the IP
     String ip;
-    ip = (await commands.processTarget("CMD", "ipconfig"))["value"]
+    ip = (await commands.processTarget("CMD", "ipconfig", "BaseInventory","IP"))["value"]
         .toString();
 
     /// RegExp to match IP
@@ -70,32 +70,33 @@ class BaseWindows {
 
     // Get the name of the computer
     String name =
-        (await commands.processTarget("CMD", "hostname"))["value"]
+        (await commands.processTarget("CMD", "hostname", "BaseInventory","NAME"))["value"]
             .toString();
 
     dynamic body = ({
       "name": name,
       "description": (await commands.processTarget("PW",
-                  "(Get-WMIObject -Class Win32_ComputerSystemProduct).Description"))[
+                  "(Get-WMIObject -Class Win32_ComputerSystemProduct).Description","BaseInventory","DESCRIPTION"))[
               "value"]
           .toString(),
       "serial": (await commands.processTarget("PW",
-              "(Get-WMIObject win32_Bios).SerialNumber"))["value"]
+              "(Get-WMIObject win32_Bios).SerialNumber",
+              "BaseInventory","SERIAL NUMBER"))["value"]
           .toString(),
       "osname": (await commands.processTarget(
-              "PW", "(Get-WMIObject win32_operatingsystem).name"))["value"]
+              "PW", "(Get-WMIObject win32_operatingsystem).name","BaseInventory","OS NAME"))["value"]
           .toString()
           .split("|")[0],
       "osversion": (await commands.processTarget(
-              "PW", "(Get-WMIObject win32_operatingsystem).Version"))["value"]
+              "PW", "(Get-WMIObject win32_operatingsystem).Version","BaseInventory","OS VERSION"))["value"]
           .toString(),
       "uuid": await _getUUID(name, getMacAddr),
       "srcip": await getIP,
       "srcmac": (await commands.processTarget("PW",
-              "Get-NetAdapter | Where-Object {\$_.Status -eq 'Up'} | Select-Object -ExpandProperty MacAddress"))["value"]
+              "Get-NetAdapter | Where-Object {\$_.Status -eq 'Up'} | Select-Object -ExpandProperty MacAddress","BaseInventory","MAC ADDRESS"))["value"]
           .toString(),
       "domain": (await commands.processTarget("PW",
-              "(Get-WMIObject -Class Win32_ComputerSystem).Domain"))["value"]
+              "(Get-WMIObject -Class Win32_ComputerSystem).Domain","BaseInventory","DOMAIN"))["value"]
           .toString(),
     });
 
@@ -107,14 +108,14 @@ class BaseWindows {
   /// Get UUID or generate one if not available and save it in a uuid file
   Future<String> _getUUID(String name, String macAdress) async {
     String uuid = (await commands.processTarget("PW",
-            "(Get-WMIObject -Class Win32_ComputerSystemProduct).UUID"))["value"]
+            "(Get-WMIObject -Class Win32_ComputerSystemProduct).UUID","BaseInventory","UUID"))["value"]
         .toString();
 
     if (uuid == "") {
       logger.info(this.runtimeType.toString(),
           "UUID not found, generating a new one...");
       uuid = (await commands.processTarget(
-              "PW", "[guid]::NewGuid().ToString()"))["value"]
+              "PW", "[guid]::NewGuid().ToString()","BaseInventory","UUID"))["value"]
           .toString();
       String containerFileName = sprintf('%s.json', ["generated_uuid"]);
       File containerWindowsFile = File(containerFileName);

@@ -36,7 +36,7 @@ class BaseMacOS {
     /// This command [commandSerialUUID] display list Serial and UUID
     String commandSerialUUID;
     commandSerialUUID = (await commands.processTarget(
-            "BASH", "system_profiler SPHardwareDataType"))["value"]
+            "BASH", "system_profiler SPHardwareDataType", "BaseInventory","UUID"))["value"]
         .toString();
 
     /// Regex to get [Serial]
@@ -54,7 +54,7 @@ class BaseMacOS {
     /// Get default route, regExp to Interface for [srcip] and [srcmac]
     String getDefaultRoute;
     getDefaultRoute = (await commands.processTarget(
-            "BASH", "route get default"))["value"]
+            "BASH", "route get default", "BaseInventory","ROUTE"))["value"]
         .toString();
     RegExp regexpInterface;
     regexpInterface = RegExp(r"(?<=interface:\s)\w*");
@@ -64,7 +64,7 @@ class BaseMacOS {
     /// Get domains list and apply this Regex to get domain
     String listDomains;
     listDomains =
-        (await commands.processTarget("BASH", "scutil --dns"))["value"]
+        (await commands.processTarget("BASH", "scutil --dns", "BaseInventory","DOMAIN"))["value"]
             .toString();
     RegExp regexpDomain;
     regexpDomain = RegExp(r'(?<=search\sdomain\[0\]\s:\s)\w*.[a-z]{0,4}');
@@ -73,24 +73,24 @@ class BaseMacOS {
 
     dynamic body = ({
       "name":
-          (await commands.processTarget("BASH", "hostname"))["value"]
+          (await commands.processTarget("BASH", "hostname", "BaseInventory","NAME"))["value"]
               .toString(),
       "description":
-          (await commands.processTarget("BASH", "uname -m"))["value"]
+          (await commands.processTarget("BASH", "uname -m", "BaseInventory","DESCRIPTION"))["value"]
               .toString(),
       "serial": getSerial,
       "osname": (await commands.processTarget(
-              "BASH", "sw_vers -productName"))["value"]
+              "BASH", "sw_vers -productName", "BaseInventory","OS NAME"))["value"]
           .toString(),
       "osversion": (await commands.processTarget(
-              "BASH", "sw_vers -productVersion"))["value"]
+              "BASH", "sw_vers -productVersion", "BaseInventory","OS VERSION"))["value"]
           .toString(),
       "uuid": getUUID,
       "srcip": (await commands.processTarget(
-              "BASH", "ipconfig getifaddr $getInterface"))["value"]
+              "BASH", "ipconfig getifaddr $getInterface", "BaseInventory","IP ADDRESS"))["value"]
           .toString(),
       "srcmac": (await commands.processTarget(
-              "BASH", "networksetup -getmacaddress $getInterface"))["value"]
+              "BASH", "networksetup -getmacaddress $getInterface", "BaseInventory","MAC ADDRESS"))["value"]
           .toString()
           .split(" ")[2],
       "domain": getDomain

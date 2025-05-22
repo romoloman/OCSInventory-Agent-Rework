@@ -464,7 +464,7 @@ class Deployment {
       }
 
       result =
-          await commands.processTarget(method, actionCommand).then((value) {
+          await commands.processTarget(method, actionCommand,"deployment","").then((value) {
         return value;
       }).catchError((onError) {
         logger.error(this.runtimeType.toString(),
@@ -590,7 +590,7 @@ class Deployment {
     try {
       // Execute the tar command to extract the archive file
       var cmdResult = await commands.processTarget(
-          "BASH", "tar -xvf $filePath -C $extractedPath");
+          "BASH", "tar -xvf $filePath -C $extractedPath","archive extract","");
 
       if (cmdResult["status"] == true) {
         // Delete the archive file after extracting it
