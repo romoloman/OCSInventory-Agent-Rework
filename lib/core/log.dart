@@ -45,10 +45,19 @@ class Logger {
   /// Constructor.
   Logger(Config config) {
     this.config = config;
+    dateFormat = DateFormat('EEE MMM dd HH:mm:ss yyyy');
 
-    _isFile = config.getInventoryConfig("log_file");
-    _url = config.getInventoryConfig("url");
-    _logLevel = config.getInventoryConfig("log_level");
+    try {
+      _isFile = config.getInventoryConfig("log_file");
+      _url = config.getInventoryConfig("url");
+      _logLevel = config.getInventoryConfig("log_level");
+    } catch (e) {
+      _logLevel = 3;
+      _isFile = false;
+      error(this.runtimeType.toString(),
+          'Configuration error: missing required fields or empty configuration file.');
+      exit(1);
+    }
 
     if (_isFile) {
       try {
@@ -60,8 +69,6 @@ class Logger {
         error(this.runtimeType.toString(), "Error creating log file: $e");
       }
     }
-
-    dateFormat = DateFormat('EEE MMM dd HH:mm:ss yyyy');
   }
 
   /// Print error message only.
@@ -93,7 +100,8 @@ class Logger {
   }
 
   /// Log message based on the specified level.
-  void _logMessage(String color, String level, String className, String message) {
+  void _logMessage(
+      String color, String level, String className, String message) {
     var now = DateTime.now();
     String date = dateFormat.format(now);
     String txt;
