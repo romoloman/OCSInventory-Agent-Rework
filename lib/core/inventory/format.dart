@@ -54,10 +54,10 @@ class Format {
     }
 
     resultCommandData = this.getDataFromResultCommand(method, resultCommand);
-    mainResult = resultCommandData['mainResult'];
-    mainResultValid = resultCommandData['mainResultValid'];
-    mainOptions = resultCommandData['mainOptions'];
-    overrideResultList = resultCommandData['overrideResultList'];
+    mainResult = resultCommandData['main_result'];
+    mainResultValid = resultCommandData['main_result_valid'];
+    mainOptions = resultCommandData['main_options'];
+    overrideResultList = resultCommandData['override_result_list'];
 
     if (!mainResultValid) {
       logger.warning(this.runtimeType.toString(),
@@ -97,10 +97,10 @@ class Format {
         resultCommand['override'] != null ? resultCommand['override'] : [];
 
     return {
-      'mainResult': mainResult,
-      'mainResultValid': mainResultValid,
-      'mainOptions': mainOptions,
-      'overrideResultList': overrideResultList,
+      'main_result': mainResult,
+      'main_result_valid': mainResultValid,
+      'main_options': mainOptions,
+      'override_result_list': overrideResultList,
     };
   }
 
@@ -212,8 +212,8 @@ class Format {
           }
 
           dynamic match = retrievalValue?.firstMatch(processedResult);
-          condition =
-              retrievalValue != null && retrievalValue.hasMatch(processedResult);
+          condition = retrievalValue != null &&
+              retrievalValue.hasMatch(processedResult);
 
           if (match != null) {
             if ((match.groupCount >= 1) && (match.group(1) != null)) {
@@ -289,50 +289,83 @@ class Format {
     String result,
     Map<String, dynamic>? options,
   ) {
-    final parsedLists = this.getArrayHeaders(result);
-    final resultRows = parsedLists['rows']!;
+    bool optionsValid = options != null && options.isNotEmpty;
+    final parsedLists = this.useIndex(result, options, optionsValid);
+    final useIndex = parsedLists['use_index']!;
     final headersList = parsedLists['headers']!;
-    final Valid = this.areListsValid(options, resultRows, headersList);
-    final useIndex = Valid['useIndex']!;
-    final listsValid = Valid['listsValid']!;
-    final jsonResult = listsValid
-        ? this.convertRowsToJson(resultRows, headersList, useIndex)
-        : <Map<String, dynamic>>[];
+    final resultRows = parsedLists['rows']!;
+    late bool listsValid;
+    List<Map<String, dynamic>> jsonResult = [];
+
+    listsValid = resultRows.isNotEmpty && (headersList.isNotEmpty || !useIndex);
+
+    if (!listsValid) {
+      logger.warning(this.runtimeType.toString(), "Unable to get results from table.");
+
+      return jsonResult;
+    }
+
+    final filteredResultRows = optionsValid ? removeLines(options, optionsValid, resultRows) : resultRows;
+    jsonResult =
+        this.convertRowsToJson(filteredResultRows, headersList, useIndex);
 
     return jsonResult;
   }
 
-  /// Extracts headers from the [result] string.
-  Map<String, List<String>> getArrayHeaders(String result) {
+  /// Extracts headers from the [result] string based on use_index option.
+  Map<String, dynamic> useIndex(String result, dynamic options, bool optionsValid) {
+    List<String> resultRows;
+    List<String> headersList;
+    bool useIndex;
+    
+    useIndex = optionsValid && options?['use_index'] == true;
+
     try {
-      List<String> resultRows = result.split("\n");
-      List<String> headersList = resultRows.removeAt(0).split(RegExp(r'\s+'));
+      resultRows = result.split("\n");
+      headersList = resultRows.removeAt(0).split(RegExp(r'\s+'));
 
       return {
-        'rows': resultRows,
+        'use_index': useIndex,
         'headers': headersList,
+        'rows': resultRows,
       };
     } catch (e) {
       logger.error(this.runtimeType.toString(), e.toString());
 
       return {
-        'rows': [],
+        'use_index': useIndex,
         'headers': [],
+        'rows': [],
       };
     }
   }
 
-  /// Check the use of index based on [options].
-  /// Check the validity of [resultRows] and [headersList].
-  Map<String, bool> areListsValid(Map<String, dynamic>? options,
-      List<String> resultRows, List<String> headersList) {
-    bool useIndex = options != null && options['use_index'] == true;
+  List<String> removeLines(Map<String, dynamic>? options, bool optionsValid,
+      List<String> resultRows) {
+    int? linesRemoved;
+    int rowIndex = 0;
 
-    return {
-      'useIndex': useIndex,
-      'listsValid':
-          resultRows.isNotEmpty && (headersList.isNotEmpty || !useIndex),
-    };
+    try {
+      linesRemoved = int.tryParse(options!['remove_line'].toString());
+    } catch (e) {
+      logger.warning(this.runtimeType.toString(),
+          "Invalid value for 'remove_line': expected an integer: $e");
+
+      return resultRows;
+    }
+
+    if (linesRemoved != null) {
+      while (rowIndex != linesRemoved) {
+        if (rowIndex >= 0 && rowIndex < resultRows.length) {
+          resultRows.removeAt(rowIndex);
+          logger.verbose(this.runtimeType.toString(), 'Line "$rowIndex" removed.');
+        }
+
+        ++rowIndex;
+      }
+    }
+
+    return resultRows;
   }
 
   /// Convert [resultRows] to json format.
