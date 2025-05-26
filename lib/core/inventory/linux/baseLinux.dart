@@ -191,14 +191,15 @@ class BaseLinux {
       if (!existFile) {
         logger.info(this.runtimeType.toString(),
             "Serial number file not found, generating new serial number.");
-        serialResult = "OCS-GEN-" +
+        serialResult = "{ \"serial\": \"OCS-GEN-" +
             macAddress.split(':').last +
             _randNumbers() +
-            macAddress.split(':').first;
+            macAddress.split(':').first +
+            "\"}";
         filesUtils.writeFile(fileSn, serialResult);
       } else {
         Map<String, dynamic> serialData = jsonUtils.getContentFromFile(fileSn);
-        serialResult = serialData["serial"] ?? serialResult;
+        serialResult = serialData["serial"];
         logger.info(this.runtimeType.toString(), "Serial number file found.");
       }
     }
