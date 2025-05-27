@@ -280,15 +280,7 @@ Future<void> main(List<String> args) async {
       }
 
       // Deployment process
-      if (config.getCoreConfig("deployment", "enabled")) {
-        if (await deployment.checkConfig()) {
-          if (await deployment.checkDownload(inventory.assetID)) {
-            if (await deployment.getActions(inventory.assetID)) {
-              await deployment.executeActions(os, inventory.assetID);
-            }
-          }
-        }
-      }
+      await deployment.processDeployment(os, inventory.assetID);
     }
   } else if (inventory.getMode() == 3 || inventory.getMode() == 4) {
     await inventory.sendLocalBaseInventory(body);
