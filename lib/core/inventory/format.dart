@@ -300,12 +300,15 @@ class Format {
     listsValid = resultRows.isNotEmpty && (headersList.isNotEmpty || !useIndex);
 
     if (!listsValid) {
-      logger.warning(this.runtimeType.toString(), "Unable to get results from table.");
+      logger.warning(
+          this.runtimeType.toString(), "Unable to get results from table.");
 
       return jsonResult;
     }
 
-    final filteredResultRows = optionsValid ? removeLines(options, optionsValid, resultRows) : resultRows;
+    final filteredResultRows = optionsValid
+        ? removeLines(options, optionsValid, resultRows)
+        : resultRows;
     jsonResult =
         this.convertRowsToJson(filteredResultRows, headersList, useIndex);
 
@@ -313,11 +316,12 @@ class Format {
   }
 
   /// Extracts headers from the [result] string based on use_index option.
-  Map<String, dynamic> useIndex(String result, dynamic options, bool optionsValid) {
+  Map<String, dynamic> useIndex(
+      String result, dynamic options, bool optionsValid) {
     List<String> resultRows;
     List<String> headersList;
     bool useIndex;
-    
+
     useIndex = optionsValid && options?['use_index'] == true;
 
     try {
@@ -340,6 +344,7 @@ class Format {
     }
   }
 
+  /// Remove raws in [resultRows] based on the remove_line option.
   List<String> removeLines(Map<String, dynamic>? options, bool optionsValid,
       List<String> resultRows) {
     int? linesRemoved;
@@ -358,7 +363,8 @@ class Format {
       while (rowIndex != linesRemoved) {
         if (rowIndex >= 0 && rowIndex < resultRows.length) {
           resultRows.removeAt(rowIndex);
-          logger.verbose(this.runtimeType.toString(), 'Line "$rowIndex" removed.');
+          logger.verbose(
+              this.runtimeType.toString(), 'Line "$rowIndex" removed.');
         }
 
         ++rowIndex;
@@ -460,6 +466,7 @@ class Format {
     return blocksList;
   }
 
+  /// Replace the values of the fields when they are overridden
   void overrideSubInventoryFields(
       String method,
       List<dynamic> fields,
