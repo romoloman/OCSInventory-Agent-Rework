@@ -75,9 +75,7 @@ class BaseMacOS {
     final result = await Process.run('sh', [
     '-c',
     '''
-    ifconfig | awk '/^[a-z0-9]+: / { iface=\$1 } /status: active/ { print iface }' | sed 's/://g' | while read iface; do
-      ifconfig "\$iface" | awk '/ether/ {print \$2}'
-    done
+    ifconfig | awk '/^[a-z0-9]+: / { iface=\$1 } /status: active/ { print iface }' | sed 's/://g' | while read iface; do ifconfig "\$iface" | awk '/ether / { print \$2 }'; done
     '''
     ]);
 
