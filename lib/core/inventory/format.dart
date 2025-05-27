@@ -78,7 +78,7 @@ class Format {
     for (var processedResult in processedResults) {
       result = {};
 
-      this.processFieldRetrival(method, fields, resultCommand, fieldNameExists,
+      this.processFieldRetrieval(method, fields, resultCommand, fieldNameExists,
           processedResult, result);
 
       if (result.isNotEmpty) subInventory.add(result);
@@ -155,14 +155,14 @@ class Format {
   }
 
   /// Process sub-inventory build based on [method], [fields], [resultCommand], [fieldNameExists], [processedResult] and [result] parameters.
-  void processFieldRetrival(
+  void processFieldRetrieval(
       String method,
       dynamic fields,
       Map<String, dynamic> resultCommand,
       bool fieldNameExists,
       dynamic processedResult,
       Map<String, dynamic> result) {
-    dynamic retrivalValue;
+    dynamic retrievalValue;
     late bool condition;
     late dynamic function;
 
@@ -171,55 +171,64 @@ class Format {
     fields.forEach((field) {
       switch (method) {
         case "TBLE":
-          retrivalValue = field['retrival_value'] ?? "";
+          retrievalValue = field['retrieval_value'] ?? "";
           condition = true;
-          function = processedResult[retrivalValue] ?? "null";
+          function = processedResult[retrievalValue] ?? "null";
           break;
 
         case "JSON":
           condition = true;
-          function = processedResult[field['retrival_value']] ?? "null";
+          function = processedResult[field['retrieval_value']] ?? "null";
           break;
 
         case "REGX":
           try {
-            retrivalValue = RegExp(field['retrival_value']);
+            retrievalValue = RegExp(field['retrieval_value']);
           } catch (e) {
             logger.error(this.runtimeType.toString(), e.toString());
-            retrivalValue = null;
+            retrievalValue = null;
           }
 
-          dynamic match = retrivalValue.firstMatch(processedResult);
+          dynamic match = retrievalValue?.firstMatch(processedResult);
           condition =
-              retrivalValue != null && retrivalValue.hasMatch(processedResult);
-          function = match != null ? match.group(1) : "null";
+              retrievalValue != null && retrievalValue.hasMatch(processedResult);
+
+          if (match != null) {
+            if ((match.groupCount >= 1) && (match.group(1) != null)) {
+              function = match.group(1);
+            } else {
+              function = match.group(0);
+            }
+          } else {
+            function = "null";
+          }
           break;
 
         case "PTXT":
           try {
-            retrivalValue = int.parse(field['retrival_value']);
+            retrievalValue = int.parse(field['retrieval_value']);
           } catch (e) {
             logger.error(this.runtimeType.toString(), e.toString());
-            retrivalValue = 0;
+            retrievalValue = 0;
           }
 
           condition = true;
           function =
-              (retrivalValue > 0 && retrivalValue <= processedResult.length)
-                  ? processedResult[retrivalValue - 1]
+              (retrievalValue > 0 && retrievalValue <= processedResult.length)
+                  ? processedResult[retrievalValue - 1]
                   : "null";
           break;
 
         case "GREP":
-          retrivalValue = field['retrival_value'] ?? "";
-          condition = processedResult.contains(retrivalValue);
+          retrievalValue = field['retrieval_value'] ?? "";
+          condition = processedResult.contains(retrievalValue);
 
-          final index = processedResult.indexOf(retrivalValue);
-          final start = index + retrivalValue.length + 1;
+          final index = processedResult.indexOf(retrievalValue);
+          final start = index + retrievalValue.length + 1;
 
           if (index == -1) {
             logger.warning(this.runtimeType.toString(),
-                "Retrival value '$retrivalValue' not found in: $processedResult");
+                "Retrieval value '$retrievalValue' not found in: $processedResult");
             return;
           }
 
@@ -233,7 +242,8 @@ class Format {
           break;
 
         default:
-          logger.warning(this.runtimeType.toString(), "Unknown method : $method");
+          logger.warning(
+              this.runtimeType.toString(), "Unknown method : $method");
           break;
       }
 

@@ -578,14 +578,14 @@ class Inventory {
       for (var section in sections) {
         result = await getResult(os, template, section);
 
-        switch (section['retrival_output']) {
+        switch (section['retrieval_output']) {
           case "JSON":
             if (os == "MAC") {
-              valueTarget = format.getByMethod(section['retrival_output'],
+              valueTarget = format.getByMethod(section['retrieval_output'],
                   section["fields"], result, section["target"]);
             } else {
               valueTarget = format.getByMethod(
-                  section['retrival_output'], section["fields"], result);
+                  section['retrieval_output'], section["fields"], result);
             }
             break;
 
@@ -594,12 +594,12 @@ class Inventory {
           case "REGX":
           case "GREP":
             valueTarget = format.getByMethod(
-                section['retrival_output'], section["fields"], result);
+                section['retrieval_output'], section["fields"], result);
             break;
 
           default:
             logger.warning(
-                this.runtimeType.toString(), "Retrival format unknown.");
+                this.runtimeType.toString(), "Retrieval format unknown.");
             valueTarget = null;
             break;
         }
@@ -622,34 +622,29 @@ class Inventory {
     List<dynamic> fields = section['fields'] ?? [];
     var fieldOver;
 
-    for(var field in fields){
-      try {
-        logger.verbose(this.runtimeType.toString(),
-            "Executing command");
+    try {
+      mainRes = await this
+          .commands
+          .getResult(section['retrieval_method'], section["target"], section["name"], field["name"]);
+    } catch (e) {
+      logger.warning(this.runtimeType.toString(),
+          "Unable to get results for ${section["target"]}: $e");
 
-          mainRes = await this
-            .commands
-            .getResult(section['retrival_method'], section["target"], section["name"], field["name"]);
-        
-      } catch (e) {
-        logger.warning(this.runtimeType.toString(),
-            "Unable to get results for ${section["target"]}: $e");
-
-        return result;
-      }
-      main.putIfAbsent('name', () => section['name']);
-      main.putIfAbsent('type', () => section['retrival_output']);
-      main.putIfAbsent('options', () => options);
-      main.putIfAbsent('result', () => mainRes);
-      result.putIfAbsent('main', () => main);
+      return result;
     }
+
+    main.putIfAbsent('name', () => section['name']);
+    main.putIfAbsent('type', () => section['retrieval_output']);
+    main.putIfAbsent('options', () => options);
+    main.putIfAbsent('result', () => mainRes);
+    result.putIfAbsent('main', () => main);
 
     fieldOver = fields.where((element) => element["override_target"]);
 
     for (var field in fieldOver) {
       try {
         res = await commands.getResult(
-            field['retrival_method'], field["new_target"],section["name"],field["name"]);
+            field['retrieval_method'], field["new_target"],section["name"],field["name"]);
       } catch (e) {
         logger.warning(
             this.runtimeType.toString(), "Error processing field override: $e");
@@ -658,7 +653,7 @@ class Inventory {
       }
 
       sub.putIfAbsent('name', () => field['name']);
-      sub.putIfAbsent('type', () => field['retrival_output']);
+      sub.putIfAbsent('type', () => field['retrieval_output']);
       sub.putIfAbsent('options', () => field['options']);
       sub.putIfAbsent('result', () => res);
       result.putIfAbsent(field['name'], () => sub);
