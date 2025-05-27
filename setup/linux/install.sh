@@ -273,6 +273,7 @@ run_interactive() {
 	echo "|                                                               |"
 	echo "+---------------------------------------------------------------+"
 	echo
+
 	# only prompting if the var has not been set by an arg already
 	if [ -z "$URL" ]; then
 		echo -n "Enter server URL: "
