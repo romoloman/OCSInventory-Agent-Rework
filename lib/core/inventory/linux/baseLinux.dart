@@ -83,25 +83,29 @@ class BaseLinux {
             .toString()
             .split("\n");
 
-    String? macAddress;
+    String macAddressList = "";
+
     for (final route in interfaces) {
       if (route.isNotEmpty) {
-        dynamic interface = route.split(" ")[4];
-        dynamic getMacAddress = (await commands.processTarget(
-                "BASH", "ip link show $interface"))["value"]
-            .toString();
-        RegExp exp = RegExp(r'link\/ether (?<mac>[\S\s]+?) ');
-        RegExpMatch? match = exp.firstMatch(getMacAddress);
+        final interface = route.split(" ")[4];
+        final result = await commands.processTarget("BASH", "ip link show $interface");
+        final getMacAddress = result["value"].toString();
+
+        final exp = RegExp(r'link\/ether (?<mac>[0-9a-fA-F:]{17})');
+        final match = exp.firstMatch(getMacAddress);
+
         if (match != null) {
-          macAddress = match.namedGroup("mac")?.trim();
-          if (macAddress != null) {
-            break;
+          final mac = match.namedGroup("mac")?.trim();
+          if (mac != null && !macAddressList.contains(mac)) {
+            macAddressList += '$mac ';
           }
         }
       }
     }
 
-    if (macAddress == null) {
+    String? macAddress = macAddressList.split(' ')[0];
+
+    if (macAddress == "") {
       logger.warning(
           this.runtimeType.toString(), "No valid MAC address found.");
       return null;
@@ -124,7 +128,7 @@ class BaseLinux {
       "srcip": (await commands.processTarget("BASH", "hostname -I"))["value"]
           .toString()
           .split(" ")[0],
-      "srcmac": macAddress,
+      "srcmac": macAddressList,
       "domain": (await commands.processTarget("BASH", "hostname -d"))["value"]
     });
 
