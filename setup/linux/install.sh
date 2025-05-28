@@ -173,14 +173,14 @@ check_installed_agent() {
 		if [ "$SILENT" = "true" ]; then
 			echo "Existing agent installation detected in silent mode. Automatically uninstalling..."
 			# automatically uninstall in silent mode
-			sudo sh "${WORKING_DIRECTORY}/uninstall.sh" -y
+			sh "${WORKING_DIRECTORY}/uninstall.sh" -y
 		else
 			# prompt the user in interactive mode
 			echo -n "The agent is already installed, do you want to remove it first? ([y]/n) "
 			read -r remove_choice
 			if [ "$remove_choice" = "y" ] || [ "$remove_choice" = "Y" ] || [ -z "$remove_choice" ]; then
 				echo "Uninstalling the existing agent..."
-				sudo sh "${WORKING_DIRECTORY}/uninstall.sh" -y
+				sh "${WORKING_DIRECTORY}/uninstall.sh" -y
 			# if the user chose 'n', we inform them the script will likely overwrite files
 			else
 				echo "Proceeding with installation without removing the existing one. Files may be overwritten."
@@ -208,7 +208,7 @@ copy_agent_contents() {
 	chmod +x "$AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$SERVICE_EXEC"
 
 	# Link the exec agent to /usr/bin
-	sudo ln -s "$AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$EXEC_AGENT" "$SYMBOLIC_LINK"
+	ln -s "$AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$EXEC_AGENT" "$SYMBOLIC_LINK"
 
 }
 
@@ -238,13 +238,13 @@ run_executable() {
 register_service() {
 	# create service file
 	echo "Creating ${SERVICE_NAME} service file..."
-	sudo cp "${WORKING_DIRECTORY}/ocsinventory-agent.service" "/etc/systemd/system/${SERVICE_NAME}.service"
+	cp "${WORKING_DIRECTORY}/ocsinventory-agent.service" "/etc/systemd/system/${SERVICE_NAME}.service"
 
 	# restart daemon, enable and start service
 	echo "Reloading daemon and enabling service"
-	sudo systemctl daemon-reload
-	sudo systemctl enable ${SERVICE_NAME}.service
-	sudo systemctl start ${SERVICE_NAME}.service
+	systemctl daemon-reload
+	systemctl enable ${SERVICE_NAME}.service
+	systemctl start ${SERVICE_NAME}.service
 	echo "Service Started"
 }
 
