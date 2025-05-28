@@ -490,7 +490,7 @@ class Format {
       overrideField.forEach((key, overrideValue) {
         overrideValue = overrideValue.toString() != "null" ? overrideValue : "";
 
-        if (overrideValue.isNotEmpty) {
+        if (overrideValue.toString().isNotEmpty) {
           for (var subField in subInventory) {
             if (subField.containsKey(key)) {
               subField[key] = overrideValue;
