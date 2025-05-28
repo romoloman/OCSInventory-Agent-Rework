@@ -15,7 +15,7 @@ STORE_DATA_PATH="/var/lib/ocsinventory-data"
 SERVICE_NAME="ocsinventory-agent"
 SERVICE_EXEC="/DAEMON-LINUX"
 AGENT_INSTALLATION_DIR="/usr/share/ocsinventory-agent"
-SYMBOLIC_LINK="/usr/bin/ocsinventory-agent-ng"
+SYMBOLIC_LINK="/usr/bin/ocsinventory-agent"
 
 # Function to display usage information
 usage() {
