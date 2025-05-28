@@ -7,7 +7,7 @@ LOG_PATH="/var/log/ocsinventory-agent"
 STRORE_DATA_PATH="/var/lib/ocsinventory-data"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 AGENT_INSTALLATION_DIR="/usr/share/ocsinventory-agent"
-SYMBOLIC_LINK="/usr/bin/ocsinventory-agent-ng"
+SYMBOLIC_LINK="/usr/bin/ocsinventory-agent"
 
 # Function to display usage information
 usage() {
