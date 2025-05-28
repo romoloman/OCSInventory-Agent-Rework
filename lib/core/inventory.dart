@@ -625,7 +625,7 @@ class Inventory {
     try {
       mainRes = await this
           .commands
-          .getResult(section['retrieval_method'], section["target"], section["name"], field["name"]);
+          .getResult(section['retrieval_method'], section["target"], section["name"], "");
     } catch (e) {
       logger.warning(this.runtimeType.toString(),
           "Unable to get results for ${section["target"]}: $e");

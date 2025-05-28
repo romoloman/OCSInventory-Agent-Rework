@@ -45,8 +45,12 @@ class Commands {
     processData["status"] = (exitCode == 0);
     processData["error"] = stderr;
 
+    if(field != ""){
+      field = "[$field]";
+    }
+
     logger.verbose(
-        this.runtimeType.toString(), "Executed $commentSubject using $method in $section - $field: '$target'");
+        this.runtimeType.toString(), "[$section] $field Executed $commentSubject using $method: '$target'");
 
     if (stderr.isNotEmpty)
       logger.error(this.runtimeType.toString(),
