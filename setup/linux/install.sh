@@ -21,16 +21,16 @@ SYMBOLIC_LINK="/usr/bin/ocsinventory-agent"
 usage() {
 	echo "Usage: $0 [OPTIONS]"
 	echo "Options:"
-	echo "  -S, --silent              Enable silent mode (requires --url, --username, --password)"
-	echo "  -U, --url URL             URL of the OCS Inventory server (required for silent mode)"
-	echo "  -u, --username USERNAME   Username (required for silent mode)"
-	echo "  -p, --password PASSWORD   Password (required for silent mode)"
-	echo "  -m, --mode MODE           Inventory mode (default: 2 = Remote without template)"
-	echo "  -l, --log-level LEVEL     Log level (default: 2 = Info)"
-	echo "  -c, --certificate CERT    Path to the certificate file (default: null)"
-	echo "  -s, --service             Register the agent as a systemd service"
-	echo "  -n, --now                 Run the agent inventory immediately after installation"
-	echo "  -h, --help                Display this help message"
+	echo "  -S, --silent                Enable silent mode (requires --url, --username, --password)"
+	echo "  -U, --url URL               URL of the OCSInventory server (required for silent mode)"
+	echo "  -u, --username USERNAME     Username (required for silent mode)"
+	echo "  -p, --password PASSWORD     Password (required for silent mode)"
+	echo "  -m, --mode MODE             Inventory mode (default: 1 = Remote with template)"
+	echo "  -l, --log-level LEVEL       Log level (default: 2 = Info)"
+	echo "  -c, --certificate CERT      Path to the certificate file (default: null)"
+	echo "  -s, --service               Register the agent as a systemd service"
+	echo "  -n, --now                   Run the agent inventory immediately after installation"
+	echo "  -h, --help                  Display this help message"
 	exit 1
 }
 
@@ -194,7 +194,6 @@ check_installed_agent
 
 # Function to copy agent contents to /usr/share/ocsinventory-agent
 copy_agent_contents() {
-
 	# Define the source directory by navigating three levels up from the script directory
 	SOURCE_DIR="$WORKING_DIRECTORY/../../"
 
@@ -209,11 +208,10 @@ copy_agent_contents() {
 
 	# Link the exec agent to /usr/bin
 	ln -s "$AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$EXEC_AGENT" "$SYMBOLIC_LINK"
-
 }
 
-# Function to run the executable with provided params
-run_executable() {
+# Function to create the config file with provided params
+create_config_file() {
 	local url="$1"
 	local username="$2"
 	local password="$3"
@@ -222,10 +220,34 @@ run_executable() {
 	local certificate="$6"
 	local inventory_mode="$7"
 
-	# Construct command for running executable
-	command_install="$WORKING_DIRECTORY$EXEC_AGENT -f true -m 0 -p $password -u $username -s $url -l $LOG_PATH -d $STORE_DATA_PATH -v $log_level -c $certificate"
-	# echo "Executing command: $command"
-	$command_install
+	# Construct config directory and file
+	echo "Creating configuration file..."
+	mkdir -p "$CONFIG_PATH"
+	touch "$CONFIG_PATH/config.json"
+	echo "
+	{
+		\"log_file\": true,
+		\"mode\": \"$inventory_mode\",
+		\"password\": \"$password\",
+		\"username\": \"$username\",
+		\"url\": \"$url\",
+		\"data_directory\": \"$STORE_DATA_PATH\",
+		\"log_file_path\": \"$LOG_PATH\",
+		\"log_level\": $log_level,
+		\"certificate\": \"$certificate\"
+		\"bypass_certificate\": false
+	}" > "$CONFIG_PATH/config.json"
+}
+
+create_log_file() {
+	echo "Creating log file..."
+	mkdir -p "$(dirname "$LOG_PATH")"
+	touch "$LOG_PATH"
+}
+
+# Function to run the executable with provided params
+run_executable() {
+	local run_now="$1"
 
 	if [ "$run_now" = "true" ]; then
 		echo "Running the agent now..."
@@ -237,7 +259,7 @@ run_executable() {
 # Function to register service
 register_service() {
 	# create service file
-	echo "Creating ${SERVICE_NAME} service file..."
+	echo "Creating service file..."
 	cp "${WORKING_DIRECTORY}/ocsinventory-agent.service" "/etc/systemd/system/${SERVICE_NAME}.service"
 
 	# restart daemon, enable and start service
@@ -251,27 +273,28 @@ register_service() {
 # Function to run in silent mode
 run_silent() {
 	echo
-	echo "+----------------------------------------------------------+"
-	echo "|                                                          |"
-	echo "|   Installing OCS Inventory Agent in silent mode...       |"
-	echo "|                                                          |"
-	echo "+----------------------------------------------------------+"
+	echo "+---------------------------------------------------------+"
+	echo "|                                                         |"
+	echo "|     Installing OCSInventory Agent in silent mode...     |"
+	echo "|                                                         |"
+	echo "+---------------------------------------------------------+"
 	echo
 
 	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$INVENTORY_MODE" true
 	copy_agent_contents
-	run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICATE" "$INVENTORY_MODE"
-
+	create_config_file "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICATE" "$INVENTORY_MODE"
+	create_log_file
+	run_executable "$NOW"
 }
 
 # Function to run in interactive mode
 run_interactive() {
 	echo
-	echo "+---------------------------------------------------------------+"
-	echo "|                                                               |"
-	echo "|   Installing OCS Inventory Agent in interactive mode...       |"
-	echo "|                                                               |"
-	echo "+---------------------------------------------------------------+"
+	echo "+--------------------------------------------------------------+"
+	echo "|                                                              |"
+	echo "|     Installing OCSInventory Agent in interactive mode...     |"
+	echo "|                                                              |"
+	echo "+--------------------------------------------------------------+"
 	echo
 
 	# only prompting if the var has not been set by an arg already
@@ -320,8 +343,9 @@ run_interactive() {
 
 	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$INVENTORY_MODE" false
 	copy_agent_contents
-	run_executable "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICATE" "$INVENTORY_MODE"
-
+	create_config_file "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICATE" "$INVENTORY_MODE"
+	create_log_file
+	run_executable "$NOW"
 }
 
 # Run in the appropriate mode
@@ -337,20 +361,19 @@ if [ -d "$CONFIG_PATH" ] && [ -f "$LOG_PATH" ] && [ -d "$AGENT_INSTALLATION_DIR"
 		register_service
 	fi
 	echo
-	echo "+------------------------------------------------------------------------------+"
-	echo "|   OCS Inventory Agent has been successfully installed and configured.        |"
-	echo "|                                                                              |"
-	echo "|   Configuration files are located at $CONFIG_PATH"
-	echo "|   Log file is located at $LOG_PATH"
-	echo "|   Agent data storage is located at $STORE_DATA_PATH"
-	echo "|   Agent installation directory is located at $AGENT_INSTALLATION_DIR"
-	echo "|                                                                              |"
-	echo "|   Please refer to the documentation for more information                     |"
-	echo "+------------------------------------------------------------------------------+"
+	echo "+------------------------------------------------------------------------------------------------+"
+	echo "|               OCSInventory Agent has been successfully installed and configured.               |"
+	echo "|                                                                                                |"
+	echo "|          Configuration files are located at $CONFIG_PATH"
+	echo "|          Log file is located at $LOG_PATH"
+	echo "|          Agent data storage is located at $STORE_DATA_PATH"
+	echo "|          Agent installation directory is located at $AGENT_INSTALLATION_DIR"
+	echo "|                                                                                                |"
+	echo "|               Please refer to the documentation for more information.                          |"
+	echo "+------------------------------------------------------------------------------------------------+"
 	echo
 
 else
-	echo
 	echo
 	echo "*** ERROR: Installation failed, please check the logs for more information" >&2
 	echo
