@@ -152,13 +152,13 @@ check_parameters() {
 
 	# Check if the inventory mode empty
 	if [ -z "$inventory_mode" ]; then
-		echo "Inventory mode will be set to 2 by default (Remote without template)"
-		INVENTORY_MODE=2
+		echo "Inventory mode will be set to 1 by default (Remote with template)"
+		INVENTORY_MODE=1
 	else
 		# Check if the inventory mode is a number
 		if ! echo "$inventory_mode" | grep -qE '^[0-9]+$'; then
-			echo "Inventory mode must be a number, using default value 2 (Remote without template)"
-			INVENTORY_MODE=2
+			echo "Inventory mode must be a number, using default value 1 (Remote with template)"
+			INVENTORY_MODE=1
 		else
 			echo "Inventory mode is set to $inventory_mode"
 		fi
@@ -288,7 +288,7 @@ run_interactive() {
 		read -r PASSWORD
 	fi
 	if [ -z "$INVENTORY_MODE" ]; then
-		echo -n "Enter the inventory mode (default is 2 = Remote without template): "
+		echo -n "Enter the inventory mode (default is 1 = Remote with template): "
 		read -r INVENTORY_MODE
 	fi
 	if [ -z "$LOG_LEVEL" ]; then
