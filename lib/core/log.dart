@@ -67,42 +67,44 @@ class Logger {
   /// Print error message only.
   void error(String className, String error) {
     if (_logLevel >= 0) {
-      _logMessage("ERROR", className, error);
+      _logMessage("\x1B[31m", "ERROR", className, error);
     }
   }
 
   /// Print error and warning messages.
   void warning(String className, String warning) {
     if (_logLevel >= 1) {
-      _logMessage("WARNING", className, warning);
+      _logMessage("\x1B[33m", "WARNING", className, warning);
     }
   }
 
   /// Print info, warning, and error messages.
   void info(String className, String info) {
     if (_logLevel >= 2) {
-      _logMessage("INFO", className, info);
+      _logMessage("\x1B[32m", "INFO", className, info);
     }
   }
 
   /// Print verbose message.
   void verbose(String className, String verbose) {
     if (_logLevel >= 3) {
-      _logMessage("VERBOSE", className, verbose);
+      _logMessage("\x1B[34m", "VERBOSE", className, verbose);
     }
   }
 
   /// Log message based on the specified level.
-  void _logMessage(String level, String className, String message) {
+  void _logMessage(String color, String level, String className, String message) {
     var now = DateTime.now();
     String date = dateFormat.format(now);
     String txt;
+
+    if (!_isFile) level = color + level + "\x1B[0m";
 
     try {
       txt = "[$date] [$level] [$className] $message";
 
       if (_isFile) {
-        file.writeAsStringSync(txt, mode: FileMode.append);
+        file.writeAsStringSync(txt + "\n", mode: FileMode.append);
       } else {
         print(txt);
       }
@@ -132,7 +134,7 @@ class Logger {
         12: "TEMPLATE_ERR"
       };
 
-      String token = config.getInventoryConfig("token");
+      String token = Config.token;
       Map<String, dynamic> content = new Map();
       content["asset"] = assetID;
       content["scope"] = errorCodes[errorCode];
