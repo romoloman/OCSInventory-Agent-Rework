@@ -177,7 +177,7 @@ check_installed_agent() {
 		if [ "$SILENT" = "true" ]; then
 			echo "Existing agent installation detected in silent mode. Automatically uninstalling..."
 			# automatically uninstall in silent mode
-			sh "${WORKING_DIRECTORY}/uninstall.sh" -y
+			sh "${WORKING_DIRECTORY}/uninstall.sh" -S -y
 		else
 			# prompt the user in interactive mode
 			echo -n "The agent is already installed, do you want to remove it first? ([y]/n) "
