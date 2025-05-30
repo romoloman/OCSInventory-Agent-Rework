@@ -16,6 +16,7 @@
 
 // External package imports
 import 'package:ocs_agent/core/log.dart';
+import 'dart:io';
 
 // Core imports
 import 'package:ocs_agent/core/inventory/commands.dart';
@@ -95,11 +96,10 @@ class BaseMacOS {
           .toString(),
       "srcmac": (await commands.processTarget(
               "BASH",
-              "networksetup -getmacaddress $getInterface",
+              "ifconfig | awk '/^[a-z0-9]+: / { iface=\$1 } /status: active/ { print iface }' | sed 's/://g' | while read iface; do ifconfig \"\$iface\" | awk '/ether / { print \$2 }'; done",
               logType,
               "MAC ADDRESS"))["value"]
-          .toString()
-          .split(" ")[2],
+          .toString(),
       "domain": getDomain
     });
 
