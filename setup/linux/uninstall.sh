@@ -18,19 +18,21 @@ SYMBOLIC_LINK="/usr/bin/ocsinventory-agent"
 usage() {
 	echo "Usage: $0 [OPTIONS]"
 	echo "Options:"
-	echo "  -S, --silent     Enable silent mode"
-	echo "  -y               Automatically confirm uninstallation without prompting"
-	echo "  -h, --help       Display this help message"
+	echo "  -S, --silent          Enable silent mode"
+	echo "  -D, --hard-delete     Remove configs, log files and store data directory"
+	echo "  -y                    Automatically confirm uninstallation without prompting"
+	echo "  -h, --help            Display this help message"
 	exit 1
 }
 
 # Default values
 SILENT=false
+HARD_DELETE=false
 AUTO_CONFIRM=false
 
 # options
-SHORT_OPTS="hSy"
-LONG_OPTS="help,silent"
+SHORT_OPTS="hSDy"
+LONG_OPTS="help,silent,hard-delete,yes"
 
 # parse options
 if ! PARSED_OPTIONS=$(getopt --options $SHORT_OPTS --longoptions $LONG_OPTS --name "$0" -- "$@"); then
@@ -47,7 +49,11 @@ while true; do
 		SILENT=true
 		shift
 		;;
-	-y)
+	-D | --hard_delete)
+		HARD_DELETE=true
+		shift
+		;;
+	-y | --yes)
 		AUTO_CONFIRM=true
 		shift
 		;;
@@ -68,6 +74,7 @@ done
 # Function to uninstall the agent
 uninstall_agent() {
 	local is_silent=$1
+	local is_hard_delete=$2
 
 	if [ "$is_silent" = true ]; then
 		echo
@@ -103,20 +110,22 @@ uninstall_agent() {
 	fi
 	sudo systemctl daemon-reload
 
-	if [ "$is_silent" = false ]; then
-		echo "Removing configuration directory..."
-	fi
-	sudo rm -rf ${CONFIG_PATH}
+	if [ "$is_hard_delete" = true ]; then
+		if [ "$is_silent" = false ]; then
+			echo "Removing configuration directory..."
+		fi
+		sudo rm -rf ${CONFIG_PATH}
 
-	if [ "$is_silent" = false ]; then
-		echo "Removing log file..."
+		if [ "$is_silent" = false ]; then
+			echo "Removing log file..."
+		fi
+		sudo rm -rf ${LOG_PATH}
+		
+		if [ "$is_silent" = false ]; then
+			echo "Removing store data directory..."
+		fi
+		sudo rm -rf ${STRORE_DATA_PATH}
 	fi
-	sudo rm -rf ${LOG_PATH}
-
-	if [ "$is_silent" = false ]; then
-		echo "Removing store data directory..."
-	fi
-	sudo rm -rf ${STRORE_DATA_PATH}
 
 	if [ "$is_silent" = false ]; then
 		echo "Removing agent installation directory..."
@@ -139,12 +148,8 @@ uninstall_agent() {
 prompt_confirmation() {
 	echo -n "Are you sure you want to uninstall OCS Inventory NG Agent ([y]/n)? "
 	read -r confirm
-	if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ] || [ -z "$confirm" ]; then
-		if [ "$SILENT" = true ]; then
-			uninstall_agent true
-		else
-			uninstall_agent false
-		fi
+	if [[ "$confirm" =~ ^[yY]?$ ]]; then
+		uninstall_agent "$SILENT" "$HARD_DELETE"
 	else
 		echo "Uninstallation cancelled."
 	fi
@@ -152,11 +157,7 @@ prompt_confirmation() {
 
 # Check for automatic confirmation or prompt the user
 if [ "$AUTO_CONFIRM" = "true" ]; then
-	if [ "$SILENT" = true ]; then
-		uninstall_agent true
-	else
-		uninstall_agent false
-	fi
+	uninstall_agent "$SILENT" "$HARD_DELETE"
 else
 	prompt_confirmation
 fi
