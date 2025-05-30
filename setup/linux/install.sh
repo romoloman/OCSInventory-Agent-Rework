@@ -242,7 +242,7 @@ create_config_file() {
 		\"log_level\": $log_level,
 		\"certificate\": \"$certificate\"
 		\"bypass_certificate\": false
-	}" > "$CONFIG_PATH/config.json"
+	}" >"$CONFIG_PATH/config.json"
 }
 
 create_log_file() {
