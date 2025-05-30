@@ -34,6 +34,7 @@ class BaseLinux {
   FilesUtils filesUtils;
   JsonUtils jsonUtils;
   final String serialFileName = "/serialNumber.json";
+  final String logType = "BaseInventory";
 
   /// Constructor
   BaseLinux(this.logger, this.commands, this.filesUtils, this.jsonUtils);
@@ -44,10 +45,10 @@ class BaseLinux {
 
     logger.info(this.runtimeType.toString(), "Retrieving OS body...");
 
-    dynamic getOSRelease =
-        (await commands.processTarget("FILE", "/etc/os-release", "BaseInventory","OS VERSION"))["value"]
-            .toString()
-            .split("\n");
+    dynamic getOSRelease = (await commands.processTarget(
+            "FILE", "/etc/os-release", logType, "OS VERSION"))["value"]
+        .toString()
+        .split("\n");
     Map<String, String> osRelease = {};
     for (final info in getOSRelease) {
       RegExp exp = RegExp(r'(?<key>[\S]+?)="(?<value>[\S\s]+?)"');
@@ -61,10 +62,10 @@ class BaseLinux {
       }
     }
 
-    dynamic getHostnamectl =
-        (await commands.processTarget("BASH", "hostnamectl", "BaseInventory","DESCRIPTION"))["value"]
-            .toString()
-            .split("\n");
+    dynamic getHostnamectl = (await commands.processTarget(
+            "BASH", "hostnamectl", logType, "DESCRIPTION"))["value"]
+        .toString()
+        .split("\n");
     Map<String, String> hostnamectl = {};
     for (final info in getHostnamectl) {
       RegExp exp = RegExp(r'(?<key>[^\n][\S\s]+?): (?<value>[\S\s][^\n]+)');
@@ -78,17 +79,17 @@ class BaseLinux {
       }
     }
 
-    dynamic interfaces =
-        (await commands.processTarget("BASH", "ip route show default", "BaseInventory","INTERFACES"))["value"]
-            .toString()
-            .split("\n");
+    dynamic interfaces = (await commands.processTarget(
+            "BASH", "ip route show default", logType, "INTERFACES"))["value"]
+        .toString()
+        .split("\n");
 
     String? macAddress;
     for (final route in interfaces) {
       if (route.isNotEmpty) {
         dynamic interface = route.split(" ")[4];
-        dynamic getMacAddress = (await commands.processTarget(
-                "BASH", "ip link show $interface", "BaseInventory", "MAC ADDRESS"))["value"]
+        dynamic getMacAddress = (await commands.processTarget("BASH",
+                "ip link show $interface", logType, "MAC ADDRESS"))["value"]
             .toString();
         RegExp exp = RegExp(r'link\/ether (?<mac>[\S\s]+?) ');
         RegExpMatch? match = exp.firstMatch(getMacAddress);
@@ -108,7 +109,8 @@ class BaseLinux {
     }
 
     // Get name
-    String name = (await commands.processTarget("BASH", "hostname", "BaseInventory","NAME"))["value"]
+    String name = (await commands.processTarget(
+            "BASH", "hostname", logType, "NAME"))["value"]
         .toString()
         .trim();
 
@@ -121,11 +123,13 @@ class BaseLinux {
       "osname": osRelease["NAME"].toString(),
       "osversion": osRelease["VERSION_ID"].toString(),
       "uuid": await _getUUID(name, macAddress),
-      "srcip": (await commands.processTarget("BASH", "hostname -I", "BaseInventory","IP ADDRESS"))["value"]
+      "srcip": (await commands.processTarget(
+              "BASH", "hostname -I", logType, "IP ADDRESS"))["value"]
           .toString()
           .split(" ")[0],
       "srcmac": macAddress,
-      "domain": (await commands.processTarget("BASH", "hostname -d", "BaseInventory","DOMAIN"))["value"]
+      "domain": (await commands.processTarget(
+          "BASH", "hostname -d", logType, "DOMAIN"))["value"]
     });
 
     logger.info(this.runtimeType.toString(), "OS body retrieved successfully.");
@@ -136,7 +140,7 @@ class BaseLinux {
   /// Get UUID or generate one if not available and save it in a uuid file
   Future<String> _getUUID(String name, String macAddress) async {
     String uuid = (await commands.processTarget(
-            "BASH", "dmidecode -s system-uuid", "BaseInventory","UUID"))["value"]
+            "BASH", "dmidecode -s system-uuid", logType, "UUID"))["value"]
         .toString();
 
     if (uuid == "") {
@@ -157,7 +161,8 @@ class BaseLinux {
       } else {
         logger.info(
             this.runtimeType.toString(), "No system UUID, generating new one.");
-        uuid = (await commands.processTarget("BASH", "uuidgen", "BaseInventory","UUID"))["value"]
+        uuid = (await commands.processTarget(
+                "BASH", "uuidgen", logType, "UUID"))["value"]
             .toString();
         dynamic baseAdded = {};
         baseAdded["name"] = name;
@@ -175,8 +180,8 @@ class BaseLinux {
   }
 
   Future<String> _getSerialNumber(String name, String macAddress) async {
-    String serialResult = (await commands.processTarget(
-            "BASH", "dmidecode -s system-uuid", "BaseInventory","SERIAL NUMBER"))["value"]
+    String serialResult = (await commands.processTarget("BASH",
+            "dmidecode -s system-uuid", logType, "SERIAL NUMBER"))["value"]
         .toString();
 
     String path = "/etc/ocsinventory-agent" + serialFileName;
