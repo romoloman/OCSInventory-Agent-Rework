@@ -50,8 +50,7 @@ SHORT_OPTS="hSnU:u:p:m:l:c:s"
 LONG_OPTS="help,silent,now,url:,username:,password:,mode:,log-level:,certificate:,service"
 
 # parse options
-PARSED_OPTIONS=$(getopt --options $SHORT_OPTS --longoptions $LONG_OPTS --name "$0" -- "$@")
-if [ $? -ne 0 ]; then
+if ! PARSED_OPTIONS=$(getopt --options $SHORT_OPTS --longoptions $LONG_OPTS --name "$0" -- "$@"); then
 	usage
 fi
 

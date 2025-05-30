@@ -33,8 +33,7 @@ SHORT_OPTS="hSy"
 LONG_OPTS="help,silent"
 
 # parse options
-PARSED_OPTIONS=$(getopt --options $SHORT_OPTS --longoptions $LONG_OPTS --name "$0" -- "$@")
-if [ $? -ne 0 ]; then
+if ! PARSED_OPTIONS=$(getopt --options $SHORT_OPTS --longoptions $LONG_OPTS --name "$0" -- "$@"); then
 	usage
 fi
 
