@@ -120,7 +120,7 @@ uninstall_agent() {
 			echo "Removing log file..."
 		fi
 		sudo rm -rf ${LOG_PATH}
-		
+
 		if [ "$is_silent" = false ]; then
 			echo "Removing store data directory..."
 		fi
