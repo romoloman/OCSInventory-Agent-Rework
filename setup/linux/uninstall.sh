@@ -94,7 +94,6 @@ uninstall_agent() {
 	local is_hard_delete=$2
 
 	if [ "$is_silent" = true ]; then
-		log "INFO" "" false
 		log "INFO" "+-----------------------------------------------------------+" false
 		log "INFO" "|                                                           |" false
 		log "INFO" "|     Uninstalling OCSInventory Agent in silent mode...     |" false
@@ -102,7 +101,6 @@ uninstall_agent() {
 		log "INFO" "+-----------------------------------------------------------+" false
 		log "INFO" "" false
 	else
-		log "INFO" "" false
 		log "INFO" "+----------------------------------------------------------------+" false
 		log "INFO" "|                                                                |" false
 		log "INFO" "|     Uninstalling OCSInventory Agent in interactive mode...     |" false
@@ -111,62 +109,53 @@ uninstall_agent() {
 		log "INFO" "" false
 	fi
 
-	if [ "$is_silent" = false ]; then
-		log "INFO" "Stopping and disabling the service..." false
-	fi
-	if systemctl stop ${SERVICE_NAME} >/dev/null 2>/dev/null; then
-		log "INFO" "Service ${SERVICE_NAME} stopped successfully." false
-		if systemctl disable ${SERVICE_NAME} >/dev/null 2>/dev/null; then
-			log "INFO" "Service ${SERVICE_NAME} disabled successfully." false
+	log "INFO" "Stopping and disabling the service..." false
+	
+	if systemctl list-units --full -all | grep -Fq "${SERVICE_NAME}.service"; then
+		if systemctl stop ${SERVICE_NAME} >/dev/null 2>/dev/null; then
+			log "INFO" "Service ${SERVICE_NAME} stopped successfully." false
+
+			if systemctl disable ${SERVICE_NAME} >/dev/null 2>/dev/null; then
+				log "INFO" "Service ${SERVICE_NAME} disabled successfully." false
+					
+				log "INFO" "Removing service file..." false
+				rm -f ${SERVICE_FILE}
+
+				log "INFO" "Reloading systemd daemon..." false
+
+				if systemctl daemon-reload > /dev/null 2> /dev/null; then
+					log "INFO" "Systemd daemon reloaded successfully." false
+				else
+					log "ERROR" "Failed to reload systemd daemon. Exiting script." false
+					exit 1;
+				fi
+			else
+				log "ERROR" "Failed to disable service ${SERVICE_NAME}. Exiting script." false
+				exit 1
+			fi
 		else
-			log "ERROR" "Failed to disable service ${SERVICE_NAME}. Exiting script." false
+			log "ERROR" "Failed to stop service ${SERVICE_NAME}. It may not be running. Exiting script." false
 			exit 1
 		fi
 	else
-		log "ERROR" "Failed to stop service ${SERVICE_NAME}. It may not be running. Exiting script." false
-		exit 1
-	fi
-
-	if [ "$is_silent" = false ]; then
-		log "INFO" "Removing service file..." false
-	fi
-	rm -f ${SERVICE_FILE}
-
-	if [ "$is_silent" = false ]; then
-		log "INFO" "Reloading systemd daemon..." false
-	fi
-	if systemctl daemon-reload >/dev/null 2>/dev/null; then
-		log "INFO" "Systemd daemon reloaded successfully." false
-	else
-		log "ERROR" "Failed to reload systemd daemon. Exiting script." false
-		exit 1
+		log "WARNING" "Service ${SERVICE_NAME} does not exist. Skiping this part." false
 	fi
 
 	if [ "$is_hard_delete" = true ]; then
-		if [ "$is_silent" = false ]; then
-			log "INFO" "Removing configuration directory..." false
-		fi
+		log "INFO" "Removing configuration directory..." false
 		rm -rf ${CONFIG_PATH}
 
-		if [ "$is_silent" = false ]; then
-			log "INFO" "Removing log file..." false
-		fi
+		log "INFO" "Removing log file..." false
 		rm -rf ${LOG_PATH}
 
-		if [ "$is_silent" = false ]; then
-			log "INFO" "Removing store data directory..." false
-		fi
+		log "INFO" "Removing store data directory..." false
 		rm -rf ${STORE_DATA_PATH}
 	fi
 
-	if [ "$is_silent" = false ]; then
-		log "INFO" "Removing agent installation directory..." false
-	fi
+	log "INFO" "Removing agent installation directory..." false
 	rm -rf ${AGENT_INSTALLATION_DIR}
 
-	if [ "$is_silent" = false ]; then
-		log "INFO" "Removing symbolic link..." false
-	fi
+	log "INFO" "Removing symbolic link..." false
 	rm -f ${SYMBOLIC_LINK}
 
 	log "INFO" "" false

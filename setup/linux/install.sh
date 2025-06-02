@@ -154,9 +154,7 @@ check_parameters() {
 
 	# Check if the log level empty
 	if [ -z "$log_level" ]; then
-		if [ "$is_silent" = "false" ]; then
-			log "INFO" "Log level will be set to 2 by default" false
-		fi
+		log "INFO" "Log level will be set to 2 by default" false
 		LOG_LEVEL=2
 	else
 		# Check if the log level is a number
@@ -170,9 +168,7 @@ check_parameters() {
 
 	# Check if the inventory mode empty
 	if [ -z "$inventory_mode" ]; then
-		if [ "$is_silent" = "false" ]; then
-			log "INFO" "Inventory mode will be set to 1 by default (Remote with template)" false
-		fi
+		log "INFO" "Inventory mode will be set to 1 by default (Remote with template)" false
 		INVENTORY_MODE=1
 	else
 		# Check if the inventory mode is a number
@@ -247,10 +243,8 @@ create_config_file() {
 	local inventory_mode="$7"
 	local is_silent="$8"
 
-	# Construct config directory and file
-	if [ "$is_silent" = "false" ]; then
-		log "INFO" "Creating configuration file..." false
-	fi
+	# Construct config directory and file	
+	log "INFO" "Creating configuration file..." false
 	mkdir -p "$CONFIG_PATH"
 	touch "$CONFIG_PATH/config.json"
 	echo "
@@ -269,11 +263,7 @@ create_config_file() {
 }
 
 create_log_file() {
-	local is_silent="$1"
-
-	if [ "$is_silent" = "false" ]; then
-		log "INFO" "Creating log file..." false
-	fi
+	log "INFO" "Creating log file..." false
 	mkdir -p "$(dirname "$LOG_PATH")"
 	touch "$LOG_PATH"
 }
@@ -281,12 +271,9 @@ create_log_file() {
 # Function to run the executable with provided params
 run_executable() {
 	local run_now="$1"
-	local is_silent="$2"
 
 	if [ "$run_now" = "true" ]; then
-		if [ "$is_silent" = "false" ]; then
-			log "INFO" "Running the agent now..." false
-		fi
+		log "INFO" "Running the agent now..." false
 		command="$WORKING_DIRECTORY$EXEC_AGENT -f true -m $inventory_mode -p $password -u $username -s $url -l $LOG_PATH -d $STORE_DATA_PATH -v $log_level -c $certificate"
 		$command
 	fi
@@ -294,29 +281,20 @@ run_executable() {
 
 # Function to register service
 register_service() {
-	local is_silent="$1"
-
 	# create service file
-	if [ "$is_silent" = "false" ]; then
-		log "INFO" "Creating service file..." false
-	fi
+	log "INFO" "Creating service file..." false
 	cp "${WORKING_DIRECTORY}/ocsinventory-agent.service" "/etc/systemd/system/${SERVICE_NAME}.service"
 
 	# restart daemon, enable and start service
-	if [ "$is_silent" = "false" ]; then
-		log "INFO" "Reloading daemon and enabling service" false
-	fi
+	log "INFO" "Reloading daemon and enabling service" false
 	systemctl daemon-reload
 	systemctl enable ${SERVICE_NAME}.service
 	systemctl start ${SERVICE_NAME}.service
-	if [ "$is_silent" = "false" ]; then
-		log "INFO" "Service Started" false
-	fi
+	log "INFO" "Service Started" false
 }
 
 # Function to run in silent mode
 run_silent() {
-	log "INFO" "" false
 	log "INFO" "+---------------------------------------------------------+" false
 	log "INFO" "|                                                         |" false
 	log "INFO" "|     Installing OCSInventory Agent in silent mode...     |" false
@@ -324,16 +302,15 @@ run_silent() {
 	log "INFO" "+---------------------------------------------------------+" false
 	log "INFO" "" false
 
-	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$INVENTORY_MODE" true
+	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$INVENTORY_MODE"
 	copy_agent_contents
-	create_config_file "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICATE" "$INVENTORY_MODE" true
-	create_log_file true
-	run_executable "$NOW" true
+	create_config_file "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICATE" "$INVENTORY_MODE"
+	create_log_file
+	run_executable "$NOW"
 }
 
 # Function to run in interactive mode
 run_interactive() {
-	log "INFO" "" false
 	log "INFO" "+--------------------------------------------------------------+" false
 	log "INFO" "|                                                              |" false
 	log "INFO" "|     Installing OCSInventory Agent in interactive mode...     |" false
@@ -393,11 +370,11 @@ run_interactive() {
 		fi
 	fi
 
-	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$INVENTORY_MODE" false
+	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$INVENTORY_MODE"
 	copy_agent_contents
-	create_config_file "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICATE" "$INVENTORY_MODE" false
-	create_log_file false
-	run_executable "$NOW" false
+	create_config_file "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$NOW" "$CERTIFICATE" "$INVENTORY_MODE"
+	create_log_file
+	run_executable "$NOW"
 }
 
 # Run in the appropriate mode
@@ -411,9 +388,9 @@ fi
 if [ -d "$CONFIG_PATH" ] && [ -f "$LOG_PATH" ] && [ -d "$AGENT_INSTALLATION_DIR" ] && [ -f "$SYMBOLIC_LINK" ]; then
 	if [ "$SERVICE" = "true" ]; then
 		if [ "$SILENT" = "true" ]; then
-			register_service true
+			register_service
 		else
-			register_service false
+			register_service
 		fi
 	fi
 	log "INFO" "" false
@@ -427,7 +404,6 @@ if [ -d "$CONFIG_PATH" ] && [ -f "$LOG_PATH" ] && [ -d "$AGENT_INSTALLATION_DIR"
 	log "INFO" "|                                                                                                |" false
 	log "INFO" "|               Please refer to the documentation for more information.                          |" false
 	log "INFO" "+------------------------------------------------------------------------------------------------+" false
-	log "INFO" "" false
 
 else
 	log "INFO" "" false
