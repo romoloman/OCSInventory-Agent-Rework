@@ -114,9 +114,9 @@ uninstall_agent() {
 	if [ "$is_silent" = false ]; then
 		log "INFO" "Stopping and disabling the service..." false
 	fi
-	if sudo systemctl stop ${SERVICE_NAME} > /dev/null 2> /dev/null; then
+	if systemctl stop ${SERVICE_NAME} > /dev/null 2> /dev/null; then
 		log "INFO" "Service ${SERVICE_NAME} stopped successfully." false
-		if sudo systemctl disable ${SERVICE_NAME} > /dev/null 2> /dev/null; then
+		if systemctl disable ${SERVICE_NAME} > /dev/null 2> /dev/null; then
 			log "INFO" "Service ${SERVICE_NAME} disabled successfully." false
 		else
 			log "ERROR" "Failed to disable service ${SERVICE_NAME}. Exiting script." false
@@ -130,39 +130,39 @@ uninstall_agent() {
 	if [ "$is_silent" = false ]; then
 		log "INFO" "Removing service file..." false
 	fi
-	sudo rm -f ${SERVICE_FILE}
+	rm -f ${SERVICE_FILE}
 
 	if [ "$is_silent" = false ]; then
 		log "INFO" "Reloading systemd daemon..." false
 	fi
-	sudo systemctl daemon-reload
+	systemctl daemon-reload
 
 	if [ "$is_hard_delete" = true ]; then
 		if [ "$is_silent" = false ]; then
 			log "INFO" "Removing configuration directory..." false
 		fi
-		sudo rm -rf ${CONFIG_PATH}
+		rm -rf ${CONFIG_PATH}
 
 		if [ "$is_silent" = false ]; then
 			log "INFO" "Removing log file..." false
 		fi
-		sudo rm -rf ${LOG_PATH}
+		rm -rf ${LOG_PATH}
 
 		if [ "$is_silent" = false ]; then
 			log "INFO" "Removing store data directory..." false
 		fi
-		sudo rm -rf ${STORE_DATA_PATH}
+		rm -rf ${STORE_DATA_PATH}
 	fi
 
 	if [ "$is_silent" = false ]; then
 		log "INFO" "Removing agent installation directory..." false
 	fi
-	sudo rm -rf ${AGENT_INSTALLATION_DIR}
+	rm -rf ${AGENT_INSTALLATION_DIR}
 
 	if [ "$is_silent" = false ]; then
 		log "INFO" "Removing symbolic link..." false
 	fi
-	sudo rm -f ${SYMBOLIC_LINK}
+	rm -f ${SYMBOLIC_LINK}
 
 	log "INFO" "" false
 	log "INFO" "+---------------------------------------------------------------+" false
