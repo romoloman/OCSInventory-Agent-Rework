@@ -76,15 +76,15 @@ log() {
 	local type="$1"
 	local message="$2"
 	local only_file="$3"
-	
+
 	if [ "$SILENT" = false ]; then
 		if [ "$only_file" = false ]; then
 			echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" | tee -a ./uninstall.log
 		else
-			echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >> ./uninstall.log
+			echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >>./uninstall.log
 		fi
 	else
-		echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >> ./uninstall.log
+		echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >>./uninstall.log
 	fi
 }
 
@@ -114,18 +114,18 @@ uninstall_agent() {
 	if [ "$is_silent" = false ]; then
 		log "INFO" "Stopping and disabling the service..." false
 	fi
-	if systemctl stop ${SERVICE_NAME} > /dev/null 2> /dev/null; then
+	if systemctl stop ${SERVICE_NAME} >/dev/null 2>/dev/null; then
 		log "INFO" "Service ${SERVICE_NAME} stopped successfully." false
-		if systemctl disable ${SERVICE_NAME} > /dev/null 2> /dev/null; then
+		if systemctl disable ${SERVICE_NAME} >/dev/null 2>/dev/null; then
 			log "INFO" "Service ${SERVICE_NAME} disabled successfully." false
 		else
 			log "ERROR" "Failed to disable service ${SERVICE_NAME}. Exiting script." false
-			exit 1;
+			exit 1
 		fi
 	else
 		log "ERROR" "Failed to stop service ${SERVICE_NAME}. It may not be running. Exiting script." false
-		exit 1;
-	fi	
+		exit 1
+	fi
 
 	if [ "$is_silent" = false ]; then
 		log "INFO" "Removing service file..." false

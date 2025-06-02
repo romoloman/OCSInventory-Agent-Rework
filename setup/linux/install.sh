@@ -115,15 +115,15 @@ log() {
 	local type="$1"
 	local message="$2"
 	local only_file="$3"
-	
+
 	if [ "$SILENT" = false ]; then
 		if [ "$only_file" = false ]; then
 			echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" | tee -a ./install.log
 		else
-			echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >> ./install.log
+			echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >>./install.log
 		fi
 	else
-		echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >> ./install.log
+		echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >>./install.log
 	fi
 }
 
@@ -228,7 +228,7 @@ copy_agent_contents() {
 	chmod +x "$AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$SERVICE_EXEC"
 
 	# Link the exec agent to /usr/bin
-	if ln -s "$AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$EXEC_AGENT" "$SYMBOLIC_LINK" > /dev/null 2> /dev/null; then
+	if ln -s "$AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$EXEC_AGENT" "$SYMBOLIC_LINK" >/dev/null 2>/dev/null; then
 		log "INFO" "Symbolic link created successfully at $SYMBOLIC_LINK" false
 	else
 		log "ERROR" "Failed to create symbolic link at $SYMBOLIC_LINK. Exiting script." false
