@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ "$(id -u)" != "0" ]; then
-	echo "The installation script requires elevated privileges, please run as root" >&2
+	log "ERROR" "The installation script requires elevated privileges, please run as root" false
 	exit 1
 fi
 
@@ -104,11 +104,28 @@ while true; do
 		break
 		;;
 	*)
-		echo "Internal error!" >&2
+		log "ERROR" "Internal error!" false
 		exit 1
 		;;
 	esac
 done
+
+# Log formatting function
+log() {
+	local type="$1"
+	local message="$2"
+	local only_file="$3"
+	
+	if [ "$SILENT" = false ]; then
+		if [ "$only_file" = false ]; then
+			echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" | tee -a ./install.log
+		else
+			echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >> ./install.log
+		fi
+	else
+		echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >> ./install.log
+	fi
+}
 
 # Function to check if the parameters are provided
 check_parameters() {
@@ -122,15 +139,15 @@ check_parameters() {
 	# check required params in silend mode only
 	if [ "$is_silent" = "true" ]; then
 		if [ -z "$url" ]; then
-			echo "Server URL is required in silent mode (-U, --url)" >&2
+			log "ERROR" "Server URL is required in silent mode (-U, --url)" false
 			usage
 		fi
 		if [ -z "$username" ]; then
-			echo "Username is required in silent mode (-u, --username)" >&2
+			log "ERROR" "Username is required in silent mode (-u, --username)" false
 			usage
 		fi
 		if [ -z "$password" ]; then
-			echo "Password is required in silent mode (-p, --password)" >&2
+			log "ERROR" "Password is required in silent mode (-p, --password)" false
 			usage
 		fi
 	fi
@@ -138,32 +155,32 @@ check_parameters() {
 	# Check if the log level empty
 	if [ -z "$log_level" ]; then
 		if [ "$is_silent" = "false" ]; then
-			echo "Log level will be set to 2 by default"
+			log "INFO" "Log level will be set to 2 by default" false
 		fi
 		LOG_LEVEL=2
 	else
 		# Check if the log level is a number
-		if ! echo "$log_level" | grep -qE '^[0-9]+$'; then
-			echo "Log level must be a number, using default value 2 (Info)"
+		if ! echo "$log_level" | grep -qE^[0-9]+; then
+			log "INFO" "Log level must be a number, using default value 2 (Info)" false
 			LOG_LEVEL=2
 		else
-			echo "Log level is set to $log_level"
+			log "INFO" "Log level is set to $log_level" false
 		fi
 	fi
 
 	# Check if the inventory mode empty
 	if [ -z "$inventory_mode" ]; then
 		if [ "$is_silent" = "false" ]; then
-			echo "Inventory mode will be set to 1 by default (Remote with template)"
+			log "INFO" "Inventory mode will be set to 1 by default (Remote with template)" false
 		fi
 		INVENTORY_MODE=1
 	else
 		# Check if the inventory mode is a number
-		if ! echo "$inventory_mode" | grep -qE '^[0-9]+$'; then
-			echo "Inventory mode must be a number, using default value 1 (Remote with template)"
+		if ! echo "$inventory_mode" | grep -qE^[0-9]+; then
+			log "INFO" "Inventory mode must be a number, using default value 1 (Remote with template)" false
 			INVENTORY_MODE=1
 		else
-			echo "Inventory mode is set to $inventory_mode"
+			log "INFO" "Inventory mode is set to $inventory_mode" false
 		fi
 	fi
 }
@@ -174,19 +191,20 @@ check_installed_agent() {
 	if [ -d "$AGENT_INSTALLATION_DIR" ] || [ -f "/etc/systemd/system/${SERVICE_NAME}.service" ] || [ -d "$CONFIG_PATH" ] || [ -f "$LOG_PATH" ]; then
 		# check if running in silent mode
 		if [ "$SILENT" = "true" ]; then
-			echo "Existing agent installation detected in silent mode. Automatically uninstalling..."
+			log "INFO" "Existing agent installation detected in silent mode. Automatically uninstalling..." false
 			# automatically uninstall in silent mode
 			sh "${WORKING_DIRECTORY}/uninstall.sh" -S -y
 		else
 			# prompt the user in interactive mode
 			echo -n "The agent is already installed, do you want to remove it first? ([y]/n) "
 			read -r remove_choice
+			log "INFO" "The agent is already installed, do you want to remove it first? ([y]/n) $remove_choice" true
 			if [ "$remove_choice" = "y" ] || [ "$remove_choice" = "Y" ] || [ -z "$remove_choice" ]; then
-				echo "Uninstalling the existing agent..."
+				log "INFO" "Uninstalling the existing agent..." false
 				sh "${WORKING_DIRECTORY}/uninstall.sh" -y
-			# if the user chose 'n', we inform them the script will likely overwrite files
+			# if the user chose, we inform them the script will likely overwrite files
 			else
-				echo "Proceeding with installation without removing the existing one. Files may be overwritten."
+				log "INFO" "Proceeding with installation without removing the existing one. Files may be overwritten." false
 			fi
 		fi
 	fi
@@ -210,7 +228,12 @@ copy_agent_contents() {
 	chmod +x "$AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$SERVICE_EXEC"
 
 	# Link the exec agent to /usr/bin
-	ln -s "$AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$EXEC_AGENT" "$SYMBOLIC_LINK"
+	if ln -s "$AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$EXEC_AGENT" "$SYMBOLIC_LINK" > /dev/null 2> /dev/null; then
+		log "INFO" "Symbolic link created successfully at $SYMBOLIC_LINK" false
+	else
+		log "ERROR" "Failed to create symbolic link at $SYMBOLIC_LINK. Exiting script." false
+		exit 1
+	fi
 }
 
 # Function to create the config file with provided params
@@ -226,7 +249,7 @@ create_config_file() {
 
 	# Construct config directory and file
 	if [ "$is_silent" = "false" ]; then
-		echo "Creating configuration file..."
+		log "INFO" "Creating configuration file..." false
 	fi
 	mkdir -p "$CONFIG_PATH"
 	touch "$CONFIG_PATH/config.json"
@@ -249,7 +272,7 @@ create_log_file() {
 	local is_silent="$1"
 
 	if [ "$is_silent" = "false" ]; then
-		echo "Creating log file..."
+		log "INFO" "Creating log file..." false
 	fi
 	mkdir -p "$(dirname "$LOG_PATH")"
 	touch "$LOG_PATH"
@@ -262,10 +285,10 @@ run_executable() {
 
 	if [ "$run_now" = "true" ]; then
 		if [ "$is_silent" = "false" ]; then
-			echo "Running the agent now..."
+			log "INFO" "Running the agent now..." false
 		fi
-		command_run="$WORKING_DIRECTORY$EXEC_AGENT -f true -m $inventory_mode -p $password -u $username -s $url -l $LOG_PATH -d $STORE_DATA_PATH -v $log_level -c $certificate"
-		$command_run
+		command="$WORKING_DIRECTORY$EXEC_AGENT -f true -m $inventory_mode -p $password -u $username -s $url -l $LOG_PATH -d $STORE_DATA_PATH -v $log_level -c $certificate"
+		$command
 	fi
 }
 
@@ -275,31 +298,31 @@ register_service() {
 
 	# create service file
 	if [ "$is_silent" = "false" ]; then
-		echo "Creating service file..."
+		log "INFO" "Creating service file..." false
 	fi
 	cp "${WORKING_DIRECTORY}/ocsinventory-agent.service" "/etc/systemd/system/${SERVICE_NAME}.service"
 
 	# restart daemon, enable and start service
 	if [ "$is_silent" = "false" ]; then
-		echo "Reloading daemon and enabling service"
+		log "INFO" "Reloading daemon and enabling service" false
 	fi
 	systemctl daemon-reload
 	systemctl enable ${SERVICE_NAME}.service
 	systemctl start ${SERVICE_NAME}.service
 	if [ "$is_silent" = "false" ]; then
-		echo "Service Started"
+		log "INFO" "Service Started" false
 	fi
 }
 
 # Function to run in silent mode
 run_silent() {
-	echo
-	echo "+---------------------------------------------------------+"
-	echo "|                                                         |"
-	echo "|     Installing OCSInventory Agent in silent mode...     |"
-	echo "|                                                         |"
-	echo "+---------------------------------------------------------+"
-	echo
+	log "INFO" "" false
+	log "INFO" "+---------------------------------------------------------+" false
+	log "INFO" "|                                                         |" false
+	log "INFO" "|     Installing OCSInventory Agent in silent mode...     |" false
+	log "INFO" "|                                                         |" false
+	log "INFO" "+---------------------------------------------------------+" false
+	log "INFO" "" false
 
 	check_parameters "$URL" "$USERNAME" "$PASSWORD" "$LOG_LEVEL" "$INVENTORY_MODE" true
 	copy_agent_contents
@@ -310,53 +333,61 @@ run_silent() {
 
 # Function to run in interactive mode
 run_interactive() {
-	echo
-	echo "+--------------------------------------------------------------+"
-	echo "|                                                              |"
-	echo "|     Installing OCSInventory Agent in interactive mode...     |"
-	echo "|                                                              |"
-	echo "+--------------------------------------------------------------+"
-	echo
+	log "INFO" "" false
+	log "INFO" "+--------------------------------------------------------------+" false
+	log "INFO" "|                                                              |" false
+	log "INFO" "|     Installing OCSInventory Agent in interactive mode...     |" false
+	log "INFO" "|                                                              |" false
+	log "INFO" "+--------------------------------------------------------------+" false
+	log "INFO" "" false
 
 	# only prompting if the var has not been set by an arg already
 	if [ -z "$URL" ]; then
 		echo -n "Enter server URL: "
 		read -r URL
+		log "INFO" "Enter server URL: $URL" true
 	fi
 	if [ -z "$USERNAME" ]; then
 		echo -n "Enter username: "
 		read -r USERNAME
+		log "INFO" "Enter username: $USERNAME" true
 	fi
 	if [ -z "$PASSWORD" ]; then
 		echo -n "Enter password: "
 		read -r PASSWORD
+		log "INFO" "Enter password: $PASSWORD" true
 	fi
 	if [ -z "$INVENTORY_MODE" ]; then
 		echo -n "Enter the inventory mode (default is 1 = Remote with template): "
 		read -r INVENTORY_MODE
+		log "INFO" "Enter the inventory mode (default is 1 = Remote with template): $INVENTORY_MODE" true
 	fi
 	if [ -z "$LOG_LEVEL" ]; then
 		echo -n "Enter the log level (default is 2 = Info): "
 		read -r LOG_LEVEL
+		log "INFO" "Enter the log level (default is 2 = Info): $LOG_LEVEL" true
 	fi
 	if [ "$CERTIFICATE" = "null" ]; then
 		echo -n "Enter the certificate path (leave empty if none): "
 		read -r cert_input
+		log "INFO" "Enter the certificate path (leave empty if none): $cert_input" true
 		if [ -n "$cert_input" ]; then
 			CERTIFICATE="$cert_input"
 		fi
 	fi
 	if [ "$SERVICE" = "false" ]; then
-		echo -n "Should the agent be registered as a systemd service? ([y]/n):"
+		echo -n "Should the agent be registered as a systemd service? ([y]/n)"
 		read -r service_choice
+		log "INFO" "Should the agent be registered as a systemd service? ([y]/n) $service_choice" true
 		if [ "$service_choice" = "y" ] || [ "$service_choice" = "Y" ] || [ -z "$service_choice" ]; then
 			SERVICE=true
 		fi
 	fi
 
 	if [ "$NOW" = "false" ]; then
-		echo -n "Do you want the agent to run immediately after installation? ([y]/n):"
+		echo -n "Do you want the agent to run immediately after installation? ([y]/n)"
 		read -r now_choice
+		log "INFO" "Do you want the agent to run immediately after installation? ([y]/n) $now_choice" true
 		if [ "$now_choice" = "y" ] || [ "$now_choice" = "Y" ] || [ -z "$now_choice" ]; then
 			NOW=true
 		fi
@@ -385,24 +416,24 @@ if [ -d "$CONFIG_PATH" ] && [ -f "$LOG_PATH" ] && [ -d "$AGENT_INSTALLATION_DIR"
 			register_service false
 		fi
 	fi
-	echo
-	echo "+------------------------------------------------------------------------------------------------+"
-	echo "|               OCSInventory Agent has been successfully installed and configured.               |"
-	echo "|                                                                                                |"
-	echo "|          Configuration files are located at $CONFIG_PATH"
-	echo "|          Log file is located at $LOG_PATH"
-	echo "|          Agent data storage is located at $STORE_DATA_PATH"
-	echo "|          Agent installation directory is located at $AGENT_INSTALLATION_DIR"
-	echo "|                                                                                                |"
-	echo "|               Please refer to the documentation for more information.                          |"
-	echo "+------------------------------------------------------------------------------------------------+"
-	echo
+	log "INFO" "" false
+	log "INFO" "+------------------------------------------------------------------------------------------------+" false
+	log "INFO" "|               OCSInventory Agent has been successfully installed and configured.               |" false
+	log "INFO" "|                                                                                                |" false
+	log "INFO" "|          Configuration files are located at $CONFIG_PATH" false
+	log "INFO" "|          Log file is located at $LOG_PATH" false
+	log "INFO" "|          Agent data storage is located at $STORE_DATA_PATH" false
+	log "INFO" "|          Agent installation directory is located at $AGENT_INSTALLATION_DIR" false
+	log "INFO" "|                                                                                                |" false
+	log "INFO" "|               Please refer to the documentation for more information.                          |" false
+	log "INFO" "+------------------------------------------------------------------------------------------------+" false
+	log "INFO" "" false
 
 else
-	echo
-	echo "*** ERROR: Installation failed, please check the logs for more information" >&2
-	echo
-	echo "Installation aborted !" >&2
+	log "INFO" "" false
+	log "INFO" "*** ERROR: Installation failed, please check the logs for more information" false
+	log "INFO" "" false
+	log "INFO" "Installation aborted !" false
 	exit 1
 fi
 

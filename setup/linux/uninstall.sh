@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ "$(id -u)" != "0" ]; then
-	echo "The uninstallation script requires elevated privileges, please run as root" >&2
+	log "ERROR" "The uninstallation script requires elevated privileges, please run as root" false
 	exit 1
 fi
 
@@ -65,11 +65,28 @@ while true; do
 		break
 		;;
 	*)
-		echo "Internal error!" >&2
+		log "ERROR" "Internal error!" false
 		exit 1
 		;;
 	esac
 done
+
+# Log formatting function
+log() {
+	local type="$1"
+	local message="$2"
+	local only_file="$3"
+	
+	if [ "$SILENT" = false ]; then
+		if [ "$only_file" = false ]; then
+			echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" | tee -a ./uninstall.log
+		else
+			echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >> ./uninstall.log
+		fi
+	else
+		echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >> ./uninstall.log
+	fi
+}
 
 # Function to uninstall the agent
 uninstall_agent() {
@@ -77,81 +94,93 @@ uninstall_agent() {
 	local is_hard_delete=$2
 
 	if [ "$is_silent" = true ]; then
-		echo
-		echo "+-----------------------------------------------------------+"
-		echo "|                                                           |"
-		echo "|     Uninstalling OCSInventory Agent in silent mode...     |"
-		echo "|                                                           |"
-		echo "+-----------------------------------------------------------+"
-		echo
+		log "INFO" "" false
+		log "INFO" "+-----------------------------------------------------------+" false
+		log "INFO" "|                                                           |" false
+		log "INFO" "|     Uninstalling OCSInventory Agent in silent mode...     |" false
+		log "INFO" "|                                                           |" false
+		log "INFO" "+-----------------------------------------------------------+" false
+		log "INFO" "" false
 	else
-		echo
-		echo "+----------------------------------------------------------------+"
-		echo "|                                                                |"
-		echo "|     Uninstalling OCSInventory Agent in interactive mode...     |"
-		echo "|                                                                |"
-		echo "+----------------------------------------------------------------+"
-		echo
+		log "INFO" "" false
+		log "INFO" "+----------------------------------------------------------------+" false
+		log "INFO" "|                                                                |" false
+		log "INFO" "|     Uninstalling OCSInventory Agent in interactive mode...     |" false
+		log "INFO" "|                                                                |" false
+		log "INFO" "+----------------------------------------------------------------+" false
+		log "INFO" "" false
 	fi
 
 	if [ "$is_silent" = false ]; then
-		echo "Stopping and disabling the service..."
+		log "INFO" "Stopping and disabling the service..." false
 	fi
-	sudo systemctl stop ${SERVICE_NAME}
-	sudo systemctl disable ${SERVICE_NAME}
+	if sudo systemctl stop ${SERVICE_NAME} > /dev/null 2> /dev/null; then
+		log "INFO" "Service ${SERVICE_NAME} stopped successfully." false
+		if sudo systemctl disable ${SERVICE_NAME} > /dev/null 2> /dev/null; then
+			log "INFO" "Service ${SERVICE_NAME} disabled successfully." false
+		else
+			log "ERROR" "Failed to disable service ${SERVICE_NAME}. Exiting script." false
+			exit 1;
+		fi
+	else
+		log "ERROR" "Failed to stop service ${SERVICE_NAME}. It may not be running. Exiting script." false
+		exit 1;
+	fi	
 
 	if [ "$is_silent" = false ]; then
-		echo "Removing service file..."
+		log "INFO" "Removing service file..." false
 	fi
 	sudo rm -f ${SERVICE_FILE}
 
 	if [ "$is_silent" = false ]; then
-		echo "Reloading systemd daemon..."
+		log "INFO" "Reloading systemd daemon..." false
 	fi
 	sudo systemctl daemon-reload
 
 	if [ "$is_hard_delete" = true ]; then
 		if [ "$is_silent" = false ]; then
-			echo "Removing configuration directory..."
+			log "INFO" "Removing configuration directory..." false
 		fi
 		sudo rm -rf ${CONFIG_PATH}
 
 		if [ "$is_silent" = false ]; then
-			echo "Removing log file..."
+			log "INFO" "Removing log file..." false
 		fi
 		sudo rm -rf ${LOG_PATH}
 
 		if [ "$is_silent" = false ]; then
-			echo "Removing store data directory..."
+			log "INFO" "Removing store data directory..." false
 		fi
 		sudo rm -rf ${STRORE_DATA_PATH}
 	fi
 
 	if [ "$is_silent" = false ]; then
-		echo "Removing agent installation directory..."
+		log "INFO" "Removing agent installation directory..." false
 	fi
 	sudo rm -rf ${AGENT_INSTALLATION_DIR}
 
 	if [ "$is_silent" = false ]; then
-		echo "Removing symbolic link..."
+		log "INFO" "Removing symbolic link..." false
 	fi
 	sudo rm -f ${SYMBOLIC_LINK}
 
-	echo "+---------------------------------------------------------------+"
-	echo "|                                                               |"
-	echo "|     OCSInventory Agent has been successfully uninstalled.     |"
-	echo "|                                                               |"
-	echo "+---------------------------------------------------------------+"
+	log "INFO" "" false
+	log "INFO" "+---------------------------------------------------------------+" false
+	log "INFO" "|                                                               |" false
+	log "INFO" "|     OCSInventory Agent has been successfully uninstalled.     |" false
+	log "INFO" "|                                                               |" false
+	log "INFO" "+---------------------------------------------------------------+" false
 }
 
 # Function to prompt for confirmation
 prompt_confirmation() {
 	echo -n "Are you sure you want to uninstall OCS Inventory NG Agent ([y]/n)? "
 	read -r confirm
+	log "INFO" "Are you sure you want to uninstall OCS Inventory NG Agent ([y]/n)? $confirm" true
 	if [[ "$confirm" =~ ^[yY]?$ ]]; then
 		uninstall_agent "$SILENT" "$HARD_DELETE"
 	else
-		echo "Uninstallation cancelled."
+		log "INFO" "Uninstallation cancelled." false
 	fi
 }
 
