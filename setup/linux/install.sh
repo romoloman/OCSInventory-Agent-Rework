@@ -243,7 +243,7 @@ create_config_file() {
 	local inventory_mode="$7"
 	local is_silent="$8"
 
-	# Construct config directory and file	
+	# Construct config directory and file
 	log "INFO" "Creating configuration file..." false
 	mkdir -p "$CONFIG_PATH"
 	touch "$CONFIG_PATH/config.json"
