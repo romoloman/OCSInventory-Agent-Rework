@@ -9,7 +9,7 @@ fi
 SERVICE_NAME="ocsinventory-agent"
 CONFIG_PATH="/etc/ocsinventory-agent"
 LOG_PATH="/var/log/ocsinventory-agent"
-STRORE_DATA_PATH="/var/lib/ocsinventory-data"
+STORE_DATA_PATH="/var/lib/ocsinventory-data"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 AGENT_INSTALLATION_DIR="/usr/share/ocsinventory-agent"
 SYMBOLIC_LINK="/usr/bin/ocsinventory-agent"
@@ -151,7 +151,7 @@ uninstall_agent() {
 		if [ "$is_silent" = false ]; then
 			log "INFO" "Removing store data directory..." false
 		fi
-		sudo rm -rf ${STRORE_DATA_PATH}
+		sudo rm -rf ${STORE_DATA_PATH}
 	fi
 
 	if [ "$is_silent" = false ]; then
