@@ -135,7 +135,12 @@ uninstall_agent() {
 	if [ "$is_silent" = false ]; then
 		log "INFO" "Reloading systemd daemon..." false
 	fi
-	systemctl daemon-reload
+	if systemctl daemon-reload > /dev/null 2> /dev/null; then
+		log "INFO" "Systemd daemon reloaded successfully." false
+	else
+		log "ERROR" "Failed to reload systemd daemon. Exiting script." false
+		exit 1;
+	fi
 
 	if [ "$is_hard_delete" = true ]; then
 		if [ "$is_silent" = false ]; then
