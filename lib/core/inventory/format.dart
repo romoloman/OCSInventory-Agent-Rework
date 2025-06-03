@@ -84,7 +84,7 @@ class Format {
       if (result.isNotEmpty) subInventory.add(result);
     }
 
-    logger.verbose(this.runtimeType.toString(), subInventory.toString());
+    logger.debug(this.runtimeType.toString(), subInventory.toString());
 
     return subInventory;
   }
@@ -190,8 +190,8 @@ class Format {
           }
 
           dynamic match = retrievalValue?.firstMatch(processedResult);
-          condition =
-              retrievalValue != null && retrievalValue.hasMatch(processedResult);
+          condition = retrievalValue != null &&
+              retrievalValue.hasMatch(processedResult);
 
           if (match != null) {
             if ((match.groupCount >= 1) && (match.group(1) != null)) {

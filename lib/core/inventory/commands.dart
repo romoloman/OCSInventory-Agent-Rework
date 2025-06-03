@@ -33,7 +33,7 @@ class Commands {
     if (field != "") {
       field = " [$field]";
     }
-    logger.verbose(this.runtimeType.toString(),
+    logger.debug(this.runtimeType.toString(),
         "[$section]$field Executing $method: '$target'");
     final methodParameters = await getMethodParameters(method, target);
     final process = methodParameters['process'];
