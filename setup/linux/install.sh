@@ -155,7 +155,8 @@ check_silent_parameters() {
 	fi
 
 	if [ -z "$CERTIFICATE" ]; then
-		log "WARNING" "Certificate not provided, using default value null"
+		log "WARNING" "Certificate not provided, using default value none"
+		CERTIFICATE="none"
 	fi
 
 	if [ "$NOW" = "false" ]; then
