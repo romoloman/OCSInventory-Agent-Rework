@@ -108,11 +108,11 @@ uninstall_agent() {
 
 	log "INFO" "Stopping and disabling the service..." false
 
-	if systemctl list-units --full -all | grep -Fq "${SERVICE_NAME}.service"; then
-		if systemctl stop ${SERVICE_NAME} >/dev/null 2>/dev/null; then
+	if systemctl -q list-units --full -all | grep -Fq "${SERVICE_NAME}.service"; then
+		if systemctl -q stop ${SERVICE_NAME} >/dev/null 2>/dev/null; then
 			log "INFO" "Service ${SERVICE_NAME} stopped successfully." false
 
-			if systemctl disable ${SERVICE_NAME} >/dev/null 2>/dev/null; then
+			if systemctl -q disable ${SERVICE_NAME} >/dev/null 2>/dev/null; then
 				log "INFO" "Service ${SERVICE_NAME} disabled successfully." false
 
 				log "INFO" "Removing service file..." false
@@ -120,7 +120,7 @@ uninstall_agent() {
 
 				log "INFO" "Reloading systemd daemon..." false
 
-				if systemctl daemon-reload >/dev/null 2>/dev/null; then
+				if systemctl -q daemon-reload >/dev/null 2>/dev/null; then
 					log "INFO" "Systemd daemon reloaded successfully." false
 				else
 					log "ERROR" "Failed to reload systemd daemon. Exiting script." false

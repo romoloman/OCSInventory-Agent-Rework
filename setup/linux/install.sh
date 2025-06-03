@@ -210,12 +210,7 @@ copy_agent_contents() {
 	chmod +x "$AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$SERVICE_EXEC"
 
 	# Link the exec agent to /usr/bin
-	if ln -s "$AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$EXEC_AGENT" "$SYMBOLIC_LINK" >/dev/null 2>/dev/null; then
-		log "INFO" "Symbolic link created successfully at $SYMBOLIC_LINK" false
-	else
-		log "ERROR" "Failed to create symbolic link at $SYMBOLIC_LINK. Exiting script." false
-		exit 1
-	fi
+	ln -s "$AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$EXEC_AGENT" "$SYMBOLIC_LINK"
 }
 
 # Function to create the config file with provided params
@@ -262,9 +257,9 @@ register_service() {
 
 	# restart daemon, enable and start service
 	log "INFO" "Reloading daemon and enabling service" false
-	systemctl daemon-reload
-	systemctl enable ${SERVICE_NAME}.service
-	systemctl start ${SERVICE_NAME}.service
+	systemctl -q daemon-reload
+	systemctl -q enable ${SERVICE_NAME}.service
+	systemctl -q start ${SERVICE_NAME}.service
 	log "INFO" "Service Started" false
 }
 
