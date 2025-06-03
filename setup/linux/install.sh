@@ -350,7 +350,7 @@ run_interactive() {
 		log "INFO" "Log level: $LOG_LEVEL" true
 	fi
 
-	if [ -z "$CERTIFICATE"]; then
+	if [ -z "$CERTIFICATE" ]; then
 		echo -n "Enter the certificate path (leave empty if none): "
 		read -r CERTIFICATE
 		if [ "$CERTIFICATE" = "" ]; then
