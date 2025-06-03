@@ -50,8 +50,6 @@ class Logger {
     _isFile = config.getInventoryConfig("log_file");
     _url = config.getInventoryConfig("url");
     _logLevel = config.getInventoryConfig("log_level");
-    String serverLogLevel = config.getCoreConfig("agent", "inventory_loglevel");
-    _serverLogLevel = _stringToLevel(serverLogLevel);
 
     if (_isFile) {
       try {
@@ -132,6 +130,9 @@ class Logger {
           "Asset ID is not defined yet. Logging to server is not possible yet.");
       return;
     }
+
+    String serverLogLevel = config.getCoreConfig("agent", "inventory_loglevel");
+    _serverLogLevel = _stringToLevel(serverLogLevel);
 
     // error code to log level and scope
     Map<int, dynamic> errorMapping = {
