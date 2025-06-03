@@ -177,7 +177,7 @@ prompt_confirmation() {
 
 # Check for automatic confirmation or prompt the user
 if [ "$AUTO_CONFIRM" = "true" ]; then
-	uninstall_agent "$SILENT" "$HARD_DELETE"
+	uninstall_agent
 else
 	prompt_confirmation
 fi
