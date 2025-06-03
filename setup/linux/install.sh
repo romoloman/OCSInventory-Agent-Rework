@@ -182,7 +182,7 @@ check_installed_agent() {
 			echo -n "The agent is already installed, do you want to remove it first? ([y]/n) "
 			read -r remove_choice
 			log "INFO" "The agent is already installed, do you want to remove it first? ([y]/n) $remove_choice" true
-			if [[ "$remove_choice" =~ ^[yY]?$  ]]; then
+			if [[ "$remove_choice" =~ ^[yY]?$ ]]; then
 				log "INFO" "Uninstalling the existing agent..." false
 				sh "${WORKING_DIRECTORY}/uninstall.sh" -y
 			# if the user chose, we inform them the script will likely overwrite files
@@ -196,7 +196,7 @@ check_installed_agent() {
 # Function to copy agent contents to /usr/share/ocsinventory-agent
 copy_agent_contents() {
 	check_installed_agent
-	
+
 	# Define the source directory by navigating three levels up from the script directory
 	SOURCE_DIR="$WORKING_DIRECTORY/../../"
 
@@ -342,7 +342,7 @@ run_interactive() {
 		read -r LOG_LEVEL
 		if [ "$LOG_LEVEL" = "" ]; then
 			LOG_LEVEL=2
-		else 
+		else
 			if [[ ! "$LOG_LEVEL" =~ ^[0-9]+$ ]]; then
 				log "INFO" "Log level must be a number, using default value 2 (Info)" true
 				LOG_LEVEL=2
