@@ -25,6 +25,23 @@ usage() {
 	exit 1
 }
 
+# Log formatting function
+log() {
+	local type="$1"
+	local message="$2"
+	local only_file="$3"
+
+	if [ "$SILENT" = false ]; then
+		if [ "$only_file" = false ]; then
+			echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" | tee -a ./uninstall.log
+		else
+			echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >>./uninstall.log
+		fi
+	else
+		echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >>./uninstall.log
+	fi
+}
+
 # Default values
 SILENT=false
 HARD_DELETE=false
@@ -71,29 +88,9 @@ while true; do
 	esac
 done
 
-# Log formatting function
-log() {
-	local type="$1"
-	local message="$2"
-	local only_file="$3"
-
-	if [ "$SILENT" = false ]; then
-		if [ "$only_file" = false ]; then
-			echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" | tee -a ./uninstall.log
-		else
-			echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >>./uninstall.log
-		fi
-	else
-		echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >>./uninstall.log
-	fi
-}
-
 # Function to uninstall the agent
 uninstall_agent() {
-	local is_silent=$1
-	local is_hard_delete=$2
-
-	if [ "$is_silent" = true ]; then
+	if [ "$SILENT" = true ]; then
 		log "INFO" "+-----------------------------------------------------------+" false
 		log "INFO" "|                                                           |" false
 		log "INFO" "|     Uninstalling OCSInventory Agent in silent mode...     |" false
@@ -141,7 +138,7 @@ uninstall_agent() {
 		log "WARNING" "Service ${SERVICE_NAME} does not exist. Skiping this part." false
 	fi
 
-	if [ "$is_hard_delete" = true ]; then
+	if [ "$HARD_DELETE" = true ]; then
 		log "INFO" "Removing configuration directory..." false
 		rm -rf ${CONFIG_PATH}
 
@@ -172,7 +169,7 @@ prompt_confirmation() {
 	read -r confirm
 	log "INFO" "Are you sure you want to uninstall OCS Inventory NG Agent ([y]/n)? $confirm" true
 	if [[ "$confirm" =~ ^[yY]?$ ]]; then
-		uninstall_agent "$SILENT" "$HARD_DELETE"
+		uninstall_agent
 	else
 		log "INFO" "Uninstallation cancelled." false
 	fi
