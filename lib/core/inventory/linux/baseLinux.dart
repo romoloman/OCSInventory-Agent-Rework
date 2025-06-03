@@ -185,7 +185,10 @@ class BaseLinux {
 
   Future<String> _getSerialNumber(String name, String macAddress) async {
     String serialResult = (await commands.processTarget(
-            "BASH", "dmidecode -s system-serial-number"))["value"]
+            "BASH",
+            "dmidecode -s system-serial-number",
+            logType,
+            "SERIAL NUMBER"))["value"]
         .toString();
 
     String path = "/etc/ocsinventory-agent" + serialFileName;
