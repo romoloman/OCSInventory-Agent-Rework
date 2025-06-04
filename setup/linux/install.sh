@@ -51,6 +51,20 @@ log() {
 	fi
 }
 
+# Function to execute a command
+execCommand() {
+	local command="$1"
+	local successMessage="$2"
+	local errorMessage="$3"
+	
+	if $command; then
+		log "INFO" "$successMessage" false
+	else
+		log "ERROR" "$errorMessage" false
+		exit 1
+	fi
+}
+
 # Default values
 SILENT=false
 URL=""
@@ -60,7 +74,7 @@ INVENTORY_MODE=""
 LOG_LEVEL=""
 CERTIFICATE=""
 SERVICE=false
-NOW=false # if true, we run the agent now with mode 2
+NOW=false
 
 # options
 SHORT_OPTS="hSnU:u:p:m:l:c:s"
@@ -170,22 +184,19 @@ check_silent_parameters() {
 
 # Function to check if the agent is already installed
 check_installed_agent() {
-	# Check if any standard agent installation artifacts exist
 	if [ -d "$AGENT_INSTALLATION_DIR" ] || [ -f "/etc/systemd/system/${SERVICE_NAME}.service" ] || [ -d "$CONFIG_PATH" ] || [ -f "$LOG_PATH" ]; then
-		# check if running in silent mode
 		if [ "$SILENT" = "true" ]; then
 			log "INFO" "Existing agent installation detected in silent mode. Automatically uninstalling..." false
-			# automatically uninstall in silent mode
-			sh "${WORKING_DIRECTORY}/uninstall.sh" -S -y
+			execCommand "sh ${WORKING_DIRECTORY}/uninstall.sh -S -y" "Existing agent uninstalled successfully." "Failed to uninstall existing agent."
 		else
-			# prompt the user in interactive mode
 			echo -n "The agent is already installed, do you want to remove it first? ([y]/n) "
 			read -r remove_choice
 			log "INFO" "The agent is already installed, do you want to remove it first? ([y]/n) $remove_choice" true
+
 			if [[ "$remove_choice" =~ ^[yY]?$ ]]; then
 				log "INFO" "Uninstalling the existing agent..." false
-				sh "${WORKING_DIRECTORY}/uninstall.sh" -y
-			# if the user chose, we inform them the script will likely overwrite files
+				
+				execCommand "sh ${WORKING_DIRECTORY}/uninstall.sh -y" "Existing agent uninstalled successfully." "Failed to uninstall existing agent."
 			else
 				log "INFO" "Proceeding with installation without removing the existing one. Files may be overwritten." false
 			fi
@@ -197,28 +208,27 @@ check_installed_agent() {
 copy_agent_contents() {
 	check_installed_agent
 
-	# Define the source directory by navigating three levels up from the script directory
 	SOURCE_DIR="$WORKING_DIRECTORY/../../"
 
-	# Create the target directory if it does not exist
-	mkdir -p "$AGENT_INSTALLATION_DIR"
+	execCommand "mkdir -p $AGENT_INSTALLATION_DIR" "Created agent installation directory: $AGENT_INSTALLATION_DIR" "Failed to create agent installation directory."
+	
+	execCommand "cp -r $SOURCE_DIR/* $AGENT_INSTALLATION_DIR" "Copied agent contents to $AGENT_INSTALLATION_DIR" "Failed to copy agent contents."
 
-	# Copy all the contents from the source directory to the target directory
-	cp -r "$SOURCE_DIR"/* "$AGENT_INSTALLATION_DIR"
+	execCommand "chmod +x $AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$EXEC_AGENT" "Made the agent executable: $AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$EXEC_AGENT" "Failed to make the agent executable."
 
-	chmod +x "$AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$EXEC_AGENT"
-	chmod +x "$AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$SERVICE_EXEC"
+	execCommand "chmod +x $AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$SERVICE_EXEC" "Made the service executable: $AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$SERVICE_EXEC" "Failed to make the service executable."
 
-	# Link the exec agent to /usr/bin
-	ln -s "$AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$EXEC_AGENT" "$SYMBOLIC_LINK"
+	execCommand "ln -s $AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$EXEC_AGENT $SYMBOLIC_LINK" "Created symbolic link for the service: $SYMBOLIC_LINK" "Failed to create symbolic link for the service."
 }
 
 # Function to create the config file with provided params
 create_config_file() {
-	# Construct config directory and file
 	log "INFO" "Creating configuration file..." false
-	mkdir -p "$CONFIG_PATH"
-	touch "$CONFIG_PATH/config.json"
+
+	execCommand "mkdir -p $CONFIG_PATH" "Created configuration directory: $CONFIG_PATH" "Failed to create configuration directory."
+
+	execCommand "touch $CONFIG_PATH/config.json" "Created configuration file: $CONFIG_PATH/config.json" "Failed to create configuration file."
+
 	echo "
 	{
 		\"log_file\": true,
@@ -236,30 +246,35 @@ create_config_file() {
 
 create_log_file() {
 	log "INFO" "Creating log file..." false
-	mkdir -p "$(dirname "$LOG_PATH")"
-	touch "$LOG_PATH"
+
+	execCommand "mkdir -p $(dirname "$LOG_PATH")" "Created log directory: $(dirname "$LOG_PATH")" "Failed to create log directory."
+
+	execCommand "touch $LOG_PATH" "Created log file: $LOG_PATH" "Failed to create log file."
 }
 
 # Function to run the executable with provided params
 run_executable() {
 	if [ "$NOW" = "true" ]; then
 		log "INFO" "Running the agent now..." false
-		command="$WORKING_DIRECTORY$EXEC_AGENT -f true -m $INVENTORY_MODE -p $PASSWORD -u $USERNAME -s $URL -l $LOG_PATH -d $STORE_DATA_PATH -v $LOG_LEVEL -c $CERTIFICATE"
-		$command
+
+		execCommand "$WORKING_DIRECTORY$EXEC_AGENT -f true -m $INVENTORY_MODE -p $PASSWORD -u $USERNAME -s $URL -l $LOG_PATH -d $STORE_DATA_PATH -v $LOG_LEVEL -c $CERTIFICATE" "Agent executed successfully." "Failed to execute the agent."
 	fi
 }
 
 # Function to register service
 register_service() {
-	# create service file
 	log "INFO" "Creating service file..." false
-	cp "${WORKING_DIRECTORY}/ocsinventory-agent.service" "/etc/systemd/system/${SERVICE_NAME}.service"
 
-	# restart daemon, enable and start service
+	execCommand "cp ${WORKING_DIRECTORY}/ocsinventory-agent.service /etc/systemd/system/${SERVICE_NAME}.service" "Service file copied successfully." "Failed to copy service file."
+
 	log "INFO" "Reloading daemon and enabling service" false
-	systemctl -q daemon-reload
-	systemctl -q enable ${SERVICE_NAME}.service
-	systemctl -q start ${SERVICE_NAME}.service
+
+	execCommand "systemctl -q daemon-reload" "Systemd daemon reloaded successfully." "Failed to reload systemd daemon."
+
+	execCommand "systemctl -q enable ${SERVICE_NAME}.service" "Service ${SERVICE_NAME} enabled successfully." "Failed to enable service ${SERVICE_NAME}."
+
+	execCommand "systemctl -q start ${SERVICE_NAME}.service" "Service ${SERVICE_NAME} started successfully." "Failed to start service ${SERVICE_NAME}."
+
 	log "INFO" "Service Started" false
 }
 
