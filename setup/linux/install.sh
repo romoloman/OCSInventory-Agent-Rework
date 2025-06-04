@@ -51,7 +51,7 @@ execCommand() {
 	local command="$1"
 	local successMessage="$2"
 	local errorMessage="$3"
-	
+
 	if $command; then
 		log "INFO" "$successMessage"
 	else
@@ -190,7 +190,7 @@ check_installed_agent() {
 
 			if [[ "$remove_choice" =~ ^[yY]?$ ]]; then
 				log "INFO" "Uninstalling the existing agent..."
-				
+
 				execCommand "sh ${WORKING_DIRECTORY}/uninstall.sh -y" "Existing agent uninstalled successfully." "Failed to uninstall existing agent."
 			else
 				log "INFO" "Proceeding with installation without removing the existing one. Files may be overwritten."
@@ -206,7 +206,7 @@ copy_agent_contents() {
 	SOURCE_DIR="$WORKING_DIRECTORY/../../"
 
 	execCommand "mkdir -p $AGENT_INSTALLATION_DIR" "Created agent installation directory: $AGENT_INSTALLATION_DIR" "Failed to create agent installation directory."
-	
+
 	execCommand "cp -r $SOURCE_DIR/* $AGENT_INSTALLATION_DIR" "Copied agent contents to $AGENT_INSTALLATION_DIR" "Failed to copy agent contents."
 
 	execCommand "chmod +x $AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$EXEC_AGENT" "Made the agent executable: $AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$EXEC_AGENT" "Failed to make the agent executable."
