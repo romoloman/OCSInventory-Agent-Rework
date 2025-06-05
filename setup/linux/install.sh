@@ -57,7 +57,7 @@ execCommand() {
 	local successMessage="$2"
 	local errorMessage="$3"
 
-	if $command; then
+	if $command >/dev/null 2>/dev/null; then
 		log "INFO" "$successMessage" false
 	else
 		log "ERROR" "$errorMessage" false
@@ -195,8 +195,8 @@ check_installed_agent() {
 
 			if [[ "$remove_choice" =~ ^[yY]?$ ]]; then
 				log "INFO" "Uninstalling the existing agent..." false
-
-				execCommand "sh ${WORKING_DIRECTORY}/uninstall.sh -y" "Existing agent uninstalled successfully." "Failed to uninstall existing agent."
+				
+				execCommand "sh ${WORKING_DIRECTORY}/uninstall.sh -y" "Existing agent uninstalled successfully. See the logs in ${WORKING_DIRECTORY}/uninstall.log" "Failed to uninstall existing agent."
 			else
 				log "INFO" "Proceeding with installation without removing the existing one. Files may be overwritten." false
 			fi

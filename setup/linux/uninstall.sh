@@ -43,6 +43,19 @@ log() {
 	fi
 }
 
+# Function to execute a command
+execCommand() {
+	local command="$1"
+	local successMessage="$2"
+	local errorMessage="$3"
+
+	if $command >/dev/null 2>/dev/null; then
+		log "INFO" "$successMessage" false
+	else
+		log "WARNING" "$errorMessage" false
+	fi
+}
+
 # Default values
 SILENT=false
 HARD_DELETE=false
@@ -107,54 +120,31 @@ uninstall_agent() {
 		log "INFO" "" false
 	fi
 
-	log "INFO" "Stopping and disabling the service..." false
+	if systemctl -q list-units --full -all | grep -q ${SERVICE_NAME}.service; then
+		log "INFO" "Service ${SERVICE_NAME} exists, proceeding with uninstallation." false
 
-	if systemctl -q list-units --full -all | grep -Fq "${SERVICE_NAME}.service"; then
-		if systemctl -q stop ${SERVICE_NAME} >/dev/null 2>/dev/null; then
-			log "INFO" "Service ${SERVICE_NAME} stopped successfully." false
+		execCommand "systemctl -q stop ${SERVICE_NAME}" "Service ${SERVICE_NAME} stopped successfully." "Failed to stop service ${SERVICE_NAME}. It may not be running."
 
-			if systemctl -q disable ${SERVICE_NAME} >/dev/null 2>/dev/null; then
-				log "INFO" "Service ${SERVICE_NAME} disabled successfully." false
+		execCommand "systemctl -q disable ${SERVICE_NAME}" "Service ${SERVICE_NAME} disabled successfully." "Failed to disable service ${SERVICE_NAME}."
 
-				log "INFO" "Removing service file..." false
-				rm -f ${SERVICE_FILE}
+		execCommand "rm ${SERVICE_FILE}" "Service file ${SERVICE_FILE} removed successfully." "Failed to remove service file ${SERVICE_FILE}."
 
-				log "INFO" "Reloading systemd daemon..." false
-
-				if systemctl -q daemon-reload >/dev/null 2>/dev/null; then
-					log "INFO" "Systemd daemon reloaded successfully." false
-				else
-					log "ERROR" "Failed to reload systemd daemon. Exiting script." false
-					exit 1
-				fi
-			else
-				log "ERROR" "Failed to disable service ${SERVICE_NAME}. Exiting script." false
-				exit 1
-			fi
-		else
-			log "ERROR" "Failed to stop service ${SERVICE_NAME}. It may not be running. Exiting script." false
-			exit 1
-		fi
+		execCommand "systemctl -q daemon-reload" "Systemd daemon reloaded successfully." "Failed to reload systemd daemon."
 	else
-		log "WARNING" "Service ${SERVICE_NAME} does not exist. Skiping this part." false
+		log "WARNING" "Service ${SERVICE_NAME} does not exist." false
 	fi
 
 	if [ "$HARD_DELETE" = true ]; then
-		log "INFO" "Removing configuration directory..." false
-		rm -rf ${CONFIG_PATH}
+		execCommand "rm -r ${CONFIG_PATH}" "Configuration directory ${CONFIG_PATH} removed successfully." "Failed to remove configuration directory ${CONFIG_PATH}."
 
-		log "INFO" "Removing log file..." false
-		rm -rf ${LOG_PATH}
+		execCommand "rm -r ${LOG_PATH}" "Log directory ${LOG_PATH} removed successfully." "Failed to remove log directory ${LOG_PATH}."
 
-		log "INFO" "Removing store data directory..." false
-		rm -rf ${STORE_DATA_PATH}
+		execCommand "rm -r ${STORE_DATA_PATH}" "Store data directory ${STORE_DATA_PATH} removed successfully." "Failed to remove store data directory ${STORE_DATA_PATH}."
 	fi
 
-	log "INFO" "Removing agent installation directory..." false
-	rm -rf ${AGENT_INSTALLATION_DIR}
+	execCommand "rm -r ${AGENT_INSTALLATION_DIR}" "Agent installation directory ${AGENT_INSTALLATION_DIR} removed successfully." "Failed to remove agent installation directory ${AGENT_INSTALLATION_DIR}."
 
-	log "INFO" "Removing symbolic link..." false
-	rm -f ${SYMBOLIC_LINK}
+	execCommand "rm ${SYMBOLIC_LINK}" "Symbolic link ${SYMBOLIC_LINK} removed successfully." "Failed to remove symbolic link ${SYMBOLIC_LINK}."
 
 	log "INFO" "" false
 	log "INFO" "+---------------------------------------------------------------+" false
