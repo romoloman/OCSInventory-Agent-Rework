@@ -208,17 +208,16 @@ Future<void> main(List<String> args) async {
     }
   }
 
-  File configFile = File(configDirectory+"/inventory.json");
-  Map<String, dynamic> inventoryConfigurationsTemp = config.getConfigContent(configFile, inventoryConfigurations);
-  
   if(allArgs.options.isNotEmpty){
     inventoryConfigurations.forEach((key, value) {
       if (allArgs.wasParsed(key)) {
-        config.updateInventoryConfig(key, value);
+        config.setConfigFileContentByKey(key, value);
+        if(allArgs.wasParsed("overwrite_config") && allArgs.option("overwrite_config") == true){
+          config.updateInventoryConfig(key, value);
+        }
       }
     });
   }
-
 
   // Initiate logger
   Logger logger = new Logger(config);
@@ -305,15 +304,5 @@ Future<void> main(List<String> args) async {
       stdout.writeln("4");
     }
   }
-
-  // Iterate allArgs and update inventory config with the provided values
-  if(allArgs.option("overwrite_config") == "false") {
-    inventoryConfigurationsTemp.forEach((key, value) {
-      if (allArgs.wasParsed(key)) {
-        config.updateInventoryConfig(key, value);
-      }
-    });
-  }
-  
   logger.info("APP", "Agent process completed successfully.\n");
 }
