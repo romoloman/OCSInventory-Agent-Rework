@@ -207,13 +207,20 @@ Future<void> main(List<String> args) async {
       inventoryConfigurations["certificate"] = certificatePath;
     }
   }
-
+  
   if(allArgs.options.isNotEmpty){
+
     inventoryConfigurations.forEach((key, value) {
+
       if (allArgs.wasParsed(key)) {
+        // Update the content of the map into the config class
         config.setConfigFileContentByKey(key, value);
-        if(allArgs.wasParsed("overwrite_config") && allArgs.option("overwrite_config") == true){
+        // if --overwrite_config update the config file
+        if(allArgs.wasParsed("overwrite_config") == true &&
+          allArgs.option("overwrite_config").toString() == "true"){
+
           config.updateInventoryConfig(key, value);
+        
         }
       }
     });

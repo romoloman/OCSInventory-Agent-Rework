@@ -36,26 +36,11 @@ class Config {
 
   static late String token = "";
 
-  static late Map<String, dynamic> configFileContent = {
-    "log_file": false,
-    "mode": 0,
-    "password": "",
-    "username": "",
-    "url": "",
-    "data_directory": "",
-    "log_file_path": "",
-    "log_level": 0,
-    "certificate": "",
-    "bypass_certificate": false,
-  };
+  static late Map<String, dynamic> configFileContent = {};
 
   /// Constructor.
   Config(String configPath, String configContent) {
     generateConfigFile(configPath, configContent);
-    configFileContent.forEach((key, value) {
-      configFileContent[key] = this.jsonUtils.getContentFromFileByKey(config, key);
-      print("======"+configFileContent[key].toString());
-    });
   }
 
   /// Create config file at [configPath] and set the content with [configContent].
@@ -111,6 +96,16 @@ class Config {
     }
   }
 
+  /// Generic method to get content from a config file by key
+  T getConfigContentByKey<T>(File file, String key, T defaultValue) {
+    try {
+      return this.jsonUtils.getContentFromFileByKey(file, key);
+    } catch (e) {
+      print('Error reading config content by key: ${e.toString()}');
+      return defaultValue;
+    }
+  }
+
   /// Generic method to set content in a config file
   void setConfigContent(File file, String content) {
     try {
@@ -128,7 +123,10 @@ class Config {
 
   /// return [key] content in inventory file.
   dynamic getInventoryConfig(String key) {
-    return configFileContent[key];
+    if(configFileContent.containsKey(key)){
+      return configFileContent[key];
+    }
+    return getConfigContentByKey<dynamic>(this.config, key, null);
   }
 
   /// Update inventory config file by [key] and [value].
