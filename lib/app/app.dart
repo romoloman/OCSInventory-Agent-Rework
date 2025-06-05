@@ -207,24 +207,20 @@ Future<void> main(List<String> args) async {
       inventoryConfigurations["certificate"] = certificatePath;
     }
   }
-  
-  if(allArgs.options.isNotEmpty){
 
-    inventoryConfigurations.forEach((key, value) {
+  inventoryConfigurations.forEach((key, value) {
+    if (allArgs.wasParsed(key)) {
+      // Update the content of the map into the config class
+      config.setConfigFileContentByKey(key, value);
+      // if --overwrite_config update the config file
+      if(allArgs.wasParsed("overwrite_config") == true &&
+        allArgs.option("overwrite_config").toString() == "true"){
 
-      if (allArgs.wasParsed(key)) {
-        // Update the content of the map into the config class
-        config.setConfigFileContentByKey(key, value);
-        // if --overwrite_config update the config file
-        if(allArgs.wasParsed("overwrite_config") == true &&
-          allArgs.option("overwrite_config").toString() == "true"){
-
-          config.updateInventoryConfig(key, value);
-        
-        }
+        config.updateInventoryConfig(key, value);
+        Config.readOnly = false;
       }
-    });
-  }
+    }
+  });
 
   // Initiate logger
   Logger logger = new Logger(config);
@@ -249,6 +245,13 @@ Future<void> main(List<String> args) async {
       jsonUtils, commands, format);
   Deployment deployment =
       new Deployment(logger, config, httpUtils, commands);
+
+  //Get the config execution mode
+  if(Config.readOnly == true){
+    logger.info("Config", "Executing config in read-only mode...");
+  } else {
+    logger.info("Config", "Executing config in read and write mode...");
+  }
 
   // Get the agent execution mode
   Map<int, String> enumMode = {

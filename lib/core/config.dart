@@ -36,6 +36,8 @@ class Config {
 
   static late String token = "";
 
+  static late bool readOnly = true;
+
   static late Map<String, dynamic> configFileContent = {};
 
   /// Constructor.
