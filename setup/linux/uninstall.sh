@@ -6,6 +6,7 @@ if [ "$(id -u)" != "0" ]; then
 fi
 
 # Constants
+WORKING_DIRECTORY=$(dirname "$(realpath "$0")")
 SERVICE_NAME="ocsinventory-agent"
 CONFIG_PATH="/etc/ocsinventory-agent"
 LOG_PATH="/var/log/ocsinventory-agent"
@@ -33,12 +34,12 @@ log() {
 
 	if [ "$SILENT" = false ]; then
 		if [ "$only_file" = false ]; then
-			echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" | tee -a ./uninstall.log
+			echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" | tee -a "${WORKING_DIRECTORY}/uninstall.log"
 		else
-			echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >>./uninstall.log
+			echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >>"${WORKING_DIRECTORY}/uninstall.log"
 		fi
 	else
-		echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >>./uninstall.log
+		echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >>"${WORKING_DIRECTORY}/uninstall.log"
 	fi
 }
 
