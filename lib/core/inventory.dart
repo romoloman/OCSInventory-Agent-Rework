@@ -1,5 +1,5 @@
 // OCSInventory Agent
-// Copyright (C) OCSInventory-NG
+// Copyright (C) OCSInventory
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -625,7 +625,7 @@ class Inventory {
     try {
       mainRes = await this
           .commands
-          .getResult(section['retrieval_method'], section["target"]);
+          .getResult(section['retrieval_method'], section["target"], section["name"], "");
     } catch (e) {
       logger.warning(this.runtimeType.toString(),
           "Unable to get results for ${section["target"]}: $e");
@@ -644,7 +644,7 @@ class Inventory {
     for (var field in fieldOver) {
       try {
         res = await commands.getResult(
-            field['retrieval_method'], field["new_target"]);
+            field['retrieval_method'], field["new_target"],section["name"],field["name"]);
       } catch (e) {
         logger.warning(
             this.runtimeType.toString(), "Error processing field override: $e");
