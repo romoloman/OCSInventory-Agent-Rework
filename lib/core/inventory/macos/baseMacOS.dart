@@ -16,6 +16,7 @@
 
 // External package imports
 import 'package:ocs_agent/core/log.dart';
+import 'dart:io';
 
 // Core imports
 import 'package:ocs_agent/core/inventory/commands.dart';
@@ -23,6 +24,7 @@ import 'package:ocs_agent/core/inventory/commands.dart';
 class BaseMacOS {
   late Logger logger;
   late Commands commands;
+  final String logType = "BaseInventory";
 
   /// Constructor
   BaseMacOS(this.logger, this.commands);
@@ -35,8 +37,8 @@ class BaseMacOS {
 
     /// This command [commandSerialUUID] display list Serial and UUID
     String commandSerialUUID;
-    commandSerialUUID = (await commands.processTarget(
-            "BASH", "system_profiler SPHardwareDataType"))["value"]
+    commandSerialUUID = (await commands.processTarget("BASH",
+            "system_profiler SPHardwareDataType", logType, "UUID"))["value"]
         .toString();
 
     /// Regex to get [Serial]
@@ -54,7 +56,7 @@ class BaseMacOS {
     /// Get default route, regExp to Interface for [srcip] and [srcmac]
     String getDefaultRoute;
     getDefaultRoute = (await commands.processTarget(
-            "BASH", "route get default"))["value"]
+            "BASH", "route get default", logType, "ROUTE"))["value"]
         .toString();
     RegExp regexpInterface;
     regexpInterface = RegExp(r"(?<=interface:\s)\w*");
@@ -63,36 +65,41 @@ class BaseMacOS {
 
     /// Get domains list and apply this Regex to get domain
     String listDomains;
-    listDomains =
-        (await commands.processTarget("BASH", "scutil --dns"))["value"]
-            .toString();
+    listDomains = (await commands.processTarget(
+            "BASH", "scutil --dns", logType, "DOMAIN"))["value"]
+        .toString();
     RegExp regexpDomain;
     regexpDomain = RegExp(r'(?<=search\sdomain\[0\]\s:\s)\w*.[a-z]{0,4}');
     String? getDomain;
     getDomain = regexpDomain.stringMatch(listDomains)!.trim();
 
     dynamic body = ({
-      "name":
-          (await commands.processTarget("BASH", "hostname"))["value"]
-              .toString(),
-      "description":
-          (await commands.processTarget("BASH", "uname -m"))["value"]
-              .toString(),
+      "name": (await commands.processTarget(
+              "BASH", "hostname", logType, "NAME"))["value"]
+          .toString(),
+      "description": (await commands.processTarget(
+              "BASH", "uname -m", logType, "DESCRIPTION"))["value"]
+          .toString(),
       "serial": getSerial,
       "osname": (await commands.processTarget(
-              "BASH", "sw_vers -productName"))["value"]
+              "BASH", "sw_vers -productName", logType, "OS NAME"))["value"]
           .toString(),
-      "osversion": (await commands.processTarget(
-              "BASH", "sw_vers -productVersion"))["value"]
+      "osversion": (await commands.processTarget("BASH",
+              "sw_vers -productVersion", logType, "OS VERSION"))["value"]
           .toString(),
       "uuid": getUUID,
       "srcip": (await commands.processTarget(
-              "BASH", "ipconfig getifaddr $getInterface"))["value"]
+              "BASH",
+              "ipconfig getifaddr $getInterface",
+              logType,
+              "IP ADDRESS"))["value"]
           .toString(),
       "srcmac": (await commands.processTarget(
-              "BASH", "networksetup -getmacaddress $getInterface"))["value"]
-          .toString()
-          .split(" ")[2],
+              "BASH",
+              "ifconfig | awk '/^[a-z0-9]+: / { iface=\$1 } /status: active/ { print iface }' | sed 's/://g' | while read iface; do ifconfig \"\$iface\" | awk '/ether / { print \$2 }'; done",
+              logType,
+              "MAC ADDRESS"))["value"]
+          .toString(),
       "domain": getDomain
     });
 

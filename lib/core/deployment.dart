@@ -51,7 +51,7 @@ class Deployment {
   /// Check the configuration of the deployment module.
   Future<bool> checkConfig() async {
     logger.info(this.runtimeType.toString(),
-        "Enabling deployment module and checking its configuration...");
+        "Checking deployment module configuration...");
 
     // Check if the URL is set
     if (url == null) {
@@ -463,8 +463,9 @@ class Deployment {
           break;
       }
 
-      result =
-          await commands.processTarget(method, actionCommand).then((value) {
+      result = await commands
+          .processTarget(method, actionCommand, "Deployment", "")
+          .then((value) {
         return value;
       }).catchError((onError) {
         logger.error(this.runtimeType.toString(),
@@ -590,7 +591,7 @@ class Deployment {
     try {
       // Execute the tar command to extract the archive file
       var cmdResult = await commands.processTarget(
-          "BASH", "tar -xvf $filePath -C $extractedPath");
+          "BASH", "tar -xvf $filePath -C $extractedPath", "Deployment", "");
 
       if (cmdResult["status"] == true) {
         // Delete the archive file after extracting it
@@ -991,5 +992,23 @@ class Deployment {
 
     result["status"] = (storeStatus && execStatus) ? 0 : 1;
     return result;
+  }
+
+  /// check if deployment is enabled then process packages and actions
+  Future<void> processDeployment(String os, int assetID) async {
+    if (config.getCoreConfig("deployment", "enabled")) {
+      logger.info(this.runtimeType.toString(),
+          "Deployment is enabled in server configuration.");
+      if (await checkConfig()) {
+        if (await checkDownload(assetID)) {
+          if (await getActions(assetID)) {
+            await executeActions(os, assetID);
+          }
+        }
+      }
+    } else {
+      logger.info(this.runtimeType.toString(),
+          "Deployment is disabled in server configuration.");
+    }
   }
 }
