@@ -114,7 +114,7 @@ begin
     if ConfigInputPage.Values[0] <> '' then
     begin
       INVENTORY_MODE := StrToInt64Def(ConfigInputPage.Values[0], 1);
-    end;
+    end
     else
     begin
       INVENTORY_MODE := 2;
@@ -123,7 +123,7 @@ begin
     if ConfigInputPage.Values[1] <> '' then
     begin
       LOG_LEVEL := StrToInt64Def(ConfigInputPage.Values[1], 1);
-    end;
+    end
     else
     begin
       LOG_LEVEL := 2;
