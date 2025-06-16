@@ -46,12 +46,12 @@ var
 procedure InitializeWizard;
 begin
   CONFIG_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent\config.json');
-  InputPage := CreateInputQueryPage(wpInstalling, 'Agent configuration', 'Please specify your own agent settings.', '* Required fields are marked with an asterisk.');
+  InputPage := CreateInputQueryPage(wpLicense, 'Agent configuration', 'Please specify your own agent settings.', '* Required fields are marked with an asterisk.');
   
   InputPage.Add('* URL:', False);
   InputPage.Add('* Username:', False);
   InputPage.Add('* Password:', False);
-  InputPage.Add('LogLevel:', False);
+  InputPage.Add('Log level:', False);
   InputPage.Add('Certificate:', False);
   
   InputPage.Values[0] := 'https://ocsinventory.example.com/';
@@ -81,7 +81,7 @@ begin
       Result := False;
     end;
     
-    if InputPage.Values[3] != '' then
+    if InputPage.Values[3] <> '' then
     begin
       LOG_LEVEL := StrToInt64Def(InputPage.Values[0], 1);
     end;
