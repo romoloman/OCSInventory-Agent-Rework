@@ -38,29 +38,29 @@ Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExeName}"
 [Code]
 var
   CONFIG_PATH: String;
-  InputPage: TInputQueryWizardPage;
+  ConnectionInputPage, ConfigInputPage: TInputQueryWizardPage;
   CheckPage: TWizardPage;
   URL, USERNAME, PASSWORD, CERTIFICATE: String;
-  LOG_LEVEL: Integer;
+  INVENTORY_MODE, LOG_LEVEL: Integer;
   InstallAsAServiceCheckBox, RunNowCheckBox: TNewCheckBox;
   ResultCode: Integer;
 
 procedure InitializeWizard;
 begin
   CONFIG_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent\config.json');
-  InputPage := CreateInputQueryPage(wpLicense, 'Agent configuration', 'Please specify your own agent settings.', '* Required fields are marked with an asterisk.');
+  ConnectionInputPage := CreateInputQueryPage(wpLicense, 'Agent configuration', 'Please specify your own agent settings.', '* Required fields are marked with an asterisk.');
   
-  InputPage.Add('* URL:', False);
-  InputPage.Add('* Username:', False);
-  InputPage.Add('* Password:', False);
-  InputPage.Add('Log level:', False);
-  InputPage.Add('Certificate:', False);
-  
-  InputPage.Values[0] := 'https://ocsinventory.example.com/';
-  InputPage.Values[1] := 'admin';
-  InputPage.Values[2] := 'admin';
+  ConnectionInputPage.Add('* URL:', False);
+  ConnectionInputPage.Add('* Username:', False);
+  ConnectionInputPage.Add('* Password:', False);
+  ConnectionInputPage.Add('Certificate:', False);
 
-  CheckPage := CreateCustomPage(wpInstalling, 'Agent configuration', 'Please specify your own agent settings.');
+  ConfigInputPage := CreateInputQueryPage(ConnectionInputPage.ID, 'Agent configuration', 'Please specify your own agent settings.', '* Required fields are marked with an asterisk.');
+
+  ConfigInputPage.Add('Agent mode:', False);
+  ConfigInputPage.Add('Log level:', False);
+
+  CheckPage := CreateCustomPage(ConnectionIConfigInputPageputPage.ID, 'Agent configuration', 'Please specify your own agent settings.');
   
   RunNowCheckBox := TNewCheckBox.Create(CheckPage);
   RunNowCheckBox.Parent := CheckPage.Surface;
@@ -83,27 +83,63 @@ function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   Result := True;
   
-  if CurPageID = InputPage.ID then
+  if CurPageID = ConnectionInputPage.ID then
   begin    
-    if InputPage.Values[0] = '' then
+    if ConnectionInputPage.Values[0] = '' then
     begin
       MsgBox('Error: URL is a mandatory field!', mbError, MB_OK);
       Result := False;
     end
-    else if InputPage.Values[1] = '' then
+    else if ConnectionInputPage.Values[1] = '' then
     begin
       MsgBox('Error: Username is a mandatory field!', mbError, MB_OK);
       Result := False;
     end
-    else if InputPage.Values[2] = '' then
+    else if ConnectionInputPage.Values[2] = '' then
     begin
       MsgBox('Error: Password is a mandatory field!', mbError, MB_OK);
       Result := False;
     end;
-    
-    if InputPage.Values[3] <> '' then
+  end;
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssPostInstall then
+  begin
+    URL := ConnectionInputPage.Values[0];
+    USERNAME := ConnectionInputPage.Values[1];
+    PASSWORD := ConnectionInputPage.Values[2];
+    CERTIFICATE := ConnectionInputPage.Values[4];
+
+    if ConfigInputPage.Values[0] <> '' then
     begin
-      LOG_LEVEL := StrToInt64Def(InputPage.Values[0], 1);
+      INVENTORY_MODE := StrToInt64Def(ConfigInputPage.Values[0], 1);
+    end;
+    else
+    begin
+      INVENTORY_MODE := 2;
+    end;
+
+    if ConfigInputPage.Values[1] <> '' then
+    begin
+      LOG_LEVEL := StrToInt64Def(ConfigInputPage.Values[1], 1);
+    end;
+    else
+    begin
+      LOG_LEVEL := 2;
+    end;
+
+    SaveStringToFile(CONFIG_PATH, Format('{"url": %s, "username": %s, "password": %s, "certificate": %s, "bypass_certificate": false, "log_file": true, "log_level": %d, "mode": %d, "data_directory": ExpandConstant('{commonappdata}\OCSInventory-Agent\data'), "log_file_path": ExpandConstant('{commonappdata}\OCSInventory-Agent\data')}', [URL, USERNAME, PASSWORD, CERTIFICATE, LOG_LEVEL, INVENTORY_MODE]));
+
+    if InstallAsAServiceCheckBox.Checked then
+    begin
+      Exec('echo', 'Hello World', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    end;
+
+    if RunNowCheckBox.Checked then
+    begin
+      Exec('echo', 'Hello World', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
     end;
   end;
 end;
