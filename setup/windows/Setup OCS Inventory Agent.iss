@@ -59,7 +59,7 @@ begin
   ConfigInputPage.Add('Agent mode:', False);
   ConfigInputPage.Add('Log level:', False);
 
-  CheckPage := CreateCustomPage(ConnectionIConfigInputPageputPage.ID, 'Agent configuration', 'Please specify your own agent settings.');
+  CheckPage := CreateCustomPage(ConfigInputPage.ID, 'Agent configuration', 'Please specify your own agent settings.');
   
   RunNowCheckBox := TNewCheckBox.Create(CheckPage);
   RunNowCheckBox.Parent := CheckPage.Surface;
