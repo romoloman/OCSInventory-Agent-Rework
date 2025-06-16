@@ -72,12 +72,12 @@ begin
     end
     else if InputPage.Values[1] = '' then
     begin
-      MsgBox('Error: USERNAME is a mandatory field!', mbError, MB_OK);
+      MsgBox('Error: Username is a mandatory field!', mbError, MB_OK);
       Result := False;
     end
     else if InputPage.Values[2] = '' then
     begin
-      MsgBox('Error: PASSWORD is a mandatory field!', mbError, MB_OK);
+      MsgBox('Error: Password is a mandatory field!', mbError, MB_OK);
       Result := False;
     end;
     
