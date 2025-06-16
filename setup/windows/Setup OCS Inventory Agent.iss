@@ -39,7 +39,8 @@ Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExeName}"
 var
   CONFIG_PATH: String;
   InputPage: TInputQueryWizardPage;
-  URL, USERNAME, PASSWORD, LOG_LEVEL, CERTIFICATE: String;
+  URL, USERNAME, PASSWORD, CERTIFICATE: String;
+  LOG_LEVEL: Integer;
   ResultCode: Integer;
 
 procedure InitializeWizard;
@@ -53,9 +54,36 @@ begin
   InputPage.Add('LogLevel:', False);
   InputPage.Add('Certificate:', False);
   
-  InputPage.Values[0] := 'https://ocsinventory.example.com/ocsinventory';
-  InputPage.Values[1] := 'ocsuser';
-  InputPage.Values[2] := 'ocspassword';
-  InputPage.Values[3] := '2';
-  InputPage.Values[4] := '';
+  InputPage.Values[0] := 'https://ocsinventory.example.com/';
+  InputPage.Values[1] := 'admin';
+  InputPage.Values[2] := 'admin';
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+begin
+  Result := True;
+  
+  if CurPageID = InputPage.ID then
+  begin    
+    if InputPage.Values[0] = '' then
+    begin
+      MsgBox('Error: URL is a mandatory field!', mbError, MB_OK);
+      Result := False;
+    end
+    else if InputPage.Values[1] = '' then
+    begin
+      MsgBox('Error: USERNAME is a mandatory field!', mbError, MB_OK);
+      Result := False;
+    end
+    else if InputPage.Values[2] = '' then
+    begin
+      MsgBox('Error: PASSWORD is a mandatory field!', mbError, MB_OK);
+      Result := False;
+    end;
+    
+    if InputPage.Values[3] != '' then
+    begin
+      LOG_LEVEL := StrToInt64Def(InputPage.Values[0], 1);
+    end;
+  end;
 end;
