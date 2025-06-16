@@ -39,7 +39,7 @@ var
   CONFIG_PATH: String;
   ConnectionInputPage, ConfigInputPage: TInputQueryWizardPage;
   CheckPage: TWizardPage;
-  URL, USERNAME, PASSWORD, CERTIFICATE: String;
+  URL, USERNAME, PASSWORD, CERTIFICATE, STORE_DATA_PATH, LOG_PATH: String;
   INVENTORY_MODE, LOG_LEVEL: Integer;
   InstallAsAServiceCheckBox, RunNowCheckBox: TNewCheckBox;
   ResultCode: Integer;
@@ -129,7 +129,10 @@ begin
       LOG_LEVEL := 2;
     end;
 
-    SaveStringToFile(CONFIG_PATH, Format('{"url": %s, "username": %s, "password": %s, "certificate": %s, "bypass_certificate": false, "log_file": true, "log_level": %d, "mode": %d, "data_directory": ExpandConstant('{commonappdata}\OCSInventory-Agent\data'), "log_file_path": ExpandConstant('{commonappdata}\OCSInventory-Agent\data')}', [URL, USERNAME, PASSWORD, CERTIFICATE, LOG_LEVEL, INVENTORY_MODE]));
+    STORE_DATA_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent\data');
+    LOG_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent\data\logs');
+
+    SaveStringToFile(CONFIG_PATH, Format('{"url": %s, "username": %s, "password": %s, "certificate": %s, "bypass_certificate": false, "log_file": true, "log_level": %d, "mode": %d, "STORE_DATA_PATH, LOG_PATHectory": %s, "log_file_path": %s}', [URL, USERNAME, PASSWORD, CERTIFICATE, LOG_LEVEL, INVENTORY_MODE, STORE_DATA_PATH, LOG_PATH]));
 
     if InstallAsAServiceCheckBox.Checked then
     begin
