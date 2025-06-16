@@ -37,35 +37,27 @@ Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExeName}"
 
 [Code]
 var
+  CONFIG_PATH: String;
   InputPage: TInputQueryWizardPage;
-  RunNowPage: TWizardPage;
-  RunNowCheckBox: TNewCheckBox;
-  ConfigPath: String;
-  CollectPeriod, WritingPeriod, BackupPeriod: Int64;
+  URL, USERNAME, PASSWORD, LOG_LEVEL, CERTIFICATE: String;
   ResultCode: Integer;
 
 procedure InitializeWizard;
 begin
-  ConfigPath := ExpandConstant('{commonappdata}\GreenIT\config.json');
-  InputPage := CreateInputQueryPage(wpInstalling, 'Service configuration', 'Please specify your own service settings.', '');
+  CONFIG_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent\config.json');
+  InputPage := CreateInputQueryPage(wpInstalling, 'Agent configuration', 'Please specify your own agent settings.', '');
   
-  InputPage.Add('Period between collecting information (in seconds):', False);
-  InputPage.Add('Period between data is written in data file (in minutes):', False);
-  InputPage.Add('Period between data is written in bakcup file (in hours):', False);
+  InputPage.Add('*URL:', False);
+  InputPage.Add('*Username:', False);
+  InputPage.Add('*Password:', False);
+  InputPage.Add('LogLevel:', False);
+  InputPage.Add('Certificate:', False);
   
-  InputPage.Values[0] := '1';
-  InputPage.Values[1] := '0';
-  InputPage.Values[2] := '1';
-  
-  RunNowPage := CreateCustomPage(InputPage.ID, 'Service configuration', 'Would you like to run the service now ?');
-  
-  RunNowCheckBox := TNewCheckBox.Create(RunNowPage);
-  RunNowCheckBox.Parent := RunNowPage.Surface;
-  RunNowCheckBox.Top := 0;
-  RunNowCheckBox.Left := 0;
-  RunNowCheckBox.Width := RunNowPage.SurfaceWidth;
-  RunNowCheckBox.Caption := 'Run the service now';
-  RunNowCheckBox.Checked := True;
+  InputPage.Values[0] := 'https://ocsinventory.example.com/ocsinventory';
+  InputPage.Values[1] := 'ocsuser';
+  InputPage.Values[2] := 'ocspassword';
+  InputPage.Values[3] := '2';
+  InputPage.Values[4] := '';
 end;
 
 function JSONWriteInteger(FileName, Section, Key: String; Value: Int64): Boolean;
@@ -97,9 +89,9 @@ begin
     WritingPeriod := StrToInt64Def(InputPage.Values[1], 0);
     BackupPeriod := StrToInt64Def(InputPage.Values[2], 1);
     
-    JSONWriteInteger(ConfigPath, 'collect', 'period', CollectPeriod);
-    JSONWriteInteger(ConfigPath, 'writing', 'period', WritingPeriod);
-    JSONWriteInteger(ConfigPath, 'backup', 'period', BackupPeriod);
+    JSONWriteInteger(CONFIG_PATH, 'collect', 'period', CollectPeriod);
+    JSONWriteInteger(CONFIG_PATH, 'writing', 'period', WritingPeriod);
+    JSONWriteInteger(CONFIG_PATH, 'backup', 'period', BackupPeriod);
   end;
   
   if CurPageID = RunNowPage.ID then
