@@ -45,11 +45,11 @@ var
 procedure InitializeWizard;
 begin
   CONFIG_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent\config.json');
-  InputPage := CreateInputQueryPage(wpInstalling, 'Agent configuration', 'Please specify your own agent settings.', '');
+  InputPage := CreateInputQueryPage(wpInstalling, 'Agent configuration', 'Please specify your own agent settings.', '* Required fields are marked with an asterisk.');
   
-  InputPage.Add('*URL:', False);
-  InputPage.Add('*Username:', False);
-  InputPage.Add('*Password:', False);
+  InputPage.Add('* URL:', False);
+  InputPage.Add('* Username:', False);
+  InputPage.Add('* Password:', False);
   InputPage.Add('LogLevel:', False);
   InputPage.Add('Certificate:', False);
   
