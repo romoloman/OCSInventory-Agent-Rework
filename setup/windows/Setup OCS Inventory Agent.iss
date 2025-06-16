@@ -39,8 +39,10 @@ Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExeName}"
 var
   CONFIG_PATH: String;
   InputPage: TInputQueryWizardPage;
+  CheckPage: TWizardPage;
   URL, USERNAME, PASSWORD, CERTIFICATE: String;
   LOG_LEVEL: Integer;
+  InstallAsAServiceCheckBox, RunNowCheckBox: TNewCheckBox;
   ResultCode: Integer;
 
 procedure InitializeWizard;
@@ -57,6 +59,24 @@ begin
   InputPage.Values[0] := 'https://ocsinventory.example.com/';
   InputPage.Values[1] := 'admin';
   InputPage.Values[2] := 'admin';
+
+  CheckPage := CreateCustomPage(InputPage.ID, 'Agent configuration', 'Please specify your own agent settings.');
+  
+  RunNowCheckBox := TNewCheckBox.Create(CheckPage);
+  RunNowCheckBox.Parent := CheckPage.Surface;
+  RunNowCheckBox.Top := 0;
+  RunNowCheckBox.Left := 0;
+  RunNowCheckBox.Width := CheckPage.SurfaceWidth;
+  RunNowCheckBox.Caption := 'Run the agent now';
+  RunNowCheckBox.Checked := True;
+
+  InstallAsAServiceCheckBox := TNewCheckBox.Create(CheckPage);
+  InstallAsAServiceCheckBox.Parent := CheckPage.Surface;
+  InstallAsAServiceCheckBox.Top := 0;
+  InstallAsAServiceCheckBox.Left := 0;
+  InstallAsAServiceCheckBox.Width := CheckPage.SurfaceWidth;
+  InstallAsAServiceCheckBox.Caption := 'Install agent as a service';
+  InstallAsAServiceCheckBox.Checked := True;
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
