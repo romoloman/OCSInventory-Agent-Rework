@@ -72,7 +72,7 @@ begin
 
   InstallAsAServiceCheckBox := TNewCheckBox.Create(CheckPage);
   InstallAsAServiceCheckBox.Parent := CheckPage.Surface;
-  InstallAsAServiceCheckBox.Top := 0;
+  InstallAsAServiceCheckBox.Top := RunNowCheckBox.Top + 50;
   InstallAsAServiceCheckBox.Left := 0;
   InstallAsAServiceCheckBox.Width := CheckPage.SurfaceWidth;
   InstallAsAServiceCheckBox.Caption := 'Install agent as a service';
