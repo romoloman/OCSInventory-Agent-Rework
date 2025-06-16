@@ -60,7 +60,7 @@ begin
   InputPage.Values[1] := 'admin';
   InputPage.Values[2] := 'admin';
 
-  CheckPage := CreateCustomPage(InputPage.ID, 'Agent configuration', 'Please specify your own agent settings.');
+  CheckPage := CreateCustomPage(wpInstalling, 'Agent configuration', 'Please specify your own agent settings.');
   
   RunNowCheckBox := TNewCheckBox.Create(CheckPage);
   RunNowCheckBox.Parent := CheckPage.Surface;
