@@ -137,7 +137,7 @@ begin
       CreateDir(STORE_DATA_PATH);
     end;
 
-    SaveStringToFile(CONFIG_PATH, Format('{"url": %s, "username": %s, "password": %s, "certificate": %s, "bypass_certificate": false, "log_file": true, "log_level": %d, "mode": %d, "data_directory": %s, "log_file_path": %s}', [URL, USERNAME, PASSWORD, CERTIFICATE, LOG_LEVEL, INVENTORY_MODE, STORE_DATA_PATH, LOG_PATH]), false);
+    SaveStringToFile(CONFIG_PATH, Format('{"url": "%s", "username": "%s", "password": "%s", "certificate": "%s", "bypass_certificate": false, "log_file": true, "log_level": %d, "mode": %d, "data_directory": "%s", "log_file_path": "%s"}', [URL, USERNAME, PASSWORD, CERTIFICATE, LOG_LEVEL, INVENTORY_MODE, STORE_DATA_PATH, LOG_PATH]), false);
 
     if InstallAsAServiceCheckBox.Checked then
     begin
