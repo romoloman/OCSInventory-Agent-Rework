@@ -128,8 +128,8 @@ begin
     end;
 
     STORE_DATA_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent');
-    CONFIG_PATH := ExpandConstant('{STORE_DATA_PATH}\config.json');
-    LOG_PATH := ExpandConstant('{STORE_DATA_PATH}\ocsinventory-agent.log');
+    CONFIG_PATH := STORE_DATA_PATH + '\config.json';
+    LOG_PATH := STORE_DATA_PATH + '\ocsinventory-agent.log';
 
     if not DirExists(STORE_DATA_PATH) then
     begin
