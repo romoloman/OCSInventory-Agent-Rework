@@ -154,6 +154,23 @@ end;
 AgentConfigurationPageTitle=Agent configuration
 AgentConfigurationPageDescription=Please specify your own agent settings.
 MandatoryFields=* Required fields are marked with an asterisk.
+URL=URL:
+Username=Username:
+Password=Password:
+Certificate=Certificate:
+AgentMode=Agent mode:
+LogLevel=Log level:
+RunNow=Run the agent now
+InstallAsAService=Install agent as a service
+
 french.AgentConfigurationPageTitle=Configuration de l'agent
 french.AgentConfigurationPageDescription=Veuillez spécifier vos propres paramètres d'agent.
 french.MandatoryFields=* Les champs obligatoires sont marqués d'un astérisque.
+french.URL=URL :
+french.Username=Nom d'utilisateur :
+french.Password=Mot de passe :
+french.Certificate=Certificat :
+french.AgentMode=Mode de l'agent :
+french.LogLevel=Niveau de journalisation :
+french.RunNow=Exécuter l'agent maintenant
+french.InstallAsAService=Installer l'agent en tant que service
