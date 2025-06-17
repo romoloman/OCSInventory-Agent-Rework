@@ -43,14 +43,14 @@ var
   InstallAsAServiceCheckBox, RunNowCheckBox: TNewCheckBox;
   ResultCode: Integer;
 
-function Logger(type, message: String): Boolean;
+function Logger(LogType, LogMessage: String): Boolean;
 begin
+  LogTime: String;
   Result := True;
-  var time: String;
-  time := FormatDateTime('yyyy-mm-dd hh:nn:ss', Now);
+  LogTime := FormatDateTime('yyyy-mm-dd hh:nn:ss', Now);
 
-  Log(Format('[%s] [Uppercase(type)] %s', [time, message]));
-  SaveStringToFile('./install.log', Format('[%s] [Uppercase(type)] %s', [time, message]), false);
+  Log(Format('[%s] [Uppercase(LogType)] %s', [LogTime, LogMessage]));
+  SaveStringToFile('./install.log', Format('[%s] [Uppercase(LogType)] %s', [LogTime, LogMessage]), false);
 end;
 
 procedure InitializeWizard;
