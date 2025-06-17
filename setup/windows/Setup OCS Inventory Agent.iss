@@ -45,19 +45,19 @@ var
 
 procedure InitializeWizard;
 begin
-  ConnectionInputPage := CreateInputQueryPage(wpLicense, 'Agent configuration', 'Please specify your own agent settings.', '* Required fields are marked with an asterisk.');
+  ConnectionInputPage := CreateInputQueryPage(wpLicense, '{cm:AgentConfigurationPageTitle}', '{cm:AgentConfigurationPageDescription}', '{cm:MandatoryFields}');
   
   ConnectionInputPage.Add('* URL:', False);
   ConnectionInputPage.Add('* Username:', False);
   ConnectionInputPage.Add('* Password:', False);
   ConnectionInputPage.Add('Certificate:', False);
 
-  ConfigInputPage := CreateInputQueryPage(ConnectionInputPage.ID, 'Agent configuration', 'Please specify your own agent settings.', '* Required fields are marked with an asterisk.');
+  ConfigInputPage := CreateInputQueryPage(ConnectionInputPage.ID, '{cm:AgentConfigurationPageTitle}', '{cm:AgentConfigurationPageDescription}', '{cm:MandatoryFields}');
 
   ConfigInputPage.Add('Agent mode:', False);
   ConfigInputPage.Add('Log level:', False);
 
-  CheckPage := CreateCustomPage(ConfigInputPage.ID, 'Agent configuration', 'Please specify your own agent settings.');
+  CheckPage := CreateCustomPage(ConfigInputPage.ID, '{cm:AgentConfigurationPageTitle}', '{cm:AgentConfigurationPageDescription}');
   
   RunNowCheckBox := TNewCheckBox.Create(CheckPage);
   RunNowCheckBox.Parent := CheckPage.Surface;
@@ -149,3 +149,11 @@ begin
     end;
   end;
 end;
+
+[CustomeMessages]
+AgentConfigurationPageTitle=Agent configuration
+AgentConfigurationPageDescription=Please specify your own agent settings.
+MandatoryFields=* Required fields are marked with an asterisk.
+french.AgentConfigurationPageTitle=Configuration de l'agent
+french.AgentConfigurationPageDescription=Veuillez spécifier vos propres paramètres d'agent.
+french.MandatoryFields=* Les champs obligatoires sont marqués d'un astérisque.
