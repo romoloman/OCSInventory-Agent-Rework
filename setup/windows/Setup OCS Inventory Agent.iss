@@ -47,15 +47,15 @@ procedure InitializeWizard;
 begin
   ConnectionInputPage := CreateInputQueryPage(wpLicense, ExpandConstant('{cm:AgentConfigurationPageTitle}'), ExpandConstant('{cm:AgentConfigurationPageDescription}'), ExpandConstant('{cm:MandatoryFields}'));
   
-  ConnectionInputPage.Add('* URL:', False);
-  ConnectionInputPage.Add('* Username:', False);
-  ConnectionInputPage.Add('* Password:', False);
-  ConnectionInputPage.Add('Certificate:', False);
+  ConnectionInputPage.Add('* ExpandConstant('{cm:URL}')', False);
+  ConnectionInputPage.Add('* ExpandConstant('{cm:Username}')', False);
+  ConnectionInputPage.Add('* ExpandConstant('{cm:Password}')', False);
+  ConnectionInputPage.Add('ExpandConstant('{cm:Certificat}')', False);
 
   ConfigInputPage := CreateInputQueryPage(ConnectionInputPage.ID, ExpandConstant('{cm:AgentConfigurationPageTitle}'), ExpandConstant('{cm:AgentConfigurationPageDescription}'), ExpandConstant('{cm:MandatoryFields}'));
 
-  ConfigInputPage.Add('Agent mode:', False);
-  ConfigInputPage.Add('Log level:', False);
+  ConfigInputPage.Add('ExpandConstant('{cm:AgentMode}')', False);
+  ConfigInputPage.Add('ExpandConstant('{cm:LogLevel}')', False);
 
   CheckPage := CreateCustomPage(ConfigInputPage.ID, ExpandConstant('{cm:AgentConfigurationPageTitle}'), ExpandConstant('{cm:AgentConfigurationPageDescription}'));
   
@@ -64,7 +64,7 @@ begin
   RunNowCheckBox.Top := 0;
   RunNowCheckBox.Left := 0;
   RunNowCheckBox.Width := CheckPage.SurfaceWidth;
-  RunNowCheckBox.Caption := 'Run the agent now';
+  RunNowCheckBox.Caption := ExpandConstant('{cm:RunNow}');
   RunNowCheckBox.Checked := True;
 
   InstallAsAServiceCheckBox := TNewCheckBox.Create(CheckPage);
@@ -72,7 +72,7 @@ begin
   InstallAsAServiceCheckBox.Top := RunNowCheckBox.Top + 50;
   InstallAsAServiceCheckBox.Left := 0;
   InstallAsAServiceCheckBox.Width := CheckPage.SurfaceWidth;
-  InstallAsAServiceCheckBox.Caption := 'Install agent as a service';
+  InstallAsAServiceCheckBox.Caption := ExpandConstant('{cm:InstallAsAService}');
   InstallAsAServiceCheckBox.Checked := True;
 end;
 
@@ -84,17 +84,17 @@ begin
   begin    
     if ConnectionInputPage.Values[0] = '' then
     begin
-      MsgBox('Error: URL is a mandatory field!', mbError, MB_OK);
+      MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:URL}}'), mbError, MB_OK);
       Result := False;
     end
     else if ConnectionInputPage.Values[1] = '' then
     begin
-      MsgBox('Error: Username is a mandatory field!', mbError, MB_OK);
+      MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:Username}}'), mbError, MB_OK);
       Result := False;
     end
     else if ConnectionInputPage.Values[2] = '' then
     begin
-      MsgBox('Error: Password is a mandatory field!', mbError, MB_OK);
+      MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:Password}}'), mbError, MB_OK);
       Result := False;
     end;
   end;
@@ -128,8 +128,8 @@ begin
     end;
 
     STORE_DATA_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent');
-    CONFIG_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent\config.json');
-    LOG_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent\ocsinventory-agent.log');
+    CONFIG_PATH := ExpandConstant('{#STORE_DATA_PATH}\config.json');
+    LOG_PATH := ExpandConstant('{#STORE_DATA_PATH}\ocsinventory-agent.log');
 
     if not DirExists(STORE_DATA_PATH) then
     begin
@@ -162,6 +162,7 @@ AgentMode=Agent mode:
 LogLevel=Log level:
 RunNow=Run the agent now
 InstallAsAService=Install agent as a service
+ErrorMandatoryField=Error: %s is a mandatory field!
 
 french.AgentConfigurationPageTitle=Configuration de l'agent
 french.AgentConfigurationPageDescription=Veuillez spécifier vos propres paramètres d'agent.
@@ -174,3 +175,4 @@ french.AgentMode=Mode de l'agent :
 french.LogLevel=Niveau de journalisation :
 french.RunNow=Exécuter l'agent maintenant
 french.InstallAsAService=Installer l'agent en tant que service
+french.ErrorMandatoryField=Erreur : %s est un champ obligatoire !
