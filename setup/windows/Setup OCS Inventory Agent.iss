@@ -46,7 +46,6 @@ var
 
 procedure InitializeWizard;
 begin
-  CONFIG_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent\config.json');
   ConnectionInputPage := CreateInputQueryPage(wpLicense, 'Agent configuration', 'Please specify your own agent settings.', '* Required fields are marked with an asterisk.');
   
   ConnectionInputPage.Add('* URL:', False);
@@ -109,7 +108,7 @@ begin
     URL := ConnectionInputPage.Values[0];
     USERNAME := ConnectionInputPage.Values[1];
     PASSWORD := ConnectionInputPage.Values[2];
-    CERTIFICATE := ConnectionInputPage.Values[4];
+    CERTIFICATE := ConnectionInputPage.Values[3];
 
     if ConfigInputPage.Values[0] <> '' then
     begin
@@ -129,10 +128,16 @@ begin
       LOG_LEVEL := 2;
     end;
 
-    STORE_DATA_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent\data');
-    LOG_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent\data\logs');
+    STORE_DATA_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent');
+    CONFIG_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent\config.json');
+    LOG_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent\ocsinventory-agent.log');
 
-    SaveStringToFile(CONFIG_PATH, Format('{"url": %s, "username": %s, "password": %s, "certificate": %s, "bypass_certificate": false, "log_file": true, "log_level": %d, "mode": %d, "data_directory": %s, "log_file_path": %s}', [URL, USERNAME, PASSWORD, CERTIFICATE, LOG_LEVEL, INVENTORY_MODE, STORE_DATA_PATH, LOG_PATH], 0);
+    if not DirExists(STORE_DATA_PATH) then
+    begin
+      CreateDir(STORE_DATA_PATH);
+    end;
+
+    SaveStringToFile(CONFIG_PATH, Format('{"url": %s, "username": %s, "password": %s, "certificate": %s, "bypass_certificate": false, "log_file": true, "log_level": %d, "mode": %d, "data_directory": %s, "log_file_path": %s}', [URL, USERNAME, PASSWORD, CERTIFICATE, LOG_LEVEL, INVENTORY_MODE, STORE_DATA_PATH, LOG_PATH]), false);
 
     if InstallAsAServiceCheckBox.Checked then
     begin
