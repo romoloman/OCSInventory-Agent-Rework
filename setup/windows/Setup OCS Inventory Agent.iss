@@ -140,7 +140,8 @@ begin
 
     if InstallAsAServiceCheckBox.Checked then
     begin
-      Exec('echo', 'Hello World', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+      Exec('sc.exe', 'create "OCSInventory Agent" binpath= "' + ExpandConstant('{app}\{#AppExeName}') + '" start= "auto"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+      Exec('sc.exe', 'description "OCSInventory Agent" "' + ExpandConstant('{cm:ServiceDescription}') + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
     end;
 
     if RunNowCheckBox.Checked then
@@ -163,6 +164,7 @@ LogLevel=Log level
 RunNow=Run the agent now
 InstallAsAService=Install agent as a service
 ErrorMandatoryField=Error: %1 is a mandatory field!
+ServiceDescription=Service starting periodically OCSInventory Agent for Windows
 
 french.AgentConfigurationPageTitle=Configuration de l'agent
 french.AgentConfigurationPageDescription=Veuillez spécifier vos propres paramètres d'agent.
@@ -176,3 +178,4 @@ french.LogLevel=Niveau de journalisation
 french.RunNow=Exécuter l'agent maintenant
 french.InstallAsAService=Installer l'agent en tant que service
 french.ErrorMandatoryField=Erreur: %1 est un champ obligatoire !
+french.ServiceDescription=Service démarrant périodiquement l'agent OCSInventory pour Windows
