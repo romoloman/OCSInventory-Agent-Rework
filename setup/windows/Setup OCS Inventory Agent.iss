@@ -45,19 +45,19 @@ var
 
 procedure InitializeWizard;
 begin
-  ConnectionInputPage := CreateInputQueryPage(wpLicense, '{cm:AgentConfigurationPageTitle}', '{cm:AgentConfigurationPageDescription}', '{cm:MandatoryFields}');
+  ConnectionInputPage := CreateInputQueryPage(wpLicense, ExpandConstant({cm:AgentConfigurationPageTitle}), ExpandConstant({cm:AgentConfigurationPageDescription}), ExpandConstant({cm:MandatoryFields}));
   
   ConnectionInputPage.Add('* URL:', False);
   ConnectionInputPage.Add('* Username:', False);
   ConnectionInputPage.Add('* Password:', False);
   ConnectionInputPage.Add('Certificate:', False);
 
-  ConfigInputPage := CreateInputQueryPage(ConnectionInputPage.ID, '{cm:AgentConfigurationPageTitle}', '{cm:AgentConfigurationPageDescription}', '{cm:MandatoryFields}');
+  ConfigInputPage := CreateInputQueryPage(ConnectionInputPage.ID, ExpandConstant({cm:AgentConfigurationPageTitle}), ExpandConstant({cm:AgentConfigurationPageDescription}), ExpandConstant({cm:MandatoryFields}));
 
   ConfigInputPage.Add('Agent mode:', False);
   ConfigInputPage.Add('Log level:', False);
 
-  CheckPage := CreateCustomPage(ConfigInputPage.ID, '{cm:AgentConfigurationPageTitle}', '{cm:AgentConfigurationPageDescription}');
+  CheckPage := CreateCustomPage(ConfigInputPage.ID, ExpandConstant({cm:AgentConfigurationPageTitle}), ExpandConstant({cm:AgentConfigurationPageDescription}));
   
   RunNowCheckBox := TNewCheckBox.Create(CheckPage);
   RunNowCheckBox.Parent := CheckPage.Surface;
