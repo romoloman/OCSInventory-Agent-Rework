@@ -47,7 +47,7 @@ function Logger(LogType, LogMessage: String): Boolean;
 var LogTime: String;
 begin
   Result := True;
-  LogTime := FormatDateTime('yyyy-mm-dd hh:nn:ss', Now);
+  LogTime := GetDateTimeString('dd/mm/yyyy hh:nn:ss', '-', ':');
 
   Log(Format('[%s] [Uppercase(LogType)] %s', [LogTime, LogMessage]));
   SaveStringToFile('./install.log', Format('[%s] [Uppercase(LogType)] %s', [LogTime, LogMessage]), false);
