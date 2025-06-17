@@ -176,6 +176,14 @@ begin
     begin
       MsgBox(ExpandConstant('{cm:ServiceStopFailed}'), mbError, MB_OK);
     end;
+
+    if DirExists(STORE_DATA_PATH) then
+    begin
+      if not RemoveDir(STORE_DATA_PATH) then
+      begin
+        MsgBox('Failed to remove OCSInventory-Agent data directory. Please check the logs for more details.', mbError, MB_OK);
+      end;
+    end;
   end;
 end;
 
