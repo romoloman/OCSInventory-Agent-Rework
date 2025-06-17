@@ -51,7 +51,7 @@ begin
   LogType := UpperCase(LogType);
 
   Log(Format('[%s] [%s] %s', [LogTime, LogType, LogMessage]));
-  SaveStringToFile('./install.log', Format('[%s] [Uppercase(LogType)] %s', [LogTime, LogMessage]), false);
+  SaveStringToFile('./install.log', Format('[%s] [%s] %s', [LogTime, LogType, LogMessage]), false);
 end;
 
 procedure InitializeWizard;
