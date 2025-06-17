@@ -1,7 +1,7 @@
 #define AppName "OCSInventory Agent"
 #define AppVersion "3.0.0"
 #define AppPublisher "OCSInventory"
-#define AppURL "https://www.ocsinventory.com/"
+#define AppURL "http//www.ocsinventory.com/"
 #define AppExeName "agent-windows.exe"
 #define AppPath "Path_of_your_agent\OCSInventory-Agent"
 
@@ -50,7 +50,7 @@ begin
   ConnectionInputPage.Add('* ' + ExpandConstant('{cm:URL}'), False);
   ConnectionInputPage.Add('* ' + ExpandConstant('{cm:Username}'), False);
   ConnectionInputPage.Add('* ' + ExpandConstant('{cm:Password}'), False);
-  ConnectionInputPage.Add(ExpandConstant('{cm:Certificate'}), False);
+  ConnectionInputPage.Add(ExpandConstant('{cm:Certificate}'), False);
 
   ConfigInputPage := CreateInputQueryPage(ConnectionInputPage.ID, ExpandConstant('{cm:AgentConfigurationPageTitle}'), ExpandConstant('{cm:AgentConfigurationPageDescription}'), ExpandConstant('{cm:MandatoryFields}'));
 
@@ -128,8 +128,8 @@ begin
     end;
 
     STORE_DATA_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent');
-    CONFIG_PATH := ExpandConstant('{#STORE_DATA_PATH}\config.json');
-    LOG_PATH := ExpandConstant('{#STORE_DATA_PATH}\ocsinventory-agent.log');
+    CONFIG_PATH := ExpandConstant('{STORE_DATA_PATH}\config.json');
+    LOG_PATH := ExpandConstant('{STORE_DATA_PATH}\ocsinventory-agent.log');
 
     if not DirExists(STORE_DATA_PATH) then
     begin
@@ -155,11 +155,11 @@ AgentConfigurationPageTitle=Agent configuration
 AgentConfigurationPageDescription=Please specify your own agent settings.
 MandatoryFields=* Required fields are marked with an asterisk.
 URL=URL:
-Username=Username:
-Password=Password:
-Certificate=Certificate:
-AgentMode=Agent mode:
-LogLevel=Log level:
+Username=Username
+Password=Password
+Certificate=Certificate
+AgentMode=Agent mode
+LogLevel=Log level
 RunNow=Run the agent now
 InstallAsAService=Install agent as a service
 ErrorMandatoryField=Error: %1 is a mandatory field!
@@ -167,12 +167,12 @@ ErrorMandatoryField=Error: %1 is a mandatory field!
 french.AgentConfigurationPageTitle=Configuration de l'agent
 french.AgentConfigurationPageDescription=Veuillez spécifier vos propres paramètres d'agent.
 french.MandatoryFields=* Les champs obligatoires sont marqués d'un astérisque.
-french.URL=URL :
-french.Username=Nom d'utilisateur :
-french.Password=Mot de passe :
-french.Certificate=Certificat :
-french.AgentMode=Mode de l'agent :
-french.LogLevel=Niveau de journalisation :
+french.URL=URL
+french.Username=Nom d'utilisateur
+french.Password=Mot de passe
+french.Certificate=Certificat
+french.AgentMode=Mode de l'agent
+french.LogLevel=Niveau de journalisation
 french.RunNow=Exécuter l'agent maintenant
 french.InstallAsAService=Installer l'agent en tant que service
-french.ErrorMandatoryField=Erreur : %1 est un champ obligatoire !
+french.ErrorMandatoryField=Erreur: %1 est un champ obligatoire !
