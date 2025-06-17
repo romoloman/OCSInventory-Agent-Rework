@@ -43,10 +43,21 @@ var
   InstallAsAServiceCheckBox, RunNowCheckBox: TNewCheckBox;
   ResultCode: Integer;
 
+function Logger(type, message: String): Boolean;
+begin
+  Result := True;
+  var time: String;
+  time := FormatDateTime('yyyy-mm-dd hh:nn:ss', Now);
+
+  Log(Format('[%s] [Uppercase(type)] %s', [time, message]));
+  SaveStringToFile('./install.log', Format('[%s] [Uppercase(type)] %s', [time, message]), false);
+end;
+
 procedure InitializeWizard;
 begin
+  Logger('info', 'Starting OCSInventory Agent setup...');
   ConnectionInputPage := CreateInputQueryPage(wpLicense, ExpandConstant('{cm:AgentConfigurationPageTitle}'), ExpandConstant('{cm:AgentConfigurationPageDescription}'), ExpandConstant('{cm:MandatoryFields}'));
-  
+
   ConnectionInputPage.Add('* ' + ExpandConstant('{cm:URL}'), False);
   ConnectionInputPage.Add('* ' + ExpandConstant('{cm:Username}'), False);
   ConnectionInputPage.Add('* ' + ExpandConstant('{cm:Password}'), False);
@@ -79,9 +90,9 @@ end;
 function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   Result := True;
-  
+
   if CurPageID = ConnectionInputPage.ID then
-  begin    
+  begin
     if ConnectionInputPage.Values[0] = '' then
     begin
       MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:URL}}'), mbError, MB_OK);
