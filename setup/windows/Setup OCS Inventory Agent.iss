@@ -44,8 +44,8 @@ var
   ResultCode: Integer;
 
 function Logger(LogType, LogMessage: String): Boolean;
+var LogTime: String;
 begin
-  LogTime: String;
   Result := True;
   LogTime := FormatDateTime('yyyy-mm-dd hh:nn:ss', Now);
 
