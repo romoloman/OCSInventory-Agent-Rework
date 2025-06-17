@@ -140,8 +140,19 @@ begin
 
     if InstallAsAServiceCheckBox.Checked then
     begin
-      Exec('sc.exe', 'create "OCSInventory Agent" binpath= "' + ExpandConstant('{app}\{#AppExeName}') + '" start= "auto"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-      Exec('sc.exe', 'description "OCSInventory Agent" "' + ExpandConstant('{cm:ServiceDescription}') + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+      if Exec('sc.exe', 'create "OCSInventory Agent" binpath= "' + ExpandConstant('{app}\{#AppExeName}') + '" start= "auto"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+      begin
+        Exec('sc.exe', 'description "OCSInventory Agent" "' + ExpandConstant('{cm:ServiceDescription}') + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+        
+        if not Exec('sc.exe', 'start "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+        begin
+          MsgBox(ExpandConstant('{cm:ServiceStartFailed}'), mbError, MB_OK);
+        end;
+      end
+      else
+      begin
+        MsgBox(ExpandConstant('{cm:ServiceCreateFailed}'), mbError, MB_OK);
+      end;
     end
     else if RunNowCheckBox.Checked then
     begin
@@ -164,6 +175,8 @@ RunNow=Run the agent now
 InstallAsAService=Install agent as a service
 ErrorMandatoryField=Error: %1 is a mandatory field!
 ServiceDescription=Service starting periodically OCSInventory Agent for Windows
+ServiceCreateFailed=Failed to create the OCSInventory Agent service. Please check the configuration and try again.
+ServiceStartFailed=Failed to start the OCSInventory Agent service. Please check the configuration and try again.
 
 french.AgentConfigurationPageTitle=Configuration de l'agent
 french.AgentConfigurationPageDescription=Veuillez spécifier vos propres paramètres d'agent.
@@ -178,3 +191,5 @@ french.RunNow=Exécuter l'agent maintenant
 french.InstallAsAService=Installer l'agent en tant que service
 french.ErrorMandatoryField=Erreur: %1 est un champ obligatoire !
 french.ServiceDescription=Service démarrant périodiquement l'agent OCSInventory pour Windows
+french.ServiceCreateFailed=Échec de la création du service OCSInventory Agent. Veuillez vérifier la
+french.ServiceStartFailed=Échec du démarrage du service OCSInventory Agent. Veuillez vérifier la configuration et réessayer.
