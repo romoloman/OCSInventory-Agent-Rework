@@ -161,6 +161,24 @@ begin
   end;
 end;
 
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+  if CurUninstallStep = usUninstall then
+  begin
+    if Exec('sc.exe', 'stop "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+    begin
+      if not Exec('sc.exe', 'delete "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+      begin
+        MsgBox(ExpandConstant('{cm:ServiceDeleteFailed}'), mbError, MB_OK);
+      end;
+    end
+    else
+    begin
+      MsgBox(ExpandConstant('{cm:ServiceStopFailed}'), mbError, MB_OK);
+    end;
+  end;
+end;
+
 [CustomMessages]
 AgentConfigurationPageTitle=Agent configuration
 AgentConfigurationPageDescription=Please specify your own agent settings.
@@ -175,8 +193,10 @@ RunNow=Run the agent now
 InstallAsAService=Install agent as a service
 ErrorMandatoryField=Error: %1 is a mandatory field!
 ServiceDescription=Service starting periodically OCSInventory Agent for Windows
-ServiceCreateFailed=Failed to create the OCSInventory Agent service. Please check the configuration and try again.
-ServiceStartFailed=Failed to start the OCSInventory Agent service. Please check the configuration and try again.
+ServiceCreateFailed=Failed to create the OCSInventory Agent service. Please check the logs for more details.
+ServiceStartFailed=Failed to start the OCSInventory Agent service. Please check the logs for more details.
+ServiceStopFailed=Failed to stop the OCSInventory Agent service. Please check the logs for more details.
+ServiceDeleteFailed=Failed to delete the OCSInventory Agent service. Please check the logs for more details.
 
 french.AgentConfigurationPageTitle=Configuration de l'agent
 french.AgentConfigurationPageDescription=Veuillez spécifier vos propres paramètres d'agent.
@@ -191,5 +211,7 @@ french.RunNow=Exécuter l'agent maintenant
 french.InstallAsAService=Installer l'agent en tant que service
 french.ErrorMandatoryField=Erreur: %1 est un champ obligatoire !
 french.ServiceDescription=Service démarrant périodiquement l'agent OCSInventory pour Windows
-french.ServiceCreateFailed=Échec de la création du service OCSInventory Agent. Veuillez vérifier la
-french.ServiceStartFailed=Échec du démarrage du service OCSInventory Agent. Veuillez vérifier la configuration et réessayer.
+french.ServiceCreateFailed=Échec de la création du service OCSInventory Agent. Veuillez vérifier les logs pur plus de détails.
+french.ServiceStartFailed=Échec du démarrage du service OCSInventory Agent. Veuillez vérifier les logs pur plus de détails.
+french.ServiceStopFailed=Échec de l'arrêt du service OCSInventory Agent. Veuillez vérifier les logs pur plus de détails.
+french.ServiceDeleteFailed=Échec de la suppression du service OCSInventory Agent. Veuillez vérifier les logs pur plus de détails.
