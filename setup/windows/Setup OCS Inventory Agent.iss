@@ -145,7 +145,7 @@ begin
     end
     else if RunNowCheckBox.Checked then
     begin
-      Exec(ExpandConstant('{app}\{#MyAppExeName}'), '', '', SW_HIDE, ewNoWait, ResultCode)
+      Exec(ExpandConstant('{app}\{#AppExeName}'), '', '', SW_HIDE, ewNoWait, ResultCode)
     end;
   end;
 end;
