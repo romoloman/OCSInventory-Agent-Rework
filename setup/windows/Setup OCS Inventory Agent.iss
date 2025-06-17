@@ -47,15 +47,15 @@ procedure InitializeWizard;
 begin
   ConnectionInputPage := CreateInputQueryPage(wpLicense, ExpandConstant('{cm:AgentConfigurationPageTitle}'), ExpandConstant('{cm:AgentConfigurationPageDescription}'), ExpandConstant('{cm:MandatoryFields}'));
   
-  ConnectionInputPage.Add('* ExpandConstant('{cm:URL}')', False);
-  ConnectionInputPage.Add('* ExpandConstant('{cm:Username}')', False);
-  ConnectionInputPage.Add('* ExpandConstant('{cm:Password}')', False);
-  ConnectionInputPage.Add('ExpandConstant('{cm:Certificat}')', False);
+  ConnectionInputPage.Add('* ' + ExpandConstant('{cm:URL}'), False);
+  ConnectionInputPage.Add('* ' + ExpandConstant('{cm:Username}'), False);
+  ConnectionInputPage.Add('* ' + ExpandConstant('{cm:Password}'), False);
+  ConnectionInputPage.Add(ExpandConstant('{cm:Certificate'}), False);
 
   ConfigInputPage := CreateInputQueryPage(ConnectionInputPage.ID, ExpandConstant('{cm:AgentConfigurationPageTitle}'), ExpandConstant('{cm:AgentConfigurationPageDescription}'), ExpandConstant('{cm:MandatoryFields}'));
 
-  ConfigInputPage.Add('ExpandConstant('{cm:AgentMode}')', False);
-  ConfigInputPage.Add('ExpandConstant('{cm:LogLevel}')', False);
+  ConfigInputPage.Add(ExpandConstant('{cm:AgentMode}'), False);
+  ConfigInputPage.Add(ExpandConstant('{cm:LogLevel}'), False);
 
   CheckPage := CreateCustomPage(ConfigInputPage.ID, ExpandConstant('{cm:AgentConfigurationPageTitle}'), ExpandConstant('{cm:AgentConfigurationPageDescription}'));
   
@@ -162,7 +162,7 @@ AgentMode=Agent mode:
 LogLevel=Log level:
 RunNow=Run the agent now
 InstallAsAService=Install agent as a service
-ErrorMandatoryField=Error: %s is a mandatory field!
+ErrorMandatoryField=Error: %1 is a mandatory field!
 
 french.AgentConfigurationPageTitle=Configuration de l'agent
 french.AgentConfigurationPageDescription=Veuillez spécifier vos propres paramètres d'agent.
@@ -175,4 +175,4 @@ french.AgentMode=Mode de l'agent :
 french.LogLevel=Niveau de journalisation :
 french.RunNow=Exécuter l'agent maintenant
 french.InstallAsAService=Installer l'agent en tant que service
-french.ErrorMandatoryField=Erreur : %s est un champ obligatoire !
+french.ErrorMandatoryField=Erreur : %1 est un champ obligatoire !
