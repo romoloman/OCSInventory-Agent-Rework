@@ -73,8 +73,8 @@ begin
     INVENTORY_MODE := StrToInt64Def(ExpandConstant('{param:MODE}'), 2);
     LOG_LEVEL := StrToInt64Def(ExpandConstant('{param:LOG_LEVEL}'), 2);
 
-    RUN_NOW := ExpandConstant('{param:NOW}') = 1;
-    INSTALL_AS_A_SERVICE := ExpandConstant('{param:SERVICE}') = 1;
+    RUN_NOW := (ExpandConstant('{param:NOW}') = 1);
+    INSTALL_AS_A_SERVICE := (ExpandConstant('{param:SERVICE}') = 1);
 
     STORE_DATA_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent');
     CONFIG_PATH := STORE_DATA_PATH + '\config.json';
