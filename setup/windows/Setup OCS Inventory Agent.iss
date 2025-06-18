@@ -70,7 +70,7 @@ begin
   ConfigInputPage.Add(ExpandConstant('{cm:LogLevel}'), False);
 
   CheckPage := CreateCustomPage(ConfigInputPage.ID, ExpandConstant('{cm:AgentConfigurationPageTitle}'), ExpandConstant('{cm:AgentConfigurationPageDescription}'));
-  
+
   RunNowCheckBox := TNewCheckBox.Create(CheckPage);
   RunNowCheckBox.Parent := CheckPage.Surface;
   RunNowCheckBox.Top := 0;
@@ -97,18 +97,22 @@ begin
     if ConnectionInputPage.Values[0] = '' then
     begin
       MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:URL}}'), mbError, MB_OK);
+      Logger('error', 'Connection details validation failed: URL is empty');
       Result := False;
     end
     else if ConnectionInputPage.Values[1] = '' then
     begin
       MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:Username}}'), mbError, MB_OK);
+      Logger('error', 'Connection details validation failed: Username is empty');
       Result := False;
     end
     else if ConnectionInputPage.Values[2] = '' then
     begin
       MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:Password}}'), mbError, MB_OK);
+      Logger('error', 'Connection details validation failed: Password is empty');
       Result := False;
     end;
+    Logger('info', 'Connection details validated: ' + ConnectionInputPage.Values[0] + ', ' + ConnectionInputPage.Values[1] + ', ' + ConnectionInputPage.Values[2]);
   end;
 end;
 
@@ -120,24 +124,8 @@ begin
     USERNAME := ConnectionInputPage.Values[1];
     PASSWORD := ConnectionInputPage.Values[2];
     CERTIFICATE := ConnectionInputPage.Values[3];
-
-    if ConfigInputPage.Values[0] <> '' then
-    begin
-      INVENTORY_MODE := StrToInt64Def(ConfigInputPage.Values[0], 1);
-    end
-    else
-    begin
-      INVENTORY_MODE := 2;
-    end;
-
-    if ConfigInputPage.Values[1] <> '' then
-    begin
-      LOG_LEVEL := StrToInt64Def(ConfigInputPage.Values[1], 1);
-    end
-    else
-    begin
-      LOG_LEVEL := 2;
-    end;
+    INVENTORY_MODE := StrToInt64Def(ConfigInputPage.Values[0], 2);
+    LOG_LEVEL := StrToInt64Def(ConfigInputPage.Values[1], 2);
 
     STORE_DATA_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent');
     CONFIG_PATH := STORE_DATA_PATH + '\config.json';
@@ -145,31 +133,70 @@ begin
 
     if not DirExists(STORE_DATA_PATH) then
     begin
-      CreateDir(STORE_DATA_PATH);
+      Logger('info', 'Data directory does not exist, attempting to create: ' + STORE_DATA_PATH);
+
+      if CreateDir(STORE_DATA_PATH) then
+      begin
+        Logger('info', 'Data directory created successfully: ' + STORE_DATA_PATH);
+      end
+      else
+      begin
+        MsgBox('Failed to create OCSInventory-Agent data directory. Please check the logs for more details.', mbError, MB_OK);
+        Logger('error', 'Failed to create data directory: ' + STORE_DATA_PATH);
+      end;
     end;
 
-    SaveStringToFile(CONFIG_PATH, Format('{"url": "%s", "username": "%s", "password": "%s", "certificate": "%s", "bypass_certificate": false, "log_file": true, "log_level": %d, "mode": %d, "data_directory": "%s", "log_file_path": "%s"}', [URL, USERNAME, PASSWORD, CERTIFICATE, LOG_LEVEL, INVENTORY_MODE, STORE_DATA_PATH, LOG_PATH]), false);
+    if SaveStringToFile(CONFIG_PATH, Format('{"url": "%s", "username": "%s", "password": "%s", "certificate": "%s", "bypass_certificate": false, "log_file": true, "log_level": %d, "mode": %d, "data_directory": "%s", "log_file_path": "%s"}', [URL, USERNAME, PASSWORD, CERTIFICATE, LOG_LEVEL, INVENTORY_MODE, STORE_DATA_PATH, LOG_PATH]), false) then
+    begin
+      Logger('info', 'Configuration file created successfully: ' + CONFIG_PATH);
+    end
+    else
+    begin
+      MsgBox('Failed to create configuration file. Please check the logs for more details.', mbError, MB_OK);
+      Logger('error', 'Failed to create configuration file: ' + CONFIG_PATH);
+    end;
 
     if InstallAsAServiceCheckBox.Checked then
     begin
       if Exec('sc.exe', 'create "OCSInventory Agent" binpath= "' + ExpandConstant('{app}\{#AppExeName}') + '" start= "auto"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
       begin
-        Exec('sc.exe', 'description "OCSInventory Agent" "' + ExpandConstant('{cm:ServiceDescription}') + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+        Logger('info', 'Service created successfully: OCSInventory Agent');
         
+        if Exec('sc.exe', 'description "OCSInventory Agent" "' + ExpandConstant('{cm:ServiceDescription}') + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+        begin
+          Logger('info', 'Service description set successfully: ' + ExpandConstant('{cm:ServiceDescription}'));
+        end
+        else
+        begin
+          MsgBox(ExpandConstant('{cm:ServiceCreateFailed}'), mbError, MB_OK);
+          Logger('error', 'Failed to set service description for OCSInventory Agent');
+        end;
+
         if not Exec('sc.exe', 'start "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
         begin
           MsgBox(ExpandConstant('{cm:ServiceStartFailed}'), mbError, MB_OK);
+          Logger('error', 'Failed to start OCSInventory Agent service');
         end;
       end
       else
       begin
         MsgBox(ExpandConstant('{cm:ServiceCreateFailed}'), mbError, MB_OK);
+        Logger('error', 'Failed to create OCSInventory Agent service');
       end;
     end
     else if RunNowCheckBox.Checked then
     begin
-      Exec(ExpandConstant('{app}\{#AppExeName}'), '', '', SW_HIDE, ewNoWait, ResultCode)
+      if Exec(ExpandConstant('{app}\{#AppExeName}'), '', '', SW_HIDE, ewNoWait, ResultCode) then
+      begin
+        Logger('info', 'OCSInventory Agent has been executed successfully');
+      end
+      else
+      begin
+        MsgBox('Failed to run OCSInventory Agent. Please check the logs for more details.', mbError, MB_OK);
+        Logger('error', 'Failed to run OCSInventory Agent');
+      end;
     end;
+    Logger('info', 'OCSInventory Agent installation steps finished');
   end;
 end;
 
@@ -179,14 +206,22 @@ begin
   begin
     if Exec('sc.exe', 'stop "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
     begin
-      if not Exec('sc.exe', 'delete "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+      Logger('info', 'OCSInventory Agent service stopped successfully');
+      
+      if Exec('sc.exe', 'delete "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+      begin
+        Logger('info', 'OCSInventory Agent service stopped and deleted successfully');
+      end
+      else
       begin
         MsgBox(ExpandConstant('{cm:ServiceDeleteFailed}'), mbError, MB_OK);
+        Logger('error', 'Failed to delete OCSInventory Agent service');
       end;
     end
     else
     begin
       MsgBox(ExpandConstant('{cm:ServiceStopFailed}'), mbError, MB_OK);
+      Logger('error', 'Failed to stop OCSInventory Agent service');
     end;
 
     if DirExists(STORE_DATA_PATH) then
@@ -194,6 +229,7 @@ begin
       if not RemoveDir(STORE_DATA_PATH) then
       begin
         MsgBox('Failed to remove OCSInventory-Agent data directory. Please check the logs for more details.', mbError, MB_OK);
+        Logger('error', 'Failed to remove data directory: ' + STORE_DATA_PATH);
       end;
     end;
   end;
