@@ -75,22 +75,6 @@ begin
   if Silent then
   begin
     Logger('info', 'Running in silent mode');
-
-    URL := ExpandConstant('{param:URL}');
-    USERNAME := ExpandConstant('{param:USERNAME}');
-    PASSWORD := ExpandConstant('{param:PASSWORD}');
-    CERTIFICATE := ExpandConstant('{param:CERTIFICATE}');
-    INVENTORY_MODE := StrToInt64Def(ExpandConstant('{param:MODE}'), 2);
-    LOG_LEVEL := StrToInt64Def(ExpandConstant('{param:LOG_LEVEL}'), 2);
-
-    RUN_NOW := (ExpandConstant('{param:NOW}') = 'True');
-    INSTALL_AS_A_SERVICE := (ExpandConstant('{param:SERVICE}') = 'True');
-
-    STORE_DATA_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent');
-    CONFIG_PATH := STORE_DATA_PATH + '\config.json';
-    LOG_PATH := STORE_DATA_PATH + '\ocsinventory-agent.log';
-
-    Logger('info', 'Silent mode parameters: URL=' + URL + ', USERNAME=' + USERNAME + ', PASSWORD=******, CERTIFICATE=' + CERTIFICATE + ', INVENTORY_MODE=' + IntToStr(INVENTORY_MODE) + ', LOG_LEVEL=' + IntToStr(LOG_LEVEL) + ', RUN_NOW=' + BoolToStr(RUN_NOW) + ', INSTALL_AS_A_SERVICE=' + BoolToStr(INSTALL_AS_A_SERVICE));
   end
   else
   begin
@@ -179,17 +163,34 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
   begin
-    URL := ConnectionInputPage.Values[0];
-    USERNAME := ConnectionInputPage.Values[1];
-    PASSWORD := ConnectionInputPage.Values[2];
-    CERTIFICATE := ConnectionInputPage.Values[3];
-    INVENTORY_MODE := StrToInt64Def(ConfigInputPage.Values[0], 2);
-    LOG_LEVEL := StrToInt64Def(ConfigInputPage.Values[1], 2);
+    if Silent then
+    begin
+      URL := ConnectionInputPage.Values[0];
+      USERNAME := ConnectionInputPage.Values[1];
+      PASSWORD := ConnectionInputPage.Values[2];
+      CERTIFICATE := ConnectionInputPage.Values[3];
+      INVENTORY_MODE := StrToInt64Def(ConfigInputPage.Values[0], 2);
+      LOG_LEVEL := StrToInt64Def(ConfigInputPage.Values[1], 2);
+    end
+    else
+    begin
+      URL := ExpandConstant('{param:URL}');
+      USERNAME := ExpandConstant('{param:USERNAME}');
+      PASSWORD := ExpandConstant('{param:PASSWORD}');
+      CERTIFICATE := ExpandConstant('{param:CERTIFICATE}');
+      INVENTORY_MODE := StrToInt64Def(ExpandConstant('{param:MODE}'), 2);
+      LOG_LEVEL := StrToInt64Def(ExpandConstant('{param:LOG_LEVEL}'), 2);
+
+      RUN_NOW := (ExpandConstant('{param:NOW}') = 'True');
+      INSTALL_AS_A_SERVICE := (ExpandConstant('{param:SERVICE}') = 'True');
+
+      Logger('info', 'Silent mode parameters: URL=' + URL + ', USERNAME=' + USERNAME + ', PASSWORD=******, CERTIFICATE=' + CERTIFICATE + ', INVENTORY_MODE=' + IntToStr(INVENTORY_MODE) + ', LOG_LEVEL=' + IntToStr(LOG_LEVEL) + ', RUN_NOW=' + BoolToStr(RUN_NOW) + ', INSTALL_AS_A_SERVICE=' + BoolToStr(INSTALL_AS_A_SERVICE));
+    end;
 
     STORE_DATA_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent');
     CONFIG_PATH := STORE_DATA_PATH + '\config.json';
     LOG_PATH := STORE_DATA_PATH + '\ocsinventory-agent.log';
-
+    
     if not DirExists(STORE_DATA_PATH) then
     begin
       Logger('info', 'Data directory does not exist, attempting to create: ' + STORE_DATA_PATH);
