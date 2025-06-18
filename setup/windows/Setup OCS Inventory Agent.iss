@@ -70,6 +70,8 @@ begin
 
   Silent := (Pos('/SILENT', GetCmdTail) > 0)
 
+  Logger('info', 'Silent mode: ' + BoolToStr(Silent));
+
   if Silent then
   begin
     Logger('info', 'Running in silent mode');
@@ -130,12 +132,6 @@ end;
 function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   Result := True;
-
-  if Silent then
-  begin
-    Logger('info', 'Silent mode: skipping validation');
-    Exit;
-  end;
 
   if CurPageID = ConnectionInputPage.ID then
   begin
