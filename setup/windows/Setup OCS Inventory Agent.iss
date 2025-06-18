@@ -36,6 +36,7 @@ Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExeName}"
 
 [Code]
 var
+  silent: Boolean;
   ConnectionInputPage, ConfigInputPage: TInputQueryWizardPage;
   CheckPage: TWizardPage;
   URL, USERNAME, PASSWORD, CERTIFICATE, STORE_DATA_PATH, CONFIG_PATH, LOG_PATH: String;
@@ -58,6 +59,21 @@ end;
 procedure InitializeWizard;
 begin
   Logger('info', 'Starting OCSInventory Agent setup...');
+
+  Silent := (Pos('/SILENT', GetCmdTail) > 0)
+
+  if Silent then
+  begin
+    Logger('info', 'Running in silent mode');
+    WizardSilent := True;
+    WizardStyle := wsSilent;
+  end
+  else
+  begin
+    Logger('info', 'Running in normal mode');
+    WizardStyle := wsModern;
+  end;
+  
   ConnectionInputPage := CreateInputQueryPage(wpLicense, ExpandConstant('{cm:AgentConfigurationPageTitle}'), ExpandConstant('{cm:AgentConfigurationPageDescription}'), ExpandConstant('{cm:MandatoryFields}'));
 
   ConnectionInputPage.Add('* ' + ExpandConstant('{cm:URL}'), False);
