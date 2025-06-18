@@ -65,46 +65,66 @@ begin
   if Silent then
   begin
     Logger('info', 'Running in silent mode');
-    WizardSilent := True;
-    WizardStyle := wsSilent;
+
+    URL := GetCmdParam('/URL');
+    USERNAME := GetCmdParam('/USERNAME');
+    PASSWORD := GetCmdParam('/PASSWORD');
+    CERTIFICATE := GetCmdParam('/CERTIFICATE');
+    INVENTORY_MODE := StrToInt64Def(GetCmdParam('/INVENTORY_MODE'), 2);
+    LOG_LEVEL := StrToInt64Def(GetCmdParam('/LOG_LEVEL'), 2);
+
+    RUN_NOW_CHECKBOX := GetCmdParam('/RUN_NOW');
+    INSTALL_AS_A_SERVICE_CHECKBOX := GetCmdParam('/INSTALL_AS_A_SERVICE');
+    if RUN_NOW_CHECKBOX = '' then
+      RunNowCheckBox.Checked := True
+    else
+      RunNowCheckBox.Checked := StrToBoolDef(RUN_NOW_CHECKBOX, True);
+    if INSTALL_AS_A_SERVICE_CHECKBOX = '' then
+      InstallAsAServiceCheckBox.Checked := True
+    else
+      InstallAsAServiceCheckBox.Checked := StrToBoolDef(INSTALL_AS_A_SERVICE_CHECKBOX, True);
+
+    STORE_DATA_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent');
+    CONFIG_PATH := STORE_DATA_PATH + '\config.json';
+    LOG_PATH := STORE_DATA_PATH + '\ocsinventory-agent.log';
+
+    Logger('info', 'Silent mode parameters: URL=' + URL + ', USERNAME=' + USERNAME + ', PASSWORD=******, CERTIFICATE=' + CERTIFICATE + ', INVENTORY_MODE=' + IntToStr(INVENTORY_MODE) + ', LOG_LEVEL=' + IntToStr(LOG_LEVEL));
   end
   else
   begin
     Logger('info', 'Running in normal mode');
-    WizardStyle := wsModern;
+    ConnectionInputPage := CreateInputQueryPage(wpLicense, ExpandConstant('{cm:AgentConfigurationPageTitle}'), ExpandConstant('{cm:AgentConfigurationPageDescription}'), ExpandConstant('{cm:MandatoryFields}'));
+
+    ConnectionInputPage.Add('* ' + ExpandConstant('{cm:URL}'), False);
+    ConnectionInputPage.Add('* ' + ExpandConstant('{cm:Username}'), False);
+    ConnectionInputPage.Add('* ' + ExpandConstant('{cm:Password}'), False);
+    ConnectionInputPage.Add(ExpandConstant('{cm:Certificate}'), False);
+
+    ConfigInputPage := CreateInputQueryPage(ConnectionInputPage.ID, ExpandConstant('{cm:AgentConfigurationPageTitle}'), ExpandConstant('{cm:AgentConfigurationPageDescription}'), ExpandConstant('{cm:MandatoryFields}'));
+
+    ConfigInputPage.Add(ExpandConstant('{cm:AgentMode}'), False);
+    ConfigInputPage.Add(ExpandConstant('{cm:LogLevel}'), False);
+
+    CheckPage := CreateCustomPage(ConfigInputPage.ID, ExpandConstant('{cm:AgentConfigurationPageTitle}'), ExpandConstant('{cm:AgentConfigurationPageDescription}'));
+
+    RunNowCheckBox := TNewCheckBox.Create(CheckPage);
+    RunNowCheckBox.Parent := CheckPage.Surface;
+    RunNowCheckBox.Top := 0;
+    RunNowCheckBox.Left := 0;
+    RunNowCheckBox.Width := CheckPage.SurfaceWidth;
+    RunNowCheckBox.Caption := ExpandConstant('{cm:RunNow}');
+    RunNowCheckBox.Checked := True;
+
+    InstallAsAServiceCheckBox := TNewCheckBox.Create(CheckPage);
+    InstallAsAServiceCheckBox.Parent := CheckPage.Surface;
+    InstallAsAServiceCheckBox.Top := RunNowCheckBox.Top + 50;
+    InstallAsAServiceCheckBox.Left := 0;
+    InstallAsAServiceCheckBox.Width := CheckPage.SurfaceWidth;
+    InstallAsAServiceCheckBox.Caption := ExpandConstant('{cm:InstallAsAService}');
+    InstallAsAServiceCheckBox.Checked := True;
+
+    Logger('info', 'Waiting user to enter inputs...');
   end;
-  
-  ConnectionInputPage := CreateInputQueryPage(wpLicense, ExpandConstant('{cm:AgentConfigurationPageTitle}'), ExpandConstant('{cm:AgentConfigurationPageDescription}'), ExpandConstant('{cm:MandatoryFields}'));
-
-  ConnectionInputPage.Add('* ' + ExpandConstant('{cm:URL}'), False);
-  ConnectionInputPage.Add('* ' + ExpandConstant('{cm:Username}'), False);
-  ConnectionInputPage.Add('* ' + ExpandConstant('{cm:Password}'), False);
-  ConnectionInputPage.Add(ExpandConstant('{cm:Certificate}'), False);
-
-  ConfigInputPage := CreateInputQueryPage(ConnectionInputPage.ID, ExpandConstant('{cm:AgentConfigurationPageTitle}'), ExpandConstant('{cm:AgentConfigurationPageDescription}'), ExpandConstant('{cm:MandatoryFields}'));
-
-  ConfigInputPage.Add(ExpandConstant('{cm:AgentMode}'), False);
-  ConfigInputPage.Add(ExpandConstant('{cm:LogLevel}'), False);
-
-  CheckPage := CreateCustomPage(ConfigInputPage.ID, ExpandConstant('{cm:AgentConfigurationPageTitle}'), ExpandConstant('{cm:AgentConfigurationPageDescription}'));
-
-  RunNowCheckBox := TNewCheckBox.Create(CheckPage);
-  RunNowCheckBox.Parent := CheckPage.Surface;
-  RunNowCheckBox.Top := 0;
-  RunNowCheckBox.Left := 0;
-  RunNowCheckBox.Width := CheckPage.SurfaceWidth;
-  RunNowCheckBox.Caption := ExpandConstant('{cm:RunNow}');
-  RunNowCheckBox.Checked := True;
-
-  InstallAsAServiceCheckBox := TNewCheckBox.Create(CheckPage);
-  InstallAsAServiceCheckBox.Parent := CheckPage.Surface;
-  InstallAsAServiceCheckBox.Top := RunNowCheckBox.Top + 50;
-  InstallAsAServiceCheckBox.Left := 0;
-  InstallAsAServiceCheckBox.Width := CheckPage.SurfaceWidth;
-  InstallAsAServiceCheckBox.Caption := ExpandConstant('{cm:InstallAsAService}');
-  InstallAsAServiceCheckBox.Checked := True;
-
-  Logger('info', 'Waiting user to enter inputs...');
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
@@ -115,19 +135,28 @@ begin
   begin
     if ConnectionInputPage.Values[0] = '' then
     begin
-      MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:URL}}'), mbError, MB_OK);
+      if not Silent then
+      begin
+        MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:URL}}'), mbError, MB_OK);
+      end;
       Logger('error', 'Connection details validation failed: URL is empty');
       Result := False;
     end
     else if ConnectionInputPage.Values[1] = '' then
     begin
-      MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:Username}}'), mbError, MB_OK);
+      if not Silent then
+      begin
+        MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:Username}}'), mbError, MB_OK);
+      end;
       Logger('error', 'Connection details validation failed: Username is empty');
       Result := False;
     end
     else if ConnectionInputPage.Values[2] = '' then
     begin
-      MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:Password}}'), mbError, MB_OK);
+      if not Silent then
+      begin
+        MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:Password}}'), mbError, MB_OK);
+      end;
       Logger('error', 'Connection details validation failed: Password is empty');
       Result := False;
     end
@@ -163,7 +192,10 @@ begin
       end
       else
       begin
-        MsgBox('Failed to create OCSInventory-Agent data directory. Please check the logs for more details.', mbError, MB_OK);
+        if not Silent then
+        begin
+          MsgBox('Failed to create OCSInventory-Agent data directory. Please check the logs for more details.', mbError, MB_OK);
+        end;
         Logger('error', 'Failed to create data directory: ' + STORE_DATA_PATH);
       end;
     end
@@ -178,7 +210,10 @@ begin
     end
     else
     begin
-      MsgBox('Failed to create configuration file. Please check the logs for more details.', mbError, MB_OK);
+      if not Silent then
+      begin
+        MsgBox('Failed to create configuration file. Please check the logs for more details.', mbError, MB_OK);
+      end;
       Logger('error', 'Failed to create configuration file: ' + CONFIG_PATH);
     end;
 
@@ -196,19 +231,28 @@ begin
         end
         else
         begin
-          MsgBox(ExpandConstant('{cm:ServiceCreateFailed}'), mbError, MB_OK);
+          if not Silent then
+          begin
+            MsgBox(ExpandConstant('{cm:ServiceCreateFailed}'), mbError, MB_OK);
+          end;
           Logger('error', 'Failed to set service description for OCSInventory Agent');
         end;
 
         if not Exec('sc.exe', 'start "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
         begin
-          MsgBox(ExpandConstant('{cm:ServiceStartFailed}'), mbError, MB_OK);
+          if not Silent then
+          begin
+            MsgBox(ExpandConstant('{cm:ServiceStartFailed}'), mbError, MB_OK);
+          end;
           Logger('error', 'Failed to start OCSInventory Agent service');
         end;
       end
       else
       begin
-        MsgBox(ExpandConstant('{cm:ServiceCreateFailed}'), mbError, MB_OK);
+        if not Silent then
+        begin
+          MsgBox(ExpandConstant('{cm:ServiceCreateFailed}'), mbError, MB_OK);
+        end;
         Logger('error', 'Failed to create OCSInventory Agent service');
       end;
     end
@@ -222,7 +266,10 @@ begin
       end
       else
       begin
-        MsgBox('Failed to run OCSInventory Agent. Please check the logs for more details.', mbError, MB_OK);
+        if not Silent then
+        begin
+          MsgBox('Failed to run OCSInventory Agent. Please check the logs for more details.', mbError, MB_OK);
+        end;
         Logger('error', 'Failed to run OCSInventory Agent');
       end;
     end;
@@ -238,19 +285,28 @@ begin
     begin
       if not Exec('sc.exe', 'delete "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
       begin
-        MsgBox(ExpandConstant('{cm:ServiceDeleteFailed}'), mbError, MB_OK);
+        if not Silent then
+        begin
+          MsgBox(ExpandConstant('{cm:ServiceDeleteFailed}'), mbError, MB_OK);
+        end;
       end;
     end
     else
     begin
-      MsgBox(ExpandConstant('{cm:ServiceStopFailed}'), mbError, MB_OK);
+      if not Silent then
+      begin
+        MsgBox(ExpandConstant('{cm:ServiceStopFailed}'), mbError, MB_OK);
+      end;
     end;
 
     if DirExists(STORE_DATA_PATH) then
     begin
       if not RemoveDir(STORE_DATA_PATH) then
       begin
-        MsgBox('Failed to remove OCSInventory-Agent data directory.', mbError, MB_OK);
+        if not Silent then
+        begin
+          MsgBox('Failed to remove OCSInventory-Agent data directory.', mbError, MB_OK);
+        end;
       end;
     end;
   end;
