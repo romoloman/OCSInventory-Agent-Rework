@@ -56,6 +56,14 @@ begin
   SaveStringToFile(ExpandConstant('{src}/install.log'), Format('[%s] [%s] %s', [LogTime, LogType, LogMessage]) + #13#10, true); // #13#10 = NewLine
 end;
 
+function BoolToStr(Value: Boolean): String;
+begin
+  if Value then
+    Result := 'True'
+  else
+    Result := 'False';
+end;
+
 procedure InitializeWizard;
 begin
   Logger('info', 'Starting OCSInventory Agent setup...');
@@ -80,7 +88,7 @@ begin
     CONFIG_PATH := STORE_DATA_PATH + '\config.json';
     LOG_PATH := STORE_DATA_PATH + '\ocsinventory-agent.log';
 
-    Logger('info', 'Silent mode parameters: URL=' + URL + ', USERNAME=' + USERNAME + ', PASSWORD=******, CERTIFICATE=' + CERTIFICATE + ', INVENTORY_MODE=' + IntToStr(INVENTORY_MODE) + ', LOG_LEVEL=' + IntToStr(LOG_LEVEL) + ', RUN_NOW=' + IntToStr(RUN_NOW) + ', INSTALL_AS_A_SERVICE=' + IntToStr(INSTALL_AS_A_SERVICE));
+    Logger('info', 'Silent mode parameters: URL=' + URL + ', USERNAME=' + USERNAME + ', PASSWORD=******, CERTIFICATE=' + CERTIFICATE + ', INVENTORY_MODE=' + IntToStr(INVENTORY_MODE) + ', LOG_LEVEL=' + IntToStr(LOG_LEVEL) + ', RUN_NOW=' + BoolToStr(RUN_NOW) + ', INSTALL_AS_A_SERVICE=' + BoolToStr(INSTALL_AS_A_SERVICE));
   end
   else
   begin
