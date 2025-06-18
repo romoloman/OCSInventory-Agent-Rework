@@ -68,7 +68,7 @@ procedure InitializeWizard;
 begin
   Logger('info', 'Starting OCSInventory Agent setup...');
 
-  Silent := (Pos('/SILENT', GetCmdTail) > 0)
+  Silent := (Pos('/SILENT', UpperCase(GetCmdTail)) > 0)
 
   Logger('info', 'Silent mode: ' + BoolToStr(Silent));
 
