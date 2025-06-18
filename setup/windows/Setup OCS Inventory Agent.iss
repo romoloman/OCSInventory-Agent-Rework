@@ -226,17 +226,37 @@ begin
       Logger('error', 'Failed to create configuration file: ' + CONFIG_PATH);
     end;
 
-    if InstallAsAServiceCheckBox.Checked then
+    if not Silent then
     begin
-      Logger('info', 'Installing OCSInventory Agent as a service...');
-
-      if Exec('sc.exe', 'create "OCSInventory Agent" binpath= "' + ExpandConstant('{app}\{#AppExeName}') + '" start= "auto"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+      if InstallAsAServiceCheckBox.Checked then
       begin
-        Logger('info', 'Service created successfully');
-        
-        if Exec('sc.exe', 'description "OCSInventory Agent" "' + ExpandConstant('{cm:ServiceDescription}') + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+        Logger('info', 'Installing OCSInventory Agent as a service...');
+
+        if Exec('sc.exe', 'create "OCSInventory Agent" binpath= "' + ExpandConstant('{app}\{#AppExeName}') + '" start= "auto"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
         begin
-          Logger('info', 'Service description set successfully');
+          Logger('info', 'Service created successfully');
+          
+          if Exec('sc.exe', 'description "OCSInventory Agent" "' + ExpandConstant('{cm:ServiceDescription}') + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+          begin
+            Logger('info', 'Service description set successfully');
+          end
+          else
+          begin
+            if not Silent then
+            begin
+              MsgBox(ExpandConstant('{cm:ServiceCreateFailed}'), mbError, MB_OK);
+            end;
+            Logger('error', 'Failed to set service description for OCSInventory Agent');
+          end;
+
+          if not Exec('sc.exe', 'start "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+          begin
+            if not Silent then
+            begin
+              MsgBox(ExpandConstant('{cm:ServiceStartFailed}'), mbError, MB_OK);
+            end;
+            Logger('error', 'Failed to start OCSInventory Agent service');
+          end;
         end
         else
         begin
@@ -244,42 +264,25 @@ begin
           begin
             MsgBox(ExpandConstant('{cm:ServiceCreateFailed}'), mbError, MB_OK);
           end;
-          Logger('error', 'Failed to set service description for OCSInventory Agent');
+          Logger('error', 'Failed to create OCSInventory Agent service');
         end;
+      end
+      else if RunNowCheckBox.Checked then
+      begin
+        Logger('info', 'Running OCSInventory Agent immediately...');
 
-        if not Exec('sc.exe', 'start "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+        if Exec(ExpandConstant('{app}\{#AppExeName}'), '', '', SW_HIDE, ewNoWait, ResultCode) then
+        begin
+          Logger('info', 'OCSInventory Agent has been executed successfully');
+        end
+        else
         begin
           if not Silent then
           begin
-            MsgBox(ExpandConstant('{cm:ServiceStartFailed}'), mbError, MB_OK);
+            MsgBox('Failed to run OCSInventory Agent. Please check the logs for more details.', mbError, MB_OK);
           end;
-          Logger('error', 'Failed to start OCSInventory Agent service');
+          Logger('error', 'Failed to run OCSInventory Agent');
         end;
-      end
-      else
-      begin
-        if not Silent then
-        begin
-          MsgBox(ExpandConstant('{cm:ServiceCreateFailed}'), mbError, MB_OK);
-        end;
-        Logger('error', 'Failed to create OCSInventory Agent service');
-      end;
-    end
-    else if RunNowCheckBox.Checked then
-    begin
-      Logger('info', 'Running OCSInventory Agent immediately...');
-
-      if Exec(ExpandConstant('{app}\{#AppExeName}'), '', '', SW_HIDE, ewNoWait, ResultCode) then
-      begin
-        Logger('info', 'OCSInventory Agent has been executed successfully');
-      end
-      else
-      begin
-        if not Silent then
-        begin
-          MsgBox('Failed to run OCSInventory Agent. Please check the logs for more details.', mbError, MB_OK);
-        end;
-        Logger('error', 'Failed to run OCSInventory Agent');
       end;
     end;
     Logger('info', 'OCSInventory Agent installation steps finished');
