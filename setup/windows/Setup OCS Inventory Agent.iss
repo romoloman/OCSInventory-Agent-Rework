@@ -87,6 +87,8 @@ begin
   InstallAsAServiceCheckBox.Width := CheckPage.SurfaceWidth;
   InstallAsAServiceCheckBox.Caption := ExpandConstant('{cm:InstallAsAService}');
   InstallAsAServiceCheckBox.Checked := True;
+
+  Logger('info', 'Waiting user to enter inputs...');'
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
@@ -148,6 +150,10 @@ begin
         MsgBox('Failed to create OCSInventory-Agent data directory. Please check the logs for more details.', mbError, MB_OK);
         Logger('error', 'Failed to create data directory: ' + STORE_DATA_PATH);
       end;
+    end
+    else
+    begin
+      Logger('info', 'Data directory found: ' + STORE_DATA_PATH);
     end;
 
     if SaveStringToFile(CONFIG_PATH, Format('{"url": "%s", "username": "%s", "password": "%s", "certificate": "%s", "bypass_certificate": false, "log_file": true, "log_level": %d, "mode": %d, "data_directory": "%s", "log_file_path": "%s"}', [URL, USERNAME, PASSWORD, CERTIFICATE, LOG_LEVEL, INVENTORY_MODE, STORE_DATA_PATH, LOG_PATH]), false) then
@@ -162,13 +168,15 @@ begin
 
     if InstallAsAServiceCheckBox.Checked then
     begin
+      Logger('info', 'Installing OCSInventory Agent as a service...');
+
       if Exec('sc.exe', 'create "OCSInventory Agent" binpath= "' + ExpandConstant('{app}\{#AppExeName}') + '" start= "auto"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
       begin
-        Logger('info', 'Service created successfully: OCSInventory Agent');
+        Logger('info', 'Service created successfully);
         
         if Exec('sc.exe', 'description "OCSInventory Agent" "' + ExpandConstant('{cm:ServiceDescription}') + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
         begin
-          Logger('info', 'Service description set successfully: ' + ExpandConstant('{cm:ServiceDescription}'));
+          Logger('info', 'Service description set successfully);
         end
         else
         begin
@@ -190,6 +198,8 @@ begin
     end
     else if RunNowCheckBox.Checked then
     begin
+      Logger('info', 'Running OCSInventory Agent immediately...');
+
       if Exec(ExpandConstant('{app}\{#AppExeName}'), '', '', SW_HIDE, ewNoWait, ResultCode) then
       begin
         Logger('info', 'OCSInventory Agent has been executed successfully');
