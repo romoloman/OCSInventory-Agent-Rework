@@ -62,8 +62,6 @@ begin
 
   Silent := (Pos('/SILENT', GetCmdTail) > 0)
 
-  Log('Silent:' + Silent);
-
   if Silent then
   begin
     Logger('info', 'Running in silent mode');
@@ -129,7 +127,7 @@ begin
   begin
     if ConnectionInputPage.Values[0] = '' then
     begin
-      if not Silent then
+      if Silent = 0 then
       begin
         MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:URL}}'), mbError, MB_OK);
       end;
@@ -138,7 +136,7 @@ begin
     end
     else if ConnectionInputPage.Values[1] = '' then
     begin
-      if not Silent then
+      if Silent = 0 then
       begin
         MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:Username}}'), mbError, MB_OK);
       end;
@@ -147,7 +145,7 @@ begin
     end
     else if ConnectionInputPage.Values[2] = '' then
     begin
-      if not Silent then
+      if Silent = 0 then
       begin
         MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:Password}}'), mbError, MB_OK);
       end;
@@ -186,7 +184,7 @@ begin
       end
       else
       begin
-        if not Silent then
+        if Silent = 0 then
         begin
           MsgBox('Failed to create OCSInventory-Agent data directory. Please check the logs for more details.', mbError, MB_OK);
         end;
@@ -204,7 +202,7 @@ begin
     end
     else
     begin
-      if not Silent then
+      if Silent = 0 then
       begin
         MsgBox('Failed to create configuration file. Please check the logs for more details.', mbError, MB_OK);
       end;
@@ -225,7 +223,7 @@ begin
         end
         else
         begin
-          if not Silent then
+          if Silent = 0 then
           begin
             MsgBox(ExpandConstant('{cm:ServiceCreateFailed}'), mbError, MB_OK);
           end;
@@ -234,7 +232,7 @@ begin
 
         if not Exec('sc.exe', 'start "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
         begin
-          if not Silent then
+          if Silent = 0 then
           begin
             MsgBox(ExpandConstant('{cm:ServiceStartFailed}'), mbError, MB_OK);
           end;
@@ -243,7 +241,7 @@ begin
       end
       else
       begin
-        if not Silent then
+        if Silent = 0 then
         begin
           MsgBox(ExpandConstant('{cm:ServiceCreateFailed}'), mbError, MB_OK);
         end;
@@ -260,7 +258,7 @@ begin
       end
       else
       begin
-        if not Silent then
+        if Silent = 0 then
         begin
           MsgBox('Failed to run OCSInventory Agent. Please check the logs for more details.', mbError, MB_OK);
         end;
@@ -279,7 +277,7 @@ begin
     begin
       if not Exec('sc.exe', 'delete "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
       begin
-        if not Silent then
+        if Silent = 0 then
         begin
           MsgBox(ExpandConstant('{cm:ServiceDeleteFailed}'), mbError, MB_OK);
         end;
@@ -287,7 +285,7 @@ begin
     end
     else
     begin
-      if not Silent then
+      if Silent = 0 then
       begin
         MsgBox(ExpandConstant('{cm:ServiceStopFailed}'), mbError, MB_OK);
       end;
@@ -297,7 +295,7 @@ begin
     begin
       if not RemoveDir(STORE_DATA_PATH) then
       begin
-        if not Silent then
+        if Silent = 0 then
         begin
           MsgBox('Failed to remove OCSInventory-Agent data directory.', mbError, MB_OK);
         end;
