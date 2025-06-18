@@ -244,7 +244,7 @@ end;
 AgentConfigurationPageTitle=Agent configuration
 AgentConfigurationPageDescription=Please specify your own agent settings.
 MandatoryFields=* Required fields are marked with an asterisk.
-URL=URL:
+URL=URL
 Username=Username
 Password=Password
 Certificate=Certificate
