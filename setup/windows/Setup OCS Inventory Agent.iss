@@ -36,7 +36,7 @@ Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExeName}"
 
 [Code]
 var
-  silent: Boolean;
+  silent, INSTALL_AS_A_SERVICE, RUN_NOW: Boolean;
   ConnectionInputPage, ConfigInputPage: TInputQueryWizardPage;
   CheckPage: TWizardPage;
   URL, USERNAME, PASSWORD, CERTIFICATE, STORE_DATA_PATH, CONFIG_PATH, LOG_PATH: String;
@@ -73,14 +73,14 @@ begin
     INVENTORY_MODE := StrToInt64Def(ExpandConstant('{param:MODE}'), 2);
     LOG_LEVEL := StrToInt64Def(ExpandConstant('{param:LOG_LEVEL}'), 2);
 
-    RUN_NOW := ExpandConstant('{param:NOW}') = 'True';
-    INSTALL_AS_A_SERVICE := ExpandConstant('{param:SERVICE}') = 'True';
+    RUN_NOW := ExpandConstant('{param:NOW}') = 1;
+    INSTALL_AS_A_SERVICE := ExpandConstant('{param:SERVICE}') = 1;
 
     STORE_DATA_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent');
     CONFIG_PATH := STORE_DATA_PATH + '\config.json';
     LOG_PATH := STORE_DATA_PATH + '\ocsinventory-agent.log';
 
-    Logger('info', 'Silent mode parameters: URL=' + URL + ', USERNAME=' + USERNAME + ', PASSWORD=******, CERTIFICATE=' + CERTIFICATE + ', INVENTORY_MODE=' + IntToStr(INVENTORY_MODE) + ', LOG_LEVEL=' + IntToStr(LOG_LEVEL) + ', RUN_NOW=' + BoolToStr(RUN_NOW, True) + ', INSTALL_AS_A_SERVICE=' + BoolToStr(INSTALL_AS_A_SERVICE, True));
+    Logger('info', 'Silent mode parameters: URL=' + URL + ', USERNAME=' + USERNAME + ', PASSWORD=******, CERTIFICATE=' + CERTIFICATE + ', INVENTORY_MODE=' + IntToStr(INVENTORY_MODE) + ', LOG_LEVEL=' + IntToStr(LOG_LEVEL) + ', RUN_NOW=' + IntToStr(RUN_NOW) + ', INSTALL_AS_A_SERVICE=' + IntToStr(INSTALL_AS_A_SERVICE));
   end
   else
   begin
