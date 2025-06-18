@@ -88,7 +88,7 @@ begin
   InstallAsAServiceCheckBox.Caption := ExpandConstant('{cm:InstallAsAService}');
   InstallAsAServiceCheckBox.Checked := True;
 
-  Logger('info', 'Waiting user to enter inputs...');'
+  Logger('info', 'Waiting user to enter inputs...');
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
@@ -172,11 +172,11 @@ begin
 
       if Exec('sc.exe', 'create "OCSInventory Agent" binpath= "' + ExpandConstant('{app}\{#AppExeName}') + '" start= "auto"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
       begin
-        Logger('info', 'Service created successfully);
+        Logger('info', 'Service created successfully');
         
         if Exec('sc.exe', 'description "OCSInventory Agent" "' + ExpandConstant('{cm:ServiceDescription}') + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
         begin
-          Logger('info', 'Service description set successfully);
+          Logger('info', 'Service description set successfully');
         end
         else
         begin
