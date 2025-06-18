@@ -43,6 +43,17 @@ var
   InstallAsAServiceCheckBox, RunNowCheckBox: TNewCheckBox;
   ResultCode: Integer;
 
+function Logger(LogType, LogMessage: String): Boolean;
+var LogTime: String;
+begin
+  Result := True;
+  LogTime := GetDateTimeString('dd/mm/yyyy hh:nn:ss', '-', ':');
+  LogType := UpperCase(LogType);
+
+  Log(Format('[%s] [%s] %s', [LogTime, LogType, LogMessage]));
+  SaveStringToFile('./install.log', Format('[%s] [%s] %s', [LogTime, LogType, LogMessage]) + #13#10, true); // #13#10 = NewLine
+end;
+
 procedure InitializeWizard;
 begin
   Logger('info', 'Starting OCSInventory Agent setup...');
@@ -188,8 +199,8 @@ begin
         Logger('error', 'Failed to run OCSInventory Agent');
       end;
     end;
-    Logger('info', 'OCSInventory Agent installation steps finished');
   end;
+  Logger('info', 'OCSInventory Agent installation steps finished');
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
@@ -225,17 +236,6 @@ begin
       end;
     end;
   end;
-end;
-
-function Logger(LogType, LogMessage: String): Boolean;
-var LogTime: String;
-begin
-  Result := True;
-  LogTime := GetDateTimeString('dd/mm/yyyy hh:nn:ss', '-', ':');
-  LogType := UpperCase(LogType);
-
-  Log(Format('[%s] [%s] %s', [LogTime, LogType, LogMessage]));
-  SaveStringToFile('./install.log', Format('[%s] [%s] %s', [LogTime, LogType, LogMessage]) + #13#10, true); // #13#10 = NewLine
 end;
 
 [CustomMessages]
