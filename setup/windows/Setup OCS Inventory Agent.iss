@@ -66,29 +66,21 @@ begin
   begin
     Logger('info', 'Running in silent mode');
 
-    URL := GetCmdParam('/URL');
-    USERNAME := GetCmdParam('/USERNAME');
-    PASSWORD := GetCmdParam('/PASSWORD');
-    CERTIFICATE := GetCmdParam('/CERTIFICATE');
-    INVENTORY_MODE := StrToInt64Def(GetCmdParam('/INVENTORY_MODE'), 2);
-    LOG_LEVEL := StrToInt64Def(GetCmdParam('/LOG_LEVEL'), 2);
+    URL := ExpandConstant('{param:URL}');
+    USERNAME := ExpandConstant('{param:USERNAME}');
+    PASSWORD := ExpandConstant('{param:PASSWORD}');
+    CERTIFICATE := ExpandConstant('{param:CERTIFICATE}');
+    INVENTORY_MODE := StrToInt64Def(ExpandConstant('{param:MODE}'), 2);
+    LOG_LEVEL := StrToInt64Def(ExpandConstant('{param:LOG_LEVEL}'), 2);
 
-    RUN_NOW_CHECKBOX := GetCmdParam('/RUN_NOW');
-    INSTALL_AS_A_SERVICE_CHECKBOX := GetCmdParam('/INSTALL_AS_A_SERVICE');
-    if RUN_NOW_CHECKBOX = '' then
-      RunNowCheckBox.Checked := True
-    else
-      RunNowCheckBox.Checked := StrToBoolDef(RUN_NOW_CHECKBOX, True);
-    if INSTALL_AS_A_SERVICE_CHECKBOX = '' then
-      InstallAsAServiceCheckBox.Checked := True
-    else
-      InstallAsAServiceCheckBox.Checked := StrToBoolDef(INSTALL_AS_A_SERVICE_CHECKBOX, True);
+    RUN_NOW := ExpandConstant('{param:NOW}') = 'True';
+    INSTALL_AS_A_SERVICE := ExpandConstant('{param:SERVICE}') = 'True';
 
     STORE_DATA_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent');
     CONFIG_PATH := STORE_DATA_PATH + '\config.json';
     LOG_PATH := STORE_DATA_PATH + '\ocsinventory-agent.log';
 
-    Logger('info', 'Silent mode parameters: URL=' + URL + ', USERNAME=' + USERNAME + ', PASSWORD=******, CERTIFICATE=' + CERTIFICATE + ', INVENTORY_MODE=' + IntToStr(INVENTORY_MODE) + ', LOG_LEVEL=' + IntToStr(LOG_LEVEL));
+    Logger('info', 'Silent mode parameters: URL=' + URL + ', USERNAME=' + USERNAME + ', PASSWORD=******, CERTIFICATE=' + CERTIFICATE + ', INVENTORY_MODE=' + IntToStr(INVENTORY_MODE) + ', LOG_LEVEL=' + IntToStr(LOG_LEVEL) + ', RUN_NOW=' + BoolToStr(RUN_NOW, True) + ', INSTALL_AS_A_SERVICE=' + BoolToStr(INSTALL_AS_A_SERVICE, True));
   end
   else
   begin
