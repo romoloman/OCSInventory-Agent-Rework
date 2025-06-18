@@ -200,8 +200,8 @@ begin
         Logger('error', 'Failed to run OCSInventory Agent');
       end;
     end;
+    Logger('info', 'OCSInventory Agent installation steps finished');
   end;
-  Logger('info', 'OCSInventory Agent installation steps finished');
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
