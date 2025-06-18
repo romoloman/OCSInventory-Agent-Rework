@@ -220,30 +220,21 @@ begin
   begin
     if Exec('sc.exe', 'stop "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
     begin
-      Logger('info', 'OCSInventory Agent service stopped successfully');
-      
-      if Exec('sc.exe', 'delete "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
-      begin
-        Logger('info', 'OCSInventory Agent service stopped and deleted successfully');
-      end
-      else
+      if not Exec('sc.exe', 'delete "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
       begin
         MsgBox(ExpandConstant('{cm:ServiceDeleteFailed}'), mbError, MB_OK);
-        Logger('error', 'Failed to delete OCSInventory Agent service');
       end;
     end
     else
     begin
       MsgBox(ExpandConstant('{cm:ServiceStopFailed}'), mbError, MB_OK);
-      Logger('error', 'Failed to stop OCSInventory Agent service');
     end;
 
     if DirExists(STORE_DATA_PATH) then
     begin
       if not RemoveDir(STORE_DATA_PATH) then
       begin
-        MsgBox('Failed to remove OCSInventory-Agent data directory. Please check the logs for more details.', mbError, MB_OK);
-        Logger('error', 'Failed to remove data directory: ' + STORE_DATA_PATH);
+        MsgBox('Failed to remove OCSInventory-Agent data directory.', mbError, MB_OK);
       end;
     end;
   end;
