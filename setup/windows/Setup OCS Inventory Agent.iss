@@ -62,6 +62,8 @@ begin
 
   Silent := (Pos('/SILENT', GetCmdTail) > 0)
 
+  Log('Silent:' + Silent);
+
   if Silent then
   begin
     Logger('info', 'Running in silent mode');
