@@ -133,6 +133,12 @@ function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   Result := True;
 
+  if Silent then
+  begin
+    Logger('info', 'Silent mode, skipping validation');
+    Exit;
+  end;
+
   if CurPageID = ConnectionInputPage.ID then
   begin
     if ConnectionInputPage.Values[0] = '' then
