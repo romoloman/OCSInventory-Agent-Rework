@@ -43,17 +43,6 @@ var
   InstallAsAServiceCheckBox, RunNowCheckBox: TNewCheckBox;
   ResultCode: Integer;
 
-function Logger(LogType, LogMessage: String): Boolean;
-var LogTime: String;
-begin
-  Result := True;
-  LogTime := GetDateTimeString('dd/mm/yyyy hh:nn:ss', '-', ':');
-  LogType := UpperCase(LogType);
-
-  Log(Format('[%s] [%s] %s', [LogTime, LogType, LogMessage]));
-  SaveStringToFile('./install.log', Format('[%s] [%s] %s', [LogTime, LogType, LogMessage]) + #13#10, true); // #13#10 = NewLine
-end;
-
 procedure InitializeWizard;
 begin
   Logger('info', 'Starting OCSInventory Agent setup...');
@@ -111,8 +100,11 @@ begin
       MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:Password}}'), mbError, MB_OK);
       Logger('error', 'Connection details validation failed: Password is empty');
       Result := False;
+    end
+    else
+    begin
+      Logger('info', 'Connection details validated: ' + ConnectionInputPage.Values[0] + ', ' + ConnectionInputPage.Values[1] + ', ' + ConnectionInputPage.Values[2]);
     end;
-    Logger('info', 'Connection details validated: ' + ConnectionInputPage.Values[0] + ', ' + ConnectionInputPage.Values[1] + ', ' + ConnectionInputPage.Values[2]);
   end;
 end;
 
@@ -233,6 +225,17 @@ begin
       end;
     end;
   end;
+end;
+
+function Logger(LogType, LogMessage: String): Boolean;
+var LogTime: String;
+begin
+  Result := True;
+  LogTime := GetDateTimeString('dd/mm/yyyy hh:nn:ss', '-', ':');
+  LogType := UpperCase(LogType);
+
+  Log(Format('[%s] [%s] %s', [LogTime, LogType, LogMessage]));
+  SaveStringToFile('./install.log', Format('[%s] [%s] %s', [LogTime, LogType, LogMessage]) + #13#10, true); // #13#10 = NewLine
 end;
 
 [CustomMessages]
