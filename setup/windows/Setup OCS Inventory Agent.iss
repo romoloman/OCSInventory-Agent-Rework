@@ -155,7 +155,7 @@ begin
       RUN_NOW := (ExpandConstant('{param:NOW}') = 'True');
       INSTALL_AS_A_SERVICE := (ExpandConstant('{param:SERVICE}') = 'True');
 
-      Log(ExpandConstant('{cm:Parameters, {#URL}, {#USERNAME}, {#CERTIFICATE}, {#INVENTORY_MODE}, {#LOG_LEVEL}, {#RUN_NOW}, {#INSTALL_AS_A_SERVICE}}'), [URL, USERNAME, CERTIFICATE, INVENTORY_MODE, LOG_LEVEL, BoolToStr(RUN_NOW), BoolToStr(INSTALL_AS_A_SERVICE)]);
+      Log(ExpandConstant('{cm:Parameters, URL, USERNAME, CERTIFICATE, INVENTORY_MODE, LOG_LEVEL, BoolToStr(RUN_NOW), BoolToStr(INSTALL_AS_A_SERVICE)}'));
     end
     else
     begin
@@ -166,7 +166,7 @@ begin
       INVENTORY_MODE := StrToInt64Def(ConfigInputPage.Values[0], 2);
       LOG_LEVEL := StrToInt64Def(ConfigInputPage.Values[1], 2);
 
-      Log(ExpandConstant('{cm:Parameters, {#URL}, {#USERNAME}, {#CERTIFICATE}, {#INVENTORY_MODE}, {#LOG_LEVEL}, {#RUN_NOW}, {#INSTALL_AS_A_SERVICE}}'), [URL, USERNAME, CERTIFICATE, INVENTORY_MODE, LOG_LEVEL, BoolToStr(RunNowCheckBox.Checked), BoolToStr(InstallAsAServiceCheckBox.Checked)]);
+      Log(ExpandConstant('{cm:Parameters, URL, USERNAME, CERTIFICATE, INVENTORY_MODE, LOG_LEVEL, BoolToStr(RunNowCheckBox.Checked), BoolToStr(InstallAsAServiceCheckBox.Checked)}'));
     end;
 
     STORE_DATA_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent');
