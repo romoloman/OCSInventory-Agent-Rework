@@ -58,13 +58,20 @@ end;
 
 procedure InitializeWizard;
 begin
-  if not WizardSilent then
+  Log(ExpandConstant('{cm:StartingOCSInventoryAgentSetup}'));
+
+  if WizardSilent then
   begin
+    Log(ExpandConstant('{cm:RunningInSilentMode}'));
+  end
+  else
+  begin
+    Log(ExpandConstant('{cm:RunningInInteractiveMode}'));
     ConnectionInputPage := CreateInputQueryPage(wpLicense, ExpandConstant('{cm:AgentConfigurationPageTitle}'), ExpandConstant('{cm:AgentConfigurationPageDescription}'), ExpandConstant('{cm:MandatoryFields}'));
 
     ConnectionInputPage.Add('* ' + ExpandConstant('{cm:URL}'), False);
     ConnectionInputPage.Add('* ' + ExpandConstant('{cm:Username}'), False);
-    ConnectionInputPage.Add('* ' + ExpandConstant('{cm:Password}'), False);
+    ConnectionInputPage.Add('* ' + ExpandConstant('{cm:Password}'), True);
     ConnectionInputPage.Add(ExpandConstant('{cm:Certificate}'), False);
 
     ConfigInputPage := CreateInputQueryPage(ConnectionInputPage.ID, ExpandConstant('{cm:AgentConfigurationPageTitle}'), ExpandConstant('{cm:AgentConfigurationPageDescription}'), ExpandConstant('{cm:MandatoryFields}'));
@@ -89,6 +96,8 @@ begin
     InstallAsAServiceCheckBox.Width := CheckPage.SurfaceWidth;
     InstallAsAServiceCheckBox.Caption := ExpandConstant('{cm:InstallAsAService}');
     InstallAsAServiceCheckBox.Checked := True;
+
+    Log(ExpandConstant('{cm:WaitingUserToEnterInputs}'));
   end;
 end;
 
@@ -107,17 +116,24 @@ begin
       if ConnectionInputPage.Values[0] = '' then
       begin
         MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:URL}}'), mbError, MB_OK);
+        Log('{cm:ErrorMandatoryField, {cm:URL}}');
         Result := False;
       end
       else if ConnectionInputPage.Values[1] = '' then
       begin
         MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:Username}}'), mbError, MB_OK);
+        Log('{cm:ErrorMandatoryField, {cm:Username}}');
         Result := False;
       end
       else if ConnectionInputPage.Values[2] = '' then
       begin
         MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:Password}}'), mbError, MB_OK);
+        Log('{cm:ErrorMandatoryField, {cm:Password}}');
         Result := False;
+      end
+      else
+      begin
+        Log(ExpandConstant('{cm:ConnectionDetailsValidated, {#URL}, {#USERNAME}}'), [ConnectionInputPage.Values[0], ConnectionInputPage.Values[1]]);
       end;
     end;
   end;
@@ -138,6 +154,8 @@ begin
 
       RUN_NOW := (ExpandConstant('{param:NOW}') = 'True');
       INSTALL_AS_A_SERVICE := (ExpandConstant('{param:SERVICE}') = 'True');
+
+      Log(ExpandConstant('{cm:Parameters, {#URL}, {#USERNAME}, {#CERTIFICATE}, {#INVENTORY_MODE}, {#LOG_LEVEL}, {#RUN_NOW}, {#INSTALL_AS_A_SERVICE}}'), [URL, USERNAME, CERTIFICATE, INVENTORY_MODE, LOG_LEVEL, BoolToStr(RUN_NOW), BoolToStr(INSTALL_AS_A_SERVICE)]);
     end
     else
     begin
@@ -147,51 +165,86 @@ begin
       CERTIFICATE := ConnectionInputPage.Values[3];
       INVENTORY_MODE := StrToInt64Def(ConfigInputPage.Values[0], 2);
       LOG_LEVEL := StrToInt64Def(ConfigInputPage.Values[1], 2);
+
+      Log(ExpandConstant('{cm:Parameters, {#URL}, {#USERNAME}, {#CERTIFICATE}, {#INVENTORY_MODE}, {#LOG_LEVEL}, {#RUN_NOW}, {#INSTALL_AS_A_SERVICE}}'), [URL, USERNAME, CERTIFICATE, INVENTORY_MODE, LOG_LEVEL, BoolToStr(RunNowCheckBox.Checked), BoolToStr(InstallAsAServiceCheckBox.Checked)]);
     end;
 
     STORE_DATA_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent');
     CONFIG_PATH := STORE_DATA_PATH + '\config.json';
     LOG_PATH := STORE_DATA_PATH + '\ocsinventory-agent.log';
 
-    if not DirExists(STORE_DATA_PATH) then
+    if DirExists(STORE_DATA_PATH) then
     begin
-      if not CreateDir(STORE_DATA_PATH) then
+      Log(ExpandConstant('{cm:DataDirectoryExist, {#CONFIG_PATH}}'), [CONFIG_PATH]);
+    end
+    else
+    begin
+      Log(ExpandConstant('{cm:DataDirectoryDoesNotExist, {#STORE_DATA_PATH}}'), [STORE_DATA_PATH]);
+      if CreateDir(STORE_DATA_PATH) then
       begin
-        MsgBox('Failed to create OCSInventory-Agent data directory. Please check the logs for more details.', mbError, MB_OK);
+        Log(ExpandConstant('{cm:DataDirectoryCreatedSuccessfully, {#STORE_DATA_PATH}}'), [STORE_DATA_PATH]);
+      end
+      else
+      begin
+        MsgBox(ExpandConstant('{cm:ErrorCreatingDataDirectory}'), mbError, MB_OK);
+        Log(ExpandConstant('{cm:ErrorCreatingDataDirectory}'));
       end;
     end;
 
-    if not SaveStringToFile(CONFIG_PATH, Format('{"url": "%s", "username": "%s", "password": "%s", "certificate": "%s", "bypass_certificate": false, "log_file": true, "log_level": %d, "mode": %d, "data_directory": "%s", "log_file_path": "%s"}', [URL, USERNAME, PASSWORD, CERTIFICATE, LOG_LEVEL, INVENTORY_MODE, STORE_DATA_PATH, LOG_PATH]), false) then
+    if SaveStringToFile(CONFIG_PATH, Format('{"url": "%s", "username": "%s", "password": "%s", "certificate": "%s", "bypass_certificate": false, "log_file": true, "log_level": %d, "mode": %d, "data_directory": "%s", "log_file_path": "%s"}', [URL, USERNAME, PASSWORD, CERTIFICATE, LOG_LEVEL, INVENTORY_MODE, STORE_DATA_PATH, LOG_PATH]), false) then
     begin
-        MsgBox('Failed to create configuration file. Please check the logs for more details.', mbError, MB_OK);
+      Log(ExpandConstant('{cm:ConfigurationFileCreatedSuccessfully, {#CONFIG_PATH}}'), [CONFIG_PATH]);
+    end
+    else
+    begin
+        MsgBox(ExpandConstant('{cm:ErrorCreatingConfigurationFile}'), mbError, MB_OK);
+        Log(ExpandConstant('{cm:ErrorCreatingConfigurationFile}'));
     end;
     
     if not WizardSilent then
     begin
       if InstallAsAServiceCheckBox.Checked then
       begin
+        Log(ExpandConstant('{cm:InstallingOCSInventoryAgentAsAService}'));
         if Exec('sc.exe', 'create "OCSInventory Agent" binpath= "' + ExpandConstant('{app}\{#AppExeName}') + '" start= "auto"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
         begin
-          if not Exec('sc.exe', 'description "OCSInventory Agent" "' + ExpandConstant('{cm:ServiceDescription}') + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+          Log(ExpandConstant('{cm:ServiceCreatedSuccessfully}'));
+          if Exec('sc.exe', 'description "OCSInventory Agent" "' + ExpandConstant('{cm:ServiceDescription}') + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
           begin
-            MsgBox(ExpandConstant('{cm:ServiceCreateFailed}'), mbError, MB_OK);
+            Log(ExpandConstant('{cm:ServiceDescriptionSetSuccessfully}'));
+          end
+          else
+          begin
+            MsgBox(ExpandConstant('{cm:ServiceDescriptionFailed}'), mbError, MB_OK);
+            Log(ExpandConstant('{cm:ServiceDescriptionFailed}'));
           end;
 
-          if not Exec('sc.exe', 'start "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+          if Exec('sc.exe', 'start "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+          begin
+            Log(ExpandConstant('{cm:ServiceStartedSuccessfully}'));
+          end
+          else
           begin
             MsgBox(ExpandConstant('{cm:ServiceStartFailed}'), mbError, MB_OK);
+            Log(ExpandConstant('{cm:ServiceStartFailed}'));
           end;
         end
         else
         begin
           MsgBox(ExpandConstant('{cm:ServiceCreateFailed}'), mbError, MB_OK);
+          Log(ExpandConstant('{cm:ServiceCreateFailed}'));
         end;
       end
       else if RunNowCheckBox.Checked then
       begin
-        if not Exec(ExpandConstant('{app}\{#AppExeName}'), '', '', SW_HIDE, ewNoWait, ResultCode) then
+        if Exec(ExpandConstant('{app}\{#AppExeName}'), '', '', SW_HIDE, ewNoWait, ResultCode) then
         begin
-          MsgBox('Failed to run OCSInventory Agent. Please check the logs for more details.', mbError, MB_OK);
+          Log(ExpandConstant('{cm:OCSInventoryAgentStarted}'));
+        end
+        else
+        begin
+          MsgBox(ExpandConstant('{cm:FailedToRunOCSInventoryAgent}'), mbError, MB_OK);
+          Log(ExpandConstant('{cm:FailedToRunOCSInventoryAgent}'));
         end;
       end;
     end;
@@ -204,39 +257,49 @@ begin
   begin
     if Exec('sc.exe', 'stop "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
     begin
-      if not Exec('sc.exe', 'delete "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+      if Exec('sc.exe', 'delete "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
       begin
-        if not WizardSilent then
-        begin
-          MsgBox(ExpandConstant('{cm:ServiceDeleteFailed}'), mbError, MB_OK);
-        end;
+        Log(ExpandConstant('{cm:ServiceDeletedSuccessfully}'));
+      end
+      else
+      begin
+        MsgBox(ExpandConstant('{cm:ServiceDeleteFailed}'), mbError, MB_OK);
+        Log(ExpandConstant('{cm:ServiceDeleteFailed}'));
       end;
     end
     else
     begin
-      if not WizardSilent then
-      begin
-        MsgBox(ExpandConstant('{cm:ServiceStopFailed}'), mbError, MB_OK);
-      end;
+      MsgBox(ExpandConstant('{cm:ServiceStopFailed}'), mbError, MB_OK);
+      Log(ExpandConstant('{cm:ServiceStopFailed}'));
     end;
 
     if DirExists(STORE_DATA_PATH) then
     begin
-      if not RemoveDir(STORE_DATA_PATH) then
+      if RemoveDir(STORE_DATA_PATH) then
       begin
-        if not WizardSilent then
-        begin
-          MsgBox('Failed to remove OCSInventory-Agent data directory.', mbError, MB_OK);
-        end;
+        Log(ExpandConstant('{cm:DataDirectoryRemovedSuccessfully, {#STORE_DATA_PATH}}'), [STORE_DATA_PATH]);
+      end
+      else
+      begin
+        MsgBox(ExpandConstant('{cm:FailedToRemoveDataDirectory, {#STORE_DATA_PATH}}'), mbError, MB_OK);
+        Log(ExpandConstant('{cm:FailedToRemoveDataDirectory, {#STORE_DATA_PATH}}'), [STORE_DATA_PATH]);
       end;
     end;
   end;
 end;
 
 [CustomMessages]
+// Custom messages for the setup wizard
 AgentConfigurationPageTitle=Agent configuration
 AgentConfigurationPageDescription=Please specify your own agent settings.
 MandatoryFields=* Required fields are marked with an asterisk.
+
+french.AgentConfigurationPageTitle=Configuration de l'agent
+french.AgentConfigurationPageDescription=Veuillez spécifier vos propres paramètres d'agent.
+french.MandatoryFields=* Les champs obligatoires sont marqués d'un astérisque.
+
+
+// Messages for the input fields
 URL=URL
 Username=Username
 Password=Password
@@ -245,27 +308,71 @@ AgentMode=Agent mode
 LogLevel=Log level
 RunNow=Run the agent now
 InstallAsAService=Install agent as a service
-ErrorMandatoryField=Error: %1 is a mandatory field!
-ServiceDescription=Service starting periodically OCSInventory Agent for Windows
-ServiceCreateFailed=Failed to create the OCSInventory Agent service. Please check the logs for more details.
-ServiceStartFailed=Failed to start the OCSInventory Agent service. Please check the logs for more details.
-ServiceStopFailed=Failed to stop the OCSInventory Agent service. Please check the logs for more details.
-ServiceDeleteFailed=Failed to delete the OCSInventory Agent service. Please check the logs for more details.
 
-french.AgentConfigurationPageTitle=Configuration de l'agent
-french.AgentConfigurationPageDescription=Veuillez spécifier vos propres paramètres d'agent.
-french.MandatoryFields=* Les champs obligatoires sont marqués d'un astérisque.
 french.URL=URL
 french.Username=Nom d'utilisateur
 french.Password=Mot de passe
 french.Certificate=Certificat
-french.AgentMode=Mode de l'agent
+french.AgentMode=Mode d'agent
 french.LogLevel=Niveau de journalisation
 french.RunNow=Exécuter l'agent maintenant
 french.InstallAsAService=Installer l'agent en tant que service
-french.ErrorMandatoryField=Erreur: %1 est un champ obligatoire !
-french.ServiceDescription=Service démarrant périodiquement l'agent OCSInventory pour Windows
-french.ServiceCreateFailed=Échec de la création du service OCSInventory Agent. Veuillez vérifier les logs pur plus de détails.
-french.ServiceStartFailed=Échec du démarrage du service OCSInventory Agent. Veuillez vérifier les logs pur plus de détails.
-french.ServiceStopFailed=Échec de l'arrêt du service OCSInventory Agent. Veuillez vérifier les logs pur plus de détails.
-french.ServiceDeleteFailed=Échec de la suppression du service OCSInventory Agent. Veuillez vérifier les logs pur plus de détails.
+
+// Messages for the logs handling
+StartingOCSInventoryAgentSetup=Starting OCS Inventory Agent Setup...
+RunningInSilentMode=Running in silent mode.
+RunningInInteractiveMode=Running in interactive mode.
+WaitingUserToEnterInputs=Waiting for user to enter inputs...
+ConnectionDetailsValidated=Connection details validated: URL: %s, Username: %s, Password: *****
+Parameters=Parameters: URL: %s, Username: %s, Password: *****, Certificate: %s, Inventory Mode: %d, Log Level: %d, Run Now: %s, Install as a Service: %s
+DataDirectoryExist=Data directory exists: %s
+DataDirectoryDoesNotExist=Data directory does not exist: %s
+DataDirectoryCreatedSuccessfully=Data directory created successfully: %s
+ConfigurationFileCreatedSuccessfully=Configuration file created successfully: %s
+ErrorCreatingDataDirectory=Error creating data directory.
+ErrorCreatingConfigurationFile=Error creating configuration file.
+InstallingOCSInventoryAgentAsAService=Installing OCS Inventory Agent as a service...
+ServiceCreatedSuccessfully=Service created successfully.
+ServiceDescriptionSetSuccessfully=Service description set successfully.
+ServiceDescriptionFailed=Failed to set service description.
+ServiceStartedSuccessfully=Service started successfully.
+ServiceStartFailed=Failed to start service.
+ServiceCreateFailed=Failed to create service.
+OCSInventoryAgentStarted=OCS Inventory Agent started.
+FailedToRunOCSInventoryAgent=Failed to run OCS Inventory Agent.
+ErrorMandatoryField=The field %s is mandatory.
+ErrorCreatingConfigurationFile=Error creating configuration file.
+ServiceDeletedSuccessfully=Service deleted successfully.
+ServiceDeleteFailed=Failed to delete service.
+ServiceStopFailed=Failed to stop service.
+DataDirectoryRemovedSuccessfully=Data directory removed successfully: %s
+FailedToRemoveDataDirectory=Failed to remove data directory: %s
+
+french.StartingOCSInventoryAgentSetup=Début de l'installation de l'agent OCS Inventory...
+french.RunningInSilentMode=Exécution en mode silencieux.
+french.RunningInInteractiveMode=Exécution en mode interactif.
+french.WaitingUserToEnterInputs=En attente de l'utilisateur pour entrer les paramètres...
+french.ConnectionDetailsValidated=Détails de connexion validés : URL : %s, Nom d'utilisateur : %s, Mot de passe : *****
+french.Parameters=Paramètres : URL : %s, Nom d'utilisateur : %s, Mot de passe : *****, Certificat : %s, Mode d'inventaire : %d, Niveau de journalisation : %d, Exécuter maintenant : %s, Installer en tant que service : %s
+french.DataDirectoryExist=Le répertoire de données existe : %s
+french.DataDirectoryDoesNotExist=Le répertoire de données n'existe pas : %s
+french.DataDirectoryCreatedSuccessfully=Répertoire de données créé avec succès : %s
+french.ConfigurationFileCreatedSuccessfully=Fichier de configuration créé avec succès : %s
+french.ErrorCreatingDataDirectory=Erreur lors de la création du répertoire de données.
+french.ErrorCreatingConfigurationFile=Erreur lors de la création du fichier de configuration.
+french.InstallingOCSInventoryAgentAsAService=Installation de l'agent OCS Inventory en tant que service...
+french.ServiceCreatedSuccessfully=Service créé avec succès.
+french.ServiceDescriptionSetSuccessfully=Description du service définie avec succès.
+french.ServiceDescriptionFailed=Échec de la définition de la description du service.
+french.ServiceStartedSuccessfully=Service démarré avec succès.
+french.ServiceStartFailed=Échec du démarrage du service.
+french.ServiceCreateFailed=Échec de la création du service.
+french.OCSInventoryAgentStarted=Agent OCS Inventory démarré.
+french.FailedToRunOCSInventoryAgent=Échec de l'exécution de l'agent OCS Inventory.
+french.ErrorMandatoryField=Le champ %s est obligatoire.
+french.ErrorCreatingConfigurationFile=Erreur lors de la création du fichier de configuration.
+french.ServiceDeletedSuccessfully=Service supprimé avec succès.
+french.ServiceDeleteFailed=Échec de la suppression du service.
+french.ServiceStopFailed=Échec de l'arrêt du service.
+french.DataDirectoryRemovedSuccessfully=Répertoire de données supprimé avec succès : %s
+french.FailedToRemoveDataDirectory=Échec de la suppression du répertoire de données : %s
