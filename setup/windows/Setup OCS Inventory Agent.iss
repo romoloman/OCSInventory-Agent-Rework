@@ -13,14 +13,18 @@ AppPublisher={#AppPublisher}
 AppPublisherURL={#AppURL}
 AppSupportURL={#AppURL}
 AppUpdatesURL={#AppURL}
+ArchitecturesAllowed=x86 x64 ia64
+ArchitecturesInstallIn64BitMode=x64 ia64
 DefaultDirName={autopf}\{#AppName}
 DisableProgramGroupPage=yes
 LicenseFile={#AppPath}\setup\windows\media\license.txt
 OutputDir=OCSInventory-Agent-Setup
 OutputBaseFilename=OCSInventory-Agent-Setup-{#AppVersion}
 SetupIconFile={#AppPath}\setup\windows\media\icone_ocs.ico
+SetupLogging=yes
 SolidCompression=yes
 UninstallDisplayIcon={#AppPath}\setup\windows\media\icone_ocs.ico
+UninstallLogging=yes
 WizardStyle=modern
 
 [Languages]
@@ -36,25 +40,13 @@ Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExeName}"
 
 [Code]
 var
-  silent, INSTALL_AS_A_SERVICE, RUN_NOW: Boolean;
+  INSTALL_AS_A_SERVICE, RUN_NOW: Boolean;
   ConnectionInputPage, ConfigInputPage: TInputQueryWizardPage;
   CheckPage: TWizardPage;
   URL, USERNAME, PASSWORD, CERTIFICATE, STORE_DATA_PATH, CONFIG_PATH, LOG_PATH: String;
   INVENTORY_MODE, LOG_LEVEL: Integer;
   InstallAsAServiceCheckBox, RunNowCheckBox: TNewCheckBox;
   ResultCode: Integer;
-
-function Logger(LogType, LogMessage: String): Boolean;
-var
-  LogTime: String;
-begin
-  Result := True;
-  LogTime := GetDateTimeString('dd/mm/yyyy hh:nn:ss', '-', ':');
-  LogType := UpperCase(LogType);
-
-  Log(Format('[%s] [%s] %s', [LogTime, LogType, LogMessage]));
-  SaveStringToFile(ExpandConstant('{src}/install.log'), Format('[%s] [%s] %s', [LogTime, LogType, LogMessage]) + #13#10, true); // #13#10 = NewLine
-end;
 
 function BoolToStr(Value: Boolean): String;
 begin
@@ -66,19 +58,8 @@ end;
 
 procedure InitializeWizard;
 begin
-  Logger('info', 'Starting OCSInventory Agent setup...');
-
-  Silent := (Pos('/SILENT', UpperCase(GetCmdTail)) > 0)
-
-  Logger('info', 'Silent mode: ' + BoolToStr(Silent));
-
-  if Silent then
+  if not WizardSilent then
   begin
-    Logger('info', 'Running in silent mode');
-  end
-  else
-  begin
-    Logger('info', 'Running in normal mode');
     ConnectionInputPage := CreateInputQueryPage(wpLicense, ExpandConstant('{cm:AgentConfigurationPageTitle}'), ExpandConstant('{cm:AgentConfigurationPageDescription}'), ExpandConstant('{cm:MandatoryFields}'));
 
     ConnectionInputPage.Add('* ' + ExpandConstant('{cm:URL}'), False);
@@ -108,8 +89,6 @@ begin
     InstallAsAServiceCheckBox.Width := CheckPage.SurfaceWidth;
     InstallAsAServiceCheckBox.Caption := ExpandConstant('{cm:InstallAsAService}');
     InstallAsAServiceCheckBox.Checked := True;
-
-    Logger('info', 'Waiting user to enter inputs...');
   end;
 end;
 
@@ -117,44 +96,29 @@ function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   Result := True;
 
-  if Silent then
+  if WizardSilent then
   begin
-    Logger('info', 'Silent mode detected, skipping validation');
     Exit;
-  end;
-
-  if CurPageID = ConnectionInputPage.ID then
+  end
+  else
   begin
-    if ConnectionInputPage.Values[0] = '' then
+    if CurPageID = ConnectionInputPage.ID then
     begin
-      if not Silent then
+      if ConnectionInputPage.Values[0] = '' then
       begin
         MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:URL}}'), mbError, MB_OK);
-      end;
-      Logger('error', 'Connection details validation failed: URL is empty');
-      Result := False;
-    end
-    else if ConnectionInputPage.Values[1] = '' then
-    begin
-      if not Silent then
+        Result := False;
+      end
+      else if ConnectionInputPage.Values[1] = '' then
       begin
         MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:Username}}'), mbError, MB_OK);
-      end;
-      Logger('error', 'Connection details validation failed: Username is empty');
-      Result := False;
-    end
-    else if ConnectionInputPage.Values[2] = '' then
-    begin
-      if not Silent then
+        Result := False;
+      end
+      else if ConnectionInputPage.Values[2] = '' then
       begin
         MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:Password}}'), mbError, MB_OK);
+        Result := False;
       end;
-      Logger('error', 'Connection details validation failed: Password is empty');
-      Result := False;
-    end
-    else
-    begin
-      Logger('info', 'Connection details validated: ' + ConnectionInputPage.Values[0] + ', ' + ConnectionInputPage.Values[1] + ', ' + ConnectionInputPage.Values[2]);
     end;
   end;
 end;
@@ -163,7 +127,7 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
   begin
-    if Silent then
+    if WizardSilent then
     begin
       URL := ExpandConstant('{param:URL}');
       USERNAME := ExpandConstant('{param:USERNAME}');
@@ -174,8 +138,6 @@ begin
 
       RUN_NOW := (ExpandConstant('{param:NOW}') = 'True');
       INSTALL_AS_A_SERVICE := (ExpandConstant('{param:SERVICE}') = 'True');
-
-      Logger('info', 'Silent mode parameters: URL=' + URL + ', USERNAME=' + USERNAME + ', PASSWORD=******, CERTIFICATE=' + CERTIFICATE + ', INVENTORY_MODE=' + IntToStr(INVENTORY_MODE) + ', LOG_LEVEL=' + IntToStr(LOG_LEVEL) + ', RUN_NOW=' + BoolToStr(RUN_NOW) + ', INSTALL_AS_A_SERVICE=' + BoolToStr(INSTALL_AS_A_SERVICE));
     end
     else
     begin
@@ -193,99 +155,46 @@ begin
 
     if not DirExists(STORE_DATA_PATH) then
     begin
-      Logger('info', 'Data directory does not exist, attempting to create: ' + STORE_DATA_PATH);
-
-      if CreateDir(STORE_DATA_PATH) then
+      if not CreateDir(STORE_DATA_PATH) then
       begin
-        Logger('info', 'Data directory created successfully: ' + STORE_DATA_PATH);
-      end
-      else
-      begin
-        if not Silent then
-        begin
-          MsgBox('Failed to create OCSInventory-Agent data directory. Please check the logs for more details.', mbError, MB_OK);
-        end;
-        Logger('error', 'Failed to create data directory: ' + STORE_DATA_PATH);
+        MsgBox('Failed to create OCSInventory-Agent data directory. Please check the logs for more details.', mbError, MB_OK);
       end;
-    end
-    else
-    begin
-      Logger('info', 'Data directory found: ' + STORE_DATA_PATH);
     end;
 
-    if SaveStringToFile(CONFIG_PATH, Format('{"url": "%s", "username": "%s", "password": "%s", "certificate": "%s", "bypass_certificate": false, "log_file": true, "log_level": %d, "mode": %d, "data_directory": "%s", "log_file_path": "%s"}', [URL, USERNAME, PASSWORD, CERTIFICATE, LOG_LEVEL, INVENTORY_MODE, STORE_DATA_PATH, LOG_PATH]), false) then
+    if not SaveStringToFile(CONFIG_PATH, Format('{"url": "%s", "username": "%s", "password": "%s", "certificate": "%s", "bypass_certificate": false, "log_file": true, "log_level": %d, "mode": %d, "data_directory": "%s", "log_file_path": "%s"}', [URL, USERNAME, PASSWORD, CERTIFICATE, LOG_LEVEL, INVENTORY_MODE, STORE_DATA_PATH, LOG_PATH]), false) then
     begin
-      Logger('info', 'Configuration file created successfully: ' + CONFIG_PATH);
-    end
-    else
-    begin
-      if not Silent then
-      begin
         MsgBox('Failed to create configuration file. Please check the logs for more details.', mbError, MB_OK);
-      end;
-      Logger('error', 'Failed to create configuration file: ' + CONFIG_PATH);
     end;
-
-    if not Silent then
+    
+    if not WizardSilent then
     begin
       if InstallAsAServiceCheckBox.Checked then
       begin
-        Logger('info', 'Installing OCSInventory Agent as a service...');
-
         if Exec('sc.exe', 'create "OCSInventory Agent" binpath= "' + ExpandConstant('{app}\{#AppExeName}') + '" start= "auto"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
         begin
-          Logger('info', 'Service created successfully');
-          
-          if Exec('sc.exe', 'description "OCSInventory Agent" "' + ExpandConstant('{cm:ServiceDescription}') + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+          if not Exec('sc.exe', 'description "OCSInventory Agent" "' + ExpandConstant('{cm:ServiceDescription}') + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
           begin
-            Logger('info', 'Service description set successfully');
-          end
-          else
-          begin
-            if not Silent then
-            begin
-              MsgBox(ExpandConstant('{cm:ServiceCreateFailed}'), mbError, MB_OK);
-            end;
-            Logger('error', 'Failed to set service description for OCSInventory Agent');
+            MsgBox(ExpandConstant('{cm:ServiceCreateFailed}'), mbError, MB_OK);
           end;
 
           if not Exec('sc.exe', 'start "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
           begin
-            if not Silent then
-            begin
-              MsgBox(ExpandConstant('{cm:ServiceStartFailed}'), mbError, MB_OK);
-            end;
-            Logger('error', 'Failed to start OCSInventory Agent service');
+            MsgBox(ExpandConstant('{cm:ServiceStartFailed}'), mbError, MB_OK);
           end;
         end
         else
         begin
-          if not Silent then
-          begin
-            MsgBox(ExpandConstant('{cm:ServiceCreateFailed}'), mbError, MB_OK);
-          end;
-          Logger('error', 'Failed to create OCSInventory Agent service');
+          MsgBox(ExpandConstant('{cm:ServiceCreateFailed}'), mbError, MB_OK);
         end;
       end
       else if RunNowCheckBox.Checked then
       begin
-        Logger('info', 'Running OCSInventory Agent immediately...');
-
-        if Exec(ExpandConstant('{app}\{#AppExeName}'), '', '', SW_HIDE, ewNoWait, ResultCode) then
+        if not Exec(ExpandConstant('{app}\{#AppExeName}'), '', '', SW_HIDE, ewNoWait, ResultCode) then
         begin
-          Logger('info', 'OCSInventory Agent has been executed successfully');
-        end
-        else
-        begin
-          if not Silent then
-          begin
-            MsgBox('Failed to run OCSInventory Agent. Please check the logs for more details.', mbError, MB_OK);
-          end;
-          Logger('error', 'Failed to run OCSInventory Agent');
+          MsgBox('Failed to run OCSInventory Agent. Please check the logs for more details.', mbError, MB_OK);
         end;
       end;
     end;
-    Logger('info', 'OCSInventory Agent installation steps finished');
   end;
 end;
 
@@ -297,7 +206,7 @@ begin
     begin
       if not Exec('sc.exe', 'delete "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
       begin
-        if not Silent then
+        if not WizardSilent then
         begin
           MsgBox(ExpandConstant('{cm:ServiceDeleteFailed}'), mbError, MB_OK);
         end;
@@ -305,7 +214,7 @@ begin
     end
     else
     begin
-      if not Silent then
+      if not WizardSilent then
       begin
         MsgBox(ExpandConstant('{cm:ServiceStopFailed}'), mbError, MB_OK);
       end;
@@ -315,7 +224,7 @@ begin
     begin
       if not RemoveDir(STORE_DATA_PATH) then
       begin
-        if not Silent then
+        if not WizardSilent then
         begin
           MsgBox('Failed to remove OCSInventory-Agent data directory.', mbError, MB_OK);
         end;
