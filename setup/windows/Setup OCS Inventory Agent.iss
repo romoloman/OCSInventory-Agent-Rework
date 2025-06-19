@@ -121,19 +121,19 @@ begin
       end
       else if ConnectionInputPage.Values[1] = '' then
       begin
-        MsgBox(Format(ExpandConstant('{cm:ErrorMandatoryField}'), [ExpandConstant('{cm:Username}')]), mbError, MB_OK);
-        Log(Format(ExpandConstant('{cm:ErrorMandatoryField}'), [ExpandConstant('{cm:Username}')]));
+        MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:Username}}'), mbError, MB_OK);
+        Log(ExpandConstant('{cm:ErrorMandatoryField, {cm:Username}}'));
         Result := False;
       end
       else if ConnectionInputPage.Values[2] = '' then
       begin
-        MsgBox(Format(ExpandConstant('{cm:ErrorMandatoryField}'), [ExpandConstant('{cm:Password}')]), mbError, MB_OK);
-        Log(Format(ExpandConstant('{cm:ErrorMandatoryField}'), [ExpandConstant('{cm:Password}')]));
+        MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:Password}}'), mbError, MB_OK);
+        Log(ExpandConstant('{cm:ErrorMandatoryField, {cm:Password}}'));
         Result := False;
       end
       else
       begin
-        Log(Format(ExpandConstant('{cm:ConnectionDetailsValidated}'), [ConnectionInputPage.Values[0], ConnectionInputPage.Values[1]]));
+        Log(ExpandConstant('{cm:ConnectionDetailsValidated, ConnectionInputPage.Values[0], ConnectionInputPage.Values[1]}'));
       end;
     end;
   end;
@@ -323,7 +323,7 @@ StartingOCSInventoryAgentSetup=Starting OCS Inventory Agent Setup...
 RunningInSilentMode=Running in silent mode.
 RunningInInteractiveMode=Running in interactive mode.
 WaitingUserToEnterInputs=Waiting for user to enter inputs...
-ErrorMandatoryField=The field %1 is mandatory.
+ErrorMandatoryField=The field %s is mandatory.
 ConnectionDetailsValidated=Connection details validated: URL: %1, Username: %2, Password: *****
 Parameters=Parameters: URL: %1, Username: %2, Password: *****, Certificate: %3, Inventory Mode: %4, Log Level: %5, Run Now: %6, Install as a Service: %7
 DataDirectoryExist=Data directory exists: %1
@@ -353,7 +353,7 @@ french.StartingOCSInventoryAgentSetup=Début de l'installation de l'agent OCS In
 french.RunningInSilentMode=Exécution en mode silencieux.
 french.RunningInInteractiveMode=Exécution en mode interactif.
 french.WaitingUserToEnterInputs=En attente de l'utilisateur pour entrer les paramètres...
-french.ErrorMandatoryField=Le champ %1 est obligatoire.
+french.ErrorMandatoryField=Le champ %s est obligatoire.
 french.ConnectionDetailsValidated=Détails de connexion validés : URL : %1, Nom d'utilisateur : %2, Mot de passe : *****
 french.Parameters=Paramètres : URL : %1, Nom d'utilisateur : %2, Mot de passe : *****, Certificat : %3, Mode d'inventaire : %4, Niveau de journalisation : %5, Exécuter maintenant : %6, Installer en tant que service : %7
 french.DataDirectoryExist=Le répertoire de données existe : %1
