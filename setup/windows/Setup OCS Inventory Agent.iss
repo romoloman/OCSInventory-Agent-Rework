@@ -115,25 +115,25 @@ begin
     begin
       if ConnectionInputPage.Values[0] = '' then
       begin
-        MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:URL}}'), mbError, MB_OK);
-        Log(ExpandConstant('{cm:ErrorMandatoryField, {cm:URL}}'));
+        MsgBox(Format(ExpandConstant('{cm:ErrorMandatoryField}'), [ExpandConstant('{cm:URL}')]), mbError, MB_OK);
+        Log(Format(ExpandConstant('{cm:ErrorMandatoryField}'), [ExpandConstant('{cm:URL}')]));
         Result := False;
       end
       else if ConnectionInputPage.Values[1] = '' then
       begin
-        MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:Username}}'), mbError, MB_OK);
-        Log(ExpandConstant('{cm:ErrorMandatoryField, {cm:Username}}'));
+        MsgBox(Format(ExpandConstant('{cm:ErrorMandatoryField}'), [ExpandConstant('{cm:Username}')]), mbError, MB_OK);
+        Log(Format(ExpandConstant('{cm:ErrorMandatoryField}'), [ExpandConstant('{cm:Username}')]));
         Result := False;
       end
       else if ConnectionInputPage.Values[2] = '' then
       begin
-        MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:Password}}'), mbError, MB_OK);
-        Log(ExpandConstant('{cm:ErrorMandatoryField, {cm:Password}}'));
+        MsgBox(Format(ExpandConstant('{cm:ErrorMandatoryField}'), [ExpandConstant('{cm:Password}')]), mbError, MB_OK);
+        Log(Format(ExpandConstant('{cm:ErrorMandatoryField}'), [ExpandConstant('{cm:Password}')]));
         Result := False;
       end
       else
       begin
-        Log(ExpandConstant('{cm:ConnectionDetailsValidated, ConnectionInputPage.Values[0], ConnectionInputPage.Values[1]}'));
+        Log(Format(ExpandConstant('{cm:ConnectionDetailsValidated}'), [ConnectionInputPage.Values[0], ConnectionInputPage.Values[1]]));
       end;
     end;
   end;
