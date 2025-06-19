@@ -133,7 +133,7 @@ begin
       end
       else
       begin
-        Log(ExpandConstant('{cm:ConnectionDetailsValidated, {#URL}, {#USERNAME}}'), [ConnectionInputPage.Values[0], ConnectionInputPage.Values[1]]);
+        Log(ExpandConstant('{cm:ConnectionDetailsValidated, ConnectionInputPage.Values[0], ConnectionInputPage.Values[1]}'));
       end;
     end;
   end;
