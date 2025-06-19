@@ -281,7 +281,7 @@ begin
       end
       else
       begin
-        MsgBox(ExpandConstant('{cm:FailedToRemoveDataDirectory, STORE_DATA_PATH}'));
+        MsgBox(ExpandConstant('{cm:FailedToRemoveDataDirectory, STORE_DATA_PATH}'), mbError, MB_OK);
         Log(ExpandConstant('{cm:FailedToRemoveDataDirectory, STORE_DATA_PATH}'));
       end;
     end;
