@@ -58,35 +58,35 @@ end;
 
 procedure InitializeWizard;
 begin
-  Log(ExpandConstant({cm:StartingOCSInventoryAgentSetup}));
+  Log(ExpandConstant('{cm:StartingOCSInventoryAgentSetup}'));
 
   if WizardSilent then
   begin
-    Log(ExpandConstant({cm:RunningInSilentMode}));
+    Log(ExpandConstant('{cm:RunningInSilentMode}'));
   end
   else
   begin
-    Log(ExpandConstant({cm:RunningInInteractiveMode}));
-    ConnectionInputPage := CreateInputQueryPage(wpLicense, ExpandConstant({cm:AgentConfigurationPageTitle}), ExpandConstant({cm:AgentConfigurationPageDescription}), ExpandConstant({cm:MandatoryFields}));
+    Log(ExpandConstant('{cm:RunningInInteractiveMode}'));
+    ConnectionInputPage := CreateInputQueryPage(wpLicense, ExpandConstant('{cm:AgentConfigurationPageTitle}'), ExpandConstant('{cm:AgentConfigurationPageDescription}'), ExpandConstant('{cm:MandatoryFields}'));
 
-    ConnectionInputPage.Add('* ' + ExpandConstant({cm:URL}), False);
-    ConnectionInputPage.Add('* ' + ExpandConstant({cm:Username}), False);
-    ConnectionInputPage.Add('* ' + ExpandConstant({cm:Password}), True);
-    ConnectionInputPage.Add(ExpandConstant({cm:Certificate}), False);
+    ConnectionInputPage.Add('* ' + ExpandConstant('{cm:URL}'), False);
+    ConnectionInputPage.Add('* ' + ExpandConstant('{cm:Username}'), False);
+    ConnectionInputPage.Add('* ' + ExpandConstant('{cm:Password}'), True);
+    ConnectionInputPage.Add(ExpandConstant('{cm:Certificate}'), False);
 
-    ConfigInputPage := CreateInputQueryPage(ConnectionInputPage.ID, ExpandConstant({cm:AgentConfigurationPageTitle}), ExpandConstant({cm:AgentConfigurationPageDescription}), ExpandConstant({cm:MandatoryFields}));
+    ConfigInputPage := CreateInputQueryPage(ConnectionInputPage.ID, ExpandConstant('{cm:AgentConfigurationPageTitle}'), ExpandConstant('{cm:AgentConfigurationPageDescription}'), ExpandConstant('{cm:MandatoryFields}'));
 
-    ConfigInputPage.Add(ExpandConstant({cm:AgentMode}), False);
-    ConfigInputPage.Add(ExpandConstant({cm:LogLevel}), False);
+    ConfigInputPage.Add(ExpandConstant('{cm:AgentMode}'), False);
+    ConfigInputPage.Add(ExpandConstant('{cm:LogLevel}'), False);
 
-    CheckPage := CreateCustomPage(ConfigInputPage.ID, ExpandConstant({cm:AgentConfigurationPageTitle}), ExpandConstant({cm:AgentConfigurationPageDescription}));
+    CheckPage := CreateCustomPage(ConfigInputPage.ID, ExpandConstant('{cm:AgentConfigurationPageTitle}'), ExpandConstant('{cm:AgentConfigurationPageDescription}'));
 
     RunNowCheckBox := TNewCheckBox.Create(CheckPage);
     RunNowCheckBox.Parent := CheckPage.Surface;
     RunNowCheckBox.Top := 0;
     RunNowCheckBox.Left := 0;
     RunNowCheckBox.Width := CheckPage.SurfaceWidth;
-    RunNowCheckBox.Caption := ExpandConstant({cm:RunNow});
+    RunNowCheckBox.Caption := ExpandConstant('{cm:RunNow}');
     RunNowCheckBox.Checked := True;
 
     InstallAsAServiceCheckBox := TNewCheckBox.Create(CheckPage);
@@ -94,10 +94,10 @@ begin
     InstallAsAServiceCheckBox.Top := RunNowCheckBox.Top + 50;
     InstallAsAServiceCheckBox.Left := 0;
     InstallAsAServiceCheckBox.Width := CheckPage.SurfaceWidth;
-    InstallAsAServiceCheckBox.Caption := ExpandConstant({cm:InstallAsAService});
+    InstallAsAServiceCheckBox.Caption := ExpandConstant('{cm:InstallAsAService}');
     InstallAsAServiceCheckBox.Checked := True;
 
-    Log(ExpandConstant({cm:WaitingUserToEnterInputs}));
+    Log(ExpandConstant('{cm:WaitingUserToEnterInputs}'));
   end;
 end;
 
@@ -115,25 +115,25 @@ begin
     begin
       if ConnectionInputPage.Values[0] = '' then
       begin
-        MsgBox(ExpandConstant({cm:ErrorMandatoryField, {cm:URL}}), mbError, MB_OK);
-        Log(ExpandConstant({cm:ErrorMandatoryField, {cm:URL}}));
+        MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:URL}}'), mbError, MB_OK);
+        Log(ExpandConstant('{cm:ErrorMandatoryField, {cm:URL}}'));
         Result := False;
       end
       else if ConnectionInputPage.Values[1] = '' then
       begin
-        MsgBox(ExpandConstant({cm:ErrorMandatoryField, {cm:Username}}), mbError, MB_OK);
-        Log(ExpandConstant({cm:ErrorMandatoryField, {cm:Username}}));
+        MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:Username}}'), mbError, MB_OK);
+        Log(ExpandConstant('{cm:ErrorMandatoryField, {cm:Username}}'));
         Result := False;
       end
       else if ConnectionInputPage.Values[2] = '' then
       begin
-        MsgBox(ExpandConstant({cm:ErrorMandatoryField, {cm:Password}}), mbError, MB_OK);
-        Log(ExpandConstant({cm:ErrorMandatoryField, {cm:Password}}));
+        MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:Password}}'), mbError, MB_OK);
+        Log(ExpandConstant('{cm:ErrorMandatoryField, {cm:Password}}'));
         Result := False;
       end
       else
       begin
-        Log(ExpandConstant({cm:ConnectionDetailsValidated, ConnectionInputPage.Values[0], ConnectionInputPage.Values[1]}));
+        Log(ExpandConstant('{cm:ConnectionDetailsValidated, ConnectionInputPage.Values[0], ConnectionInputPage.Values[1]}'));
       end;
     end;
   end;
@@ -145,17 +145,17 @@ begin
   begin
     if WizardSilent then
     begin
-      URL := ExpandConstant({param:URL});
-      USERNAME := ExpandConstant({param:USERNAME});
-      PASSWORD := ExpandConstant({param:PASSWORD});
-      CERTIFICATE := ExpandConstant({param:CERTIFICATE});
-      INVENTORY_MODE := StrToInt64Def(ExpandConstant({param:MODE}), 2);
-      LOG_LEVEL := StrToInt64Def(ExpandConstant({param:LOG_LEVEL}), 2);
+      URL := ExpandConstant('{param:URL}');
+      USERNAME := ExpandConstant('{param:USERNAME}');
+      PASSWORD := ExpandConstant('{param:PASSWORD}');
+      CERTIFICATE := ExpandConstant('{param:CERTIFICATE}');
+      INVENTORY_MODE := StrToInt64Def(ExpandConstant('{param:MODE}'), 2);
+      LOG_LEVEL := StrToInt64Def(ExpandConstant('{param:LOG_LEVEL}'), 2);
 
-      RUN_NOW := (ExpandConstant({param:NOW}) = 'True');
-      INSTALL_AS_A_SERVICE := (ExpandConstant({param:SERVICE}) = 'True');
+      RUN_NOW := (ExpandConstant('{param:NOW}') = 'True');
+      INSTALL_AS_A_SERVICE := (ExpandConstant('{param:SERVICE}') = 'True');
 
-      Log(ExpandConstant({cm:Parameters, URL, USERNAME, CERTIFICATE, INVENTORY_MODE, LOG_LEVEL, BoolToStr(RUN_NOW), BoolToStr(INSTALL_AS_A_SERVICE)}));
+      Log(ExpandConstant('{cm:Parameters, URL, USERNAME, CERTIFICATE, INVENTORY_MODE, LOG_LEVEL, BoolToStr(RUN_NOW), BoolToStr(INSTALL_AS_A_SERVICE)}'));
     end
     else
     begin
@@ -166,85 +166,85 @@ begin
       INVENTORY_MODE := StrToInt64Def(ConfigInputPage.Values[0], 2);
       LOG_LEVEL := StrToInt64Def(ConfigInputPage.Values[1], 2);
 
-      Log(ExpandConstant({cm:Parameters, URL, USERNAME, CERTIFICATE, INVENTORY_MODE, LOG_LEVEL, BoolToStr(RunNowCheckBox.Checked), BoolToStr(InstallAsAServiceCheckBox.Checked)}));
+      Log(ExpandConstant('{cm:Parameters, URL, USERNAME, CERTIFICATE, INVENTORY_MODE, LOG_LEVEL, BoolToStr(RunNowCheckBox.Checked), BoolToStr(InstallAsAServiceCheckBox.Checked)}'));
     end;
 
-    STORE_DATA_PATH := ExpandConstant({commonappdata}\OCSInventory-Agent);
+    STORE_DATA_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent');
     CONFIG_PATH := STORE_DATA_PATH + '\config.json';
     LOG_PATH := STORE_DATA_PATH + '\ocsinventory-agent.log';
 
     if DirExists(STORE_DATA_PATH) then
     begin
-      Log(ExpandConstant({cm:DataDirectoryExist, CONFIG_PATH}));
+      Log(ExpandConstant('{cm:DataDirectoryExist, CONFIG_PATH}'));
     end
     else
     begin
-      Log(ExpandConstant({cm:DataDirectoryDoesNotExist, STORE_DATA_PATH}));
+      Log(ExpandConstant('{cm:DataDirectoryDoesNotExist, STORE_DATA_PATH}'));
       if CreateDir(STORE_DATA_PATH) then
       begin
-        Log(ExpandConstant({cm:DataDirectoryCreatedSuccessfully, STORE_DATA_PATH}));
+        Log(ExpandConstant('{cm:DataDirectoryCreatedSuccessfully, STORE_DATA_PATH}'));
       end
       else
       begin
-        MsgBox(ExpandConstant({cm:ErrorCreatingDataDirectory}), mbError, MB_OK);
-        Log(ExpandConstant({cm:ErrorCreatingDataDirectory}));
+        MsgBox(ExpandConstant('{cm:ErrorCreatingDataDirectory}'), mbError, MB_OK);
+        Log(ExpandConstant('{cm:ErrorCreatingDataDirectory}'));
       end;
     end;
 
     if SaveStringToFile(CONFIG_PATH, Format('{"url": "%s", "username": "%s", "password": "%s", "certificate": "%s", "bypass_certificate": false, "log_file": true, "log_level": %d, "mode": %d, "data_directory": "%s", "log_file_path": "%s"}', [URL, USERNAME, PASSWORD, CERTIFICATE, LOG_LEVEL, INVENTORY_MODE, STORE_DATA_PATH, LOG_PATH]), false) then
     begin
-      Log(ExpandConstant({cm:ConfigurationFileCreatedSuccessfully, CONFIG_PATH}));
+      Log(ExpandConstant('{cm:ConfigurationFileCreatedSuccessfully, CONFIG_PATH}'));
     end
     else
     begin
-        MsgBox(ExpandConstant({cm:ErrorCreatingConfigurationFile}), mbError, MB_OK);
-        Log(ExpandConstant({cm:ErrorCreatingConfigurationFile}));
+        MsgBox(ExpandConstant('{cm:ErrorCreatingConfigurationFile}'), mbError, MB_OK);
+        Log(ExpandConstant('{cm:ErrorCreatingConfigurationFile}'));
     end;
     
     if not WizardSilent then
     begin
       if InstallAsAServiceCheckBox.Checked then
       begin
-        Log(ExpandConstant({cm:InstallingOCSInventoryAgentAsAService}));
-        if Exec('sc.exe', 'create "OCSInventory Agent" binpath= "' + ExpandConstant({app}\{#AppExeName}) + '" start= "auto"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+        Log(ExpandConstant('{cm:InstallingOCSInventoryAgentAsAService}'));
+        if Exec('sc.exe', 'create "OCSInventory Agent" binpath= "' + ExpandConstant('{app}\{#AppExeName}') + '" start= "auto"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
         begin
-          Log(ExpandConstant({cm:ServiceCreatedSuccessfully}));
-          if Exec('sc.exe', 'description "OCSInventory Agent" "' + ExpandConstant({cm:ServiceDescription}) + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+          Log(ExpandConstant('{cm:ServiceCreatedSuccessfully}'));
+          if Exec('sc.exe', 'description "OCSInventory Agent" "' + ExpandConstant('{cm:ServiceDescription}') + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
           begin
-            Log(ExpandConstant({cm:ServiceDescriptionSetSuccessfully}));
+            Log(ExpandConstant('{cm:ServiceDescriptionSetSuccessfully}'));
           end
           else
           begin
-            MsgBox(ExpandConstant({cm:ServiceDescriptionFailed}), mbError, MB_OK);
-            Log(ExpandConstant({cm:ServiceDescriptionFailed}));
+            MsgBox(ExpandConstant('{cm:ServiceDescriptionFailed}'), mbError, MB_OK);
+            Log(ExpandConstant('{cm:ServiceDescriptionFailed}'));
           end;
 
           if Exec('sc.exe', 'start "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
           begin
-            Log(ExpandConstant({cm:ServiceStartedSuccessfully}));
+            Log(ExpandConstant('{cm:ServiceStartedSuccessfully}'));
           end
           else
           begin
-            MsgBox(ExpandConstant({cm:ServiceStartFailed}), mbError, MB_OK);
-            Log(ExpandConstant({cm:ServiceStartFailed}));
+            MsgBox(ExpandConstant('{cm:ServiceStartFailed}'), mbError, MB_OK);
+            Log(ExpandConstant('{cm:ServiceStartFailed}'));
           end;
         end
         else
         begin
-          MsgBox(ExpandConstant({cm:ServiceCreateFailed}), mbError, MB_OK);
-          Log(ExpandConstant({cm:ServiceCreateFailed}));
+          MsgBox(ExpandConstant('{cm:ServiceCreateFailed}'), mbError, MB_OK);
+          Log(ExpandConstant('{cm:ServiceCreateFailed}'));
         end;
       end
       else if RunNowCheckBox.Checked then
       begin
-        if Exec(ExpandConstant({app}\{#AppExeName}), '', '', SW_HIDE, ewNoWait, ResultCode) then
+        if Exec(ExpandConstant('{app}\{#AppExeName}'), '', '', SW_HIDE, ewNoWait, ResultCode) then
         begin
-          Log(ExpandConstant({cm:OCSInventoryAgentStarted}));
+          Log(ExpandConstant('{cm:OCSInventoryAgentStarted}'));
         end
         else
         begin
-          MsgBox(ExpandConstant({cm:FailedToRunOCSInventoryAgent}), mbError, MB_OK);
-          Log(ExpandConstant({cm:FailedToRunOCSInventoryAgent}));
+          MsgBox(ExpandConstant('{cm:FailedToRunOCSInventoryAgent}'), mbError, MB_OK);
+          Log(ExpandConstant('{cm:FailedToRunOCSInventoryAgent}'));
         end;
       end;
     end;
@@ -259,30 +259,30 @@ begin
     begin
       if Exec('sc.exe', 'delete "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
       begin
-        Log(ExpandConstant({cm:ServiceDeletedSuccessfully}));
+        Log(ExpandConstant('{cm:ServiceDeletedSuccessfully}'));
       end
       else
       begin
-        MsgBox(ExpandConstant({cm:ServiceDeleteFailed}), mbError, MB_OK);
-        Log(ExpandConstant({cm:ServiceDeleteFailed}));
+        MsgBox(ExpandConstant('{cm:ServiceDeleteFailed}'), mbError, MB_OK);
+        Log(ExpandConstant('{cm:ServiceDeleteFailed}'));
       end;
     end
     else
     begin
-      MsgBox(ExpandConstant({cm:ServiceStopFailed}), mbError, MB_OK);
-      Log(ExpandConstant({cm:ServiceStopFailed}));
+      MsgBox(ExpandConstant('{cm:ServiceStopFailed}'), mbError, MB_OK);
+      Log(ExpandConstant('{cm:ServiceStopFailed}'));
     end;
 
     if DirExists(STORE_DATA_PATH) then
     begin
       if RemoveDir(STORE_DATA_PATH) then
       begin
-        Log(ExpandConstant({cm:DataDirectoryRemovedSuccessfully, STORE_DATA_PATH}));
+        Log(ExpandConstant('{cm:DataDirectoryRemovedSuccessfully, STORE_DATA_PATH}'));
       end
       else
       begin
-        MsgBox(ExpandConstant({cm:FailedToRemoveDataDirectory, STORE_DATA_PATH}), mbError, MB_OK);
-        Log(ExpandConstant({cm:FailedToRemoveDataDirectory, STORE_DATA_PATH}));
+        MsgBox(ExpandConstant('{cm:FailedToRemoveDataDirectory, STORE_DATA_PATH}'), mbError, MB_OK);
+        Log(ExpandConstant('{cm:FailedToRemoveDataDirectory, STORE_DATA_PATH}'));
       end;
     end;
   end;
