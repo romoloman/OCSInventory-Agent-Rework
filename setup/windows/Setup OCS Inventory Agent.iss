@@ -175,14 +175,14 @@ begin
 
     if DirExists(STORE_DATA_PATH) then
     begin
-      Log(ExpandConstant('{cm:DataDirectoryExist, {#CONFIG_PATH}}'), [CONFIG_PATH]);
+      Log(ExpandConstant('{cm:DataDirectoryExist, CONFIG_PATH}'));
     end
     else
     begin
-      Log(ExpandConstant('{cm:DataDirectoryDoesNotExist, {#STORE_DATA_PATH}}'), [STORE_DATA_PATH]);
+      Log(ExpandConstant('{cm:DataDirectoryDoesNotExist, STORE_DATA_PATH}'));
       if CreateDir(STORE_DATA_PATH) then
       begin
-        Log(ExpandConstant('{cm:DataDirectoryCreatedSuccessfully, {#STORE_DATA_PATH}}'), [STORE_DATA_PATH]);
+        Log(ExpandConstant('{cm:DataDirectoryCreatedSuccessfully, STORE_DATA_PATH}'));
       end
       else
       begin
@@ -193,7 +193,7 @@ begin
 
     if SaveStringToFile(CONFIG_PATH, Format('{"url": "%s", "username": "%s", "password": "%s", "certificate": "%s", "bypass_certificate": false, "log_file": true, "log_level": %d, "mode": %d, "data_directory": "%s", "log_file_path": "%s"}', [URL, USERNAME, PASSWORD, CERTIFICATE, LOG_LEVEL, INVENTORY_MODE, STORE_DATA_PATH, LOG_PATH]), false) then
     begin
-      Log(ExpandConstant('{cm:ConfigurationFileCreatedSuccessfully, {#CONFIG_PATH}}'), [CONFIG_PATH]);
+      Log(ExpandConstant('{cm:ConfigurationFileCreatedSuccessfully, CONFIG_PATH}'));
     end
     else
     begin
@@ -277,12 +277,12 @@ begin
     begin
       if RemoveDir(STORE_DATA_PATH) then
       begin
-        Log(ExpandConstant('{cm:DataDirectoryRemovedSuccessfully, {#STORE_DATA_PATH}}'), [STORE_DATA_PATH]);
+        Log(ExpandConstant('{cm:DataDirectoryRemovedSuccessfully, STORE_DATA_PATH}'));
       end
       else
       begin
-        MsgBox(ExpandConstant('{cm:FailedToRemoveDataDirectory, {#STORE_DATA_PATH}}'), mbError, MB_OK);
-        Log(ExpandConstant('{cm:FailedToRemoveDataDirectory, {#STORE_DATA_PATH}}'), [STORE_DATA_PATH]);
+        MsgBox(ExpandConstant('{cm:FailedToRemoveDataDirectory, STORE_DATA_PATH}'));
+        Log(ExpandConstant('{cm:FailedToRemoveDataDirectory, STORE_DATA_PATH}'));
       end;
     end;
   end;
