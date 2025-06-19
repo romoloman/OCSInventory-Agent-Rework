@@ -121,19 +121,19 @@ begin
       end
       else if ConnectionInputPage.Values[1] = '' then
       begin
-        MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:Username}}'), mbError, MB_OK);
-        Log(ExpandConstant('{cm:ErrorMandatoryField, {cm:Username}}'));
+        MsgBox(Format(ExpandConstant('{cm:ErrorMandatoryField}'), [ExpandConstant('{cm:Username}')]), mbError, MB_OK);
+        Log(Format(ExpandConstant('{cm:ErrorMandatoryField}'), [ExpandConstant('{cm:Username}')]));
         Result := False;
       end
       else if ConnectionInputPage.Values[2] = '' then
       begin
-        MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:Password}}'), mbError, MB_OK);
-        Log(ExpandConstant('{cm:ErrorMandatoryField, {cm:Password}}'));
+        MsgBox(Format(ExpandConstant('{cm:ErrorMandatoryField}'), [ExpandConstant('{cm:Password}')]), mbError, MB_OK);
+        Log(Format(ExpandConstant('{cm:ErrorMandatoryField}'), [ExpandConstant('{cm:Password}')]));
         Result := False;
       end
       else
       begin
-        Log(ExpandConstant('{cm:ConnectionDetailsValidated, ConnectionInputPage.Values[0], ConnectionInputPage.Values[1]}'));
+        Log(Format(ExpandConstant('{cm:ConnectionDetailsValidated}'), [ConnectionInputPage.Values[0], ConnectionInputPage.Values[1]]));
       end;
     end;
   end;
@@ -155,7 +155,7 @@ begin
       RUN_NOW := (ExpandConstant('{param:NOW}') = 'True');
       INSTALL_AS_A_SERVICE := (ExpandConstant('{param:SERVICE}') = 'True');
 
-      Log(ExpandConstant('{cm:Parameters, URL, USERNAME, CERTIFICATE, INVENTORY_MODE, LOG_LEVEL, BoolToStr(RUN_NOW), BoolToStr(INSTALL_AS_A_SERVICE)}'));
+      Log(Format(ExpandConstant('{cm:Parameters}'), [URL, USERNAME, CERTIFICATE, INVENTORY_MODE, LOG_LEVEL, BoolToStr(RUN_NOW), BoolToStr(INSTALL_AS_A_SERVICE)]));
     end
     else
     begin
@@ -166,7 +166,7 @@ begin
       INVENTORY_MODE := StrToInt64Def(ConfigInputPage.Values[0], 2);
       LOG_LEVEL := StrToInt64Def(ConfigInputPage.Values[1], 2);
 
-      Log(ExpandConstant('{cm:Parameters, URL, USERNAME, CERTIFICATE, INVENTORY_MODE, LOG_LEVEL, BoolToStr(RunNowCheckBox.Checked), BoolToStr(InstallAsAServiceCheckBox.Checked)}'));
+      Log(Format(ExpandConstant('{cm:Parameters}'), [URL, USERNAME, CERTIFICATE, INVENTORY_MODE, LOG_LEVEL, BoolToStr(RunNowCheckBox.Checked), BoolToStr(InstallAsAServiceCheckBox.Checked)]));
     end;
 
     STORE_DATA_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent');
@@ -175,14 +175,14 @@ begin
 
     if DirExists(STORE_DATA_PATH) then
     begin
-      Log(ExpandConstant('{cm:DataDirectoryExist, CONFIG_PATH}'));
+      Log(Format(ExpandConstant('{cm:DataDirectoryExist}'), [CONFIG_PATH]));
     end
     else
     begin
-      Log(ExpandConstant('{cm:DataDirectoryDoesNotExist, STORE_DATA_PATH}'));
+      Log(Format(ExpandConstant('{cm:DataDirectoryDoesNotExist}') , [STORE_DATA_PATH]));
       if CreateDir(STORE_DATA_PATH) then
       begin
-        Log(ExpandConstant('{cm:DataDirectoryCreatedSuccessfully, STORE_DATA_PATH}'));
+        Log(Format(ExpandConstant('{cm:DataDirectoryCreatedSuccessfully}'), [STORE_DATA_PATH]));
       end
       else
       begin
@@ -193,7 +193,7 @@ begin
 
     if SaveStringToFile(CONFIG_PATH, Format('{"url": "%s", "username": "%s", "password": "%s", "certificate": "%s", "bypass_certificate": false, "log_file": true, "log_level": %d, "mode": %d, "data_directory": "%s", "log_file_path": "%s"}', [URL, USERNAME, PASSWORD, CERTIFICATE, LOG_LEVEL, INVENTORY_MODE, STORE_DATA_PATH, LOG_PATH]), false) then
     begin
-      Log(ExpandConstant('{cm:ConfigurationFileCreatedSuccessfully, CONFIG_PATH}'));
+      Log(Format(ExpandConstant('{cm:ConfigurationFileCreatedSuccessfully}'), [CONFIG_PATH]));
     end
     else
     begin
@@ -277,12 +277,12 @@ begin
     begin
       if RemoveDir(STORE_DATA_PATH) then
       begin
-        Log(ExpandConstant('{cm:DataDirectoryRemovedSuccessfully, STORE_DATA_PATH}'));
+        Log(Format(ExpandConstant('{cm:DataDirectoryRemovedSuccessfully}'), [STORE_DATA_PATH]));
       end
       else
       begin
-        MsgBox(ExpandConstant('{cm:FailedToRemoveDataDirectory, STORE_DATA_PATH}'), mbError, MB_OK);
-        Log(ExpandConstant('{cm:FailedToRemoveDataDirectory, STORE_DATA_PATH}'));
+        MsgBox(Format(ExpandConstant('{cm:FailedToRemoveDataDirectory}'), [STORE_DATA_PATH]), mbError, MB_OK);
+        Log(Format(ExpandConstant('{cm:FailedToRemoveDataDirectory}'), [STORE_DATA_PATH]));
       end;
     end;
   end;
@@ -324,12 +324,12 @@ RunningInSilentMode=Running in silent mode.
 RunningInInteractiveMode=Running in interactive mode.
 WaitingUserToEnterInputs=Waiting for user to enter inputs...
 ErrorMandatoryField=The field %s is mandatory.
-ConnectionDetailsValidated=Connection details validated: URL: %1, Username: %2, Password: *****
-Parameters=Parameters: URL: %1, Username: %2, Password: *****, Certificate: %3, Inventory Mode: %4, Log Level: %5, Run Now: %6, Install as a Service: %7
-DataDirectoryExist=Data directory exists: %1
-DataDirectoryDoesNotExist=Data directory does not exist: %1
-DataDirectoryCreatedSuccessfully=Data directory created successfully: %1
-ConfigurationFileCreatedSuccessfully=Configuration file created successfully: %1
+ConnectionDetailsValidated=Connection details validated: URL: %s, Username: %s, Password: *****
+Parameters=Parameters: URL: %s, Username: %s, Password: *****, Certificate: %s, Inventory Mode: %s, Log Level: %s, Run Now: %d, Install as a Service: %d
+DataDirectoryExist=Data directory exists: %s
+DataDirectoryDoesNotExist=Data directory does not exist: %s
+DataDirectoryCreatedSuccessfully=Data directory created successfully: %s
+ConfigurationFileCreatedSuccessfully=Configuration file created successfully: %s
 ErrorCreatingDataDirectory=Error creating data directory.
 ErrorCreatingConfigurationFile=Error creating configuration file.
 InstallingOCSInventoryAgentAsAService=Installing OCS Inventory Agent as a service...
@@ -346,20 +346,20 @@ ErrorCreatingConfigurationFile=Error creating configuration file.
 ServiceDeletedSuccessfully=Service deleted successfully.
 ServiceDeleteFailed=Failed to delete service.
 ServiceStopFailed=Failed to stop service.
-DataDirectoryRemovedSuccessfully=Data directory removed successfully: %1
-FailedToRemoveDataDirectory=Failed to remove data directory: %1
+DataDirectoryRemovedSuccessfully=Data directory removed successfully: %s
+FailedToRemoveDataDirectory=Failed to remove data directory: %s
 
 french.StartingOCSInventoryAgentSetup=Début de l'installation de l'agent OCS Inventory...
 french.RunningInSilentMode=Exécution en mode silencieux.
 french.RunningInInteractiveMode=Exécution en mode interactif.
 french.WaitingUserToEnterInputs=En attente de l'utilisateur pour entrer les paramètres...
 french.ErrorMandatoryField=Le champ %s est obligatoire.
-french.ConnectionDetailsValidated=Détails de connexion validés : URL : %1, Nom d'utilisateur : %2, Mot de passe : *****
-french.Parameters=Paramètres : URL : %1, Nom d'utilisateur : %2, Mot de passe : *****, Certificat : %3, Mode d'inventaire : %4, Niveau de journalisation : %5, Exécuter maintenant : %6, Installer en tant que service : %7
-french.DataDirectoryExist=Le répertoire de données existe : %1
-french.DataDirectoryDoesNotExist=Le répertoire de données n'existe pas : %1
-french.DataDirectoryCreatedSuccessfully=Répertoire de données créé avec succès : %1
-french.ConfigurationFileCreatedSuccessfully=Fichier de configuration créé avec succès : %1
+french.ConnectionDetailsValidated=Détails de connexion validés : URL : %s, Nom d'utilisateur : %s, Mot de passe : *****
+french.Parameters=Paramètres : URL : %s, Nom d'utilisateur : %s, Mot de passe : *****, Certificat : %s, Mode d'inventaire : %s, Niveau de journalisation : %s, Exécuter maintenant : %d, Installer en tant que service : %d
+french.DataDirectoryExist=Le répertoire de données existe : %s
+french.DataDirectoryDoesNotExist=Le répertoire de données n'existe pas : %s
+french.DataDirectoryCreatedSuccessfully=Répertoire de données créé avec succès : %s
+french.ConfigurationFileCreatedSuccessfully=Fichier de configuration créé avec succès : %s
 french.ErrorCreatingDataDirectory=Erreur lors de la création du répertoire de données.
 french.ErrorCreatingConfigurationFile=Erreur lors de la création du fichier de configuration.
 french.InstallingOCSInventoryAgentAsAService=Installation de l'agent OCS Inventory en tant que service...
@@ -376,5 +376,5 @@ french.ErrorCreatingConfigurationFile=Erreur lors de la création du fichier de 
 french.ServiceDeletedSuccessfully=Service supprimé avec succès.
 french.ServiceDeleteFailed=Échec de la suppression du service.
 french.ServiceStopFailed=Échec de l'arrêt du service.
-french.DataDirectoryRemovedSuccessfully=Répertoire de données supprimé avec succès : %1
-french.FailedToRemoveDataDirectory=Échec de la suppression du répertoire de données : %1
+french.DataDirectoryRemovedSuccessfully=Répertoire de données supprimé avec succès : %s
+french.FailedToRemoveDataDirectory=Échec de la suppression du répertoire de données : %s
