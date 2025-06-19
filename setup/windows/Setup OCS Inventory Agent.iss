@@ -116,19 +116,19 @@ begin
       if ConnectionInputPage.Values[0] = '' then
       begin
         MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:URL}}'), mbError, MB_OK);
-        Log('{cm:ErrorMandatoryField, {cm:URL}}');
+        Log(ExpandConstant('{cm:ErrorMandatoryField, {cm:URL}}'));
         Result := False;
       end
       else if ConnectionInputPage.Values[1] = '' then
       begin
         MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:Username}}'), mbError, MB_OK);
-        Log('{cm:ErrorMandatoryField, {cm:Username}}');
+        Log(ExpandConstant('{cm:ErrorMandatoryField, {cm:Username}}'));
         Result := False;
       end
       else if ConnectionInputPage.Values[2] = '' then
       begin
         MsgBox(ExpandConstant('{cm:ErrorMandatoryField, {cm:Password}}'), mbError, MB_OK);
-        Log('{cm:ErrorMandatoryField, {cm:Password}}');
+        Log(ExpandConstant('{cm:ErrorMandatoryField, {cm:Password}}'));
         Result := False;
       end
       else
