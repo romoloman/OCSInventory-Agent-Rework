@@ -32,7 +32,7 @@ usage() {
 	echo "Usage: $0 [OPTIONS]"
 	echo "Options:"
 	echo "  -S, --silent          Enable silent mode"
-	echo "  -D, --hard-delete     Remove configs, log files and store data directory"
+	echo "  -D, --hard-delete     Remove configs, log files and data directory"
 	echo "  -y, --yes             Automatically confirm uninstallation without prompting"
 	echo "  -h, --help            Display this help message"
 	exit 1
