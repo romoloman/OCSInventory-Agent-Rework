@@ -170,6 +170,8 @@ check_silent_parameters() {
 	if [ -z "$CERTIFICATE" ]; then
 		log "Certificate not provided, using default value: none" true
 		CERTIFICATE="none"
+	else
+		execCommand "openssl x509 -in $CERTIFICATE -noout" "Certificate file exists: $CERTIFICATE" "Certificate file does not exist: $CERTIFICATE"
 	fi
 
 	if [ "$NOW" = "false" ]; then
@@ -370,6 +372,8 @@ run_interactive() {
 		read -r CERTIFICATE
 		if [ "$CERTIFICATE" = "" ]; then
 			CERTIFICATE="none"
+		else
+			execCommand "openssl x509 -in $CERTIFICATE -noout" "Certificate file exists: $CERTIFICATE" "Certificate file does not exist: $CERTIFICATE"
 		fi
 		log "Certificate path: $CERTIFICATE" true
 	fi
