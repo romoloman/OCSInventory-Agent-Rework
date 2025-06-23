@@ -77,6 +77,7 @@ unset PARSED_OPTIONS
 while true; do
 	case "$1" in
 	-S | --silent)
+		AUTO_CONFIRM=true
 		SILENT=true
 		shift
 		;;

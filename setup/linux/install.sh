@@ -187,7 +187,7 @@ check_installed_agent() {
 	if [ -d "$AGENT_INSTALLATION_DIR" ] || [ -f "/etc/systemd/system/${SERVICE_NAME}.service" ] || [ -d "$CONFIG_PATH" ] || [ -f "$LOG_PATH" ]; then
 		if [ "$SILENT" = "true" ]; then
 			log "INFO" "Existing agent installation detected in silent mode. Automatically uninstalling..." false
-			execCommand "sh ${WORKING_DIRECTORY}/uninstall.sh -S -y" "Existing agent uninstalled successfully." "Failed to uninstall existing agent."
+			execCommand "sh ${WORKING_DIRECTORY}/uninstall.sh -S -D" "Existing agent uninstalled successfully." "Failed to uninstall existing agent."
 		else
 			echo -n "The agent is already installed, do you want to remove it first? ([y]/n) "
 			read -r remove_choice
@@ -196,7 +196,7 @@ check_installed_agent() {
 			if [[ "$remove_choice" =~ ^[yY]?$ ]]; then
 				log "INFO" "Uninstalling the existing agent..." false
 
-				execCommand "sh ${WORKING_DIRECTORY}/uninstall.sh -y" "Existing agent uninstalled successfully. See the logs in ${WORKING_DIRECTORY}/uninstall.log" "Failed to uninstall existing agent."
+				execCommand "sh ${WORKING_DIRECTORY}/uninstall.sh -D -y" "Existing agent uninstalled successfully. See the logs in ${WORKING_DIRECTORY}/uninstall.log" "Failed to uninstall existing agent."
 			else
 				log "INFO" "Proceeding with installation without removing the existing one. Files may be overwritten." false
 			fi
