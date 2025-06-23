@@ -8,22 +8,21 @@ LOG_PATH="/var/log/ocsinventory-agent"
 STORE_DATA_PATH="/var/lib/ocsinventory-data"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 AGENT_INSTALLATION_DIR="/usr/share/ocsinventory-agent"
-SYMBOLIC_LINK="/usr/bin/ocsinventory-agent"
+SYMBOLIC_LINK="/usr/bin/ocsinventory-cli"
 
 # Log formatting function
 log() {
-	local type="$1"
-	local message="$2"
-	local only_file="$3"
+	local message="$1"
+	local only_file="$2"
 
 	if [ "$SILENT" = false ]; then
 		if [ "$only_file" = false ]; then
-			echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" | tee -a "${WORKING_DIRECTORY}/uninstall.log"
+			echo "$(date +"%Y-%m-%d %H:%M:%S") $message" | tee -a "${WORKING_DIRECTORY}/uninstall.log"
 		else
-			echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >>"${WORKING_DIRECTORY}/uninstall.log"
+			echo "$(date +"%Y-%m-%d %H:%M:%S") $message" >>"${WORKING_DIRECTORY}/uninstall.log"
 		fi
 	else
-		echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >>"${WORKING_DIRECTORY}/uninstall.log"
+		echo "$(date +"%Y-%m-%d %H:%M:%S") $message" >>"${WORKING_DIRECTORY}/uninstall.log"
 	fi
 }
 
@@ -45,14 +44,14 @@ execCommand() {
 	local errorMessage="$3"
 
 	if $command >/dev/null 2>/dev/null; then
-		log "INFO" "$successMessage" false
+		log "$successMessage" false
 	else
-		log "WARNING" "$errorMessage" false
+		log "$errorMessage" false
 	fi
 }
 
 if [ "$(id -u)" != "0" ]; then
-	log "ERROR" "The uninstallation script requires elevated privileges, please run as root" false
+	log "The uninstallation script requires elevated privileges, please run as root" false
 	exit 1
 fi
 
@@ -97,7 +96,7 @@ while true; do
 		break
 		;;
 	*)
-		log "ERROR" "Internal error!" false
+		log "Internal error!" false
 		exit 1
 		;;
 	esac
@@ -106,23 +105,23 @@ done
 # Function to uninstall the agent
 uninstall_agent() {
 	if [ "$SILENT" = true ]; then
-		log "INFO" "+-----------------------------------------------------------+" false
-		log "INFO" "|                                                           |" false
-		log "INFO" "|     Uninstalling OCSInventory Agent in silent mode...     |" false
-		log "INFO" "|                                                           |" false
-		log "INFO" "+-----------------------------------------------------------+" false
-		log "INFO" "" false
+		log "+-----------------------------------------------------------+" false
+		log "|                                                           |" false
+		log "|     Uninstalling OCSInventory Agent in silent mode...     |" false
+		log "|                                                           |" false
+		log "+-----------------------------------------------------------+" false
+		log "" false
 	else
-		log "INFO" "+----------------------------------------------------------------+" false
-		log "INFO" "|                                                                |" false
-		log "INFO" "|     Uninstalling OCSInventory Agent in interactive mode...     |" false
-		log "INFO" "|                                                                |" false
-		log "INFO" "+----------------------------------------------------------------+" false
-		log "INFO" "" false
+		log "+----------------------------------------------------------------+" false
+		log "|                                                                |" false
+		log "|     Uninstalling OCSInventory Agent in interactive mode...     |" false
+		log "|                                                                |" false
+		log "+----------------------------------------------------------------+" false
+		log "" false
 	fi
 
 	if systemctl -q list-units --full -all | grep -q ${SERVICE_NAME}.service; then
-		log "INFO" "Service ${SERVICE_NAME} exists, proceeding with uninstallation." false
+		log "Service ${SERVICE_NAME} exists, proceeding with uninstallation." false
 
 		execCommand "systemctl -q stop ${SERVICE_NAME}" "Service ${SERVICE_NAME} stopped successfully." "Failed to stop service ${SERVICE_NAME}. It may not be running."
 
@@ -132,7 +131,7 @@ uninstall_agent() {
 
 		execCommand "systemctl -q daemon-reload" "Systemd daemon reloaded successfully." "Failed to reload systemd daemon."
 	else
-		log "WARNING" "Service ${SERVICE_NAME} does not exist." false
+		log "Service ${SERVICE_NAME} does not exist." false
 	fi
 
 	if [ "$HARD_DELETE" = true ]; then
@@ -147,23 +146,23 @@ uninstall_agent() {
 
 	execCommand "rm ${SYMBOLIC_LINK}" "Symbolic link ${SYMBOLIC_LINK} removed successfully." "Failed to remove symbolic link ${SYMBOLIC_LINK}."
 
-	log "INFO" "" false
-	log "INFO" "+---------------------------------------------------------------+" false
-	log "INFO" "|                                                               |" false
-	log "INFO" "|     OCSInventory Agent has been successfully uninstalled.     |" false
-	log "INFO" "|                                                               |" false
-	log "INFO" "+---------------------------------------------------------------+" false
+	log "" false
+	log "+---------------------------------------------------------------+" false
+	log "|                                                               |" false
+	log "|     OCSInventory Agent has been successfully uninstalled.     |" false
+	log "|                                                               |" false
+	log "+---------------------------------------------------------------+" false
 }
 
 # Function to prompt for confirmation
 prompt_confirmation() {
 	echo -n "Are you sure you want to uninstall OCS Inventory NG Agent ([y]/n)? "
 	read -r confirm
-	log "INFO" "Are you sure you want to uninstall OCS Inventory NG Agent ([y]/n)? $confirm" true
+	log "Are you sure you want to uninstall OCS Inventory NG Agent ([y]/n)? $confirm" true
 	if [[ "$confirm" =~ ^[yY]?$ ]]; then
 		uninstall_agent
 	else
-		log "INFO" "Uninstallation cancelled." false
+		log "Uninstallation cancelled." false
 	fi
 }
 
