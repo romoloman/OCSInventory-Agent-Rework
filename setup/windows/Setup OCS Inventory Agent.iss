@@ -1,7 +1,7 @@
 #define AppName "OCSInventory Agent"
 #define AppVersion "3.0.0"
 #define AppPublisher "OCSInventory"
-#define AppURL "http//www.ocsinventory.com/"
+#define AppURL "https//www.ocsinventory.com/"
 #define AppExeName "agent-windows.exe"
 #define AppPath "Path_of_your_agent\OCSInventory-Agent"
 
