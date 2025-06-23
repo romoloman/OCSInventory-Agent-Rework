@@ -254,7 +254,7 @@ create_log_file() {
 create_data_folder() {
 	log "Creating data folder..." false
 
-	execCommand "mkdir -p $(dirname "$STORE_DATA_PATH")" "Created data directory: $(dirname "$STORE_DATA_PATH")" "Failed to create data directory."
+	execCommand "mkdir -p $STORE_DATA_PATH" "Created data directory: $STORE_DATA_PATH" "Failed to create data directory."
 }
 
 # Function to run the executable with provided params
