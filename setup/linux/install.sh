@@ -1,4 +1,17 @@
 #!/bin/bash
+
+# Constants
+WORKING_DIRECTORY=$(dirname "$(realpath "$0")")
+WORKING_DIRECTORY_EXEC_PATH="/setup/linux"
+EXEC_AGENT="/AGENT-LINUX"
+CONFIG_PATH="/etc/ocsinventory-agent"
+LOG_PATH="/var/log/ocsinventory-agent/ocsinventory-agent.log"
+STORE_DATA_PATH="/var/lib/ocsinventory-data"
+SERVICE_NAME="ocsinventory-agent"
+SERVICE_EXEC="/DAEMON-LINUX"
+AGENT_INSTALLATION_DIR="/usr/share/ocsinventory-agent"
+SYMBOLIC_LINK="/usr/bin/ocsinventory-agent"
+
 # Function to log formated messages
 log() {
 	local type="$1"
@@ -15,23 +28,6 @@ log() {
 		echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >>"${WORKING_DIRECTORY}/install.log"
 	fi
 }
-
-if [ "$(id -u)" != "0" ]; then
-	log "ERROR" "The installation script requires elevated privileges, please run as root" false
-	exit 1
-fi
-
-# Constants
-WORKING_DIRECTORY=$(dirname "$(realpath "$0")")
-WORKING_DIRECTORY_EXEC_PATH="/setup/linux"
-EXEC_AGENT="/AGENT-LINUX"
-CONFIG_PATH="/etc/ocsinventory-agent"
-LOG_PATH="/var/log/ocsinventory-agent/ocsinventory-agent.log"
-STORE_DATA_PATH="/var/lib/ocsinventory-data"
-SERVICE_NAME="ocsinventory-agent"
-SERVICE_EXEC="/DAEMON-LINUX"
-AGENT_INSTALLATION_DIR="/usr/share/ocsinventory-agent"
-SYMBOLIC_LINK="/usr/bin/ocsinventory-agent"
 
 # Function to display usage information
 usage() {
@@ -63,6 +59,11 @@ execCommand() {
 		exit 1
 	fi
 }
+
+if [ "$(id -u)" != "0" ]; then
+	log "ERROR" "The installation script requires elevated privileges, please run as root" false
+	exit 1
+fi
 
 # Default values
 SILENT=false
