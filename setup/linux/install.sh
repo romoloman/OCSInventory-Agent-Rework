@@ -158,26 +158,26 @@ check_silent_parameters() {
 	fi
 
 	if [ -z "$LOG_LEVEL" ]; then
-		log "WARNING" "Log level not provided, using default value 2 (Info)" true
+		log "WARNING" "Log level not provided, using default value: 2 (Info)" true
 		LOG_LEVEL=2
 	fi
 
 	if [ -z "$INVENTORY_MODE" ]; then
-		log "WARNING" "Inventory mode not provided, using default value 1 (Remote with template)" true
+		log "WARNING" "Inventory mode not provided, using default value: 1 (Remote with template)" true
 		INVENTORY_MODE=1
 	fi
 
 	if [ -z "$CERTIFICATE" ]; then
-		log "WARNING" "Certificate not provided, using default value none" true
+		log "WARNING" "Certificate not provided, using default value: none" true
 		CERTIFICATE="none"
 	fi
 
 	if [ "$NOW" = "false" ]; then
-		log "WARNING" "Run now option not provided, using default value false (do not run immediately)" true
+		log "WARNING" "Run now option not provided, using default value: false (do not run immediately)" true
 	fi
 
 	if [ "$SERVICE" = "false" ]; then
-		log "WARNING" "Service registration not provided, using default value false (do not register as service)" true
+		log "WARNING" "Service registration not provided, using default value: false (do not register as service)" true
 	fi
 }
 
@@ -319,7 +319,6 @@ run_interactive() {
 			echo -n "Invalid username format. Please enter a valid username (alphanumeric characters, dots, underscores, and hyphens allowed): "
 			read -r USERNAME
 		done
-		log "INFO" "User has written a username." true
 	fi
 
 	if [ -z "$PASSWORD" ]; then
@@ -329,7 +328,6 @@ run_interactive() {
 			echo -n "Invalid password format. Please enter a valid password (alphanumeric and special characters allowed): "
 			read -r PASSWORD
 		done
-		log "INFO" "User has written a password." true
 	fi
 
 	if [ -z "$INVENTORY_MODE" ]; then
@@ -339,7 +337,7 @@ run_interactive() {
 			INVENTORY_MODE=1
 		else
 			if [[ ! "$INVENTORY_MODE" =~ ^[0-9]+$ ]]; then
-				log "INFO" "Inventory mode must be a number, using default value 1 (Remote with template)" true
+				log "INFO" "Inventory mode must be a number, using default value: 1 (Remote with template)" true
 				INVENTORY_MODE=1
 			fi
 		fi
@@ -347,13 +345,13 @@ run_interactive() {
 	fi
 
 	if [ -z "$LOG_LEVEL" ]; then
-		echo -n "Enter the log level (leave empty if default, default is 2 = Info): "
+		echo -n "Enter the log level (leave empty if default, default is: 2 = Info): "
 		read -r LOG_LEVEL
 		if [ "$LOG_LEVEL" = "" ]; then
 			LOG_LEVEL=2
 		else
 			if [[ ! "$LOG_LEVEL" =~ ^[0-9]+$ ]]; then
-				log "INFO" "Log level must be a number, using default value 2 (Info)" true
+				log "INFO" "Log level must be a number, using default value: 2 (Info)" true
 				LOG_LEVEL=2
 			fi
 		fi
