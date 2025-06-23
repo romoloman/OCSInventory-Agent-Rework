@@ -80,7 +80,7 @@ while true; do
 		SILENT=true
 		shift
 		;;
-	-D | --hard_delete)
+	-D | --hard-delete)
 		HARD_DELETE=true
 		shift
 		;;
