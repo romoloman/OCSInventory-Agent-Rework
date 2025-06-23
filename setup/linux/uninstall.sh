@@ -1,10 +1,5 @@
 #!/bin/bash
 
-if [ "$(id -u)" != "0" ]; then
-	log "ERROR" "The uninstallation script requires elevated privileges, please run as root" false
-	exit 1
-fi
-
 # Constants
 WORKING_DIRECTORY=$(dirname "$(realpath "$0")")
 SERVICE_NAME="ocsinventory-agent"
@@ -14,17 +9,6 @@ STORE_DATA_PATH="/var/lib/ocsinventory-data"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 AGENT_INSTALLATION_DIR="/usr/share/ocsinventory-agent"
 SYMBOLIC_LINK="/usr/bin/ocsinventory-agent"
-
-# Function to display usage information
-usage() {
-	echo "Usage: $0 [OPTIONS]"
-	echo "Options:"
-	echo "  -S, --silent          Enable silent mode"
-	echo "  -D, --hard-delete     Remove configs, log files and store data directory"
-	echo "  -y, --yes             Automatically confirm uninstallation without prompting"
-	echo "  -h, --help            Display this help message"
-	exit 1
-}
 
 # Log formatting function
 log() {
@@ -43,6 +27,17 @@ log() {
 	fi
 }
 
+# Function to display usage information
+usage() {
+	echo "Usage: $0 [OPTIONS]"
+	echo "Options:"
+	echo "  -S, --silent          Enable silent mode"
+	echo "  -D, --hard-delete     Remove configs, log files and store data directory"
+	echo "  -y, --yes             Automatically confirm uninstallation without prompting"
+	echo "  -h, --help            Display this help message"
+	exit 1
+}
+
 # Function to execute a command
 execCommand() {
 	local command="$1"
@@ -55,6 +50,11 @@ execCommand() {
 		log "WARNING" "$errorMessage" false
 	fi
 }
+
+if [ "$(id -u)" != "0" ]; then
+	log "ERROR" "The uninstallation script requires elevated privileges, please run as root" false
+	exit 1
+fi
 
 # Default values
 SILENT=false
