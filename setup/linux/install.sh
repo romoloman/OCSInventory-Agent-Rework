@@ -1,4 +1,20 @@
 #!/bin/bash
+# Function to log formated messages
+log() {
+	local type="$1"
+	local message="$2"
+	local only_file="$3"
+
+	if [ "$SILENT" = false ]; then
+		if [ "$only_file" = false ]; then
+			echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" | tee -a "${WORKING_DIRECTORY}/install.log"
+		else
+			echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >>"${WORKING_DIRECTORY}/install.log"
+		fi
+	else
+		echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >>"${WORKING_DIRECTORY}/install.log"
+	fi
+}
 
 if [ "$(id -u)" != "0" ]; then
 	log "ERROR" "The installation script requires elevated privileges, please run as root" false
@@ -32,23 +48,6 @@ usage() {
 	echo "  -n, --now                   Run the agent inventory immediately after installation"
 	echo "  -h, --help                  Display this help message"
 	exit 1
-}
-
-# Function to log formated messages
-log() {
-	local type="$1"
-	local message="$2"
-	local only_file="$3"
-
-	if [ "$SILENT" = false ]; then
-		if [ "$only_file" = false ]; then
-			echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" | tee -a "${WORKING_DIRECTORY}/install.log"
-		else
-			echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >>"${WORKING_DIRECTORY}/install.log"
-		fi
-	else
-		echo "$(date +"%Y-%m-%d %H:%M:%S") [$type] $message" >>"${WORKING_DIRECTORY}/install.log"
-	fi
 }
 
 # Function to execute a command
@@ -239,7 +238,7 @@ create_config_file() {
 		\"data_directory\": \"$STORE_DATA_PATH\",
 		\"log_file_path\": \"$LOG_PATH\",
 		\"log_level\": $LOG_LEVEL,
-		\"certificate\": \"$CERTIFICATE\"
+		\"certificate\": \"$CERTIFICATE\",
 		\"bypass_certificate\": false
 	}" >"$CONFIG_PATH/config.json"
 }
