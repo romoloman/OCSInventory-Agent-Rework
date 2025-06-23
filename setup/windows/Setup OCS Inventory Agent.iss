@@ -116,19 +116,16 @@ begin
       if ConnectionInputPage.Values[0] = '' then
       begin
         MsgBox(Format(ExpandConstant('{cm:ErrorMandatoryField}'), [ExpandConstant('{cm:URL}')]), mbError, MB_OK);
-        Log(Format(ExpandConstant('{cm:ErrorMandatoryField}'), [ExpandConstant('{cm:URL}')]));
         Result := False;
       end
       else if ConnectionInputPage.Values[1] = '' then
       begin
         MsgBox(Format(ExpandConstant('{cm:ErrorMandatoryField}'), [ExpandConstant('{cm:Username}')]), mbError, MB_OK);
-        Log(Format(ExpandConstant('{cm:ErrorMandatoryField}'), [ExpandConstant('{cm:Username}')]));
         Result := False;
       end
       else if ConnectionInputPage.Values[2] = '' then
       begin
         MsgBox(Format(ExpandConstant('{cm:ErrorMandatoryField}'), [ExpandConstant('{cm:Password}')]), mbError, MB_OK);
-        Log(Format(ExpandConstant('{cm:ErrorMandatoryField}'), [ExpandConstant('{cm:Password}')]));
         Result := False;
       end
       else
@@ -187,7 +184,6 @@ begin
       else
       begin
         MsgBox(ExpandConstant('{cm:ErrorCreatingDataDirectory}'), mbError, MB_OK);
-        Log(ExpandConstant('{cm:ErrorCreatingDataDirectory}'));
       end;
     end;
 
@@ -198,7 +194,6 @@ begin
     else
     begin
         MsgBox(ExpandConstant('{cm:ErrorCreatingConfigurationFile}'), mbError, MB_OK);
-        Log(ExpandConstant('{cm:ErrorCreatingConfigurationFile}'));
     end;
     
     if not WizardSilent then
@@ -216,7 +211,6 @@ begin
           else
           begin
             MsgBox(ExpandConstant('{cm:ServiceDescriptionFailed}'), mbError, MB_OK);
-            Log(ExpandConstant('{cm:ServiceDescriptionFailed}'));
           end;
 
           if Exec('sc.exe', 'start "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
@@ -226,13 +220,11 @@ begin
           else
           begin
             MsgBox(ExpandConstant('{cm:ServiceStartFailed}'), mbError, MB_OK);
-            Log(ExpandConstant('{cm:ServiceStartFailed}'));
           end;
         end
         else
         begin
           MsgBox(ExpandConstant('{cm:ServiceCreateFailed}'), mbError, MB_OK);
-          Log(ExpandConstant('{cm:ServiceCreateFailed}'));
         end;
       end
       else if RunNowCheckBox.Checked then
@@ -244,7 +236,6 @@ begin
         else
         begin
           MsgBox(ExpandConstant('{cm:FailedToRunOCSInventoryAgent}'), mbError, MB_OK);
-          Log(ExpandConstant('{cm:FailedToRunOCSInventoryAgent}'));
         end;
       end;
     end;
@@ -264,13 +255,11 @@ begin
       else
       begin
         MsgBox(ExpandConstant('{cm:ServiceDeleteFailed}'), mbError, MB_OK);
-        Log(ExpandConstant('{cm:ServiceDeleteFailed}'));
       end;
     end
     else
     begin
       MsgBox(ExpandConstant('{cm:ServiceStopFailed}'), mbError, MB_OK);
-      Log(ExpandConstant('{cm:ServiceStopFailed}'));
     end;
 
     if DirExists(STORE_DATA_PATH) then
@@ -282,7 +271,6 @@ begin
       else
       begin
         MsgBox(Format(ExpandConstant('{cm:FailedToRemoveDataDirectory}'), [STORE_DATA_PATH]), mbError, MB_OK);
-        Log(Format(ExpandConstant('{cm:FailedToRemoveDataDirectory}'), [STORE_DATA_PATH]));
       end;
     end;
   end;
