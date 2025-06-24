@@ -226,37 +226,56 @@ copy_agent_contents() {
 create_config_file() {
 	log "Creating configuration file..." false
 
-	execCommand "mkdir -p $CONFIG_PATH" "Created configuration directory: $CONFIG_PATH" "Failed to create configuration directory."
+	if [ ! -d "$CONFIG_PATH" ]; then
+		execCommand "mkdir -p $CONFIG_PATH" "Created configuration directory: $CONFIG_PATH" "Failed to create configuration directory."
+	else
+		log "Configuration directory already exists: $CONFIG_PATH" false
+	fi
 
-	execCommand "touch $CONFIG_PATH/config.json" "Created configuration file: $CONFIG_PATH/config.json" "Failed to create configuration file."
+	if [ ! -f "$CONFIG_PATH/config.json" ]; then
+		execCommand "touch $CONFIG_PATH/config.json" "Created configuration file: $CONFIG_PATH/config.json" "Failed to create configuration file."
+		echo "
+		{
+			\"log_file\": true,
+			\"mode\": $INVENTORY_MODE,
+			\"password\": \"$PASSWORD\",
+			\"username\": \"$USERNAME\",
+			\"url\": \"$URL\",
+			\"data_directory\": \"$STORE_DATA_PATH\",
+			\"log_file_path\": \"$LOG_PATH\",
+			\"log_level\": $LOG_LEVEL,
+			\"certificate\": \"$CERTIFICATE\",
+			\"bypass_certificate\": false
+		}" >"$CONFIG_PATH/config.json"
+	else
+		log "Configuration file already exists: $CONFIG_PATH/config.json" false
+	fi
 
-	echo "
-	{
-		\"log_file\": true,
-		\"mode\": $INVENTORY_MODE,
-		\"password\": \"$PASSWORD\",
-		\"username\": \"$USERNAME\",
-		\"url\": \"$URL\",
-		\"data_directory\": \"$STORE_DATA_PATH\",
-		\"log_file_path\": \"$LOG_PATH\",
-		\"log_level\": $LOG_LEVEL,
-		\"certificate\": \"$CERTIFICATE\",
-		\"bypass_certificate\": false
-	}" >"$CONFIG_PATH/config.json"
 }
 
 create_log_file() {
 	log "Creating log file..." false
 
-	execCommand "mkdir -p $(dirname "$LOG_PATH")" "Created log directory: $(dirname "$LOG_PATH")" "Failed to create log directory."
-
-	execCommand "touch $LOG_PATH" "Created log file: $LOG_PATH" "Failed to create log file."
+	if [ ! -d "$(dirname "$LOG_PATH")" ]; then
+		execCommand "mkdir -p $(dirname "$LOG_PATH")" "Created log directory: $(dirname "$LOG_PATH")" "Failed to create log directory."
+	else
+		log "Log directory already exists: $(dirname "$LOG_PATH")" false
+	fi
+	if [ ! -f "$LOG_PATH" ]; then
+		execCommand "touch $LOG_PATH" "Created log file: $LOG_PATH" "Failed to create log file."
+	else
+		log "Log file already exists: $LOG_PATH" false
+	fi
 }
 
 create_data_folder() {
 	log "Creating data folder..." false
 
-	execCommand "mkdir -p $STORE_DATA_PATH" "Created data directory: $STORE_DATA_PATH" "Failed to create data directory."
+	if [ ! -d "$STORE_DATA_PATH" ]; then
+		execCommand "mkdir -p $STORE_DATA_PATH" "Created data directory: $STORE_DATA_PATH" "Failed to create data directory."
+	else
+		log "Data directory already exists: $STORE_DATA_PATH" false
+	fi
 }
 
 # Function to run the executable with provided params
