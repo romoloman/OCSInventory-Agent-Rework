@@ -9,7 +9,7 @@ LOG_PATH="/var/log/ocsinventory-agent/ocsinventory-agent.log"
 STORE_DATA_PATH="/var/lib/ocsinventory-data"
 SERVICE_NAME="ocsinventory-agent"
 SERVICE_EXEC="/DAEMON-LINUX"
-AGENT_INSTALLATION_DIR="/usr/share/ocsinventory-agent"
+AGENT_INSTALLATION_DIR="/usr/local/bin/ocsinventory-agent"
 SYMBOLIC_LINK="/usr/bin/ocsinventory-cli"
 
 # Function to log formated messages
