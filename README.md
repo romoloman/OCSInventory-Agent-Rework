@@ -167,15 +167,15 @@ You need to download `NSSM - the Non-Sucking Service Manager` for handling servi
 After adding the NSSM executable file in the setup directory, you need to compile the entry point `app.dart` and the daemon `daemon.dart` using the following command
 
 ```text
-dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o AGENT-WINDOWS.exe
-dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/daemon.dart -o DAEMON-WINDOWS.exe
+dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o ocsinventory-agent.exe
+dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/daemon.dart -o ocsinventory-service.exe
 ```
 
 Ensure that you have something like this:
 
 ```text
-├── agent-windows.exe
-├── daemon-windows.exe
+├── ocsinventory-agent.exe
+├── ocsinventory-service.exe
 ├── Setup OCS Inventory Agent.iss
 └── nssm.exe
 ```
@@ -249,8 +249,8 @@ Go to the linux setup directory: `/setup/macos/`
 You need to compile the entry point `app.dart` and the daemon `daemon.dart` using the following command
 
 ```text
-dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o AGENT-MACOS
-dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/daemon.dart -o DAEMON-MACOS
+dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o ocsinventory-agent
+dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/daemon.dart -o ocsinventory-service
 ```
 
 #### 2. Create your own package
@@ -266,8 +266,8 @@ Ensure that you have something like this:
 ```text
 ├── AUTHORS
 ├── Changes
-├── AGENT-MACOS
-├── DAEMON-MACOS
+├── ocsinventory-agent
+├── ocsinventory-service
 ├── LICENCE.txt
 ├── OCS Inventory Agent setup
 │   ├── build
