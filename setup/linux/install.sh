@@ -2,14 +2,13 @@
 
 # Constants
 WORKING_DIRECTORY=$(dirname "$(realpath "$0")")
-WORKING_DIRECTORY_EXEC_PATH="/setup/linux"
-EXEC_AGENT="/AGENT-LINUX"
+AGENT_EXEC="/ocsinventory-agent"
 CONFIG_PATH="/etc/ocsinventory-agent"
 LOG_PATH="/var/log/ocsinventory-agent/ocsinventory-agent.log"
 STORE_DATA_PATH="/var/lib/ocsinventory-data"
 SERVICE_NAME="ocsinventory-agent"
-SERVICE_EXEC="/DAEMON-LINUX"
-AGENT_INSTALLATION_DIR="/usr/local/bin/ocsinventory-agent"
+SERVICE_EXEC="/ocsinventory-service"
+AGENT_INSTALLATION_DIR="/usr/local/bin"
 SYMBOLIC_LINK="/usr/bin/ocsinventory-cli"
 
 # Function to log formated messages
@@ -185,7 +184,7 @@ check_silent_parameters() {
 
 # Function to check if the agent is already installed
 check_installed_agent() {
-	if [ -d "$AGENT_INSTALLATION_DIR" ] || [ -f "/etc/systemd/system/${SERVICE_NAME}.service" ] || [ -d "$CONFIG_PATH" ] || [ -f "$LOG_PATH" ]; then
+	if [ -d "$AGENT_INSTALLATION_DIR$AGENT_EXEC" ] || [ -f "/etc/systemd/system/${SERVICE_NAME}.service" ] || [ -d "$CONFIG_PATH" ] || [ -f "$LOG_PATH" ]; then
 		if [ "$SILENT" = "true" ]; then
 			log "Existing agent installation detected in silent mode. Automatically uninstalling..." false
 			execCommand "sh ${WORKING_DIRECTORY}/uninstall.sh -S -D" "Existing agent uninstalled successfully." "Failed to uninstall existing agent."
@@ -209,17 +208,15 @@ check_installed_agent() {
 copy_agent_contents() {
 	check_installed_agent
 
-	SOURCE_DIR="$WORKING_DIRECTORY/../../"
+	execCommand "cp -r $WORKING_DIRECTORY$AGENT_EXEC $AGENT_INSTALLATION_DIR" "Copied agent contents to $AGENT_INSTALLATION_DIR" "Failed to copy agent contents."
 
-	execCommand "mkdir -p $AGENT_INSTALLATION_DIR" "Created agent installation directory: $AGENT_INSTALLATION_DIR" "Failed to create agent installation directory."
+	execCommand "cp -r $WORKING_DIRECTORY$SERVICE_EXEC $AGENT_INSTALLATION_DIR" "Copied service contents to $AGENT_INSTALLATION_DIR" "Failed to copy service contents."
 
-	execCommand "cp -r $SOURCE_DIR/* $AGENT_INSTALLATION_DIR" "Copied agent contents to $AGENT_INSTALLATION_DIR" "Failed to copy agent contents."
+	execCommand "chmod +x $AGENT_INSTALLATION_DIR$AGENT_EXEC" "Made the agent executable: $AGENT_INSTALLATION_DIR$AGENT_EXEC" "Failed to make the agent executable."
 
-	execCommand "chmod +x $AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$EXEC_AGENT" "Made the agent executable: $AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$EXEC_AGENT" "Failed to make the agent executable."
+	execCommand "chmod +x $AGENT_INSTALLATION_DIR$SERVICE_EXEC" "Made the service executable: $AGENT_INSTALLATION_DIR$SERVICE_EXEC" "Failed to make the service executable."
 
-	execCommand "chmod +x $AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$SERVICE_EXEC" "Made the service executable: $AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$SERVICE_EXEC" "Failed to make the service executable."
-
-	execCommand "ln -s $AGENT_INSTALLATION_DIR$WORKING_DIRECTORY_EXEC_PATH$EXEC_AGENT $SYMBOLIC_LINK" "Created symbolic link for the service: $SYMBOLIC_LINK" "Failed to create symbolic link for the service."
+	execCommand "ln -s $AGENT_INSTALLATION_DIR$AGENT_EXEC $SYMBOLIC_LINK" "Created symbolic link for the service: $SYMBOLIC_LINK" "Failed to create symbolic link for the service."
 }
 
 # Function to create the config file with provided params
@@ -283,7 +280,7 @@ run_executable() {
 	if [ "$NOW" = "true" ]; then
 		log "Running the agent now..." false
 
-		execCommand "$WORKING_DIRECTORY$EXEC_AGENT -f true -m $INVENTORY_MODE -p $PASSWORD -u $USERNAME -s $URL -l $LOG_PATH -d $STORE_DATA_PATH -v $LOG_LEVEL -c $CERTIFICATE" "Agent executed successfully." "Failed to execute the agent."
+		execCommand "$WORKING_DIRECTORY$AGENT_EXEC -f true -m $INVENTORY_MODE -p $PASSWORD -u $USERNAME -s $URL -l $LOG_PATH -d $STORE_DATA_PATH -v $LOG_LEVEL -c $CERTIFICATE" "Agent executed successfully." "Failed to execute the agent."
 	fi
 }
 

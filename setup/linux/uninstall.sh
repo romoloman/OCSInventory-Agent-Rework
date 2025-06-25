@@ -2,12 +2,12 @@
 
 # Constants
 WORKING_DIRECTORY=$(dirname "$(realpath "$0")")
-SERVICE_NAME="ocsinventory-agent"
+SERVICE_NAME="ocsinventory-service"
 CONFIG_PATH="/etc/ocsinventory-agent"
 LOG_PATH="/var/log/ocsinventory-agent"
 STORE_DATA_PATH="/var/lib/ocsinventory-data"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
-AGENT_INSTALLATION_DIR="/usr/share/ocsinventory-agent"
+AGENT_INSTALLATION_DIR="/usr/local/bin/ocsinventory-agent"
 SYMBOLIC_LINK="/usr/bin/ocsinventory-cli"
 
 # Log formatting function

@@ -73,15 +73,15 @@ Go to the linux setup directory: `/setup/linux/`
 You need to compile the entry point `app.dart` and the daemon `daemon.dart` using the following command
 
 ```text
-dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o AGENT-LINUX
-dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/daemon.dart -o DAEMON-LINUX
+dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o ocsinventory-agent
+dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/daemon.dart -o ocsinventory-service
 ```
 
 Ensure that you have something like this:
 
 ```text
-├── AGENT-LINUX
-├── DAEMON-LINUX
+├── ocsinventory-agent
+├── ocsinventory-service
 ├── install.sh
 └── uninstall.sh
 ```
