@@ -31,16 +31,16 @@ log() {
 usage() {
 	echo "Usage: $0 [OPTIONS]"
 	echo "Options:"
-	echo "  -S, --silent                       Enable silent mode (requires --url, --username, --password)"
-	echo "  -U, --url URL                      URL of the OCSInventory server (required for silent mode)"
-	echo "  -u, --username USERNAME            Username (required for silent mode)"
-	echo "  -p, --password PASSWORD            Password (required for silent mode)"
-	echo "  -m, --mode MODE                    Inventory mode (default: 1 = Remote with template)"
-	echo "  -l, --log-level LEVEL              Log level (default: 2 = Info)"
-	echo "  -c, --certificate CERTIFICATE      Path to the certificate file (default: null)"
-	echo "  -s, --service                      Register the agent as a systemd service"
-	echo "  -n, --now                          Run the agent inventory immediately after installation"
-	echo "  -h, --help                         Display this help message"
+	echo "  -S, --silent                      Enable silent mode (requires --url, --username, --password)"
+	echo "  -U, --url URL                     URL of the OCSInventory server (required for silent mode)"
+	echo "  -u, --username USERNAME           Username (required for silent mode)"
+	echo "  -p, --password PASSWORD           Password (required for silent mode)"
+	echo "  -m, --mode MODE                   Inventory mode (default: 1 = Remote with template)"
+	echo "  -l, --log-level LEVEL             Log level (default: 2 = Info)"
+	echo "  -c, --certificate CERTIFICATE     Path to the certificate file (default: null)"
+	echo "  -s, --service                     Register the agent as a systemd service"
+	echo "  -n, --now                         Run the agent inventory immediately after installation"
+	echo "  -h, --help                        Display this help message"
 	exit 1
 }
 
