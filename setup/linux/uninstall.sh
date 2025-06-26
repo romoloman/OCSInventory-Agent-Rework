@@ -124,8 +124,8 @@ SILENT=false
 HARD_DELETE=false
 AUTO_CONFIRM=false
 
-SHORT_OPTS="hSDy"
-LONG_OPTS="help,silent,hard-delete,yes"
+SHORT_OPTS="SDyh"
+LONG_OPTS="silent,hard-delete,yes,help"
 
 if ! PARSED_OPTIONS=$(getopt --options $SHORT_OPTS --longoptions $LONG_OPTS --name "$0" -- "$@"); then
 	usage
