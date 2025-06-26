@@ -110,7 +110,7 @@ check_silent_parameters() {
 }
 
 check_installed_agent() {
-	if [ -d "$AGENT_Binary$AGENT_EXEC" ] || [ -f "/etc/systemd/system/${SERVICE_NAME}.service" ] || [ -d "$CONFIG_PATH" ] || [ -f "$LOG_FILE_PATH" ]; then
+	if [ -d "$AGENT_BINARY$AGENT_EXEC" ] || [ -f "/etc/systemd/system/${SERVICE_NAME}.service" ] || [ -d "$CONFIG_PATH" ] || [ -f "$LOG_FILE_PATH" ]; then
 		if [ "$SILENT" = "true" ]; then
 			log "Existing agent installation detected in silent mode. Automatically uninstalling..." false
 			execCommand "sh ${WORKING_DIRECTORY}/uninstall.sh -S -D" "Existing agent uninstalled successfully. See the logs in ${WORKING_DIRECTORY}/uninstall.log" "Failed to uninstall existing agent."
@@ -132,15 +132,15 @@ check_installed_agent() {
 copy_agent_contents() {
 	check_installed_agent
 
-	execCommand "cp -r $WORKING_DIRECTORY$AGENT_EXEC $AGENT_Binary" "Copied agent contents to $AGENT_Binary" "Failed to copy agent contents."
+	execCommand "cp -r $WORKING_DIRECTORY$AGENT_EXEC $AGENT_BINARY" "Copied agent contents to $AGENT_BINARY" "Failed to copy agent contents."
 
-	execCommand "cp -r $WORKING_DIRECTORY$SERVICE_EXEC $AGENT_Binary" "Copied service contents to $AGENT_Binary" "Failed to copy service contents."
+	execCommand "cp -r $WORKING_DIRECTORY$SERVICE_EXEC $AGENT_BINARY" "Copied service contents to $AGENT_BINARY" "Failed to copy service contents."
 
-	execCommand "chmod +x $AGENT_Binary$AGENT_EXEC" "Made the agent executable: $AGENT_Binary$AGENT_EXEC" "Failed to make the agent executable."
+	execCommand "chmod +x $AGENT_BINARY$AGENT_EXEC" "Made the agent executable: $AGENT_BINARY$AGENT_EXEC" "Failed to make the agent executable."
 
-	execCommand "chmod +x $AGENT_Binary$SERVICE_EXEC" "Made the service executable: $AGENT_Binary$SERVICE_EXEC" "Failed to make the service executable."
+	execCommand "chmod +x $AGENT_BINARY$SERVICE_EXEC" "Made the service executable: $AGENT_BINARY$SERVICE_EXEC" "Failed to make the service executable."
 
-	execCommand "ln -s $AGENT_Binary$AGENT_EXEC $SYMBOLIC_LINK" "Created symbolic link for the service: $SYMBOLIC_LINK" "Failed to create symbolic link for the service."
+	execCommand "ln -s $AGENT_BINARY$AGENT_EXEC $SYMBOLIC_LINK" "Created symbolic link for the service: $SYMBOLIC_LINK" "Failed to create symbolic link for the service."
 }
 
 create_config_file() {
@@ -360,7 +360,7 @@ fi
 
 WORKING_DIRECTORY=$(dirname "$(realpath "$0")")
 CONFIG_PATH="/etc/ocsinventory-agent"
-AGENT_Binary="/usr/local/bin"
+AGENT_BINARY="/usr/local/bin"
 SYMBOLIC_LINK="/usr/bin/ocsinventory-cli"
 DEFAULT_DATA_PATH="/var/lib/ocsinventory-data"
 DEFAULT_LOG_FILE_PATH="/var/log/ocsinventory-agent/ocsinventory-agent.log"
@@ -382,8 +382,8 @@ BYPASS_CERTIFICATE=false
 SERVICE=false
 NOW=false
 
-SHORT_OPTS="SU:u:p:m:l:c:snh"
-LONG_OPTS="silent,url:,username:,password:,mode:,log-level:,log-file,log-file-path:,certificate:,bypass-certificate,service,now,help"
+SHORT_OPTS="SU:u:p:m:d:l:c:snh"
+LONG_OPTS="silent,url:,username:,password:,mode:,data-path:,log-level:,log-file,log-file-path:,certificate:,bypass-certificate,service,now,help"
 
 if ! PARSED_OPTIONS=$(getopt --options $SHORT_OPTS --longoptions $LONG_OPTS --name "$0" -- "$@"); then
 	usage
@@ -466,7 +466,7 @@ else
 	run_interactive
 fi
 
-if [ -d "$CONFIG_PATH" ] && [ -f "$LOG_FILE_PATH" ] && [ -d "$AGENT_Binary" ] && [ -f "$SYMBOLIC_LINK" ]; then
+if [ -d "$CONFIG_PATH" ] && [ -f "$LOG_FILE_PATH" ] && [ -d "$AGENT_BINARY" ] && [ -f "$SYMBOLIC_LINK" ]; then
 	if [ "$SERVICE" = "true" ]; then
 		register_service
 	fi
@@ -476,8 +476,8 @@ if [ -d "$CONFIG_PATH" ] && [ -f "$LOG_FILE_PATH" ] && [ -d "$AGENT_Binary" ] &&
 	log "|                                                                                                |" false
 	log "|          Configuration files are located at $CONFIG_PATH" false
 	log "|          Log file is located at $LOG_FILE_PATH" false
-	log "|          Agent data storage is located at $DEFAULT_DATA_PATH" false
-	log "|          Agent installation directory is located at $AGENT_Binary" false
+	log "|          Agent data storage is located at $DATA_PATH" false
+	log "|          Agent installation directory is located at $AGENT_BINARY" false
 	log "|                                                                                                |" false
 	log "|               Please refer to the documentation for more information.                          |" false
 	log "+------------------------------------------------------------------------------------------------+" false
