@@ -1,16 +1,5 @@
 #!/bin/bash
 
-# Constants
-WORKING_DIRECTORY=$(dirname "$(realpath "$0")")
-SERVICE_NAME="ocsinventory-service"
-CONFIG_PATH="/etc/ocsinventory-agent"
-LOG_PATH="/var/log/ocsinventory-agent"
-STORE_DATA_PATH="/var/lib/ocsinventory-data"
-SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
-AGENT_INSTALLATION_DIR="/usr/local/bin/ocsinventory-agent"
-SYMBOLIC_LINK="/usr/bin/ocsinventory-cli"
-
-# Log formatting function
 log() {
 	local message="$1"
 	local only_file="$2"
@@ -26,7 +15,6 @@ log() {
 	fi
 }
 
-# Function to display usage information
 usage() {
 	echo "Usage: $0 [OPTIONS]"
 	echo "Options:"
@@ -37,7 +25,6 @@ usage() {
 	exit 1
 }
 
-# Function to execute a command
 execCommand() {
 	local command="$1"
 	local successMessage="$2"
@@ -50,21 +37,96 @@ execCommand() {
 	fi
 }
 
+get_path() {
+	DATA_PATH=$(grep -q -oP '"data_directory": "\K[^"]+' "/etc/ocsinventory-agent/config.json")
+	LOG_FILE_PATH=$(grep -q -oP '"log_file_path": "\K[^"]+' "/etc/ocsinventory-agent/config.json")
+}
+
+uninstall_agent() {
+	if [ "$SILENT" = true ]; then
+		log "+-----------------------------------------------------------+" false
+		log "|                                                           |" false
+		log "|     Uninstalling OCSInventory Agent in silent mode...     |" false
+		log "|                                                           |" false
+		log "+-----------------------------------------------------------+" false
+		log "" false
+	else
+		log "+----------------------------------------------------------------+" false
+		log "|                                                                |" false
+		log "|     Uninstalling OCSInventory Agent in interactive mode...     |" false
+		log "|                                                                |" false
+		log "+----------------------------------------------------------------+" false
+		log "" false
+	fi
+
+	get_path
+
+	if systemctl -q list-units --full -all | grep -q ${SERVICE_NAME}.service; then
+		log "Service ${SERVICE_NAME} exists, proceeding with uninstallation." false
+
+		execCommand "systemctl -q stop ${SERVICE_NAME}" "Service ${SERVICE_NAME} stopped successfully." "Failed to stop service ${SERVICE_NAME}. It may not be running."
+
+		execCommand "systemctl -q disable ${SERVICE_NAME}" "Service ${SERVICE_NAME} disabled successfully." "Failed to disable service ${SERVICE_NAME}."
+
+		execCommand "rm ${SERVICE_FILE}" "Service file ${SERVICE_FILE} removed successfully." "Failed to remove service file ${SERVICE_FILE}."
+
+		execCommand "systemctl -q daemon-reload" "Systemd daemon reloaded successfully." "Failed to reload systemd daemon."
+	else
+		log "Service ${SERVICE_NAME} does not exist." false
+	fi
+
+	if [ "$HARD_DELETE" = true ]; then
+		execCommand "rm -r ${CONFIG_PATH}" "Configuration directory ${CONFIG_PATH} removed successfully." "Failed to remove configuration directory ${CONFIG_PATH}."
+
+		execCommand "rm -r ${LOG_FILE_PATH}" "Log directory ${LOG_FILE_PATH} removed successfully." "Failed to remove log directory ${LOG_FILE_PATH}."
+
+		execCommand "rm -r ${DATA_PATH}" "Store data directory ${DATA_PATH} removed successfully." "Failed to remove store data directory ${DATA_PATH}."
+	fi
+
+	execCommand "rm -r ${AGENT_INSTALLATION_DIR}" "Agent installation directory ${AGENT_INSTALLATION_DIR} removed successfully." "Failed to remove agent installation directory ${AGENT_INSTALLATION_DIR}."
+
+	execCommand "rm ${SYMBOLIC_LINK}" "Symbolic link ${SYMBOLIC_LINK} removed successfully." "Failed to remove symbolic link ${SYMBOLIC_LINK}."
+
+	log "" false
+	log "+---------------------------------------------------------------+" false
+	log "|                                                               |" false
+	log "|     OCSInventory Agent has been successfully uninstalled.     |" false
+	log "|                                                               |" false
+	log "+---------------------------------------------------------------+" false
+}
+
+prompt_confirmation() {
+	echo -n "Are you sure you want to uninstall OCS Inventory NG Agent ([y]/n)? "
+	read -r confirm
+	log "Are you sure you want to uninstall OCS Inventory NG Agent ([y]/n)? $confirm" true
+	if [[ "$confirm" =~ ^[yY]?$ ]]; then
+		uninstall_agent
+	else
+		log "Uninstallation cancelled." false
+	fi
+}
+
 if [ "$(id -u)" != "0" ]; then
 	log "The uninstallation script requires elevated privileges, please run as root" false
 	exit 1
 fi
 
-# Default values
+WORKING_DIRECTORY=$(dirname "$(realpath "$0")")
+CONFIG_PATH="/etc/ocsinventory-agent"
+AGENT_INSTALLATION_DIR="/usr/local/bin/ocsinventory-agent"
+SYMBOLIC_LINK="/usr/bin/ocsinventory-cli"
+DATA_PATH=""
+LOG_FILE_PATH=""
+SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
+SERVICE_NAME="ocsinventory-service"
+
 SILENT=false
 HARD_DELETE=false
 AUTO_CONFIRM=false
 
-# options
 SHORT_OPTS="hSDy"
 LONG_OPTS="help,silent,hard-delete,yes"
 
-# parse options
 if ! PARSED_OPTIONS=$(getopt --options $SHORT_OPTS --longoptions $LONG_OPTS --name "$0" -- "$@"); then
 	usage
 fi
@@ -72,7 +134,6 @@ fi
 eval set -- "$PARSED_OPTIONS"
 unset PARSED_OPTIONS
 
-# process options
 while true; do
 	case "$1" in
 	-S | --silent)
@@ -102,71 +163,6 @@ while true; do
 	esac
 done
 
-# Function to uninstall the agent
-uninstall_agent() {
-	if [ "$SILENT" = true ]; then
-		log "+-----------------------------------------------------------+" false
-		log "|                                                           |" false
-		log "|     Uninstalling OCSInventory Agent in silent mode...     |" false
-		log "|                                                           |" false
-		log "+-----------------------------------------------------------+" false
-		log "" false
-	else
-		log "+----------------------------------------------------------------+" false
-		log "|                                                                |" false
-		log "|     Uninstalling OCSInventory Agent in interactive mode...     |" false
-		log "|                                                                |" false
-		log "+----------------------------------------------------------------+" false
-		log "" false
-	fi
-
-	if systemctl -q list-units --full -all | grep -q ${SERVICE_NAME}.service; then
-		log "Service ${SERVICE_NAME} exists, proceeding with uninstallation." false
-
-		execCommand "systemctl -q stop ${SERVICE_NAME}" "Service ${SERVICE_NAME} stopped successfully." "Failed to stop service ${SERVICE_NAME}. It may not be running."
-
-		execCommand "systemctl -q disable ${SERVICE_NAME}" "Service ${SERVICE_NAME} disabled successfully." "Failed to disable service ${SERVICE_NAME}."
-
-		execCommand "rm ${SERVICE_FILE}" "Service file ${SERVICE_FILE} removed successfully." "Failed to remove service file ${SERVICE_FILE}."
-
-		execCommand "systemctl -q daemon-reload" "Systemd daemon reloaded successfully." "Failed to reload systemd daemon."
-	else
-		log "Service ${SERVICE_NAME} does not exist." false
-	fi
-
-	if [ "$HARD_DELETE" = true ]; then
-		execCommand "rm -r ${CONFIG_PATH}" "Configuration directory ${CONFIG_PATH} removed successfully." "Failed to remove configuration directory ${CONFIG_PATH}."
-
-		execCommand "rm -r ${LOG_PATH}" "Log directory ${LOG_PATH} removed successfully." "Failed to remove log directory ${LOG_PATH}."
-
-		execCommand "rm -r ${STORE_DATA_PATH}" "Store data directory ${STORE_DATA_PATH} removed successfully." "Failed to remove store data directory ${STORE_DATA_PATH}."
-	fi
-
-	execCommand "rm -r ${AGENT_INSTALLATION_DIR}" "Agent installation directory ${AGENT_INSTALLATION_DIR} removed successfully." "Failed to remove agent installation directory ${AGENT_INSTALLATION_DIR}."
-
-	execCommand "rm ${SYMBOLIC_LINK}" "Symbolic link ${SYMBOLIC_LINK} removed successfully." "Failed to remove symbolic link ${SYMBOLIC_LINK}."
-
-	log "" false
-	log "+---------------------------------------------------------------+" false
-	log "|                                                               |" false
-	log "|     OCSInventory Agent has been successfully uninstalled.     |" false
-	log "|                                                               |" false
-	log "+---------------------------------------------------------------+" false
-}
-
-# Function to prompt for confirmation
-prompt_confirmation() {
-	echo -n "Are you sure you want to uninstall OCS Inventory NG Agent ([y]/n)? "
-	read -r confirm
-	log "Are you sure you want to uninstall OCS Inventory NG Agent ([y]/n)? $confirm" true
-	if [[ "$confirm" =~ ^[yY]?$ ]]; then
-		uninstall_agent
-	else
-		log "Uninstallation cancelled." false
-	fi
-}
-
-# Check for automatic confirmation or prompt the user
 if [ "$AUTO_CONFIRM" = "true" ]; then
 	uninstall_agent
 else
