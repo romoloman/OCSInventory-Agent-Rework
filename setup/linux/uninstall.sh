@@ -39,9 +39,7 @@ execCommand() {
 
 get_path() {
 	DATA_PATH=$(grep -oP '"data_directory": "\K[^"]+' "${CONFIG_PATH}/config.json" 2>/dev/null)
-	log "Data directory path: ${DATA_PATH}" false
 	LOG_FILE_PATH=$(dirname $(grep -oP '"log_file_path": "\K[^"]+' "${CONFIG_PATH}/config.json" 2>/dev/null))
-	log "Log file path: ${LOG_FILE_PATH}" false
 }
 
 uninstall_agent() {
@@ -74,20 +72,45 @@ uninstall_agent() {
 
 		execCommand "systemctl -q daemon-reload" "Systemd daemon reloaded successfully." "Failed to reload systemd daemon."
 	else
-		log "Service ${SERVICE_NAME} does not exist." false
+		log "Service ${SERVICE_NAME} does not exist. Skipping service uninstallation." false
 	fi
 
 	if [ "$HARD_DELETE" = true ]; then
-		execCommand "rm -r ${CONFIG_PATH}" "Configuration directory ${CONFIG_PATH} removed successfully." "Failed to remove configuration directory ${CONFIG_PATH}."
+		if [ -d "${CONFIG_PATH}" ]; then
+			log "Configuration directory ${CONFIG_PATH} exists, proceeding with removal." false
+			execCommand "rm -r ${CONFIG_PATH}" "Configuration directory ${CONFIG_PATH} removed successfully." "Failed to remove configuration directory ${CONFIG_PATH}."
+		else
+			log "Configuration directory does not exist, skipping removal." false
+		fi
 
-		execCommand "rm -r ${LOG_FILE_PATH}" "Log directory ${LOG_FILE_PATH} removed successfully." "Failed to remove log directory ${LOG_FILE_PATH}."
+		if [ -d "${LOG_FILE_PATH}" ]; then
+			log "Log directory ${LOG_FILE_PATH} exists, proceeding with removal." false
+			execCommand "rm -r ${LOG_FILE_PATH}" "Log directory ${LOG_FILE_PATH} removed successfully." "Failed to remove log directory ${LOG_FILE_PATH}."
+		else
+			log "Log directory does not exist, skipping removal." false
+		fi
 
-		execCommand "rm -r ${DATA_PATH}" "Store data directory ${DATA_PATH} removed successfully." "Failed to remove store data directory ${DATA_PATH}."
+		if [ -d "${DATA_PATH}" ]; then
+			log "Store data directory ${DATA_PATH} exists, proceeding with removal." false
+			execCommand "rm -r ${DATA_PATH}" "Store data directory ${DATA_PATH} removed successfully." "Failed to remove store data directory ${DATA_PATH}."
+		else
+			log "Store data directory does not exist, skipping removal." false
+		fi
 	fi
 
-	execCommand "rm -r ${AGENT_INSTALLATION_DIR}" "Agent installation directory ${AGENT_INSTALLATION_DIR} removed successfully." "Failed to remove agent installation directory ${AGENT_INSTALLATION_DIR}."
+	if [ -f "${AGENT_BINARY}" ]; then
+		log "Agent binary ${AGENT_BINARY} exists, proceeding with removal." false
+		execCommand "rm -r ${AGENT_BINARY}" "Agent installation directory ${AGENT_BINARY} removed successfully." "Failed to remove agent installation directory ${AGENT_BINARY}."
+	else
+		log "Agent binary does not exist, skipping removal." false
+	fi
 
-	execCommand "rm ${SYMBOLIC_LINK}" "Symbolic link ${SYMBOLIC_LINK} removed successfully." "Failed to remove symbolic link ${SYMBOLIC_LINK}."
+	if [ -L "${SYMBOLIC_LINK}" ]; then
+		log "Symbolic link ${SYMBOLIC_LINK} exists, proceeding with removal." false
+		execCommand "rm ${SYMBOLIC_LINK}" "Symbolic link ${SYMBOLIC_LINK} removed successfully." "Failed to remove symbolic link ${SYMBOLIC_LINK}."
+	else
+		log "Symbolic link does not exist, skipping removal." false
+	fi
 
 	log "" false
 	log "+---------------------------------------------------------------+" false
@@ -100,7 +123,6 @@ uninstall_agent() {
 prompt_confirmation() {
 	echo -n "Are you sure you want to uninstall OCS Inventory NG Agent ([y]/n)? "
 	read -r confirm
-	log "Are you sure you want to uninstall OCS Inventory NG Agent ([y]/n)? $confirm" true
 	if [[ "$confirm" =~ ^[yY]?$ ]]; then
 		uninstall_agent
 	else
@@ -115,7 +137,7 @@ fi
 
 WORKING_DIRECTORY=$(dirname "$(realpath "$0")")
 CONFIG_PATH="/etc/ocsinventory-agent"
-AGENT_INSTALLATION_DIR="/usr/local/bin/ocsinventory-agent"
+AGENT_BINARY="/usr/local/bin/ocsinventory-agent"
 SYMBOLIC_LINK="/usr/bin/ocsinventory-cli"
 DATA_PATH=""
 LOG_FILE_PATH=""
