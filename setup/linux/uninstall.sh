@@ -38,8 +38,10 @@ execCommand() {
 }
 
 get_path() {
-	DATA_PATH=$(grep -q -oP '"data_directory": "\K[^"]+' "/etc/ocsinventory-agent/config.json" 2>/dev/null)
-	LOG_FILE_PATH=$(grep -q -oP '"log_file_path": "\K[^"]+' "/etc/ocsinventory-agent/config.json" 2>/dev/null)
+	DATA_PATH=$(grep -oP '"data_directory": "\K[^"]+' "${CONFIG_PATH}/config.json" 2>/dev/null)
+	log "Data directory path: ${DATA_PATH}" false
+	LOG_FILE_PATH=$(dirname $(grep -oP '"log_file_path": "\K[^"]+' "${CONFIG_PATH}/config.json" 2>/dev/null))
+	log "Log file path: ${LOG_FILE_PATH}" false
 }
 
 uninstall_agent() {

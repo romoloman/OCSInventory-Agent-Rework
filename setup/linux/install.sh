@@ -113,16 +113,15 @@ check_installed_agent() {
 	if [ -d "$AGENT_INSTALLATION_DIR$AGENT_EXEC" ] || [ -f "/etc/systemd/system/${SERVICE_NAME}.service" ] || [ -d "$CONFIG_PATH" ] || [ -f "$LOG_FILE_PATH" ]; then
 		if [ "$SILENT" = "true" ]; then
 			log "Existing agent installation detected in silent mode. Automatically uninstalling..." false
-			execCommand "sh ${WORKING_DIRECTORY}/uninstall.sh -S -D" "Existing agent uninstalled successfully." "Failed to uninstall existing agent."
+			execCommand "sh ${WORKING_DIRECTORY}/uninstall.sh -S -D" "Existing agent uninstalled successfully. See the logs in ${WORKING_DIRECTORY}/uninstall.log" "Failed to uninstall existing agent."
 		else
 			echo -n "The agent is already installed, do you want to remove it first? ([y]/n) "
 			read -r remove_choice
 
-			log "User choice for removing existing agent: $remove_choice" true
 			if [[ "$remove_choice" =~ ^[yY]?$ ]]; then
 				log "Uninstalling the existing agent..." false
 
-				execCommand "sh ${WORKING_DIRECTORY}/uninstall.sh -D -y" "Existing agent uninstalled successfully. See the logs in ${WORKING_DIRECTORY}/uninstall.log" "Failed to uninstall existing agent."
+				execCommand "sh ${WORKING_DIRECTORY}/uninstall.sh -S -D" "Existing agent uninstalled successfully. See the logs in ${WORKING_DIRECTORY}/uninstall.log" "Failed to uninstall existing agent."
 			else
 				log "Proceeding with installation without removing the existing one. Files may be overwritten." false
 			fi
@@ -277,11 +276,11 @@ run_interactive() {
 		log "Inventory mode: $INVENTORY_MODE" true
 	fi
 
-	if [ -z "$DEFAULT_DATA_PATH" ]; then
+	if [ -z "$DATA_PATH" ]; then
 		echo -n "Enter the data path (leave empty if default, default is: /var/lib/ocsinventory-data): "
-		read -r DEFAULT_DATA_PATH
-		if [ "$DEFAULT_DATA_PATH" = "" ]; then
-			DEFAULT_DATA_PATH="/var/lib/ocsinventory-data"
+		read -r DATA_PATH
+		if [ "$DATA_PATH" = "" ]; then
+			DATA_PATH=$DEFAULT_DATA_PATH
 		fi
 		log "Data path: $DEFAULT_DATA_PATH" true
 	fi
@@ -298,6 +297,24 @@ run_interactive() {
 			fi
 		fi
 		log "Log level: $LOG_LEVEL" true
+	fi
+
+	if [ "$LOG_FILE" = "false" ]; then
+		echo -n "Do you want to enable log file? ([y]/n) "
+		read -r log_file_choice
+		if [[ "$log_file_choice" =~ ^[yY]?$ ]]; then
+			LOG_FILE=true
+		fi
+		log "Log file option: $LOG_FILE" true
+	fi
+
+	if [ "$LOG_FILE" = "true" ] && [ -z "$LOG_FILE_PATH" ]; then
+		echo -n "Enter the log file path (leave empty if default, default is: /var/log/ocsinventory-agent/ocsinventory-agent.log): "
+		read -r LOG_FILE_PATH
+		if [ "$LOG_FILE_PATH" = "" ]; then
+			LOG_FILE_PATH=$DEFAULT_LOG_FILE_PATH
+		fi
+		log "Log file path: $LOG_FILE_PATH" true
 	fi
 
 	if [ -z "$CERTIFICATE" ]; then
