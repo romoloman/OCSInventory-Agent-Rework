@@ -51,7 +51,7 @@ class Deployment {
   /// Check the configuration of the deployment module.
   Future<bool> checkConfig() async {
     logger.info(this.runtimeType.toString(),
-        "Enabling deployment module and checking its configuration...");
+        "Checking deployment module configuration...");
 
     // Check if the URL is set
     if (url == null) {
@@ -86,7 +86,7 @@ class Deployment {
       String endpoint, Map<String, String> params) async {
     var uri = Uri.parse(url + endpoint).replace(queryParameters: params);
     var response = await httpUtils.get(uri, httpUtils.getHeader());
-    logger.verbose(this.runtimeType.toString(), response["message"]);
+    logger.debug(this.runtimeType.toString(), response["message"]);
 
     return {
       "status_code": response["status_code"],
@@ -119,7 +119,7 @@ class Deployment {
                     "/"),
                 httpUtils.getHeader(),
                 "{\"status\": 2, \"comment\": \"Notified\"}");
-            logger.verbose(
+            logger.debug(
                 this.runtimeType.toString(), responseNotified["message"]);
           } catch (exception) {
             logger.error(
@@ -253,7 +253,7 @@ class Deployment {
       status = 0;
 
       for (var action in element) {
-        logger.verbose(this.runtimeType.toString(),
+        logger.debug(this.runtimeType.toString(),
             "Processing action: ${action.toString()}");
 
         results.forEach((resultElement) {
@@ -266,7 +266,7 @@ class Deployment {
             action["package"].toString() +
             "/";
         // VERBOSE: show which action is processing
-        logger.verbose(this.runtimeType.toString(), action.toString());
+        logger.debug(this.runtimeType.toString(), action.toString());
 
         //clear comment
         errorComment = "Error";
@@ -313,7 +313,7 @@ class Deployment {
               if (packageDirectory.existsSync()) {
                 try {
                   await packageDirectory.delete(recursive: true);
-                  logger.verbose(this.runtimeType.toString(),
+                  logger.debug(this.runtimeType.toString(),
                       "Deleted package directory at: '$packagePath'");
                 } catch (exception) {
                   logger.error(
@@ -348,7 +348,7 @@ class Deployment {
             if (packageDirectory.existsSync()) {
               try {
                 await packageDirectory.delete(recursive: true);
-                logger.verbose(this.runtimeType.toString(),
+                logger.debug(this.runtimeType.toString(),
                     "Deleted package directory at: '$packagePath'");
               } catch (exception) {
                 logger.error(
@@ -378,8 +378,7 @@ class Deployment {
               Uri.parse(url + "/deployment/results/$id/"),
               httpUtils.getHeader(),
               "{\"status\": 0, \"comment\": \"Success\"}");
-          logger.verbose(
-              this.runtimeType.toString(), responseSuccess["message"]);
+          logger.debug(this.runtimeType.toString(), responseSuccess["message"]);
           if (responseSuccess["status_code"] == 200) {
             logger.info(this.runtimeType.toString(),
                 "Package $id has been successfully processed.");
@@ -408,7 +407,7 @@ class Deployment {
               Uri.parse(url + "/deployment/results/$id/"),
               httpUtils.getHeader(),
               "{\"status\": 3, \"comment\": ${jsonEncode(formattedErrorComment)}}");
-          logger.verbose(this.runtimeType.toString(), responseFail["message"]);
+          logger.debug(this.runtimeType.toString(), responseFail["message"]);
           if (responseFail["status_code"] == 200) {
             logger.error(this.runtimeType.toString(),
                 "Something went wrong while processing package $id: $formattedErrorComment");
@@ -463,8 +462,9 @@ class Deployment {
           break;
       }
 
-      result =
-          await commands.processTarget(method, actionCommand).then((value) {
+      result = await commands
+          .processTarget(method, actionCommand, "Deployment", "")
+          .then((value) {
         return value;
       }).catchError((onError) {
         logger.error(this.runtimeType.toString(),
@@ -494,7 +494,7 @@ class Deployment {
         config.getCoreConfig("deployment", "auto_retry"));
 
     if (result["status"] == true) {
-      logger.verbose(this.runtimeType.toString(), result["value"].toString());
+      logger.debug(this.runtimeType.toString(), result["value"].toString());
     }
 
     return result;
@@ -529,7 +529,7 @@ class Deployment {
       var archive = ZipDecoder().decodeBytes(fileBytes);
       await extractArchiveToDiskAsync(archive, extractedPath).then((value) {
         // Log verbose message indicating successful extraction
-        logger.verbose(this.runtimeType.toString(),
+        logger.debug(this.runtimeType.toString(),
             "File has been extracted at: '$extractedPath'");
 
         // Delete the __MACOSX directory if it exists
@@ -584,19 +584,19 @@ class Deployment {
       return result;
     }
 
-    logger.verbose(this.runtimeType.toString(),
+    logger.debug(this.runtimeType.toString(),
         "Extracting tar file: '$filePath' to path: '$extractedPath'");
 
     try {
       // Execute the tar command to extract the archive file
       var cmdResult = await commands.processTarget(
-          "BASH", "tar -xvf $filePath -C $extractedPath");
+          "BASH", "tar -xvf $filePath -C $extractedPath", "Deployment", "");
 
       if (cmdResult["status"] == true) {
         // Delete the archive file after extracting it
         if (savedFile.existsSync()) {
           // Log verbose message indicating successful extraction
-          logger.verbose(this.runtimeType.toString(),
+          logger.debug(this.runtimeType.toString(),
               "File has been extracted at: '$extractedPath'");
 
           savedFile.deleteSync();
@@ -641,15 +641,13 @@ class Deployment {
   Future<Map<String, dynamic>> storeFile(int package, String filePath,
       String pathToStore, String actionType, String os) async {
     logger.info(this.runtimeType.toString(), "Downloading and saving file...");
-    logger.verbose(
-        this.runtimeType.toString(), "File path structure: $filePath");
+    logger.debug(this.runtimeType.toString(), "File path structure: $filePath");
 
     // extract actual URL if filePath is a Map
     String fileUrl;
     if (filePath is Map<String, dynamic>) {
       fileUrl = (filePath as Map<String, dynamic>)["file"] as String;
-      logger.verbose(
-          this.runtimeType.toString(), "Extracted file URL: $fileUrl");
+      logger.debug(this.runtimeType.toString(), "Extracted file URL: $fileUrl");
     } else {
       fileUrl = filePath;
     }
@@ -701,7 +699,7 @@ class Deployment {
           return request.close();
         }).then((HttpClientResponse response) {
           if (response.statusCode == HttpStatus.ok) {
-            logger.verbose(this.runtimeType.toString(),
+            logger.debug(this.runtimeType.toString(),
                 "Successfully downloaded file: $fileUrl");
             response.pipe(fileSaveLocal.openWrite()).then((fileAdded) async {
               // Save the file directly if not zipped
@@ -813,7 +811,7 @@ class Deployment {
                       responseStreamStatus = false;
                   }
                 } else {
-                  logger.verbose(this.runtimeType.toString(),
+                  logger.debug(this.runtimeType.toString(),
                       "The file $fileUrl has been saved in the agent directory at: '$localPath'");
                   if (actionType == "LAUNCH") {
                     // Make the file executable
@@ -833,7 +831,7 @@ class Deployment {
                           .copySync(specifiedPath + fileUrl.split("/").last);
                       if (remoteFile.existsSync() &&
                           remoteFile.lengthSync() == fileAdded.lengthSync()) {
-                        logger.verbose(this.runtimeType.toString(),
+                        logger.debug(this.runtimeType.toString(),
                             "The file $fileUrl has been successfully saved at the specified path: '$specifiedPath'");
                         responseStreamStatus = true;
                       } else {
@@ -926,7 +924,7 @@ class Deployment {
   Future<Map<String, dynamic>> launchFile(String os, int package,
       String actionCommand, dynamic filePath, String actionType) async {
     logger.info(this.runtimeType.toString(), "Launching file...");
-    logger.verbose(this.runtimeType.toString(),
+    logger.debug(this.runtimeType.toString(),
         "Launch file parameters - Command: $actionCommand, File: $filePath");
 
     // use package dir as extract path
@@ -935,7 +933,7 @@ class Deployment {
         package.toString() +
         "/";
 
-    logger.verbose(this.runtimeType.toString(),
+    logger.debug(this.runtimeType.toString(),
         "Using package directory for extraction: '$packagePath'");
 
     Map<String, dynamic> result = {"status": 1, "error": ""};
@@ -944,7 +942,7 @@ class Deployment {
         await storeFile(package, filePath, packagePath, actionType, os);
     bool storeStatus = storeResult["status"];
 
-    logger.verbose(this.runtimeType.toString(),
+    logger.debug(this.runtimeType.toString(),
         "File store operation result: ${storeStatus ? 'Success' : 'Failed'}");
 
     if (!storeStatus) {
@@ -957,7 +955,7 @@ class Deployment {
     try {
       var files = Directory(packagePath).listSync();
       extractedFiles = files.map((f) => f.path.split('/').last).toList();
-      logger.verbose(this.runtimeType.toString(),
+      logger.debug(this.runtimeType.toString(),
           "Files in package directory: ${extractedFiles.join(', ')}");
     } catch (e) {
       logger.error(this.runtimeType.toString(),
@@ -969,7 +967,7 @@ class Deployment {
 
     // then switching to the pkg dir for contextual exec
     Directory.current = Directory(packagePath);
-    logger.verbose(this.runtimeType.toString(),
+    logger.debug(this.runtimeType.toString(),
         "Changed working directory to: '${Directory.current.path}'");
 
     Map<String, dynamic> execResult =
@@ -978,10 +976,10 @@ class Deployment {
 
     // back to the original dir
     Directory.current = Directory(originalDir);
-    logger.verbose(this.runtimeType.toString(),
+    logger.debug(this.runtimeType.toString(),
         "Restored working directory to: '${Directory.current.path}'");
 
-    logger.verbose(this.runtimeType.toString(),
+    logger.debug(this.runtimeType.toString(),
         "Command execution result: ${execStatus ? 'Success' : 'Failed'}");
 
     if (!execStatus) {
@@ -991,5 +989,23 @@ class Deployment {
 
     result["status"] = (storeStatus && execStatus) ? 0 : 1;
     return result;
+  }
+
+  /// check if deployment is enabled then process packages and actions
+  Future<void> processDeployment(String os, int assetID) async {
+    if (config.getCoreConfig("deployment", "enabled")) {
+      logger.info(this.runtimeType.toString(),
+          "Deployment is enabled in server configuration.");
+      if (await checkConfig()) {
+        if (await checkDownload(assetID)) {
+          if (await getActions(assetID)) {
+            await executeActions(os, assetID);
+          }
+        }
+      }
+    } else {
+      logger.info(this.runtimeType.toString(),
+          "Deployment is disabled in server configuration.");
+    }
   }
 }

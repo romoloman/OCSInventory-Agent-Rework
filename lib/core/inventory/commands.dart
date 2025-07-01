@@ -29,7 +29,12 @@ class Commands {
 
   /// Process the given target based on the [method].
   Future<Map<String, Object>> processTarget(
-      String method, String target) async {
+      String method, String target, String section, String field) async {
+    if (field != "") {
+      field = " [$field]";
+    }
+    logger.debug(this.runtimeType.toString(),
+        "[$section]$field Executing $method: '$target'");
     final methodParameters = await getMethodParameters(method, target);
     final process = methodParameters['process'];
     final commentSubject = methodParameters['commentSubject'];
@@ -44,9 +49,6 @@ class Commands {
     processData["value"] = (exitCode == 0) ? stdout : "";
     processData["status"] = (exitCode == 0);
     processData["error"] = stderr;
-
-    logger.verbose(
-        this.runtimeType.toString(), "Executed $commentSubject: '$target'");
 
     if (stderr.isNotEmpty)
       logger.error(this.runtimeType.toString(),
@@ -136,7 +138,9 @@ class Commands {
   }
 
   /// Execute or read [target] in terms of [method].
-  Future<String> getResult(String method, String target) async {
-    return (await this.processTarget(method, target))["value"].toString();
+  Future<String> getResult(
+      String method, String target, String section, String field) async {
+    return (await this.processTarget(method, target, section, field))["value"]
+        .toString();
   }
 }
