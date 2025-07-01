@@ -243,17 +243,9 @@ Future<void> main(List<String> args) async {
       new Format(logger, commands);
 
   // Initiate modules
-  Inventory inventory = new Inventory(logger, config, filesUtils, httpUtils,
-      jsonUtils, commands, format);
-  Deployment deployment =
-      new Deployment(logger, config, httpUtils, commands);
-
-  //Get the config execution mode
-  if(Config.readOnly == true){
-    logger.info("Config", "Executing config in read-only mode...");
-  } else {
-    logger.info("Config", "Executing config in read and write mode...");
-  }
+  Inventory inventory = new Inventory(
+      logger, config, filesUtils, httpUtils, jsonUtils, commands, format);
+  Deployment deployment = new Deployment(logger, config, httpUtils, commands);
 
   // Get the agent execution mode
   Map<int, String> enumMode = {
@@ -266,6 +258,14 @@ Future<void> main(List<String> args) async {
   logger.info("APP",
       sprintf("Starting agent in %s mode...", [enumMode[inventory.getMode()]]));
 
+  //Get the config execution mode
+  if (Config.readOnly == true) {
+    logger.info("Config",
+        "Command-line arguments will override config values for this run only (no persistent change).");
+  } else {
+    logger.info("Config",
+        "Command-line arguments will overwrite values in the config file (persistent change).");
+  }
   // Get the OS body
   var body, os;
   if (Platform.isLinux) {
