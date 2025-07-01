@@ -98,10 +98,12 @@ Future<void> main(List<String> args) async {
       help: "Check if the agent is running as a service",
       valueHelp: "Used only by the daemon",
       defaultsTo: "false");
+  parser.addOption("overwrite_config",
+      help: "overwrite_config",
+      valueHelp: "Overwrite the configuration file if true, default to false",
+      defaultsTo: "false");
   parser.addFlag("help",
       abbr: "h", help: "Display this help message", negatable: false);
-  parser.addOption("overwrite_config",
-      help: "overwrite_config", valueHelp: "Overwrite the configuration file if true, default to false", defaultsTo: "false");
 
   try {
     allArgs = parser.parse(args);
