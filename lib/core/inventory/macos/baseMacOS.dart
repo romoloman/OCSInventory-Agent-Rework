@@ -20,6 +20,7 @@ import 'dart:io';
 
 // Core imports
 import 'package:ocs_agent/core/inventory/commands.dart';
+import 'package:ocs_agent/core/config.dart';
 
 class BaseMacOS {
   late Logger logger;
@@ -100,7 +101,8 @@ class BaseMacOS {
               logType,
               "MAC ADDRESS"))["value"]
           .toString(),
-      "domain": getDomain
+      "domain": getDomain,
+      "agent": Config.agentVersion,
     });
 
     logger.info(this.runtimeType.toString(), "OS body retrieved successfully.");

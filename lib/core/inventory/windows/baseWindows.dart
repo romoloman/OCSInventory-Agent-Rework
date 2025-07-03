@@ -26,6 +26,7 @@ import 'package:ocs_agent/core/inventory/commands.dart';
 // Common imports
 import 'package:ocs_agent/core/common/files_utils.dart';
 import 'package:ocs_agent/core/common/json_utils.dart';
+import 'package:ocs_agent/core/config.dart';
 
 class BaseWindows {
   late Logger logger;
@@ -116,6 +117,7 @@ class BaseWindows {
               logType,
               "DOMAIN"))["value"]
           .toString(),
+      "agent": Config.agentVersion,
     });
 
     logger.info(this.runtimeType.toString(), "OS body has been retrieved!");
