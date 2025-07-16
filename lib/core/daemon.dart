@@ -29,10 +29,11 @@ class Daemon {
     ProcessSignal.sigterm.watch().listen((signal) {
       logger.info("Service", "Received SIGTERM signal. Stopping daemon...");
       stopSignal = true;
+      exit(0);
     });
 
     if (Platform.isLinux || Platform.isMacOS) {
-      executable = Directory.current.path + "/ocsinventory-agent";
+      executable = Directory.current.path + "/ocsinventory-cli";
     } else if (Platform.isWindows) {
       executable = Directory.current.path + "/ocsinventory-agent.exe";
     }

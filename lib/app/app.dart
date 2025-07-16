@@ -313,5 +313,5 @@ Future<void> main(List<String> args) async {
       await inventory.sendLocalTemplateInventory();
     }
   }
-  logger.info("APP", "Agent process completed successfully.\n");
+  logger.info("APP", "Agent process completed successfully.");
 }
