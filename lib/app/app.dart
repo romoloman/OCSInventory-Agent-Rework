@@ -132,7 +132,7 @@ Future<void> main(List<String> args) async {
   } else if (Platform.isMacOS) {
     configDirectory = "/etc/ocsinventory-agent";
   } else if (Platform.isWindows) {
-    configDirectory = "C:\\ProgramData\\OCSInventory-Agent";
+    configDirectory = "C://ProgramData/OCSInventory-Agent";
   } else {
     stdout.writeln("Unsupported platform detected.");
     exit(1);
