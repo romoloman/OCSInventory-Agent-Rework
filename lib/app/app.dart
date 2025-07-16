@@ -39,6 +39,7 @@ import 'package:ocs_agent/core/inventory/format.dart';
 // Modules imports
 import 'package:ocs_agent/core/inventory.dart';
 import 'package:ocs_agent/core/deployment.dart';
+import 'package:ocs_agent/core/daemon.dart';
 
 /// In this main section we send the [body] to the asset/bases endpoint
 Future<void> main(List<String> args) async {
@@ -195,7 +196,6 @@ Future<void> main(List<String> args) async {
   config = await Config(
       configDirectory, jsonEncode(inventoryConfigurations).toString());
 
-
   if (allArgs.wasParsed("certificate")) {
     File certificate = File(allArgs.option("certificate").toString());
     if (certificate.existsSync()) {
@@ -215,9 +215,8 @@ Future<void> main(List<String> args) async {
       // Update the content of the map into the config class
       config.setConfigFileContentByKey(key, value);
       // if --overwrite_config update the config file
-      if(allArgs.wasParsed("overwrite_config") == true &&
-        allArgs.option("overwrite_config").toString() == "true"){
-
+      if (allArgs.wasParsed("overwrite_config") == true &&
+          allArgs.option("overwrite_config").toString() == "true") {
         config.updateInventoryConfig(key, value);
         Config.readOnly = false;
       }
@@ -234,13 +233,11 @@ Future<void> main(List<String> args) async {
 
   // Initiate core
   Commands commands = new Commands(logger);
-  BaseLinux baseLinux =
-      new BaseLinux(logger, commands, filesUtils, jsonUtils);
+  BaseLinux baseLinux = new BaseLinux(logger, commands, filesUtils, jsonUtils);
   BaseMacOS baseMacOS = new BaseMacOS(logger, commands);
   BaseWindows baseWindows =
       new BaseWindows(logger, commands, filesUtils, jsonUtils);
-  Format format =
-      new Format(logger, commands);
+  Format format = new Format(logger, commands);
 
   // Initiate modules
   Inventory inventory = new Inventory(
@@ -255,6 +252,17 @@ Future<void> main(List<String> args) async {
     3: "Local with template",
     4: "Local without template",
   };
+
+  if (await allArgs.option("service").toString() == "true") {
+    try {
+      new Daemon(config, logger);
+    } catch (e) {
+      logger.error("Service",
+          "An error occurred while starting the daemon: ${e.toString()}");
+    }
+    return;
+  }
+
   logger.info("APP",
       sprintf("Starting agent in %s mode...", [enumMode[inventory.getMode()]]));
 
@@ -303,17 +311,6 @@ Future<void> main(List<String> args) async {
     await inventory.sendLocalBaseInventory(body);
     if (inventory.getMode() == 3) {
       await inventory.sendLocalTemplateInventory();
-    }
-  }
-
-  if (await allArgs.option("service").toString() == "true") {
-    try {
-      if (config.getCoreConfig("agent", "frequency") != null) {
-        stdout.writeln(
-            config.getCoreConfig("agent", "frequency").toString().trim());
-      }
-    } catch (e) {
-      stdout.writeln("4");
     }
   }
   logger.info("APP", "Agent process completed successfully.\n");
