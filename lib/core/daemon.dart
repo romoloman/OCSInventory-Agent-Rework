@@ -26,14 +26,15 @@ class Daemon {
   bool stopSignal = false;
 
   Daemon(this.config, this.logger) {
-    if (Platform.isLinux || Platform.isMacOS) {
-      executable = Directory.current.path + "/ocsinventory-cli";
-
+    if (Platform.isLinux) {
       ProcessSignal.sigterm.watch().listen((signal) {
         logger.info("Service", "Received SIGTERM signal. Stopping daemon...");
         stopSignal = true;
-        exit(0);
       });
+    }
+
+    if (Platform.isLinux || Platform.isMacOS) {
+      executable = Directory.current.path + "/ocsinventory-cli";
     } else if (Platform.isWindows) {
       executable = Directory.current.path + "/ocsinventory-agent.exe";
     }
