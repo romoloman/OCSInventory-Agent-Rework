@@ -42,7 +42,7 @@ import 'package:ocs_agent/core/deployment.dart';
 import 'package:ocs_agent/core/daemon.dart';
 
 /// In this main section we send the [body] to the asset/bases endpoint
-Future<void> main(List<String> args) async {
+void main(List<String> args) async {
   // Initiate the parser for the arguments
   ArgParser parser = ArgParser();
   ArgResults allArgs;
