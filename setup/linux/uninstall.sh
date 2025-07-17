@@ -83,7 +83,7 @@ uninstall_agent() {
 			log "Configuration directory does not exist, skipping removal." false
 		fi
 
-		if [ -d "${LOG_FILE_PATH}" ]; then
+		if [ -d "${LOG_FILE_PATH}" ] && [[ "${LOG_FILE_PATH}" != "." ]]; then
 			log "Log directory ${LOG_FILE_PATH} exists, proceeding with removal." false
 			execCommand "rm -r ${LOG_FILE_PATH}" "Log directory ${LOG_FILE_PATH} removed successfully." "Failed to remove log directory ${LOG_FILE_PATH}."
 		else
