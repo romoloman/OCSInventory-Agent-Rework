@@ -39,7 +39,7 @@ execCommand() {
 
 get_path() {
 	DATA_PATH=$(grep -oP '"data_directory": "\K[^"]+' "${CONFIG_PATH}/config.json" 2>/dev/null)
-	LOG_FILE_PATH=$(dirname $(grep -oP '"log_file_path": "\K[^"]+' "${CONFIG_PATH}/config.json" 2>/dev/null) 2>/dev/null)
+	LOG_FILE_PATH=$(dirname "$(grep -oP '"log_file_path": "\K[^"]+' "${CONFIG_PATH}/config.json" 2>/dev/null)" 2>/dev/null)
 }
 
 uninstall_agent() {

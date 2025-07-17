@@ -361,7 +361,6 @@ SYMBOLIC_LINK="/usr/bin/ocsinventory-cli"
 DEFAULT_DATA_PATH="/var/lib/ocsinventory-data"
 DEFAULT_LOG_FILE_PATH="/var/log/ocsinventory-agent/ocsinventory-agent.log"
 AGENT_EXEC="/ocsinventory-agent"
-SERVICE_EXEC="/ocsinventory-agent"
 SERVICE_NAME="ocsinventory-agent"
 
 SILENT=false
