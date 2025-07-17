@@ -142,7 +142,7 @@ SYMBOLIC_LINK="/usr/bin/ocsinventory-cli"
 DATA_PATH=""
 LOG_FILE_PATH=""
 SERVICE_NAME="ocsinventory-agent"
-SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
+SERVICE_FILE="/etc/systemd/system/multi-user.target.wants/${SERVICE_NAME}.service"
 
 SILENT=false
 HARD_DELETE=false

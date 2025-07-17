@@ -3,13 +3,13 @@ Description=OCS Inventory Agent
 After=network.target
 
 [Service]
-ExecStart=/usr/share/ocsinventory-agent/setup/linux/ocsinventory-service
+ExecStart=/usr/bin/ocsinventory-cli --service true
 User=root
 Group=root
 RestartSec=60
 StartLimitInterval=1800
 StartLimitBurst=3
-WorkingDirectory=/usr/share/ocsinventory-agent/setup/linux
+WorkingDirectory=/usr/bin
 
 # Ensure that PID file and logging directories are set if needed
 PIDFile=/var/run/ocsinventory-agent.pid

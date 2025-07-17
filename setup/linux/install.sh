@@ -110,7 +110,7 @@ check_silent_parameters() {
 }
 
 check_installed_agent() {
-	if [ -d "$AGENT_BINARY$AGENT_EXEC" ] || [ -f "/etc/systemd/system/${SERVICE_NAME}.service" ] || [ -d "$CONFIG_PATH" ] || [ -f "$LOG_FILE_PATH" ]; then
+	if [ -d "$AGENT_BINARY$AGENT_EXEC" ] || [ -f "/etc/systemd/system/multi-user.target.wants/${SERVICE_NAME}.service" ] || [ -d "$CONFIG_PATH" ] || [ -f "$LOG_FILE_PATH" ]; then
 		if [ "$SILENT" = "true" ]; then
 			log "Existing agent installation detected in silent mode. Automatically uninstalling..." false
 			execCommand "sh ${WORKING_DIRECTORY}/uninstall.sh -S -D" "Existing agent uninstalled successfully. See the logs in ${WORKING_DIRECTORY}/uninstall.log" "Failed to uninstall existing agent."
@@ -134,11 +134,7 @@ copy_agent_contents() {
 
 	execCommand "cp -r $WORKING_DIRECTORY$AGENT_EXEC $AGENT_BINARY" "Copied agent contents to $AGENT_BINARY" "Failed to copy agent contents."
 
-	execCommand "cp -r $WORKING_DIRECTORY$SERVICE_EXEC $AGENT_BINARY" "Copied service contents to $AGENT_BINARY" "Failed to copy service contents."
-
 	execCommand "chmod +x $AGENT_BINARY$AGENT_EXEC" "Made the agent executable: $AGENT_BINARY$AGENT_EXEC" "Failed to make the agent executable."
-
-	execCommand "chmod +x $AGENT_BINARY$SERVICE_EXEC" "Made the service executable: $AGENT_BINARY$SERVICE_EXEC" "Failed to make the service executable."
 
 	execCommand "ln -s $AGENT_BINARY$AGENT_EXEC $SYMBOLIC_LINK" "Created symbolic link for the service: $SYMBOLIC_LINK" "Failed to create symbolic link for the service."
 }
@@ -197,7 +193,7 @@ run_executable() {
 register_service() {
 	log "Creating service file..." false
 
-	execCommand "cp ${WORKING_DIRECTORY}/ocsinventory-agent.service /etc/systemd/system/${SERVICE_NAME}.service" "Service file copied successfully." "Failed to copy service file."
+	execCommand "cp ${WORKING_DIRECTORY}/ocsinventory-agent.service /etc/systemd/system/multi-user.target.wants/${SERVICE_NAME}.service" "Service file copied successfully." "Failed to copy service file."
 
 	log "Reloading daemon and enabling service" false
 
@@ -365,7 +361,7 @@ SYMBOLIC_LINK="/usr/bin/ocsinventory-cli"
 DEFAULT_DATA_PATH="/var/lib/ocsinventory-data"
 DEFAULT_LOG_FILE_PATH="/var/log/ocsinventory-agent/ocsinventory-agent.log"
 AGENT_EXEC="/ocsinventory-agent"
-SERVICE_EXEC="/ocsinventory-service"
+SERVICE_EXEC="/ocsinventory-agent"
 SERVICE_NAME="ocsinventory-agent"
 
 SILENT=false
