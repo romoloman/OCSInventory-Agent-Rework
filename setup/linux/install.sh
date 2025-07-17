@@ -110,7 +110,7 @@ check_silent_parameters() {
 }
 
 check_installed_agent() {
-	if [ -d "$AGENT_BINARY$AGENT_EXEC" ] || [ -f "/etc/systemd/system/multi-user.target.wants/${SERVICE_NAME}.service" ] || [ -d "$CONFIG_PATH" ] || [ -f "$LOG_FILE_PATH" ]; then
+	if [ -d "$AGENT_BINARY$AGENT_EXEC" ] || [ -f "/etc/systemd/system/${SERVICE_NAME}.service" ] || [ -d "$CONFIG_PATH" ] || [ -f "$LOG_FILE_PATH" ]; then
 		if [ "$SILENT" = "true" ]; then
 			log "Existing agent installation detected in silent mode. Automatically uninstalling..." false
 			execCommand "sh ${WORKING_DIRECTORY}/uninstall.sh -S -D" "Existing agent uninstalled successfully. See the logs in ${WORKING_DIRECTORY}/uninstall.log" "Failed to uninstall existing agent."
@@ -193,7 +193,7 @@ run_executable() {
 register_service() {
 	log "Creating service file..." false
 
-	execCommand "cp ${WORKING_DIRECTORY}/ocsinventory-agent.service /etc/systemd/system/multi-user.target.wants/${SERVICE_NAME}.service" "Service file copied successfully." "Failed to copy service file."
+	execCommand "cp ${WORKING_DIRECTORY}/ocsinventory-agent.service /etc/systemd/system/${SERVICE_NAME}.service" "Service file copied successfully." "Failed to copy service file."
 
 	log "Reloading daemon and enabling service" false
 
