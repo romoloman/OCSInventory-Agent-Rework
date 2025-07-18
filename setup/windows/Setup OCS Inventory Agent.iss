@@ -2,8 +2,9 @@
 #define AppVersion "3.0.0"
 #define AppPublisher "OCSInventory"
 #define AppURL "https//www.ocsinventory.com/"
-#define AppExeName "agent-windows.exe"
-#define AppPath "Path_of_your_agent\OCSInventory-Agent"
+#define AppExeName "OCSInventory-Agent.exe"
+#define ServiceExeName "OCSInventory-Service.exe"
+#define AppPath "C:\Users\antoi\source\repos\OCSInventory-NG\OCSInventory-Agent-Rework"
 
 [Setup]
 AppId={{652EB54C-0A14-46AF-9F06-3BA7C294AFC9}
@@ -32,7 +33,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 
 [Files]
-Source: "{#AppPath}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#AppPath}\setup\windows\OCSInventory-Service\bin\Release\net8.0\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#AppPath}\setup\windows\{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
@@ -169,6 +170,10 @@ begin
     STORE_DATA_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent');
     CONFIG_PATH := STORE_DATA_PATH + '\config.json';
     LOG_PATH := STORE_DATA_PATH + '\ocsinventory-agent.log';
+    
+    StringChangeEx(STORE_DATA_PATH, '\', '/', True);
+    StringChangeEx(CONFIG_PATH, '\', '/', True);
+    StringChangeEx(LOG_PATH, '\', '/', True);
 
     if DirExists(STORE_DATA_PATH) then
     begin
@@ -201,7 +206,7 @@ begin
       if InstallAsAServiceCheckBox.Checked then
       begin
         Log(ExpandConstant('{cm:InstallingOCSInventoryAgentAsAService}'));
-        if Exec('sc.exe', 'create "OCSInventory Agent" binpath= "' + ExpandConstant('{app}\{#AppExeName}') + '" start= "auto"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+        if Exec('sc.exe', 'create "OCSInventory Agent" binpath= "' + ExpandConstant('{app}\{#ServiceExeName}') + '" start= "auto"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
         begin
           Log(ExpandConstant('{cm:ServiceCreatedSuccessfully}'));
           if Exec('sc.exe', 'description "OCSInventory Agent" "' + ExpandConstant('{cm:ServiceDescription}') + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
