@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Text.Json.Nodes;
+using static System.Environment;
 
 namespace OCSInventory_Service
 {
@@ -6,9 +8,13 @@ namespace OCSInventory_Service
     {
         private readonly ILogger<Worker> _logger;
 
+        private String _configPath = GetFolderPath(SpecialFolder.CommonApplicationData) + "/OCSInventory-Agent/config.json";
+        private JsonObject _config;
+
         public Worker(ILogger<Worker> logger)
         {
             _logger = logger;
+            _config = JsonNode.Parse(File.ReadAllText(_configPath))?.AsObject() ?? new JsonObject();
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -22,7 +28,7 @@ namespace OCSInventory_Service
                     try
                     {
                         _logger.LogInformation("Service started.");
-                        Process.Start("./ocsinventory-agent.exe", "--service true").WaitForExit();
+                        Process.Start(_config["install_directory"]?.ToString() + "/ocsinventory-agent.exe", "--service true").WaitForExit();
                         _logger.LogWarning("The service will restart. Check agent logs for any errors.");
                     }
                     catch (Exception ex)
