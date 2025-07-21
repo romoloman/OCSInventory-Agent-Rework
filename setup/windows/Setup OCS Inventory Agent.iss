@@ -44,7 +44,7 @@ var
   INSTALL_AS_A_SERVICE, RUN_NOW: Boolean;
   ConnectionInputPage, ConfigInputPage: TInputQueryWizardPage;
   CheckPage: TWizardPage;
-  URL, USERNAME, PASSWORD, CERTIFICATE, STORE_DATA_PATH, CONFIG_PATH, LOG_PATH: String;
+  URL, USERNAME, PASSWORD, CERTIFICATE, STORE_DATA_PATH, CONFIG_PATH, LOG_PATH, INSTALL_PATH: String;
   INVENTORY_MODE, LOG_LEVEL: Integer;
   InstallAsAServiceCheckBox, RunNowCheckBox: TNewCheckBox;
   ResultCode: Integer;
