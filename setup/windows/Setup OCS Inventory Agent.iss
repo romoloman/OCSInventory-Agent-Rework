@@ -4,7 +4,7 @@
 #define AppURL "https//www.ocsinventory.com/"
 #define AppExeName "OCSInventory-Agent.exe"
 #define ServiceExeName "OCSInventory-Service.exe"
-#define AppPath "C:\Users\antoi\source\repos\OCSInventory-NG\OCSInventory-Agent-Rework"
+#define AppPath "/path/of/agent/repository"
 
 [Setup]
 AppId={{652EB54C-0A14-46AF-9F06-3BA7C294AFC9}
@@ -175,6 +175,7 @@ begin
     StringChangeEx(STORE_DATA_PATH, '\', '/', True);
     StringChangeEx(CONFIG_PATH, '\', '/', True);
     StringChangeEx(LOG_PATH, '\', '/', True);
+    StringChangeEx(INSTALL_PATH, '\', '/', True);
 
     if DirExists(STORE_DATA_PATH) then
     begin
