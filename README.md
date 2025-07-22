@@ -411,4 +411,7 @@ If you encounter any issues during the installation or usage of the OCS Inventor
 
 4. Verify the API URL: Double-check the API URL to ensure it is accurate and points to the correct backend server.
 
-5. Restart the agent: Sometimes, restarting the agent can resolve certain issues. You can do this by running the appropriate command for your operating system: `sudo systemctl restart ocsinventory-agent` on Linux,`C:\Program Files\OCS Inventory Agent\setup\windows\nssm.exe stop OCSInventory-Agent` followed by `C:\Program Files\OCS Inventory Agent\setup\windows\nssm.exe start OCSInventory-Agent` on Windows, and `sudo launchctl unload /Library/LaunchDaemons/org.ocsinventory.agent.plist` followed by `sudo launchctl load /Library/LaunchDaemons/org.ocsinventory.agent.plist` on macOS.
+5. Restart the agent: Sometimes, restarting the agent can resolve certain issues.
+You can do this by running the appropriate command for your operating system: `sudo systemctl restart ocsinventory-agent`
+on Linux,`C:\Program Files\OCS Inventory Agent\setup\windows\nssm.exe stop OCSInventory-Agent` followed by `C:\Program Files\OCS Inventory Agent\setup\windows\nssm.exe start OCSInventory-Agent`
+on Windows, and `sudo launchctl unload /Library/LaunchDaemons/org.ocsinventory.agent.plist` followed by `sudo launchctl load /Library/LaunchDaemons/org.ocsinventory.agent.plist` on macOS.
