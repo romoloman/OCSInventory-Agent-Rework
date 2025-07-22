@@ -351,7 +351,7 @@ After installing the agent, there is a config forlder and the file `inventory.js
 In this file, there are properties to configure the agent:
 
 |      Property      |                                                                                        Description                                                                                        |
-| :----------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+|:------------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
 |   data_directory   |                                                                     Folder where the agent will store inventory data.                                                                     |
 |     log_level      |                                                                      0: Error 1: Warning 2: Info (default) 3 Verbose                                                                      |
 |      log_file      |                   Default to false, the logs will be written in the terminal you'r using. Set to true, you'll need to specify a log file where you want to write logs.                    |
@@ -394,7 +394,7 @@ You can bypass SSL certificate verification (if the certificate is self-signed) 
 
 ## Step 6: Uninstalling the agent
 
-- Linux Agent: To uninstall the Linux agent, 
+- Linux Agent: To uninstall the Linux agent,
 navigate to `/usr/share/ocsinventory-agent/setup/linux/` and execute the `uninstall.sh` script with root privileges.
 - Windows Agent: To uninstall the Windows agent, go to `C:\Program Files\OCS Inventory Agent` and run the `uninstall application` executable.
 - MacOS Agent: To uninstall the macOS agent, navigate to `/Applications/OCS-NG.app/Contents/Resources/` and execute the `uninstaller.sh` script with root privileges.
