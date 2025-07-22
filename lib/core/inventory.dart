@@ -318,6 +318,12 @@ class Inventory {
 
     try {
       remoteInfo = await getRemoteTemplateInfo(body);
+      // skip template processing
+      if (remoteInfo["return"] == "false") {
+        logger.info(this.runtimeType.toString(),
+            "No remote template to process (skipping template processing).");
+        return false;
+      }
       localInfo = getLocalTemplateInfo();
     } catch (e) {
       logger.error(this.runtimeType.toString(),
@@ -453,6 +459,14 @@ class Inventory {
     if (responseAsset?["status_code"] == 200 && assetMap.isNotEmpty) {
       // API call
       logger.info(this.runtimeType.toString(), "Base inventory found.");
+
+      // template is null or missing? we skip processing it
+      if (!assetMap[0].containsKey('template') ||
+          assetMap[0]['template'] == null) {
+        logger.info(this.runtimeType.toString(),
+            "No template assigned to asset (template is null or missing).");
+        return {"return": "false"};
+      }
 
       try {
         responseTemplate = await httpUtils.get(
@@ -912,7 +926,7 @@ class Inventory {
             this.runtimeType.toString(), "Failed to process template.");
       }
     } else {
-      logger.error(
+      logger.warning(
           this.runtimeType.toString(), "Failed to get remote template.");
     }
   }
