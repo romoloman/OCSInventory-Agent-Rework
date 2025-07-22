@@ -8,6 +8,7 @@ namespace OCSInventory_Service
         {
             CreateHostBuilder(args).Build().Run();
         }
+
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .UseWindowsService(options =>
@@ -15,13 +16,15 @@ namespace OCSInventory_Service
                     options.ServiceName = "OCSInventory Service";
                 })
                 .UseSerilog()
-                .ConfigureServices((hostContext, services) =>
-                {
-                    Log.Logger = new LoggerConfiguration()
-                        .ReadFrom.Configuration(hostContext.Configuration)
-                        .Enrich.FromLogContext()
-                        .CreateLogger();
-                    services.AddHostedService<Worker>();
-                });
+                .ConfigureServices(
+                    (hostContext, services) =>
+                    {
+                        Log.Logger = new LoggerConfiguration()
+                            .ReadFrom.Configuration(hostContext.Configuration)
+                            .Enrich.FromLogContext()
+                            .CreateLogger();
+                        services.AddHostedService<Worker>();
+                    }
+                );
     }
 }

@@ -8,7 +8,8 @@ namespace OCSInventory_Service
     {
         private readonly ILogger<Worker> _logger;
 
-        private String _configPath = GetFolderPath(SpecialFolder.CommonApplicationData) + "/OCSInventory-Agent/config.json";
+        private String _configPath =
+            GetFolderPath(SpecialFolder.CommonApplicationData) + "/OCSInventory-Agent/config.json";
         private JsonObject _config;
 
         public Worker(ILogger<Worker> logger)
@@ -22,14 +23,22 @@ namespace OCSInventory_Service
             try
             {
                 _logger.LogInformation("Starting service..");
-                
+
                 while (!stoppingToken.IsCancellationRequested)
                 {
                     try
                     {
                         _logger.LogInformation("Service started.");
-                        Process.Start(_config["install_directory"]?.ToString() + "/ocsinventory-agent.exe", "--service true").WaitForExit();
-                        _logger.LogWarning("The service will restart. Check agent logs for any errors.");
+                        Process
+                            .Start(
+                                _config["install_directory"]?.ToString()
+                                    + "/ocsinventory-agent.exe",
+                                "--service true"
+                            )
+                            .WaitForExit();
+                        _logger.LogWarning(
+                            "The service will restart. Check agent logs for any errors."
+                        );
                     }
                     catch (Exception ex)
                     {
