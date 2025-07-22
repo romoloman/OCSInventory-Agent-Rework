@@ -27,6 +27,7 @@ import 'package:ocs_agent/core/inventory/commands.dart';
 // Common imports
 import 'package:ocs_agent/core/common/files_utils.dart';
 import 'package:ocs_agent/core/common/json_utils.dart';
+import 'package:ocs_agent/core/config.dart';
 
 class BaseLinux {
   late Logger logger;
@@ -133,7 +134,8 @@ class BaseLinux {
           .split(" ")[0],
       "srcmac": macAddressList,
       "domain": (await commands.processTarget(
-          "BASH", "hostname -d", logType, "DOMAIN"))["value"]
+          "BASH", "hostname -d", logType, "DOMAIN"))["value"],
+      "agent": Config.agentVersion,
     });
 
     logger.info(this.runtimeType.toString(), "OS body retrieved successfully.");
