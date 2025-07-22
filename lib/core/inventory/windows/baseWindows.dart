@@ -32,6 +32,8 @@ class BaseWindows {
   late Commands commands;
   late FilesUtils filesUtils;
   late JsonUtils jsonUtils;
+  final String uuidFileName = "uuid.json";
+  final String configDirectory = "C:\\ProgramData\\Agent-OCS\\config";
   final String logType = "BaseInventory";
 
   /// Constructor
@@ -102,7 +104,7 @@ class BaseWindows {
               logType,
               "OS VERSION"))["value"]
           .toString(),
-      "uuid": await _getUUID(name, getMacAddr),
+      "uuid": await _getUUID(),
       "srcip": await getIP,
       "srcmac": (await commands.processTarget(
               "PW",
@@ -124,7 +126,7 @@ class BaseWindows {
   }
 
   /// Get UUID or generate one if not available and save it in a uuid file
-  Future<String> _getUUID(String name, String macAdress) async {
+  Future<String> _getUUID() async {
     String uuid = (await commands.processTarget(
             "PW",
             "(Get-WMIObject -Class Win32_ComputerSystemProduct).UUID",
@@ -132,38 +134,29 @@ class BaseWindows {
             "UUID"))["value"]
         .toString();
 
+    // path
+    String uuidFilePath = '$configDirectory\\$uuidFileName';
+    File uuidFile = File(uuidFilePath);
+    bool uuidFileExists = await uuidFile.exists();
+
     if (uuid == "") {
       logger.info(this.runtimeType.toString(),
-          "UUID not found, generating a new one...");
-      uuid = (await commands.processTarget(
-              "PW", "[guid]::NewGuid().ToString()", logType, "UUID"))["value"]
-          .toString();
-      String containerFileName = sprintf('%s.json', ["generated_uuid"]);
-      File containerWindowsFile = File(containerFileName);
-      if (!containerWindowsFile.existsSync()) {
-        containerWindowsFile.createSync(recursive: true);
-        containerWindowsFile.writeAsStringSync("{}");
-      }
-      Map<String, dynamic> containerWindows =
-          jsonUtils.getContentFromFile(containerWindowsFile);
+          "No system UUID from WMI, checking UUID file...");
 
-      if (containerWindows.isNotEmpty &&
-          containerWindows.containsValue(name) &&
-          containerWindows.containsValue(macAdress)) {
-        uuid = containerWindows["uuid"];
+      if (!uuidFileExists) {
         logger.info(this.runtimeType.toString(),
-            "UUID has been retrieved from the uuid file.");
+            "UUID file not found, generating new one.");
+        uuid = (await commands.processTarget(
+                "PW", "[guid]::NewGuid().ToString()", logType, "UUID"))["value"]
+            .toString();
+        filesUtils.writeFile(uuidFile, '{ "uuid": "$uuid" }');
+        logger.info(this.runtimeType.toString(), "New UUID saved to file.");
       } else {
-        dynamic baseAdded = {};
-        baseAdded["name"] = name;
-        baseAdded["uuid"] = uuid;
-        baseAdded["MAC"] = macAdress;
-
-        JsonEncoder encoder = new JsonEncoder.withIndent('  ');
-        String str = encoder.convert(baseAdded);
-        filesUtils.rewriteFile(containerWindowsFile, str);
-        logger.info(this.runtimeType.toString(),
-            "UUID has been generated and saved in the uuid file.");
+        Map<String, dynamic> uuidData = jsonUtils.getContentFromFile(uuidFile);
+        if (uuidData.containsKey("uuid")) {
+          uuid = uuidData["uuid"];
+          logger.info(this.runtimeType.toString(), "UUID file found.");
+        }
       }
     }
     return uuid;
