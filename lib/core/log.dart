@@ -37,6 +37,7 @@ class Logger {
   late bool _isFile;
   late String _url;
   late int _logLevel;
+  late int _serverLogLevel;
 
   late File file;
 
@@ -45,10 +46,19 @@ class Logger {
   /// Constructor.
   Logger(Config config) {
     this.config = config;
+    dateFormat = DateFormat('EEE MMM dd HH:mm:ss yyyy');
 
-    _isFile = config.getInventoryConfig("log_file");
-    _url = config.getInventoryConfig("url");
-    _logLevel = config.getInventoryConfig("log_level");
+    try {
+      _isFile = config.getInventoryConfig("log_file");
+      _url = config.getInventoryConfig("url");
+      _logLevel = config.getInventoryConfig("log_level");
+    } catch (e) {
+      _logLevel = 3;
+      _isFile = false;
+      error(this.runtimeType.toString(),
+          'Configuration error: missing required fields or empty configuration file.');
+      exit(1);
+    }
 
     if (_isFile) {
       try {
@@ -60,40 +70,46 @@ class Logger {
         error(this.runtimeType.toString(), "Error creating log file: $e");
       }
     }
+  }
 
-    dateFormat = DateFormat('EEE MMM dd HH:mm:ss yyyy');
+  /// Print critical error message
+  void critical(String className, String message) {
+    if (_logLevel >= 0) {
+      _logMessage("\x1B[41;97m", "CRITICAL", className, message);
+    }
   }
 
   /// Print error message only.
-  void error(String className, String error) {
-    if (_logLevel >= 0) {
-      _logMessage("\x1B[31m", "ERROR", className, error);
+  void error(String className, String message) {
+    if (_logLevel >= 1) {
+      _logMessage("\x1B[31m", "ERROR", className, message);
     }
   }
 
   /// Print error and warning messages.
-  void warning(String className, String warning) {
-    if (_logLevel >= 1) {
-      _logMessage("\x1B[33m", "WARNING", className, warning);
+  void warning(String className, String message) {
+    if (_logLevel >= 2) {
+      _logMessage("\x1B[33m", "WARNING", className, message);
     }
   }
 
   /// Print info, warning, and error messages.
-  void info(String className, String info) {
-    if (_logLevel >= 2) {
-      _logMessage("\x1B[32m", "INFO", className, info);
+  void info(String className, String message) {
+    if (_logLevel >= 3) {
+      _logMessage("\x1B[32m", "INFO", className, message);
     }
   }
 
-  /// Print verbose message.
-  void verbose(String className, String verbose) {
-    if (_logLevel >= 3) {
-      _logMessage("\x1B[34m", "VERBOSE", className, verbose);
+  /// Print debug message.
+  void debug(String className, String message) {
+    if (_logLevel >= 4) {
+      _logMessage("\x1B[34m", "DEBUG", className, message);
     }
   }
 
   /// Log message based on the specified level.
-  void _logMessage(String color, String level, String className, String message) {
+  void _logMessage(
+      String color, String level, String className, String message) {
     var now = DateTime.now();
     String date = dateFormat.format(now);
     String txt;
@@ -116,44 +132,96 @@ class Logger {
 
   /// Send formatted logs to the server
   void serverLogger(int assetID, int errorCode, String comment) async {
-    if (assetID != -1) {
-      HTTPUtils query = new HTTPUtils(this, config);
-      Map<int, String> errorCodes = {
-        0: "UNKNOWN",
-        1: "INVENTORY_BASE_INSERT",
-        2: "INVENTORY_BASE_UPDATE",
-        3: "INVENTORY_EXT_INSERT",
-        4: "INVENTORY_EXT_UPDATE",
-        5: "INVENTORY_BASE_ERR",
-        6: "INVENTORY_EXT_ERR",
-        7: "DEPLOYMENT_ACK",
-        8: "DEPLOYMENT_ERR",
-        9: "CONFIG_UPDATE",
-        10: "CONFIG_ERR",
-        11: "TEMPLATE_UPDATE",
-        12: "TEMPLATE_ERR"
-      };
+    if (assetID == -1) {
+      error(runtimeType.toString(),
+          "Asset ID is not defined yet. Logging to server is not possible yet.");
+      return;
+    }
 
-      String token = Config.token;
-      Map<String, dynamic> content = new Map();
-      content["asset"] = assetID;
-      content["scope"] = errorCodes[errorCode];
-      content["comment"] = comment;
+    String serverLogLevel = config.getCoreConfig("agent", "inventory_loglevel");
+    _serverLogLevel = _stringToLevel(serverLogLevel);
 
-      try {
-        await query.post(
-            Uri.parse("$_url/asset/logs/"),
-            {
-              HttpHeaders.contentTypeHeader: 'application/json',
-              HttpHeaders.authorizationHeader: "Token $token"
-            },
-            jsonEncode(content));
-      } catch (exception) {
-        error(this.runtimeType.toString(),
-            sprintf("HTTP query: %s", [exception.toString().trim()]));
-      }
-    } else {
-      error(this.runtimeType.toString(), "Failed to send remote logs!");
+    // error code to log level and scope
+    Map<int, dynamic> errorMapping = {
+      0: {"level": 2, "scope": "UNKNOWN"}, // WARNING
+      1: {"level": 4, "scope": "INVENTORY_BASE_INSERT"}, // DEBUG
+      2: {"level": 4, "scope": "INVENTORY_BASE_UPDATE"}, // DEBUG
+      3: {"level": 4, "scope": "INVENTORY_EXT_INSERT"}, // DEBUG
+      4: {"level": 4, "scope": "INVENTORY_EXT_UPDATE"}, // DEBUG
+      5: {"level": 1, "scope": "INVENTORY_BASE_ERR"}, // ERROR
+      6: {"level": 1, "scope": "INVENTORY_EXT_ERR"}, // ERROR
+      7: {"level": 4, "scope": "DEPLOYMENT_ACK"}, // DEBUG
+      8: {"level": 1, "scope": "DEPLOYMENT_ERR"}, // ERROR
+      9: {"level": 4, "scope": "CONFIG_UPDATE"}, // DEBUG
+      10: {"level": 1, "scope": "CONFIG_ERR"}, // ERROR
+      11: {"level": 4, "scope": "TEMPLATE_UPDATE"}, // DEBUG
+      12: {"level": 1, "scope": "TEMPLATE_ERR"} // ERROR
+    };
+
+    var mapping = errorMapping[errorCode] ?? {"level": 2, "scope": "UNKNOWN"};
+    int logLevel = mapping["level"];
+
+    if (logLevel > _serverLogLevel) {
+      return;
+    }
+
+    HTTPUtils query = HTTPUtils(this, config);
+    String token = Config.token;
+    Map<String, dynamic> content = {
+      "asset": assetID,
+      "scope": mapping["scope"],
+      "comment": comment,
+      "level": _levelToString(logLevel)
+    };
+
+    try {
+      await query.post(
+          Uri.parse("$_url/asset/logs/"),
+          {
+            HttpHeaders.contentTypeHeader: 'application/json',
+            HttpHeaders.authorizationHeader: "Token $token"
+          },
+          jsonEncode(content));
+    } catch (exception) {
+      error(runtimeType.toString(),
+          sprintf("HTTP query: %s", [exception.toString().trim()]));
+    }
+  }
+
+  // helper to convert numeric level to string
+  String _levelToString(int level) {
+    switch (level) {
+      case 0:
+        return "CRITICAL";
+      case 1:
+        return "ERROR";
+      case 2:
+        return "WARNING";
+      case 3:
+        return "INFO";
+      case 4:
+        return "DEBUG";
+      default:
+        return "WARNING";
+    }
+  }
+
+  // helper to convert string level to numeric value
+  int _stringToLevel(String level) {
+    switch (level.toUpperCase()) {
+      case "CRITICAL":
+        return 0;
+      case "ERROR":
+        return 1;
+      case "WARNING":
+        return 2;
+      case "INFO":
+        return 3;
+      case "DEBUG":
+        return 4;
+      default:
+        // default to WARNING
+        return 2;
     }
   }
 }

@@ -73,7 +73,7 @@ class Format {
           overrideResultList, commandTarget, subInventory);
     }
 
-    logger.verbose(this.runtimeType.toString(), subInventory.toString());
+    logger.debug(this.runtimeType.toString(), subInventory.toString());
 
     return subInventory;
   }
@@ -195,12 +195,12 @@ class Format {
         case "TBLE":
           retrievalValue = field['retrieval_value'] ?? "";
           condition = true;
-          function = processedResult[retrievalValue] ?? "null";
+          function = processedResult[retrievalValue] ?? "";
           break;
 
         case "JSON":
           condition = true;
-          function = processedResult[field['retrieval_value']] ?? "null";
+          function = processedResult[field['retrieval_value']] ?? "";
           break;
 
         case "REGX":
@@ -222,7 +222,7 @@ class Format {
               function = match.group(0);
             }
           } else {
-            function = "null";
+            function = "";
           }
           break;
 
@@ -238,7 +238,7 @@ class Format {
           function =
               (retrievalValue > 0 && retrievalValue <= processedResult.length)
                   ? processedResult[retrievalValue - 1]
-                  : "null";
+                  : "";
           break;
 
         case "GREP":

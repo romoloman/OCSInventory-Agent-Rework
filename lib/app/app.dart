@@ -98,6 +98,10 @@ Future<void> main(List<String> args) async {
       help: "Check if the agent is running as a service",
       valueHelp: "Used only by the daemon",
       defaultsTo: "false");
+  parser.addOption("overwrite_config",
+      help: "overwrite_config",
+      valueHelp: "Overwrite the configuration file if true, default to false",
+      defaultsTo: "false");
   parser.addFlag("help",
       abbr: "h", help: "Display this help message", negatable: false);
 
@@ -191,6 +195,7 @@ Future<void> main(List<String> args) async {
   config = await Config(
       configDirectory, jsonEncode(inventoryConfigurations).toString());
 
+
   if (allArgs.wasParsed("certificate")) {
     File certificate = File(allArgs.option("certificate").toString());
     if (certificate.existsSync()) {
@@ -205,14 +210,19 @@ Future<void> main(List<String> args) async {
     }
   }
 
-  // Iterate allArgs and update inventory config with the provided values
-  if (allArgs.options.isNotEmpty) {
-    inventoryConfigurations.forEach((key, value) {
-      if (allArgs.wasParsed(key)) {
+  inventoryConfigurations.forEach((key, value) {
+    if (allArgs.wasParsed(key)) {
+      // Update the content of the map into the config class
+      config.setConfigFileContentByKey(key, value);
+      // if --overwrite_config update the config file
+      if(allArgs.wasParsed("overwrite_config") == true &&
+        allArgs.option("overwrite_config").toString() == "true"){
+
         config.updateInventoryConfig(key, value);
+        Config.readOnly = false;
       }
-    });
-  }
+    }
+  });
 
   // Initiate logger
   Logger logger = new Logger(config);
@@ -233,10 +243,9 @@ Future<void> main(List<String> args) async {
       new Format(logger, commands);
 
   // Initiate modules
-  Inventory inventory = new Inventory(logger, config, filesUtils, httpUtils,
-      jsonUtils, commands, format);
-  Deployment deployment =
-      new Deployment(logger, config, httpUtils, commands);
+  Inventory inventory = new Inventory(
+      logger, config, filesUtils, httpUtils, jsonUtils, commands, format);
+  Deployment deployment = new Deployment(logger, config, httpUtils, commands);
 
   // Get the agent execution mode
   Map<int, String> enumMode = {
@@ -249,6 +258,14 @@ Future<void> main(List<String> args) async {
   logger.info("APP",
       sprintf("Starting agent in %s mode...", [enumMode[inventory.getMode()]]));
 
+  //Get the config execution mode
+  if (Config.readOnly == true) {
+    logger.info("Config",
+        "Command-line arguments will override config values for this run only (no persistent change).");
+  } else {
+    logger.info("Config",
+        "Command-line arguments will overwrite values in the config file (persistent change).");
+  }
   // Get the OS body
   var body, os;
   if (Platform.isLinux) {
@@ -299,6 +316,5 @@ Future<void> main(List<String> args) async {
       stdout.writeln("4");
     }
   }
-
   logger.info("APP", "Agent process completed successfully.\n");
 }
