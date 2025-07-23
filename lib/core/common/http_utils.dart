@@ -50,21 +50,41 @@ class HTTPUtils {
 
   /// Create https client
   IOClient createHttpsClient() {
-    bool bypassCertificate = config.getInventoryConfig("bypass_certificate").toString() == "true";
+    String certificate = "";
+    if (config.getInventoryConfig("certificate") != "") {
+      if (File(config.getInventoryConfig("certificate")).existsSync()) {
+        logger.debug(
+            this.runtimeType.toString(),
+            sprintf("Using certificate file: %s",
+                [config.getInventoryConfig("certificate")]));
+        certificate =
+            File(config.getInventoryConfig("certificate")).readAsStringSync();
+      } else {
+        logger.debug(
+            this.runtimeType.toString(),
+            sprintf("Certificate file not found: %s",
+                [config.getInventoryConfig("certificate")]));
+        return IOClient(HttpClient());
+      }
+    }
+
+    bool bypassCertificate =
+        config.getInventoryConfig("bypass_certificate").toString() == "true";
     try {
       if (bypassCertificate) {
         SecurityContext context = SecurityContext(withTrustedRoots: false);
-        String certificate = File(config.getInventoryConfig("certificate")).readAsStringSync();
         context.setTrustedCertificatesBytes(utf8.encode(certificate));
-        
+
         HttpClient client = HttpClient(context: context)
-          ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+          ..badCertificateCallback =
+              (X509Certificate cert, String host, int port) => true;
         return IOClient(client);
       } else {
         return IOClient(HttpClient());
       }
     } catch (exception) {
-      logger.error(this.runtimeType.toString(), sprintf("HTTP query: %s", [exception.toString().trim()]));
+      logger.error(this.runtimeType.toString(),
+          sprintf("HTTP query: %s", [exception.toString().trim()]));
       return IOClient(HttpClient());
     }
   }
