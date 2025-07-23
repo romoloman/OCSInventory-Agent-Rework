@@ -363,7 +363,7 @@ class Format {
       while (rowIndex != linesRemoved) {
         if (rowIndex >= 0 && rowIndex < resultRows.length) {
           resultRows.removeAt(rowIndex);
-          logger.verbose(
+          logger.debug(
               this.runtimeType.toString(), 'Line "$rowIndex" removed.');
         }
 
@@ -494,7 +494,7 @@ class Format {
           for (var subField in subInventory) {
             if (subField.containsKey(key)) {
               subField[key] = overrideValue;
-              logger.verbose(this.runtimeType.toString(),
+              logger.debug(this.runtimeType.toString(),
                   'Field "$key" update with "$overrideValue"');
             }
           }

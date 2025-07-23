@@ -619,9 +619,8 @@ class Inventory {
     var fieldOver;
 
     try {
-      mainRes = await this
-          .commands
-          .getTargetResult(section['retrieval_method'], section["target"]);
+      mainRes = await this.commands.getTargetResult(
+          section['retrieval_method'], section["target"], section["name"], "");
     } catch (e) {
       logger.warning(this.runtimeType.toString(),
           "Unable to get results for ${section["target"]}: $e");
@@ -641,8 +640,8 @@ class Inventory {
       sub = {};
 
       try {
-        res = await commands.getTargetResult(
-            field['retrieval_method'], field["new_target"]);
+        res = await commands.getTargetResult(field['retrieval_method'],
+            field["new_target"], section["name"], field["name"]);
       } catch (e) {
         logger.warning(
             this.runtimeType.toString(), "Error processing field override: $e");
