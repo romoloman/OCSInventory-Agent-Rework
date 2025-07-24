@@ -100,7 +100,7 @@ class Inventory {
     // Check OCS API status
     logger.info(this.runtimeType.toString(), "Checking API availability...");
     dynamic responseGet = await httpUtils.get(
-        Uri.parse(baseUrl + "/api_check/"),
+        Uri.parse(baseUrl + "/api-check/"),
         {HttpHeaders.contentTypeHeader: 'application/json'});
 
     if (responseGet?["status_code"] != 200) {
