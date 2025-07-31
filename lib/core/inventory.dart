@@ -585,7 +585,7 @@ class Inventory {
 
     if (sections.isNotEmpty) {
       for (var section in sections) {
-        result = await getResult(os, template, section);
+        result = await getSectionResult(os, template, section);
 
         switch (section['retrieval_output']) {
           case "JSON":
@@ -621,18 +621,19 @@ class Inventory {
   }
 
   /// Get the result
-  Future<Map<String, dynamic>> getResult(String os,
+  Future<Map<String, dynamic>> getSectionResult(String os,
       Map<String, dynamic> template, Map<String, dynamic> section) async {
     Map<String, dynamic> options = section['options'] ?? {};
     String mainRes, res;
-    Map<String, dynamic> result = {};
     Map<String, dynamic> main = {};
-    Map<String, dynamic> sub = {};
     List<dynamic> fields = section['fields'] ?? [];
+    Map<String, dynamic> sub = {};
+    List<Map<String, dynamic>> listOverride = [];
+    Map<String, dynamic> result = {};
     var fieldOver;
 
     try {
-      mainRes = await this.commands.getResult(
+      mainRes = await this.commands.getTargetResult(
           section['retrieval_method'], section["target"], section["name"], "");
     } catch (e) {
       logger.warning(this.runtimeType.toString(),
@@ -650,8 +651,10 @@ class Inventory {
     fieldOver = fields.where((element) => element["override_target"]);
 
     for (var field in fieldOver) {
+      sub = {};
+
       try {
-        res = await commands.getResult(field['retrieval_method'],
+        res = await commands.getTargetResult(field['retrieval_method'],
             field["new_target"], section["name"], field["name"]);
       } catch (e) {
         logger.warning(
@@ -664,7 +667,8 @@ class Inventory {
       sub.putIfAbsent('type', () => field['retrieval_output']);
       sub.putIfAbsent('options', () => field['options']);
       sub.putIfAbsent('result', () => res);
-      result.putIfAbsent(field['name'], () => sub);
+      listOverride.add(sub);
+      result['override'] = listOverride;
     }
 
     return result;
