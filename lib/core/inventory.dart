@@ -99,29 +99,30 @@ class Inventory {
 
     // Check OCS API status
     logger.info(this.runtimeType.toString(), "Checking API availability...");
-    dynamic responseGet = await httpUtils.get(Uri.parse(baseUrl),
+    dynamic responseGet = await httpUtils.get(
+        Uri.parse(baseUrl + "/api-check/"),
         {HttpHeaders.contentTypeHeader: 'application/json'});
 
-    try {
-      List<String> inventoryData = getInventoryData(requiredFields);
-      if (inventoryData.length == 2) {
-        username = inventoryData[0];
-        password = inventoryData[1];
-      } else {
-        throw ("Invalid number of config fields.");
+    if (responseGet?["status_code"] != 200) {
+      logger.error(this.runtimeType.toString(), "API is not available!");
+      return false;
+    } else {
+      logger.debug(this.runtimeType.toString(), responseGet["message"]);
+      try {
+        List<String> inventoryData = getInventoryData(requiredFields);
+        if (inventoryData.length == 2) {
+          username = inventoryData[0];
+          password = inventoryData[1];
+        } else {
+          throw ("Invalid number of config fields.");
+        }
+
+        await generateToken(username, password);
+      } catch (e) {
+        logger.error(this.runtimeType.toString(), "Configuration error: $e");
       }
 
-      await generateToken(username, password);
-    } catch (e) {
-      logger.error(this.runtimeType.toString(), "Configuration error: $e");
-    }
-
-    if (responseGet != null) {
-      logger.info(this.runtimeType.toString(), "API is online!");
       return true;
-    } else {
-      logger.error(this.runtimeType.toString(), "API connection failed!");
-      return false;
     }
   }
 
