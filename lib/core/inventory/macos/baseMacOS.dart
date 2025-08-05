@@ -72,7 +72,7 @@ class BaseMacOS {
     RegExp regexpDomain;
     regexpDomain = RegExp(r'(?<=search\sdomain\[0\]\s:\s)\w*.[a-z]{0,4}');
     String? getDomain;
-    getDomain = regexpDomain.stringMatch(listDomains)!.trim();
+    getDomain = regexpDomain.stringMatch(listDomains)?.trim() ?? "";
 
     dynamic body = ({
       "name": (await commands.processTarget(
