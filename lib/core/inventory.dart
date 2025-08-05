@@ -107,7 +107,7 @@ class Inventory {
       logger.error(this.runtimeType.toString(), "API is not available!");
       return false;
     } else {
-      logger.info(this.runtimeType.toString(), responseGet["message"]);
+      logger.debug(this.runtimeType.toString(), responseGet["message"]);
       try {
         List<String> inventoryData = getInventoryData(requiredFields);
         if (inventoryData.length == 2) {
