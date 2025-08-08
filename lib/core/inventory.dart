@@ -751,7 +751,7 @@ class Inventory {
             this.runtimeType.toString(), "Exception during API call: $e");
       }
 
-      if (responsePost?["status_code"] == 200) {
+      if (responsePost?["status_code"] == 201) {
         logger.info(
             this.runtimeType.toString(), "Inventory created successfully.");
         logger.serverLogger(assetID, 1, "Inventory created successfully.");
