@@ -291,7 +291,7 @@ After installing the agent, there is a config forlder and the file `config.json`
 In this file, there are properties to configure the agent:
 
 | Property           | Description                                                                                                                                                          |
-| :----------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|:-------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | url                | Backend server api url.                                                                                                                                              |
 | username           | By default in remote inventory mode, set the username to connect to the backend server api.                                                                          |
 | password           | By default in remote inventory mode, set the password to connect to the backend server api.                                                                          |
@@ -348,7 +348,7 @@ If you encounter any issues during the installation or usage of the OCS Inventor
 
 4. Verify the API URL: Double-check the API URL to ensure it is accurate and points to the correct backend server.
 
-5. Restart the agent: Sometimes, restarting the agent can resolve certain issues. You can do this by running the appropriate command for your operating system: 
+5. Restart the agent: Sometimes, restarting the agent can resolve certain issues. You can do this by running the appropriate command for your operating system:
 - On linux: `sudo systemctl restart ocsinventory-service`
 - On Windows: Go to windows services and click on restart the service
 - On MacOS: `sudo launchctl unload /Library/LaunchDaemons/org.ocsinventory.agent.plist` followed by `sudo launchctl load /Library/LaunchDaemons/org.ocsinventory.agent.plist`
