@@ -10,22 +10,22 @@
   - [Step 3: Getting dependencies](#step-3-getting-dependencies)
   - [Step 4: Installing the Agent](#step-4-installing-the-agent)
     - [Installing the agent on Linux](#installing-the-agent-on-linux)
-      - [1. Compilation](#1-compilation)
-      - [2. Installing the agent non-interactively](#2-installing-the-agent-non-interactively)
-      - [3. Installing the agent interactively](#3-installing-the-agent-interactively)
-      - [4. Additionnal information](#4-additionnal-information)
+      - [1. Linux compilation](#1-linux-compilation)
+      - [2. Installing the Linux agent non-interactively](#2-installing-the-linux-agent-non-interactively)
+      - [3. Installing the Linux agent interactively](#3-installing-the-linux-agent-interactively)
+      - [4. Additionnal information for Linux installation](#4-additionnal-information-for-linux-installation)
     - [Installing the agent on Windows](#installing-the-agent-on-windows)
-      - [1. Compilation](#1-compilation-1)
-      - [2. Create your own package](#2-create-your-own-package)
-      - [3. Installing the agent non-interactively](#3-installing-the-agent-non-interactively)
-      - [4. Installing the agent interactively](#4-installing-the-agent-interactively)
-      - [5. Additionnal information](#5-additionnal-information)
+      - [1. Windows compilation](#1-windows-compilation)
+      - [2. Create your own Windows package](#2-create-your-own-windows-package)
+      - [3. Installing the Windows agent non-interactively](#3-installing-the-windows-agent-non-interactively)
+      - [4. Installing the Windows agent interactively](#4-installing-the-windows-agent-interactively)
+      - [5. Additionnal information for Windows installation](#5-additionnal-information-for-windows-installation)
     - [Installing the agent on MacOS](#installing-the-agent-on-macos)
-      - [1. Compilation](#1-compilation-2)
-      - [2. Create your own package](#2-create-your-own-package-1)
-      - [3. Installing the agent non-interactively](#3-installing-the-agent-non-interactively-1)
-      - [4. Installing the agent interactively](#4-installing-the-agent-interactively-1)
-      - [5. Additionnal information](#5-additionnal-information-1)
+      - [1. MacOS compilation](#1-macos-compilation)
+      - [2. Create your own MacOS package](#2-create-your-own-macos-package)
+      - [3. Installing the MacOS agent non-interactively](#3-installing-the-macos-agent-non-interactively)
+      - [4. Installing the MacOS agent interactively](#4-installing-the-macos-agent-interactively)
+      - [5. Additionnal information for MacOS installation](#5-additionnal-information-for-macos-installation)
   - [Step 5: Agent configuration](#step-5-agent-configuration)
     - [Linux and macos](#linux-and-macos)
     - [Windows](#windows)
@@ -71,7 +71,7 @@ flutter pub get
 
 ### Installing the agent on Linux
 
-#### 1. Compilation
+#### 1. Linux compilation
 
 Go to the linux setup directory: `/setup/linux/` from the repository cloned above.
 You need to compile the entry point `/lib/app/app.dart` using the following command
@@ -89,7 +89,7 @@ Ensure that you have something like this in the linux setup directory:
 └── uninstall.sh
 ```
 
-#### 2. Installing the agent non-interactively
+#### 2. Installing the Linux agent non-interactively
 
 To install the agent in non-interactive mode, you have to run the linux `install.sh` script with a set of launch arguments to allow to set all configuration options as you can do in interactive mode.
 This is a list of all available `install.sh` script arguments:
@@ -119,14 +119,14 @@ sudo sh install.sh -U Server_ip_and_port -u username -p password -m 1 -l 4 -s -n
 
 > *NOTE: This command will install a new agent with inventory mode at "inventory with template", the default log level "INFO", install the service to run the agent periodicly and start automaticly an inventory after the installation.*
 
-#### 3. Installing the agent interactively
+#### 3. Installing the Linux agent interactively
 
 To install the agent in interactive mode, you have to run the `install.sh` script with root privileges.
 If the agent configuration is already exist, it will ask you to remove it before installing the agent.
 
 For the server URL field, the expected URL is `http(s)://<Server ip:port>`
 
-#### 4. Additionnal information
+#### 4. Additionnal information for Linux installation
 
 When the installation finished successfully, you can use the command ocsinventory-cli to run the agent as CLI. You can use this command with arguments above to run a single custom instance of the agent.
 
@@ -140,7 +140,7 @@ sudo ocsinventory-agent-ng -l 2
 
 ### Installing the agent on Windows
 
-#### 1. Compilation
+#### 1. Windows compilation
 
 Go to the windows setup directory: `/setup/windows/` from the repository cloned above.
 You need to compile the entry point `/lib/app/app.dart` using the following command
@@ -157,7 +157,7 @@ Ensure that you have something like this in the windows setup directory:
 └── Setup OCS Inventory Agent.iss
 ```
 
-#### 2. Create your own package
+#### 2. Create your own Windows package
 
 You can create your package (if needed) with Inno setup by using `Setup OCS Inventory Agent.iss` script
 
@@ -169,7 +169,7 @@ You can create your package (if needed) with Inno setup by using `Setup OCS Inve
 
 > *NOTE: Even if you're not planing to use the service, you'll have to build the service with a C# compiler. Otherwise you can manually remove the service part in the inno setup install script.*
 
-#### 3. Installing the agent non-interactively
+#### 3. Installing the Windows agent non-interactively
 
 To install the agent in non-interactive mode, you have to run the binary setup generated above with a set of launch arguments to allow to set all configuration options as you can do in interactive mode.
 This is a list of all available arguments:
@@ -192,17 +192,17 @@ Here an example command to use the installation script in non-interactive mode (
 mysetup-agent.exe /VERYSILENT /URL=Server_ip_and_port /USERNAME=username /PASSWORD=password /MODE=1 /LOGLEVEL=4 /CERTIFICATE="\path of the certificate\cert.pem" /SERVICE=True /NOW=True 
 ```
 
-#### 4. Installing the agent interactively
+#### 4. Installing the Windows agent interactively
 
 To install the agent in interactive mode, you have to run the binary setup generated above and set all configuration fields.
 
-#### 5. Additionnal information
+#### 5. Additionnal information for Windows installation
 
 If you set service installation to true, it will be in service and named `OCSInventory-Service`. The location of this service is store at the same location as the agent installation directory.
 
 ### Installing the agent on MacOS
 
-#### 1. Compilation
+#### 1. MacOS compilation
 
 Go to the linux setup directory: `/setup/macos/`
 You need to compile the entry point `app.dart` and the daemon `daemon.dart` using the following command
@@ -212,7 +212,7 @@ dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dar
 dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/daemon.dart -o DAEMON-MACOS
 ```
 
-#### 2. Create your own package
+#### 2. Create your own MacOS package
 
 You can create your package (if needed) with Xcode and Package applications.
 
@@ -248,7 +248,7 @@ Ensure that you have something like this:
 └── THANKS
 ```
 
-#### 3. Installing the agent non-interactively
+#### 3. Installing the MacOS agent non-interactively
 
 To install the agent in non-interactive mode, you have to run the MacOS `install.sh` script with a set of launch arguments to allow to set all configuration options as you can do in interactive mode.
 This is a list of all available `install.sh` script arguments:
@@ -267,11 +267,11 @@ For example, if you want to install OCS Inventory Agent in non-interactive mode 
 sudo sh install.sh -l Server_ip_and_port -u username -p password -v 3 -s -n -c -c /path of the certificate/cert.pem
 ```
 
-#### 4. Installing the agent interactively
+#### 4. Installing the MacOS agent interactively
 
 To install the agent in interactive mode, you have to run the `OCS Inventory Agent.mpkg` package and set all configuration fields.
 
-#### 5. Additionnal information
+#### 5. Additionnal information for MacOS installation
 
 - The is installed in `/Applications/OCS-NG`
 
@@ -294,7 +294,7 @@ After installing the agent, there is a config forlder and the file `config.json`
 In this file, there are properties to configure the agent:
 
 | Property           | Description                                                                                                                                                          |
-|:-------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| :----------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | url                | Backend server api url.                                                                                                                                              |
 | username           | By default in remote inventory mode, set the username to connect to the backend server api.                                                                          |
 | password           | By default in remote inventory mode, set the password to connect to the backend server api.                                                                          |
