@@ -102,10 +102,10 @@ This is a list of all available `install.sh` script arguments:
 -m, --mode MODE                            Inventory mode (default: 1 = Remote with template)
 -d, --data-path PATH                         Path to the data directory (default: /var/lib/ocsinventory-data)
 -l, --log-level LEVEL                        Log level (default: 2 = Info)
-  --log-file                                          Enable log file (default: false)
-  --log-file-path PATH                       Path to the log file (default: /var/log/ocsinventory-agent/ocsinventory-agent.log)
+    --log-file                                        Enable log file (default: false)
+    --log-file-path PATH                     Path to the log file (default: /var/log/ocsinventory-agent/ocsinventory-agent.log)
 -c, --certificate CERTIFICATE         Path to the certificate file (default: null)
-  --bypass-certificate                          Bypass certificate validation (default: false)
+    --bypass-certificate                        Bypass certificate validation (default: false)
 -s, --service                                        Register the agent as a systemd service
 -n, --now                                            Run the agent inventory immediately after installation
 -h, --help                                            Display this help message
