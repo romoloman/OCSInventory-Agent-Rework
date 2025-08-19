@@ -294,7 +294,7 @@ After installing the agent, there is a config forlder and the file `config.json`
 In this file, there are properties to configure the agent:
 
 | Property           | Description                                                                                                                                                          |
-| :----------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|:-------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | url                | Backend server api url.                                                                                                                                              |
 | username           | By default in remote inventory mode, set the username to connect to the backend server api.                                                                          |
 | password           | By default in remote inventory mode, set the password to connect to the backend server api.                                                                          |
