@@ -49,13 +49,13 @@ To add flutter to path, click on this [flutter documentation link](https://docs.
 
 ## Step 2: Clone of the project
 
-```
+```text
 git clone https://github.com/OCSInventory-NG/OCSInventory-Agent-Rework.git
 ```
 
 or with SSH
 
-```
+```text
 git clone git@github.com:OCSInventory-NG/OCSInventory-Agent-Rework.git
 ```
 
@@ -63,7 +63,7 @@ git clone git@github.com:OCSInventory-NG/OCSInventory-Agent-Rework.git
 
 Go to the agent directory and run this command :
 
-```
+```text
 flutter pub get
 ```
 
@@ -76,13 +76,13 @@ flutter pub get
 Go to the linux setup directory: `/setup/linux/` from the repository cloned above.
 You need to compile the entry point `/lib/app/app.dart` using the following command
 
-```
+```text
 dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o ocsinventory-agent
 ```
 
 Ensure that you have something like this in the linux setup directory:
 
-```
+```text
 ├── ocsinventory-agent
 ├── ocsinventory-agent.service
 ├── install.sh
@@ -94,7 +94,7 @@ Ensure that you have something like this in the linux setup directory:
 To install the agent in non-interactive mode, you have to run the linux `install.sh` script with a set of launch arguments to allow to set all configuration options as you can do in interactive mode.
 This is a list of all available `install.sh` script arguments:
 
-```
+```text
 -S, --silent                          Enable silent mode (requires --url --username, --password)
 -U, --url URL                         URL of the OCSInventory server (required for silent mode)
 -u, --username USERNAME               Username (required for silent mode)
@@ -112,9 +112,11 @@ This is a list of all available `install.sh` script arguments:
 ```
 
 Here an example command to use the installation script in non-interactive mode (silent disabled):
-```
+
+```text
 sudo sh install.sh -U Server_ip_and_port -u username -p password -m 1 -l 4 -s -n -c -c /path of the certificate/cert.pem
 ```
+
 > *NOTE: This command will install a new agent with inventory mode at "inventory with template", the default log level "INFO", install the service to run the agent periodicly and start automaticly an inventory after the installation.*
 
 #### 3. Installing the agent interactively
@@ -130,7 +132,7 @@ When the installation finished successfully, you can use the command ocsinventor
 
 For example, if you want to run the agent and set log level to "ERROR" for a single instance, you have to run this command:
 
-```
+```text
 sudo ocsinventory-agent-ng -l 2
 ```
 
@@ -143,13 +145,13 @@ sudo ocsinventory-agent-ng -l 2
 Go to the windows setup directory: `/setup/windows/` from the repository cloned above.
 You need to compile the entry point `/lib/app/app.dart` using the following command
 
-```
+```text
 dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o ocsinventory-agent.exe
 ```
 
 Ensure that you have something like this in the windows setup directory:
 
-```
+```text
 ├── OCSInventory-Service/
 ├── ocsinventory-agent.exe
 └── Setup OCS Inventory Agent.iss
@@ -171,7 +173,8 @@ You can create your package (if needed) with Inno setup by using `Setup OCS Inve
 
 To install the agent in non-interactive mode, you have to run the binary setup generated above with a set of launch arguments to allow to set all configuration options as you can do in interactive mode.
 This is a list of all available arguments:
-```
+
+```text
 /VERYSILENT                 Enable silent mode (requires /URL /USERNAME, /PASSWORD)
 /URL=url                    URL of the OCSInventory server
 /USERNAME=username          Username (required for silent mode)
@@ -185,7 +188,7 @@ This is a list of all available arguments:
 
 Here an example command to use the installation script in non-interactive mode (silent enabled):
 
-```
+```text
 mysetup-agent.exe /VERYSILENT /URL=Server_ip_and_port /USERNAME=username /PASSWORD=password /MODE=1 /LOGLEVEL=4 /CERTIFICATE="\path of the certificate\cert.pem" /SERVICE=True /NOW=True 
 ```
 
@@ -204,7 +207,7 @@ If you set service installation to true, it will be in service and named `OCSInv
 Go to the linux setup directory: `/setup/macos/`
 You need to compile the entry point `app.dart` and the daemon `daemon.dart` using the following command
 
-```
+```text
 dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o AGENT-MACOS
 dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/daemon.dart -o DAEMON-MACOS
 ```
@@ -219,7 +222,7 @@ You can create your package (if needed) with Xcode and Package applications.
 
 Ensure that you have something like this:
 
-```
+```text
 ├── AUTHORS
 ├── Changes
 ├── AGENT-MACOS
@@ -260,7 +263,7 @@ This is a list of all available `install.sh` script arguments:
 
 For example, if you want to install OCS Inventory Agent in non-interactive mode and set server adress, set password, set username, set log level, register the service and run the agent now, you have to run this command:
 
-```
+```text
 sudo sh install.sh -l Server_ip_and_port -u username -p password -v 3 -s -n -c -c /path of the certificate/cert.pem
 ```
 
@@ -303,7 +306,7 @@ In this file, there are properties to configure the agent:
 | certificate        | Specify the path to the certificate file (.pem)                                                                                                                      |
 | bypass_certificate | Bypass certificate verification (false by default)                                                                                                                   |
 
-```
+```text
 {
     "url": "Server ip and port",
     "username": "username",
