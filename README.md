@@ -95,20 +95,20 @@ To install the agent in non-interactive mode, you have to run the linux `install
 This is a list of all available `install.sh` script arguments:
 
 ```
--S, --silent                                         Enable silent mode (requires --url --username, --password)
--U, --url URL                                    URL of the OCSInventory server (required for silent mode)
--u, --username USERNAME            Username (required for silent mode)
--p, --password PASSWORD             Password (required for silent mode)
--m, --mode MODE                            Inventory mode (default: 1 = Remote with template)
--d, --data-path PATH                         Path to the data directory (default: /var/lib/ocsinventory-data)
--l, --log-level LEVEL                        Log level (default: 2 = Info)
-    --log-file                                        Enable log file (default: false)
-    --log-file-path PATH                     Path to the log file (default: /var/log/ocsinventory-agent/ocsinventory-agent.log)
+-S, --silent                          Enable silent mode (requires --url --username, --password)
+-U, --url URL                         URL of the OCSInventory server (required for silent mode)
+-u, --username USERNAME               Username (required for silent mode)
+-p, --password PASSWORD               Password (required for silent mode)
+-m, --mode MODE                       Inventory mode (default: 1 = Remote with template)
+-d, --data-path PATH                  Path to the data directory (default: /var/lib/ocsinventory-data)
+-l, --log-level LEVEL                 Log level (default: 2 = Info)
+    --log-file                        Enable log file (default: false)
+    --log-file-path PATH              Path to the log file (default: /var/log/ocsinventory-agent/ocsinventory-agent.log)
 -c, --certificate CERTIFICATE         Path to the certificate file (default: null)
-    --bypass-certificate                        Bypass certificate validation (default: false)
--s, --service                                        Register the agent as a systemd service
--n, --now                                            Run the agent inventory immediately after installation
--h, --help                                            Display this help message
+    --bypass-certificate              Bypass certificate validation (default: false)
+-s, --service                         Register the agent as a systemd service
+-n, --now                             Run the agent inventory immediately after installation
+-h, --help                            Display this help message
 ```
 
 Here an example command to use the installation script in non-interactive mode (silent disabled):
@@ -172,15 +172,15 @@ You can create your package (if needed) with Inno setup by using `Setup OCS Inve
 To install the agent in non-interactive mode, you have to run the binary setup generated above with a set of launch arguments to allow to set all configuration options as you can do in interactive mode.
 This is a list of all available arguments:
 ```
-/VERYSILENT                         Enable silent mode (requires /URL /USERNAME, /PASSWORD)
-/URL=url                                   URL of the OCSInventory server
+/VERYSILENT                 Enable silent mode (requires /URL /USERNAME, /PASSWORD)
+/URL=url                    URL of the OCSInventory server
 /USERNAME=username          Username (required for silent mode)
-/PASSWORD=password           Password (required for silent mode)
-/MODE=mode                           Inventory mode (default: 1 = Remote with template)
-/LOG_LEVEL=level                 Log level (default: 4 = Info)
-/CERTIFICATE=path                Path to the certificate file (default: null)
-/SERVICE=boolean                   Register the agent as a windows service
-/NOW=boolean                          Run the agent inventory immediately after installation
+/PASSWORD=password          Password (required for silent mode)
+/MODE=mode                  Inventory mode (default: 1 = Remote with template)
+/LOG_LEVEL=level            Log level (default: 4 = Info)
+/CERTIFICATE=path           Path to the certificate file (default: null)
+/SERVICE=boolean            Register the agent as a windows service
+/NOW=boolean                Run the agent inventory immediately after installation
 ```
 
 Here an example command to use the installation script in non-interactive mode (silent enabled):
