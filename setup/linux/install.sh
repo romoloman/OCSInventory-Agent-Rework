@@ -19,14 +19,14 @@ usage() {
 	echo "Usage: $0 [OPTIONS]"
 	echo "Options:"
 	echo "  -S, --silent                      Enable silent mode (requires --url, --username, --password)"
-	echo "  -U, --url URL                     URL of the OCSInventory server (required for silent mode)"
+	echo "  -U, --url URL                     URL of the OCSInventory API server (required for silent mode)"
 	echo "  -u, --username USERNAME           Username (required for silent mode)"
 	echo "  -p, --password PASSWORD           Password (required for silent mode)"
 	echo "  -m, --mode MODE                   Inventory mode (default: 1 = Remote with template)"
 	echo "  -d, --data-path PATH              Path to the data directory (default: /var/lib/ocsinventory-data)"
 	echo "  -l, --log-level LEVEL             Log level (default: 2 = Info)"
 	echo "      --log-file                    Enable log file (default: false)"
-	echo "      --log-file-path PATH          Path to the log file (default: /var/log/ocsinventory-agent/ocsinventory-agent.log)"
+	echo "      --log-file-path PATH          Path to the log file (default: /var/log/ocsinventory-agent.log)"
 	echo "  -c, --certificate CERTIFICATE     Path to the certificate file (default: null)"
 	echo "      --bypass-certificate          Bypass certificate validation (default: false)"
 	echo "  -s, --service                     Register the agent as a systemd service"
@@ -118,13 +118,16 @@ check_installed_agent() {
 			echo -n "The agent is already installed, do you want to remove it first? ([y]/n) "
 			read -r remove_choice
 
-			if [[ "$remove_choice" =~ ^[yY]?$ ]]; then
+			case "$remove_choice" in
+			""|"y"|"Y")
 				log "Uninstalling the existing agent..." false
 
 				execCommand "sh ${WORKING_DIRECTORY}/uninstall.sh -S -D" "Existing agent uninstalled successfully. See the logs in ${WORKING_DIRECTORY}/uninstall.log" "Failed to uninstall existing agent."
-			else
+				;;
+			*)
 				log "Proceeding with installation without removing the existing one. Files may be overwritten." false
-			fi
+				;;
+			esac
 		fi
 	fi
 }
@@ -158,12 +161,21 @@ create_config_file() {
 }
 
 create_log_file() {
+	if [ "$LOG_FILE" != "true" ]; then
+		log "Log file option is disabled; skipping log file creation." false
+		return
+	fi
+
+	if [ -z "$LOG_FILE_PATH" ]; then
+		LOG_FILE_PATH="$DEFAULT_LOG_FILE_PATH"
+	fi
+
 	log "Creating log file..." false
 
 	if [ ! -d "$(dirname "$LOG_FILE_PATH")" ]; then
-		execCommand "mkdir -p $(dirname "$LOG_FILE_PATH")" "Created log directory: $(dirname "$LOG_FILE_PATH")" "Failed to create log directory."
+		execCommand "mkdir -p $(dirname \"$LOG_FILE_PATH\")" "Created log directory: $(dirname \"$LOG_FILE_PATH\")" "Failed to create log directory."
 	else
-		log "Log directory already exists: $(dirname "$LOG_FILE_PATH")" false
+		log "Log directory already exists: $(dirname \"$LOG_FILE_PATH\")" false
 	fi
 	if [ ! -f "$LOG_FILE_PATH" ]; then
 		execCommand "touch $LOG_FILE_PATH" "Created log file: $LOG_FILE_PATH" "Failed to create log file."
@@ -186,7 +198,7 @@ run_executable() {
 	if [ "$NOW" = "true" ]; then
 		log "Running the agent now..." false
 
-		execCommand "$WORKING_DIRECTORY$AGENT_EXEC -f true -m $INVENTORY_MODE -p $PASSWORD -u $USERNAME -s $URL -l $LOG_FILE_PATH -d $DEFAULT_DATA_PATH -v $LOG_LEVEL -c $CERTIFICATE" "Agent executed successfully." "Failed to execute the agent."
+		execCommand "$WORKING_DIRECTORY$AGENT_EXEC -f $LOG_FILE -m $INVENTORY_MODE -p $PASSWORD -u $USERNAME -s $URL -l $LOG_FILE_PATH -d $DEFAULT_DATA_PATH -v $LOG_LEVEL -c $CERTIFICATE" "Agent executed successfully." "Failed to execute the agent."
 	fi
 }
 
@@ -233,9 +245,16 @@ run_interactive() {
 	if [ -z "$URL" ]; then
 		echo -n "Enter server URL: "
 		read -r URL
-		while [[ ! "$URL" =~ ^https?:// ]]; do
-			echo -n "Invalid URL format. Please enter a valid URL (starting with http:// or https://): "
-			read -r URL
+		while :; do
+			case "$URL" in
+			http://*|https://*)
+				break
+				;;
+			*)
+				echo -n "Invalid URL format. Please enter a valid URL (starting with http:// or https://): "
+				read -r URL
+				;;
+			esac
 		done
 		log "Server URL: $URL" true
 	fi
@@ -243,9 +262,16 @@ run_interactive() {
 	if [ -z "$USERNAME" ]; then
 		echo -n "Enter username: "
 		read -r USERNAME
-		while [[ ! "$USERNAME" =~ ^[a-zA-Z0-9._-]+$ ]]; do
-			echo -n "Invalid username format. Please enter a valid username (alphanumeric characters, dots, underscores, and hyphens allowed): "
-			read -r USERNAME
+		while :; do
+			case "$USERNAME" in
+			""|*[!a-zA-Z0-9._-]*)
+				echo -n "Invalid username format. Please enter a valid username (alphanumeric characters, dots, underscores, and hyphens allowed): "
+				read -r USERNAME
+				;;
+			*)
+				break
+				;;
+			esac
 		done
 	fi
 
@@ -264,10 +290,12 @@ run_interactive() {
 		if [ "$INVENTORY_MODE" = "" ]; then
 			INVENTORY_MODE=1
 		else
-			if [[ ! "$INVENTORY_MODE" =~ ^[0-9]+$ ]]; then
+			case "$INVENTORY_MODE" in
+			*[!0-9]*)
 				log "Inventory mode must be a number, using default value: 1 (Remote with template)" true
 				INVENTORY_MODE=1
-			fi
+				;;
+			esac
 		fi
 		log "Inventory mode: $INVENTORY_MODE" true
 	fi
@@ -287,10 +315,12 @@ run_interactive() {
 		if [ "$LOG_LEVEL" = "" ]; then
 			LOG_LEVEL=3
 		else
-			if [[ ! "$LOG_LEVEL" =~ ^[0-9]+$ ]]; then
+			case "$LOG_LEVEL" in
+			*[!0-9]*)
 				log "Log level must be a number, using default value: 3 (Info)" true
 				LOG_LEVEL=3
-			fi
+				;;
+			esac
 		fi
 		log "Log level: $LOG_LEVEL" true
 	fi
@@ -298,14 +328,16 @@ run_interactive() {
 	if [ "$LOG_FILE" = "false" ]; then
 		echo -n "Do you want to enable log file? ([y]/n) "
 		read -r log_file_choice
-		if [[ "$log_file_choice" =~ ^[yY]?$ ]]; then
+		case "$log_file_choice" in
+		""|"y"|"Y")
 			LOG_FILE=true
-		fi
+			;;
+		esac
 		log "Log file option: $LOG_FILE" true
 	fi
 
 	if [ "$LOG_FILE" = "true" ] && [ -z "$LOG_FILE_PATH" ]; then
-		echo -n "Enter the log file path (leave empty if default, default is: /var/log/ocsinventory-agent/ocsinventory-agent.log): "
+		echo -n "Enter the log file path (leave empty if default, default is: /var/log/ocsinventory-agent.log): "
 		read -r LOG_FILE_PATH
 		if [ "$LOG_FILE_PATH" = "" ]; then
 			LOG_FILE_PATH=$DEFAULT_LOG_FILE_PATH
@@ -327,18 +359,22 @@ run_interactive() {
 	if [ "$SERVICE" = "false" ]; then
 		echo -n "Should the agent be registered as a systemd service? ([y]/n) "
 		read -r service_choice
-		if [[ "$service_choice" =~ ^[yY]?$ ]]; then
+		case "$service_choice" in
+		""|"y"|"Y")
 			SERVICE=true
-		fi
+			;;
+		esac
 		log "Service registration: $SERVICE" true
 	fi
 
 	if [ "$NOW" = "false" ]; then
 		echo -n "Do you want the agent to run immediately after installation? ([y]/n) "
 		read -r now_choice
-		if [[ "$now_choice" =~ ^[yY]?$ ]]; then
+		case "$now_choice" in
+		""|"y"|"Y")
 			NOW=true
-		fi
+			;;
+		esac
 		log "Run now option: $NOW" true
 	fi
 
@@ -359,7 +395,7 @@ CONFIG_PATH="/etc/ocsinventory-agent"
 AGENT_BINARY="/usr/local/bin"
 SYMBOLIC_LINK="/usr/bin/ocsinventory-cli"
 DEFAULT_DATA_PATH="/var/lib/ocsinventory-data"
-DEFAULT_LOG_FILE_PATH="/var/log/ocsinventory-agent/ocsinventory-agent.log"
+DEFAULT_LOG_FILE_PATH="/var/log/ocsinventory-agent.log"
 AGENT_EXEC="/ocsinventory-agent"
 SERVICE_NAME="ocsinventory-agent"
 
@@ -469,10 +505,10 @@ if [ -d "$CONFIG_PATH" ] && [ -f "$LOG_FILE_PATH" ] && [ -d "$AGENT_BINARY" ] &&
 	log "+------------------------------------------------------------------------------------------------+" false
 	log "|               OCSInventory Agent has been successfully installed and configured.               |" false
 	log "|                                                                                                |" false
-	log "|          Configuration files are located at $CONFIG_PATH" false
-	log "|          Log file is located at $LOG_FILE_PATH" false
-	log "|          Agent data storage is located at $DATA_PATH" false
-	log "|          Agent installation directory is located at $AGENT_BINARY" false
+	log "|          Configuration files are located at $CONFIG_PATH                                       |" false
+	log "|          Log file is located at $LOG_FILE_PATH                                                 |" false
+	log "|          Agent data storage is located at $DATA_PATH                                           |" false
+	log "|          Agent installation directory is located at $AGENT_BINARY                              |" false
 	log "|                                                                                                |" false
 	log "|               Please refer to the documentation for more information.                          |" false
 	log "+------------------------------------------------------------------------------------------------+" false
