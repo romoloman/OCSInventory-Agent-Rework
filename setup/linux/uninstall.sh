@@ -124,7 +124,7 @@ prompt_confirmation() {
 	echo -n "Are you sure you want to uninstall OCS Inventory NG Agent ([y]/n)? "
 	read -r confirm
 	case "$confirm" in
-	""|"y"|"Y")
+	"" | "y" | "Y")
 		uninstall_agent
 		;;
 	*)

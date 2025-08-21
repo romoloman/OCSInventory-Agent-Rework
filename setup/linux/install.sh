@@ -119,7 +119,7 @@ check_installed_agent() {
 			read -r remove_choice
 
 			case "$remove_choice" in
-			""|"y"|"Y")
+			"" | "y" | "Y")
 				log "Uninstalling the existing agent..." false
 
 				execCommand "sh ${WORKING_DIRECTORY}/uninstall.sh -S -D" "Existing agent uninstalled successfully. See the logs in ${WORKING_DIRECTORY}/uninstall.log" "Failed to uninstall existing agent."
@@ -247,7 +247,7 @@ run_interactive() {
 		read -r URL
 		while :; do
 			case "$URL" in
-			http://*|https://*)
+			http://* | https://*)
 				break
 				;;
 			*)
@@ -264,7 +264,7 @@ run_interactive() {
 		read -r USERNAME
 		while :; do
 			case "$USERNAME" in
-			""|*[!a-zA-Z0-9._-]*)
+			"" | *[!a-zA-Z0-9._-]*)
 				echo -n "Invalid username format. Please enter a valid username (alphanumeric characters, dots, underscores, and hyphens allowed): "
 				read -r USERNAME
 				;;
@@ -329,7 +329,7 @@ run_interactive() {
 		echo -n "Do you want to enable log file? ([y]/n) "
 		read -r log_file_choice
 		case "$log_file_choice" in
-		""|"y"|"Y")
+		"" | "y" | "Y")
 			LOG_FILE=true
 			;;
 		esac
@@ -360,7 +360,7 @@ run_interactive() {
 		echo -n "Should the agent be registered as a systemd service? ([y]/n) "
 		read -r service_choice
 		case "$service_choice" in
-		""|"y"|"Y")
+		"" | "y" | "Y")
 			SERVICE=true
 			;;
 		esac
@@ -371,7 +371,7 @@ run_interactive() {
 		echo -n "Do you want the agent to run immediately after installation? ([y]/n) "
 		read -r now_choice
 		case "$now_choice" in
-		""|"y"|"Y")
+		"" | "y" | "Y")
 			NOW=true
 			;;
 		esac
