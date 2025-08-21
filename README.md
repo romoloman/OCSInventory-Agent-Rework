@@ -177,7 +177,8 @@ sudo ocsinventory-agent-ng -v 3
 Go to the linux setup directory: `/setup/windows/`
 You need to download `NSSM - the Non-Sucking Service Manager` for handling services
 
-- [NSSM Installation last release](https://nssm.cc/download)
+- NSSM Installation last release
+
   Extract the file, navigate until win64 folder and copy nssm.exe file into your windows setup folder `/setup/windows/`
 
 After adding the NSSM executable file in the setup directory, you need to compile the entry point `app.dart` and the daemon `daemon.dart` using the following command
