@@ -24,8 +24,8 @@ usage() {
 	echo "  -p, --password PASSWORD           Password (required for silent mode)"
 	echo "  -m, --mode MODE                   Inventory mode (default: 1 = Remote with template)"
 	echo "  -d, --data-path PATH              Path to the data directory (default: /var/lib/ocsinventory-data)"
-	echo "  -l, --log-level LEVEL             Log level (default: 2 = Info)"
-	echo "      --log-file                    Enable log file (default: false)"
+	echo "  -l, --log-level LEVEL             Log level (default: 3 = Info)"
+	echo "      --log-file                    Enable log file (default: true)"
 	echo "      --log-file-path PATH          Path to the log file (default: /var/log/ocsinventory-agent.log)"
 	echo "  -c, --certificate CERTIFICATE     Path to the certificate file (default: null)"
 	echo "      --bypass-certificate          Bypass certificate validation (default: false)"
@@ -153,7 +153,7 @@ create_config_file() {
 
 	if [ ! -f "$CONFIG_PATH/config.json" ]; then
 		execCommand "touch $CONFIG_PATH/config.json" "Created configuration file: $CONFIG_PATH/config.json" "Failed to create configuration file."
-		echo "{\"url\": \"$URL\", \"username\": \"$USERNAME\", \"password\": \"$PASSWORD\", \"mode\": $INVENTORY_MODE, \"log_level\": $LOG_LEVEL, \"log_file\": $LOG_FILE, \"log_file_path\": \"$LOG_FILE_PATH\", \"data_directory\": \"$DEFAULT_DATA_PATH\", \"certificate\": \"$CERTIFICATE\", \"bypass_certificate\": $BYPASS_CERTIFICATE}" >"$CONFIG_PATH/config.json"
+		echo "{\"url\": \"$URL\", \"username\": \"$USERNAME\", \"password\": \"$PASSWORD\", \"mode\": $INVENTORY_MODE, \"log_level\": $LOG_LEVEL, \"log_file\": $LOG_FILE, \"log_file_path\": "$LOG_FILE_PATH", \"data_directory\": \"$DEFAULT_DATA_PATH\", \"certificate\": \"$CERTIFICATE\", \"bypass_certificate\": $BYPASS_CERTIFICATE}" >"$CONFIG_PATH/config.json"
 	else
 		log "Configuration file already exists: $CONFIG_PATH/config.json" false
 	fi
@@ -173,9 +173,9 @@ create_log_file() {
 	log "Creating log file..." false
 
 	if [ ! -d "$(dirname "$LOG_FILE_PATH")" ]; then
-		execCommand "mkdir -p $(dirname \"$LOG_FILE_PATH\")" "Created log directory: $(dirname \"$LOG_FILE_PATH\")" "Failed to create log directory."
+		execCommand "mkdir -p $(dirname "$LOG_FILE_PATH")" "Created log directory: $(dirname "$LOG_FILE_PATH")" "Failed to create log directory."
 	else
-		log "Log directory already exists: $(dirname \"$LOG_FILE_PATH\")" false
+		log "Log directory already exists: $(dirname "$LOG_FILE_PATH")" false
 	fi
 	if [ ! -f "$LOG_FILE_PATH" ]; then
 		execCommand "touch $LOG_FILE_PATH" "Created log file: $LOG_FILE_PATH" "Failed to create log file."
@@ -505,10 +505,10 @@ if [ -d "$CONFIG_PATH" ] && [ -f "$LOG_FILE_PATH" ] && [ -d "$AGENT_BINARY" ] &&
 	log "+------------------------------------------------------------------------------------------------+" false
 	log "|               OCSInventory Agent has been successfully installed and configured.               |" false
 	log "|                                                                                                |" false
-	log "|          Configuration files are located at $CONFIG_PATH                                       |" false
-	log "|          Log file is located at $LOG_FILE_PATH                                                 |" false
-	log "|          Agent data storage is located at $DATA_PATH                                           |" false
-	log "|          Agent installation directory is located at $AGENT_BINARY                              |" false
+	log "|          Configuration files are located at $CONFIG_PATH" false
+	log "|          Log file is located at $LOG_FILE_PATH" false
+	log "|          Agent data storage is located at $DATA_PATH" false
+	log "|          Agent installation directory is located at $AGENT_BINARY" false
 	log "|                                                                                                |" false
 	log "|               Please refer to the documentation for more information.                          |" false
 	log "+------------------------------------------------------------------------------------------------+" false
