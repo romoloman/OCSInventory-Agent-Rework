@@ -101,7 +101,7 @@ This is a list of all available `install.sh` script arguments:
 -p, --password PASSWORD               Password (required for silent mode)
 -m, --mode MODE                       Inventory mode (default: 1 = Remote with template)
 -d, --data-path PATH                  Path to the data directory (default: /var/lib/ocsinventory-data)
--l, --log-level LEVEL                 Log level (default: 2 = Info)
+-l, --log-level LEVEL                 Log level (default: 3 = Info)
     --log-file                        Enable log file (default: false)
     --log-file-path PATH              Path to the log file (default: /var/log/ocsinventory-agent/ocsinventory-agent.log)
 -c, --certificate CERTIFICATE         Path to the certificate file (default: null)
@@ -133,7 +133,7 @@ When the installation finished successfully, you can use the command ocsinventor
 For example, if you want to run the agent and set log level to "ERROR" for a single instance, you have to run this command:
 
 ```text
-sudo ocsinventory-agent-ng -l 2
+sudo ocsinventory-cli -l 2
 ```
 
 > *NOTE: If you set the service installation to true, it will be stored in `/etc/systemd/system/ocsinventory-agent.service`*
@@ -167,7 +167,7 @@ You can create your package (if needed) with Inno setup by using `Setup OCS Inve
 - Build the package using Inno Setup's build feature
 - The resulting installer will be created in `/setup/windows/` directory as ̀`OCSInventory-Agent-Setup/OCSInventory-Agent-Setup-{#AppVersion}`
 
-> *NOTE: Even if you're not planing to use the service, you'll have to build the service with a C# compiler. Otherwise you can manually remove the service part in the inno setup install script.*
+> *NOTE: Even if you're not planing to use the service, you'll have to build the service in release mode using Visual Studio 2022. Otherwise you can manually remove the service part in the inno setup install script.*
 
 #### 3. Installing the Windows agent non-interactively
 
@@ -180,7 +180,7 @@ This is a list of all available arguments:
 /USERNAME=username          Username (required for silent mode)
 /PASSWORD=password          Password (required for silent mode)
 /MODE=mode                  Inventory mode (default: 1 = Remote with template)
-/LOG_LEVEL=level            Log level (default: 4 = Info)
+/LOG_LEVEL=level            Log level (default: 3 = Info)
 /CERTIFICATE=path           Path to the certificate file (default: null)
 /SERVICE=boolean            Register the agent as a windows service
 /NOW=boolean                Run the agent inventory immediately after installation
