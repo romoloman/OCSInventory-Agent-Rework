@@ -4,9 +4,29 @@ namespace OCSInventory_Service
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static int Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Run();
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(new ConfigurationBuilder()
+                    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                    .Build())
+                .Enrich.FromLogContext()
+                .CreateLogger();
+
+            try
+            {
+                CreateHostBuilder(args).Build().Run();
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Service terminated unexpectedly");
+                return 1;
+            }
+            finally
+            {
+                Log.CloseAndFlush();
+            }
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -19,10 +39,6 @@ namespace OCSInventory_Service
                 .ConfigureServices(
                     (hostContext, services) =>
                     {
-                        Log.Logger = new LoggerConfiguration()
-                            .ReadFrom.Configuration(hostContext.Configuration)
-                            .Enrich.FromLogContext()
-                            .CreateLogger();
                         services.AddHostedService<Worker>();
                     }
                 );
