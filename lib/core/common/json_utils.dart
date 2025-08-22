@@ -57,12 +57,19 @@ class JsonUtils {
   /// Set new [_value] from [_index] in Json [file].
   String setContentFromFile(File file, String _index, dynamic _value) {
     var jsonContent = file.readAsStringSync();
-    Map<String, dynamic> json = jsonDecode(jsonContent);
-    json.forEach((key, value) {
-      if (key == _index) {
-        json[key] = _value;
-      }
-    });
+    Map<String, dynamic> json = {};
+
+    try {
+      json = jsonDecode(jsonContent);
+
+      json.forEach((key, value) {
+        if (key == _index) {
+          json[key] = _value;
+        }
+      });
+    } catch (_) {
+      return "";
+    }
 
     return serializeJson(file, json);
   }

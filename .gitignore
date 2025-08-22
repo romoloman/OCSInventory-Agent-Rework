@@ -62,9 +62,15 @@ config/template.json
 pubspec.lock
 hiveData/testbox.lock
 hiveData/testbox.hive
-setup/linux/AGENT-LINUX
-setup/linux/DAEMON-LINUX
+setup/linux/ocsinventory-agent
+setup/linux/ocsinventory-service
 
 # VS Code
 .vscode/
 
+# Service ignored files
+.vs/
+bin/
+obj/
+logs/
+Setup/Output

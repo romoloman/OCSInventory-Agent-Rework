@@ -27,37 +27,46 @@ class Config {
   late JsonUtils jsonUtils = new JsonUtils();
 
   final String coreFilename = "/core.json";
-  final String inventoryFilename = "/inventory.json";
+  final String configFilename = "/config.json";
   final String templateFilename = "/template.json";
 
-  late File inventory;
+  late File config;
   late File core;
   late File template;
 
   static late String token = "";
 
+  static late bool readOnly = true;
+
+  static late Map<String, dynamic> configFileContent = {};
+
+  static const String agentVersion = "3.0.0";
+
   /// Constructor.
-  Config(String configPath, String inventoryContent) {
-    generateConfigFile(configPath, inventoryContent);
+  Config(String configPath, String configContent) {
+    generateConfigFile(configPath, configContent);
   }
 
-  /// Create config file at [configPath] and set the content with [inventoryContent].
-  void generateConfigFile(String configPath, String inventoryContent) {
+  /// Create config file at [configPath] and set the content with [configContent].
+  void generateConfigFile(String configPath, String configContent) {
     try {
       Directory configDir = Directory(configPath);
-      this.inventory = File(configPath + this.inventoryFilename);
+      this.config = File(configPath + this.configFilename);
       this.core = File(configPath + this.coreFilename);
       this.template = File(configPath + this.templateFilename);
 
       if (!configDir.existsSync()) configDir.createSync(recursive: true);
 
-      writeConfigFile(this.inventory, inventoryContent);
       writeConfigFile(this.core, "[]");
       writeConfigFile(this.template, "{}");
     } catch (e) {
       print('Error creating config files: ${e.toString()}');
       rethrow;
     }
+  }
+
+  void setConfigFileContentByKey(String key, dynamic value) {
+    configFileContent[key] = value;
   }
 
   /// Create and write config files with a [configFile] name and their [fileContent] content.
@@ -113,17 +122,20 @@ class Config {
 
   /// Return all content in inventory config file.
   String getInventoryConfigs() {
-    return getConfigContent<String>(this.inventory, "{}");
+    return getConfigContent<String>(this.config, "{}");
   }
 
   /// return [key] content in inventory file.
   dynamic getInventoryConfig(String key) {
-    return getConfigContentByKey<dynamic>(this.inventory, key, null);
+    if (configFileContent.containsKey(key)) {
+      return configFileContent[key];
+    }
+    return getConfigContentByKey<dynamic>(this.config, key, null);
   }
 
   /// Update inventory config file by [key] and [value].
   void updateInventoryConfig(String key, dynamic value) {
-    updateConfigFile(this.inventory, key, value);
+    updateConfigFile(this.config, key, value);
   }
 
   /// Return all content in core config file.
@@ -169,7 +181,7 @@ class Config {
 
   /// return [key] content in template file.
   String getTemplateKey(String key) {
-    return getConfigContentByKey<String>(this.template, key, "");
+    return this.jsonUtils.getContentFromFileByKey(this.template, key);
   }
 
   /// Update core template file by [key] and [value].

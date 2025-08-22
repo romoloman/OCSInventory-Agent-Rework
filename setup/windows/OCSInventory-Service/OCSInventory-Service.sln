@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36310.24 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OCSInventory-Service", "OCSInventory-Service.csproj", "{0550F37D-CC37-4B72-8E30-B71A1A032EC0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0550F37D-CC37-4B72-8E30-B71A1A032EC0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0550F37D-CC37-4B72-8E30-B71A1A032EC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0550F37D-CC37-4B72-8E30-B71A1A032EC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0550F37D-CC37-4B72-8E30-B71A1A032EC0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9C6F0FF0-D1ED-41DA-AA90-5B45AED80E55}
+	EndGlobalSection
+EndGlobal
