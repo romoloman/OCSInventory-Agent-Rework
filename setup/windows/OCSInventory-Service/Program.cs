@@ -7,9 +7,11 @@ namespace OCSInventory_Service
         public static int Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
-                .ReadFrom.Configuration(new ConfigurationBuilder()
-                    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                    .Build())
+                .ReadFrom.Configuration(
+                    new ConfigurationBuilder()
+                        .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                        .Build()
+                )
                 .Enrich.FromLogContext()
                 .CreateLogger();
 

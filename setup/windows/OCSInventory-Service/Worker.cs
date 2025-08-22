@@ -25,7 +25,11 @@ namespace OCSInventory_Service
                     try
                     {
                         var programData = GetFolderPath(SpecialFolder.CommonApplicationData);
-                        var configPath = Path.Combine(programData, "OCSInventory-Agent", "config.json");
+                        var configPath = Path.Combine(
+                            programData,
+                            "OCSInventory-Agent",
+                            "config.json"
+                        );
 
                         if (!File.Exists(configPath))
                         {
@@ -72,17 +76,31 @@ namespace OCSInventory_Service
                             continue;
                         }
 
-                        _agentProcess.OutputDataReceived += (_, e) => { if (e.Data != null) _logger.LogInformation("{Line}", e.Data); };
-                        _agentProcess.ErrorDataReceived +=  (_, e) => { if (e.Data != null) _logger.LogError("{Line}", e.Data); };
+                        _agentProcess.OutputDataReceived += (_, e) =>
+                        {
+                            if (e.Data != null)
+                                _logger.LogInformation("{Line}", e.Data);
+                        };
+                        _agentProcess.ErrorDataReceived += (_, e) =>
+                        {
+                            if (e.Data != null)
+                                _logger.LogError("{Line}", e.Data);
+                        };
                         _agentProcess.BeginOutputReadLine();
                         _agentProcess.BeginErrorReadLine();
 
-                        _logger.LogInformation("Agent process started with PID {Pid}", _agentProcess.Id);
+                        _logger.LogInformation(
+                            "Agent process started with PID {Pid}",
+                            _agentProcess.Id
+                        );
 
                         await _agentProcess.WaitForExitAsync(stoppingToken);
 
                         var code = _agentProcess.ExitCode;
-                        _logger.LogWarning("Agent exited with code {ExitCode}. It will be restarted.", code);
+                        _logger.LogWarning(
+                            "Agent exited with code {ExitCode}. It will be restarted.",
+                            code
+                        );
 
                         var delaySeconds = Math.Clamp(code, 1, 30);
                         await Task.Delay(TimeSpan.FromSeconds(delaySeconds), stoppingToken);
