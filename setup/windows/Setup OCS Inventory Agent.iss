@@ -45,8 +45,9 @@ var
   ConnectionInputPage, ConfigInputPage: TInputQueryWizardPage;
   CheckPage: TWizardPage;
   URL, USERNAME, PASSWORD, CERTIFICATE, STORE_DATA_PATH, CONFIG_PATH, LOG_PATH, INSTALL_PATH: String;
+  BYPASS_CERT: String;
   INVENTORY_MODE, LOG_LEVEL: Integer;
-  InstallAsAServiceCheckBox, RunNowCheckBox: TNewCheckBox;
+  InstallAsAServiceCheckBox, RunNowCheckBox, ValidateCertCheckBox: TNewCheckBox;
   ResultCode: Integer;
 
 function BoolToStr(Value: Boolean): String;
@@ -70,10 +71,63 @@ begin
     Log(ExpandConstant('{cm:RunningInInteractiveMode}'));
     ConnectionInputPage := CreateInputQueryPage(wpLicense, ExpandConstant('{cm:AgentConfigurationPageTitle}'), ExpandConstant('{cm:AgentConfigurationPageDescription}'), ExpandConstant('{cm:MandatoryFields}'));
 
-    ConnectionInputPage.Add('* ' + ExpandConstant('{cm:URL}'), False);
-    ConnectionInputPage.Add('* ' + ExpandConstant('{cm:Username}'), False);
-    ConnectionInputPage.Add('* ' + ExpandConstant('{cm:Password}'), True);
+    ConnectionInputPage.Add(ExpandConstant('{cm:URL}'), False);
+    ConnectionInputPage.Add(ExpandConstant('{cm:Username}'), False);
+    ConnectionInputPage.Add(ExpandConstant('{cm:Password}'), True);
     ConnectionInputPage.Add(ExpandConstant('{cm:Certificate}'), False);
+
+    // Default value for URL input
+    ConnectionInputPage.Values[0] := 'http://ocsinventory-server-domain';
+
+    // Group box around server credentials
+    var GroupBox: TNewGroupBox;
+    var SecurityGroupBox: TNewGroupBox;
+    var i, minTop, maxBottom: Integer;
+    GroupBox := TNewGroupBox.Create(ConnectionInputPage);
+    GroupBox.Parent := ConnectionInputPage.Surface;
+    GroupBox.Caption := ExpandConstant('{cm:ServerCredentialsGroupTitle}');
+    GroupBox.Left := 0;
+    GroupBox.Width := ConnectionInputPage.SurfaceWidth;
+
+    // compute bounds to enclose labels+edits 0..3
+    minTop := ConnectionInputPage.PromptLabels[0].Top;
+    maxBottom := ConnectionInputPage.Edits[0].Top + ConnectionInputPage.Edits[0].Height;
+    for i := 0 to 3 do
+    begin
+      if ConnectionInputPage.PromptLabels[i].Top < minTop then
+        minTop := ConnectionInputPage.PromptLabels[i].Top;
+      if (ConnectionInputPage.Edits[i].Top + ConnectionInputPage.Edits[i].Height) > maxBottom then
+        maxBottom := ConnectionInputPage.Edits[i].Top + ConnectionInputPage.Edits[i].Height;
+    end;
+    GroupBox.Top := minTop - 8;
+    GroupBox.Height := (maxBottom - minTop) + 16;
+
+    // Group box for server security (certificate)
+    SecurityGroupBox := TNewGroupBox.Create(ConnectionInputPage);
+    SecurityGroupBox.Parent := ConnectionInputPage.Surface;
+    SecurityGroupBox.Caption := ExpandConstant('{cm:ServerSecurityGroupTitle}');
+    SecurityGroupBox.Left := 0;
+    SecurityGroupBox.Width := ConnectionInputPage.SurfaceWidth;
+    SecurityGroupBox.Top := GroupBox.Top + GroupBox.Height + 8;
+    SecurityGroupBox.Height := 70;
+
+    // Move certificate label and edit into the security group visually
+    ConnectionInputPage.PromptLabels[3].Parent := SecurityGroupBox;
+    ConnectionInputPage.Edits[3].Parent := SecurityGroupBox;
+    ConnectionInputPage.PromptLabels[3].Top := 20;
+    ConnectionInputPage.PromptLabels[3].Left := 8;
+    ConnectionInputPage.Edits[3].Top := 18;
+    ConnectionInputPage.Edits[3].Left := 150;
+    ConnectionInputPage.Edits[3].Width := SecurityGroupBox.Width - 160;
+
+    // Validate certificate checkbox (checked by default)
+    ValidateCertCheckBox := TNewCheckBox.Create(SecurityGroupBox);
+    ValidateCertCheckBox.Parent := SecurityGroupBox;
+    ValidateCertCheckBox.Top := ConnectionInputPage.Edits[3].Top + ConnectionInputPage.Edits[3].Height + 10;
+    ValidateCertCheckBox.Left := 8;
+    ValidateCertCheckBox.Width := SecurityGroupBox.Width - 16;
+    ValidateCertCheckBox.Caption := ExpandConstant('{cm:ValidateCertificate}');
+    ValidateCertCheckBox.Checked := True;
 
     ConfigInputPage := CreateInputQueryPage(ConnectionInputPage.ID, ExpandConstant('{cm:AgentConfigurationPageTitle}'), ExpandConstant('{cm:AgentConfigurationPageDescription}'), ExpandConstant('{cm:MandatoryFields}'));
 
@@ -161,6 +215,11 @@ begin
       USERNAME := ConnectionInputPage.Values[1];
       PASSWORD := ConnectionInputPage.Values[2];
       CERTIFICATE := ConnectionInputPage.Values[3];
+      // from checkbox - if checked, we DO validate, so bypass=false
+      if ValidateCertCheckBox.Checked then
+        BYPASS_CERT := 'false'
+      else
+        BYPASS_CERT := 'true';
       INVENTORY_MODE := StrToInt64Def(ConfigInputPage.Values[0], 2);
       LOG_LEVEL := StrToInt64Def(ConfigInputPage.Values[1], 2);
 
@@ -194,7 +253,7 @@ begin
       end;
     end;
 
-    if SaveStringToFile(CONFIG_PATH, Format('{"url": "%s", "username": "%s", "password": "%s", "certificate": "%s", "bypass_certificate": false, "log_file": true, "log_level": %d, "mode": %d, "data_directory": "%s", "log_file_path": "%s", "install_directory": "%s"}', [URL, USERNAME, PASSWORD, CERTIFICATE, LOG_LEVEL, INVENTORY_MODE, STORE_DATA_PATH, LOG_PATH, INSTALL_PATH]), false) then
+    if SaveStringToFile(CONFIG_PATH, Format('{"url": "%s", "username": "%s", "password": "%s", "certificate": "%s", "bypass_certificate": %s, "log_file": true, "log_level": %d, "mode": %d, "data_directory": "%s", "log_file_path": "%s", "install_directory": "%s"}', [URL, USERNAME, PASSWORD, CERTIFICATE, BYPASS_CERT, LOG_LEVEL, INVENTORY_MODE, STORE_DATA_PATH, LOG_PATH, INSTALL_PATH]), false) then
     begin
       Log(Format(ExpandConstant('{cm:ConfigurationFileCreatedSuccessfully}'), [CONFIG_PATH]));
     end
@@ -289,10 +348,15 @@ AgentConfigurationPageTitle=Agent configuration
 AgentConfigurationPageDescription=Please specify your own agent settings.
 MandatoryFields=* Required fields are marked with an asterisk.
 
+// Group titles
+ServerCredentialsGroupTitle=Server credentials (mandatory)
+
 french.AgentConfigurationPageTitle=Configuration de l'agent
 french.AgentConfigurationPageDescription=Veuillez spécifier vos propres paramètres d'agent.
 french.MandatoryFields=* Les champs obligatoires sont marqués d'un astérisque.
 
+// Group titles (French)
+french.ServerCredentialsGroupTitle=Identifiants serveur (obligatoire)
 
 // Messages for the input fields
 URL=URL
@@ -344,6 +408,10 @@ ServiceStopFailed=Failed to stop service.
 DataDirectoryRemovedSuccessfully=Data directory removed successfully: %s
 FailedToRemoveDataDirectory=Failed to remove data directory: %s
 
+// Security group captions
+ServerSecurityGroupTitle=Server security
+ValidateCertificate=Validate certificate
+
 french.StartingOCSInventoryAgentSetup=Début de l'installation de l'agent OCS Inventory...
 french.RunningInSilentMode=Exécution en mode silencieux.
 french.RunningInInteractiveMode=Exécution en mode interactif.
@@ -373,3 +441,7 @@ french.ServiceDeleteFailed=Échec de la suppression du service.
 french.ServiceStopFailed=Échec de l'arrêt du service.
 french.DataDirectoryRemovedSuccessfully=Répertoire de données supprimé avec succès : %s
 french.FailedToRemoveDataDirectory=Échec de la suppression du répertoire de données : %s
+
+// Security group captions (French)
+french.ServerSecurityGroupTitle=Sécurité serveur
+french.ValidateCertificate=Valider le certificat
