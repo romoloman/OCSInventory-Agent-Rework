@@ -40,6 +40,8 @@ class Config {
 
   static late Map<String, dynamic> configFileContent = {};
 
+  static const String agentVersion = "3.0.0";
+
   /// Constructor.
   Config(String configPath, String configContent) {
     generateConfigFile(configPath, configContent);
@@ -63,7 +65,7 @@ class Config {
     }
   }
 
-  void setConfigFileContentByKey(String key, dynamic value){
+  void setConfigFileContentByKey(String key, dynamic value) {
     configFileContent[key] = value;
   }
 
@@ -125,7 +127,7 @@ class Config {
 
   /// return [key] content in inventory file.
   dynamic getInventoryConfig(String key) {
-    if(configFileContent.containsKey(key)){
+    if (configFileContent.containsKey(key)) {
       return configFileContent[key];
     }
     return getConfigContentByKey<dynamic>(this.config, key, null);

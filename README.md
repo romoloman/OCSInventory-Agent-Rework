@@ -1,21 +1,37 @@
 # Getting started
 
 ## Table of Contents
-- [Step 1: Flutter installation](#step-1-flutter-installation)
-  - [Download Flutter packages](#download-flutter-packages)
-  - [Add Flutter application to path](#add-flutter-application-to-path)
-- [Step 2: Clone of the project](#step-2-clone-of-the-project)
-- [Step 3: Getting dependencies](#step-3-getting-dependencies)
-- [Step 4: Installing the Agent](#step-4-installing-the-agent)
-  - [Installing the agent on Linux](#installing-the-agent-on-linux)
-  - [Installing the agent on Windows](#installing-the-agent-on-windows)
-  - [Installing the agent on MacOS](#installing-the-agent-on-macos)
-- [Step 5: Agent configuration](#step-5-agent-configuration)
-  - [Linux and macos](#linux-and-macos)
-  - [Windows](#windows)
-  - [SSL](#ssl)
-- [Step 6: Uninstalling the agent](#step-6-uninstalling-the-agent)
-- [Step 7: Troubleshooting](#step-7-troubleshooting)
+- [Getting started](#getting-started)
+  - [Table of Contents](#table-of-contents)
+  - [Step 1: Flutter installation](#step-1-flutter-installation)
+    - [Download Flutter packages](#download-flutter-packages)
+    - [Add Flutter application to path](#add-flutter-application-to-path)
+  - [Step 2: Clone of the project](#step-2-clone-of-the-project)
+  - [Step 3: Getting dependencies](#step-3-getting-dependencies)
+  - [Step 4: Installing the Agent](#step-4-installing-the-agent)
+    - [Installing the agent on Linux](#installing-the-agent-on-linux)
+      - [1. Linux Compilation](#1-linux-compilation)
+      - [2. Installing the Linux agent non-interactively](#2-installing-the-linux-agent-non-interactively)
+      - [3. Installing the Linux agent interactively](#3-installing-the-linux-agent-interactively)
+      - [4. Additionnal information for Linux](#4-additionnal-information-for-linux)
+    - [Installing the agent on Windows](#installing-the-agent-on-windows)
+      - [1. Windows Compilation](#1-windows-compilation)
+      - [2. Create your own Windows package](#2-create-your-own-windows-package)
+      - [3. Installing the Windows agent non-interactively](#3-installing-the-windows-agent-non-interactively)
+      - [4. Installing the Windows agent interactively](#4-installing-the-windows-agent-interactively)
+      - [5. Additionnal information for Windows](#5-additionnal-information-for-windows)
+    - [Installing the agent on MacOS](#installing-the-agent-on-macos)
+      - [1. MacOS Compilation](#1-macos-compilation)
+      - [2. Create your own MacOS package](#2-create-your-own-macos-package)
+      - [3. Installing the MacOS agent non-interactively](#3-installing-the-macos-agent-non-interactively)
+      - [4. Installing the MacOS agent interactively](#4-installing-the-macos-agent-interactively)
+      - [5. Additionnal information for MacOS](#5-additionnal-information-for-macos)
+  - [Step 5: Agent configuration](#step-5-agent-configuration)
+    - [Linux and macos](#linux-and-macos)
+    - [Windows](#windows)
+    - [SSL](#ssl)
+  - [Step 6: Uninstalling the agent](#step-6-uninstalling-the-agent)
+  - [Step 7: Troubleshooting](#step-7-troubleshooting)
 
 ## Step 1: Flutter installation
 
@@ -67,26 +83,26 @@ flutter pub get
 
 You will find below how to install OCS Inventory agent on linux
 
-#### 1. Compilation
+#### 1. Linux Compilation
 
 Go to the linux setup directory: `/setup/linux/`
 You need to compile the entry point `app.dart` and the daemon `daemon.dart` using the following command
 
 ```text
-dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o AGENT-LINUX
-dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/daemon.dart -o DAEMON-LINUX
+dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o ocsinventory-agent
+dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/daemon.dart -o ocsinventory-service
 ```
 
 Ensure that you have something like this:
 
 ```text
-├── AGENT-LINUX
-├── DAEMON-LINUX
+├── ocsinventory-agent
+├── ocsinventory-service
 ├── install.sh
 └── uninstall.sh
 ```
 
-#### 2. Installing the agent non-interactively
+#### 2. Installing the Linux agent non-interactively
 
 To install the agent in non-interactive mode, you have to run the linux `install.sh` script with a set of launch arguments to allow to set all configuration options as you can do in interactive mode.
 This is a list of all available `install.sh` script arguments:
@@ -106,7 +122,7 @@ For example, if you want to install OCS Inventory Agent in non-interactive mode 
 sudo sh install.sh -l Server_ip_and_port -u username -p password -m 2 -v 3 -s -n -c -c /path of the certificate/cert.pem
 ```
 
-#### 3. Installing the agent interactively
+#### 3. Installing the Linux agent interactively
 
 To install the agent in interactive mode, you have to run the `install.sh` script with root privileges.
 If the agent configuration is already exist, it will ask you to remove it before installing the agent.
@@ -130,7 +146,7 @@ Do you want to run the agent now (y/n)?
 ```
 For the server URL field, the expected URL is `http://<Server ip:port>`
 
-#### 4. Additionnal information
+#### 4. Additionnal information for Linux
 
 - The content of the agent is stored in `/usr/share/ocsinventory-agent` and a symbolic link is created with `/usr/bin/ocsinventory-agent-ng`, so you can run with root privileges
 
@@ -156,31 +172,32 @@ sudo ocsinventory-agent-ng -v 3
 
 ### Installing the agent on Windows
 
-#### 1. Compilation
+#### 1. Windows Compilation
 
 Go to the linux setup directory: `/setup/windows/`
 You need to download `NSSM - the Non-Sucking Service Manager` for handling services
 
-- [NSSM Installation last release](https://nssm.cc/download)
+- NSSM Installation last release
+
   Extract the file, navigate until win64 folder and copy nssm.exe file into your windows setup folder `/setup/windows/`
 
 After adding the NSSM executable file in the setup directory, you need to compile the entry point `app.dart` and the daemon `daemon.dart` using the following command
 
 ```text
-dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o AGENT-WINDOWS.exe
-dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/daemon.dart -o DAEMON-WINDOWS.exe
+dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o ocsinventory-agent.exe
+dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/daemon.dart -o ocsinventory-service.exe
 ```
 
 Ensure that you have something like this:
 
 ```text
-├── agent-windows.exe
-├── daemon-windows.exe
+├── ocsinventory-agent.exe
+├── ocsinventory-service.exe
 ├── Setup OCS Inventory Agent.iss
 └── nssm.exe
 ```
 
-#### 2. Create your own package
+#### 2. Create your own Windows package
 
 You can create your package (if needed) with Inno setup by using `Setup OCS Inventory Agent.iss` script
 
@@ -196,7 +213,7 @@ For example, if you want to create your own package, you need to adjust the agen
 #define AgentPath "path where your agent are located\OCSInventory-Agent-Rework"
 ```
 
-#### 3. Installing the agent non-interactively
+#### 3. Installing the Windows agent non-interactively
 
 To install the agent in non-interactive mode, you have to run the `OCS-NG` with a set of launch arguments to allow to set all configuration options as you can do in interactive mode.
 This is a list of all available `OCS-NG` script arguments:
@@ -217,11 +234,11 @@ For example, if you want to install OCS Inventory Agent in non-interactive mode 
 mysetup-agent.exe /VERYSILENT /LOG="C:\path to store\setup.log" /URL=Server_ip_and_port /USERNAME=username /PASSWORD=password /LOCAL=False /SERVICE=True /NOW=True /LOGLEVEL=3 /CERTIFICATE="\path of the certificate\cert.pem"
 ```
 
-#### 4. Installing the agent interactively
+#### 4. Installing the Windows agent interactively
 
 To install the agent in interactive mode, you have to run the `OCS-NG` and set all configuration fields.
 
-#### 5. Additionnal information
+#### 5. Additionnal information for Windows
 
 - The is installed in `C:\Program Files\OCS Inventory AGENT`
 
@@ -243,17 +260,17 @@ For example, if you want to run the agent and set log level to verbose, you have
 
 ### Installing the agent on MacOS
 
-#### 1. Compilation
+#### 1. MacOS Compilation
 
 Go to the linux setup directory: `/setup/macos/`
 You need to compile the entry point `app.dart` and the daemon `daemon.dart` using the following command
 
 ```text
-dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o AGENT-MACOS
-dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/daemon.dart -o DAEMON-MACOS
+dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o ocsinventory-agent
+dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/daemon.dart -o ocsinventory-service
 ```
 
-#### 2. Create your own package
+#### 2. Create your own MacOS package
 
 You can create your package (if needed) with Xcode and Package applications.
 
@@ -266,8 +283,8 @@ Ensure that you have something like this:
 ```text
 ├── AUTHORS
 ├── Changes
-├── AGENT-MACOS
-├── DAEMON-MACOS
+├── ocsinventory-agent
+├── ocsinventory-service
 ├── LICENCE.txt
 ├── OCS Inventory Agent setup
 │   ├── build
@@ -289,7 +306,7 @@ Ensure that you have something like this:
 └── THANKS
 ```
 
-#### 3. Installing the agent non-interactively
+#### 3. Installing the MacOS agent non-interactively
 
 To install the agent in non-interactive mode, you have to run the MacOS `install.sh` script with a set of launch arguments to allow to set all configuration options as you can do in interactive mode.
 This is a list of all available `install.sh` script arguments:
@@ -308,11 +325,11 @@ For example, if you want to install OCS Inventory Agent in non-interactive mode 
 sudo sh install.sh -l Server_ip_and_port -u username -p password -v 3 -s -n -c -c /path of the certificate/cert.pem
 ```
 
-#### 4. Installing the agent interactively
+#### 4. Installing the MacOS agent interactively
 
 To install the agent in interactive mode, you have to run the `OCS Inventory Agent.mpkg` package and set all configuration fields.
 
-#### 5. Additionnal information
+#### 5. Additionnal information for MacOS
 
 - The is installed in `/Applications/OCS-NG`
 
@@ -378,7 +395,8 @@ You can bypass SSL certificate verification (if the certificate is self-signed) 
 
 ## Step 6: Uninstalling the agent
 
-- Linux Agent: To uninstall the Linux agent, navigate to `/usr/share/ocsinventory-agent/setup/linux/` and execute the `uninstall.sh` script with root privileges.
+- Linux Agent: To uninstall the Linux agent,
+navigate to `/usr/share/ocsinventory-agent/setup/linux/` and execute the `uninstall.sh` script with root privileges.
 - Windows Agent: To uninstall the Windows agent, go to `C:\Program Files\OCS Inventory Agent` and run the `uninstall application` executable.
 - MacOS Agent: To uninstall the macOS agent, navigate to `/Applications/OCS-NG.app/Contents/Resources/` and execute the `uninstaller.sh` script with root privileges.
 
@@ -394,4 +412,7 @@ If you encounter any issues during the installation or usage of the OCS Inventor
 
 4. Verify the API URL: Double-check the API URL to ensure it is accurate and points to the correct backend server.
 
-5. Restart the agent: Sometimes, restarting the agent can resolve certain issues. You can do this by running the appropriate command for your operating system: `sudo systemctl restart ocsinventory-agent` on Linux,`C:\Program Files\OCS Inventory Agent\setup\windows\nssm.exe stop OCSInventory-Agent` followed by `C:\Program Files\OCS Inventory Agent\setup\windows\nssm.exe start OCSInventory-Agent` on Windows, and `sudo launchctl unload /Library/LaunchDaemons/org.ocsinventory.agent.plist` followed by `sudo launchctl load /Library/LaunchDaemons/org.ocsinventory.agent.plist` on macOS.
+5. Restart the agent: Sometimes, restarting the agent can resolve certain issues.
+You can do this by running the appropriate command for your operating system: `sudo systemctl restart ocsinventory-agent`
+on Linux,`C:\Program Files\OCS Inventory Agent\setup\windows\nssm.exe stop OCSInventory-Agent` followed by `C:\Program Files\OCS Inventory Agent\setup\windows\nssm.exe start OCSInventory-Agent`
+on Windows, and `sudo launchctl unload /Library/LaunchDaemons/org.ocsinventory.agent.plist` followed by `sudo launchctl load /Library/LaunchDaemons/org.ocsinventory.agent.plist` on macOS.

@@ -138,7 +138,7 @@ class Commands {
   }
 
   /// Execute or read [target] in terms of [method].
-  Future<String> getResult(
+  Future<String> getTargetResult(
       String method, String target, String section, String field) async {
     return (await this.processTarget(method, target, section, field))["value"]
         .toString();
