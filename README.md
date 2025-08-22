@@ -208,8 +208,8 @@ Go to the linux setup directory: `/setup/macos/`
 You need to compile the entry point `app.dart` and the daemon `daemon.dart` using the following command
 
 ```text
-dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o AGENT-MACOS
-dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/daemon.dart -o DAEMON-MACOS
+dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o ocsinventory-agent
+dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/daemon.dart -o ocsinventory-service
 ```
 
 #### 2. Create your own MacOS package
@@ -225,8 +225,8 @@ Ensure that you have something like this:
 ```text
 ├── AUTHORS
 ├── Changes
-├── AGENT-MACOS
-├── DAEMON-MACOS
+├── ocsinventory-agent
+├── ocsinventory-service
 ├── LICENCE.txt
 ├── OCS Inventory Agent setup
 │   ├── build
@@ -294,7 +294,7 @@ After installing the agent, there is a config forlder and the file `config.json`
 In this file, there are properties to configure the agent:
 
 | Property           | Description                                                                                                                                                          |
-|:-------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| :----------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | url                | Backend server api url.                                                                                                                                              |
 | username           | By default in remote inventory mode, set the username to connect to the backend server api.                                                                          |
 | password           | By default in remote inventory mode, set the password to connect to the backend server api.                                                                          |

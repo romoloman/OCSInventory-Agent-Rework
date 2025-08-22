@@ -61,17 +61,7 @@ void main(List<String> args) async {
 
 Future<ProcessResult> runMainScript(String CurrentDirectory) async {
   try {
-    String agentName = "";
-    if (Platform.isLinux) {
-      agentName = "/AGENT-LINUX";
-    } else if (Platform.isMacOS) {
-      agentName = "/AGENT-MACOS";
-    } else if (Platform.isWindows) {
-      agentName = "/AGENT-WINDOWS";
-    } else {
-      stdout.writeln('Unsupported platform');
-      return ProcessResult(0, 1, '', 'Unsupported platform');
-    }
+    String agentName = "ocsinventory-agent";
     // Define the command to execute
     var executable = CurrentDirectory + agentName;
     // Execute the compiled binary with arguments
