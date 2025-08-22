@@ -16,7 +16,6 @@
 
 // External package imports
 import 'package:ocs_agent/core/log.dart';
-import 'dart:io';
 
 // Core imports
 import 'package:ocs_agent/core/inventory/commands.dart';
