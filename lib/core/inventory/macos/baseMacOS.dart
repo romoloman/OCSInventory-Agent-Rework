@@ -63,6 +63,26 @@ class BaseMacOS {
     String? getInterface;
     getInterface = regexpInterface.stringMatch(getDefaultRoute);
 
+    String macAddressesResult = (await commands.processTarget(
+            "BASH",
+            "ifconfig | awk '/^[a-z0-9]+: / { iface=\$1 } /status: active/ { print iface }' | sed 's/://g' | while read iface; do ifconfig \"\$iface\" | awk '/ether / { print \$2 }'; done",
+            logType,
+            "MAC ADDRESS"))["value"]
+        .toString();
+
+    List<String> macAddresses = [];
+    if (macAddressesResult.isNotEmpty) {
+      List<String> rawMacs = macAddressesResult.trim().split('\n');
+      for (String mac in rawMacs) {
+        String trimmedMac = mac.trim();
+        if (trimmedMac.isNotEmpty && !macAddresses.contains(trimmedMac)) {
+          macAddresses.add(trimmedMac);
+        }
+      }
+    }
+
+    String macAddressList = macAddresses.join(',');
+
     /// Get domains list and apply this Regex to get domain
     String listDomains;
     listDomains = (await commands.processTarget(
@@ -94,12 +114,7 @@ class BaseMacOS {
               logType,
               "IP ADDRESS"))["value"]
           .toString(),
-      "srcmac": (await commands.processTarget(
-              "BASH",
-              "ifconfig | awk '/^[a-z0-9]+: / { iface=\$1 } /status: active/ { print iface }' | sed 's/://g' | while read iface; do ifconfig \"\$iface\" | awk '/ether / { print \$2 }'; done",
-              logType,
-              "MAC ADDRESS"))["value"]
-          .toString(),
+      "srcmac": macAddressList,
       "domain": getDomain,
       "agent": Config.agentVersion,
     });
