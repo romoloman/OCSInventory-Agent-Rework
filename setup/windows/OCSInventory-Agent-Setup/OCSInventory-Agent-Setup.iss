@@ -52,6 +52,8 @@ var
   CredsLine, SecLine: TBevel;
   CredsCaption, SecCaption, AgentModeLabel, LogLevelLabel: TNewStaticText;
   hE, hL: Integer;
+  InvCaption, VerbCaption, AgentModeHelp: TNewStaticText;
+  InvLine, VerbLine: TBevel;
 
   ResultCode: Integer;
 
@@ -61,6 +63,15 @@ begin
     Result := 'True'
   else
     Result := 'False';
+end;
+
+function CmMultiline(const Key: string): string;
+var
+  S: string;
+begin
+  S := ExpandConstant('{cm:' + Key + '}');
+  StringChangeEx(S, '#13#10', #13#10, True);
+  Result := S;
 end;
 
 procedure InitializeWizard;
@@ -99,7 +110,7 @@ begin
     CredsLine.Shape := bsTopLine;
     CredsLine.Left := CredsCaption.Left;
     CredsLine.Top := CredsCaption.Top + CredsCaption.Height + ScaleY(2);
-    CredsLine.Width := ConnectionInputPage.SurfaceWidth - ScaleX(16);
+    CredsLine.Width := ConnectionInputPage.SurfaceWidth;
     
     // URL
     ConnectionInputPage.PromptLabels[0].Parent := ConnectionInputPage.Surface;
@@ -157,7 +168,7 @@ begin
     SecLine.Shape := bsTopLine;
     SecLine.Left := SecCaption.Left;
     SecLine.Top := SecCaption.Top + SecCaption.Height + ScaleY(2);
-    SecLine.Width := ConnectionInputPage.SurfaceWidth - ScaleX(16);
+    SecLine.Width := ConnectionInputPage.SurfaceWidth;
 
     // Certificat
     ConnectionInputPage.PromptLabels[3].Parent := ConnectionInputPage.Surface;
@@ -188,12 +199,28 @@ begin
       ExpandConstant('{cm:AgentConfigurationPageDescription}')
     );
 
-    // AgentMode
+    // === Section "Inventory" ===
+    InvCaption := TNewStaticText.Create(ConfigPage);
+    InvCaption.Parent := ConfigPage.Surface;
+    InvCaption.Caption := ExpandConstant('{cm:InventorySectionTitle}');
+    InvCaption.Font.Style := InvCaption.Font.Style + [fsBold];
+    InvCaption.AutoSize := True;
+    InvCaption.Left := ScaleX(8);
+    InvCaption.Top := 0;
+
+    InvLine := TBevel.Create(ConfigPage);
+    InvLine.Parent := ConfigPage.Surface;
+    InvLine.Shape := bsTopLine;
+    InvLine.Left := InvCaption.Left;
+    InvLine.Top := InvCaption.Top + InvCaption.Height + ScaleY(2);
+    InvLine.Width := ConfigPage.SurfaceWidth;
+
+    // AgentMode (dropdown)
     AgentModeCombo := TNewComboBox.Create(ConfigPage);
     AgentModeCombo.Parent := ConfigPage.Surface;
     AgentModeCombo.Style := csDropDownList;
     AgentModeCombo.Left := ScaleX(150);
-    AgentModeCombo.Top := 0;
+    AgentModeCombo.Top := InvLine.Top + ScaleY(16);
     AgentModeCombo.Width := ConfigPage.SurfaceWidth - AgentModeCombo.Left - ScaleX(16);
     AgentModeCombo.Items.Add(ExpandConstant('{cm:AgentMode1}'));
     AgentModeCombo.Items.Add(ExpandConstant('{cm:AgentMode2}'));
@@ -208,12 +235,40 @@ begin
     AgentModeLabel.Left := ScaleX(8);
     AgentModeLabel.Top := AgentModeCombo.Top + (AgentModeCombo.Height - AgentModeLabel.Height) div 2;
 
-    // LogLevel
+    // AgentMode help
+    AgentModeHelp := TNewStaticText.Create(ConfigPage);
+    AgentModeHelp.Parent := ConfigPage.Surface;
+    AgentModeHelp.AutoSize := False;
+    AgentModeHelp.WordWrap := True;
+    AgentModeHelp.ShowAccelChar := False;
+    AgentModeHelp.Left := AgentModeLabel.Left;
+    AgentModeHelp.Top := AgentModeCombo.Top + AgentModeCombo.Height + ScaleY(6);
+    AgentModeHelp.Width := InvLine.Width;
+    AgentModeHelp.Height := ScaleY(110);
+    AgentModeHelp.Caption := CmMultiline('AgentModeHelp');
+
+    // === Section "Verbose" ===
+    VerbCaption := TNewStaticText.Create(ConfigPage);
+    VerbCaption.Parent := ConfigPage.Surface;
+    VerbCaption.Caption := ExpandConstant('{cm:VerboseSectionTitle}');
+    VerbCaption.Font.Style := VerbCaption.Font.Style + [fsBold];
+    VerbCaption.AutoSize := True;
+    VerbCaption.Left := InvCaption.Left;
+    VerbCaption.Top := AgentModeHelp.Top + AgentModeHelp.Height + ScaleY(16);
+
+    VerbLine := TBevel.Create(ConfigPage);
+    VerbLine.Parent := ConfigPage.Surface;
+    VerbLine.Shape := bsTopLine;
+    VerbLine.Left := VerbCaption.Left;
+    VerbLine.Top    := VerbCaption.Top + VerbCaption.Height + ScaleY(2);
+    VerbLine.Width := ConfigPage.SurfaceWidth;
+
+    // LogLevel (dropdown)
     LogLevelCombo := TNewComboBox.Create(ConfigPage);
     LogLevelCombo.Parent := ConfigPage.Surface;
     LogLevelCombo.Style := csDropDownList;
     LogLevelCombo.Left := AgentModeCombo.Left;
-    LogLevelCombo.Top := AgentModeCombo.Top + AgentModeCombo.Height + ScaleY(16);
+    LogLevelCombo.Top := VerbLine.Top + ScaleY(16);
     LogLevelCombo.Width := AgentModeCombo.Width;
     LogLevelCombo.Items.Add(ExpandConstant('{cm:LogLevel0}'));
     LogLevelCombo.Items.Add(ExpandConstant('{cm:LogLevel1}'));
@@ -228,6 +283,7 @@ begin
     LogLevelLabel.AutoSize := True;
     LogLevelLabel.Left := AgentModeLabel.Left;
     LogLevelLabel.Top := LogLevelCombo.Top + (LogLevelCombo.Height - LogLevelLabel.Height) div 2;
+
 
     CheckPage := CreateCustomPage(
       ConfigPage.ID,
@@ -510,6 +566,7 @@ AgentMode1=Remote with template
 AgentMode2=Remote without template
 AgentMode3=Local with template
 AgentMode4=Local without template
+AgentModeHelp=#13#10Select the agent inventory mode:#13#10#13#10  • Remote with template: Sends the full inventory to the server.#13#10  • Remote without template: Sends the base inventory to the server.#13#10  • Local with template: Saves the full inventory locally.#13#10  • Local without template: Saves the base inventory locally.
 Certificate=Certificate
 ConfigurationFileCreatedSuccessfully=Configuration file created successfully: %s
 ConnectionDetailsValidated=Connection details validated: URL: %s, Username: %s, Password: *****
@@ -525,6 +582,7 @@ FailedToRemoveDataDirectory=Failed to remove data directory: %s
 FailedToRunOCSInventoryAgent=Failed to run OCS Inventory Agent.
 InstallAsAService=Install agent as a service
 InstallingOCSInventoryAgentAsAService=Installing OCS Inventory Agent as a service...
+InventorySectionTitle=Inventory
 LogLevel=Log level
 LogLevel0=Critical
 LogLevel1=Error
@@ -553,6 +611,7 @@ StartingOCSInventoryAgentSetup=Starting OCS Inventory Agent Setup...
 URL=URL
 Username=Username
 ValidateCertificate=Validate certificate
+VerboseSectionTitle=Verbose
 WaitingUserToEnterInputs=Waiting for user to enter inputs...
 
 french.AgentConfigurationPageDescription=Veuillez spécifier vos propres paramètres d'agent.
@@ -562,6 +621,7 @@ french.AgentMode1=Distant avec modèle
 french.AgentMode2=Distant sans modèle
 french.AgentMode3=Local avec modèle
 french.AgentMode4=Local sans modèle
+french.AgentModeHelp=#13#10Séléctionnez le mode d'inventaire de l'agent :#13#10#13#10  • Distant avec modèle : Envoi de l'inventaire complet au serveur.#13#10  • Distant sans modèle : Envoi de l'inventaire base au serveur.#13#10  • Local avec modèle : Sauvegarde de l'inventaire complet en local.#13#10  • Local sans modèle : Sauvegarde de l'inventaire base en local.
 french.Certificate=Certificat
 french.ConfigurationFileCreatedSuccessfully=Fichier de configuration créé avec succès : %s
 french.ConnectionDetailsValidated=Détails de connexion validés : URL : %s, Nom d'utilisateur : %s, Mot de passe : *****
@@ -577,6 +637,7 @@ french.FailedToRemoveDataDirectory=Échec de la suppression du répertoire de do
 french.FailedToRunOCSInventoryAgent=Échec de l'exécution de l'agent OCS Inventory.
 french.InstallAsAService=Installer l'agent en tant que service
 french.InstallingOCSInventoryAgentAsAService=Installation de l'agent OCS Inventory en tant que service...
+french.InventorySectionTitle=Inventaire
 french.LogLevel=Niveau de journalisation
 french.LogLevel0=Critique
 french.LogLevel1=Erreur
@@ -605,4 +666,5 @@ french.StartingOCSInventoryAgentSetup=Début de l'installation de l'agent OCS In
 french.URL=URL
 french.Username=Nom d'utilisateur
 french.ValidateCertificate=Valider le certificat
+french.VerboseSectionTitle=Verbosité
 french.WaitingUserToEnterInputs=En attente de l'utilisateur pour entrer les paramètres...
