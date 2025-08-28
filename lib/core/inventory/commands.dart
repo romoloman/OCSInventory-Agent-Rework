@@ -49,7 +49,6 @@ class Commands {
 
     final int exitCode = process.exitCode;
 
-    // Décodage robuste des sorties (UTF-8/UTF-16LE/UTF-16BE, fallback Latin-1)
     final String stdoutStr = _decodeBytes(process.stdout).trim();
     final String stderrStr = _decodeBytes(process.stderr).trim();
 
