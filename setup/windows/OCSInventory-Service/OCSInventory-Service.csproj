@@ -10,7 +10,7 @@
     <PublishTrimmed>true</PublishTrimmed>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <ApplicationIcon>OCSInventory.ico</ApplicationIcon>
-    <BaseOutputPath>C:\Users\devel\Documents\Rework\OCSInventory-Agent-Rework\setup\windows\OCSInventory-Agent-Setup\payload\OCSInventory-Service</BaseOutputPath>
+    <BaseOutputPath>$(MSBuildProjectDirectory)\..\OCSInventory-Agent-Setup\payload\OCSInventory-Service</BaseOutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
