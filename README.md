@@ -143,31 +143,32 @@ sudo ocsinventory-cli -l 2
 #### 1. Windows compilation
 
 Go to the windows setup directory: `/setup/windows/` from the repository cloned above.
-You need to compile the entry point `/lib/app/app.dart` using the following command
-
-```text
-dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o ocsinventory-agent.exe
-```
-
-Ensure that you have something like this in the windows setup directory:
+Ensure that you have all following folders/file in the windows setup directory:
 
 ```text
 ├── OCSInventory-Service/
-├── ocsinventory-agent.exe
-└── Setup OCS Inventory Agent.iss
+├── OCSInventory-Agent-Setup/
+└── build_all.bat
 ```
+
+To compile all required payload, open `Developer Command Prompt for VS 2022`. Go to the `setup/windows` folder and run the following command :
+
+```batch
+build_all.bat
+```
+
+Read the console output logs to see any compilation errors.
 
 #### 2. Create your own Windows package
 
-You can create your package (if needed) with Inno setup by using `Setup OCS Inventory Agent.iss` script
+You can create your package (if needed) with Inno setup by using `OCSInventory-Agent-Setup.iss` script
 
 - Download and install Inno Setup. You can download it from [here](https://jrsoftware.org/isdl.php).
-- Run Inno Setup and open the `Setup OCS Inventory Agent.iss` script
+- Run Inno Setup and open the `OCSInventory-Agent-Setup/OCSInventory-Agent-Setup.iss` script
 - Set up the script, specifying the `AppPath` as your cloned repository path
 - Build the package using Inno Setup's build feature
-- The resulting installer will be created in `/setup/windows/` directory as ̀`OCSInventory-Agent-Setup/OCSInventory-Agent-Setup-{#AppVersion}`
+- The resulting installer will be created in `/setup/windows/OCSInventory-Agent-Setup/` directory as `OCSInventory-Agent-Setup/OCSInventory-Agent-Setup-{#AppVersion}.exe`
 
-> *NOTE: Even if you're not planing to use the service, you'll have to build the service in release mode using Visual Studio 2022. Otherwise you can manually remove the service part in the inno setup install script.*
 
 #### 3. Installing the Windows agent non-interactively
 
@@ -182,14 +183,15 @@ This is a list of all available arguments:
 /MODE=mode                  Inventory mode (default: 1 = Remote with template)
 /LOG_LEVEL=level            Log level (default: 3 = Info)
 /CERTIFICATE=path           Path to the certificate file (default: null)
-/SERVICE=boolean            Register the agent as a windows service
-/NOW=boolean                Run the agent inventory immediately after installation
+/BYPASS_CERT=[0/1]          Disable the certificate validation (default: 0)
+/SERVICE=[0/1]              Register the agent as a windows service
+/NOW=[0/1]                  Run the agent inventory immediately after installation
 ```
 
 Here an example command to use the installation script in non-interactive mode (silent enabled):
 
 ```text
-mysetup-agent.exe /VERYSILENT /URL=Server_ip_and_port /USERNAME=username /PASSWORD=password /MODE=1 /LOGLEVEL=4 /CERTIFICATE="\path of the certificate\cert.pem" /SERVICE=True /NOW=True 
+mysetup-agent.exe /VERYSILENT /URL=https://server_ip_and_port /USERNAME=username /PASSWORD=password /MODE=1 /LOGLEVEL=4 /CERTIFICATE="\path of the certificate\cert.pem" /BYPASS_CERT=0 /SERVICE=1 /NOW=1 
 ```
 
 #### 4. Installing the Windows agent interactively
