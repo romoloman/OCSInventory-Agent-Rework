@@ -9,7 +9,7 @@ set "AGENT_PAYLOAD_DIR=%~dp0OCSInventory-Agent-Setup\payload\OCSInventory-Agent"
 set "AGENT_OUT_NAME=ocsinventory-agent.exe"
 
 REM OCSInventory Service solution path
-set "SERVICE_SOLUTION=%~dp0OCSInventory-Service\OCSInventory-Service.sln"
+set "SERVICE_SOLUTION=%~dp0OCSInventory-Service\OCSInventory-Service.csproj"
 set "CONFIG=Release"
 set "PLATFORM=Any CPU"
 
@@ -24,10 +24,10 @@ if errorlevel 1 (
   echo [ERROR] Clean failure
   exit /b 31
 )
-echo Build solution...
-dotnet build "%SERVICE_SOLUTION%" -c %CONFIG% -p:Platform="%PLATFORM%" -maxcpucount
+echo Publish solution...
+dotnet publish "%SERVICE_SOLUTION%" -c %CONFIG% -p:Platform="%PLATFORM%" -maxcpucount -f net9.0 -r win-x64 --self-contained true -p:PublishSingleFile=true
 if errorlevel 1 (
-  echo [ERROR] dotnet build failed
+  echo [ERROR] dotnet publish failed
   exit /b 3
 )
 
