@@ -5,9 +5,10 @@
 #define AppExeName "ocsinventory-agent.exe"
 #define ServiceExeName "OCSInventory-Service.exe"
 #define AppPath "C:\Users\devel\Documents\Rework\OCSInventory-Agent-Rework"
+#define AppGuid "{652EB54C-0A14-46AF-9F06-3BA7C294AFC9}"
 
 [Setup]
-AppId={{652EB54C-0A14-46AF-9F06-3BA7C294AFC9}
+AppId={{#AppGuid}
 AppName={#AppName}
 AppVersion={#AppVersion}
 AppPublisher={#AppPublisher}
@@ -45,7 +46,7 @@ var
   INSTALL_AS_A_SERVICE, RUN_NOW: Boolean;
   ConnectionInputPage: TInputQueryWizardPage;
   CheckPage, ConfigPage: TWizardPage;
-  URL, USERNAME, PASSWORD, CERTIFICATE, STORE_DATA_PATH, CONFIG_PATH, LOG_PATH, INSTALL_PATH, BYPASS_CERT, tmp: String;
+  URL, USERNAME, PASSWORD, CERTIFICATE, STORE_DATA_PATH, CONFIG_PATH, LOG_PATH, INSTALL_PATH, BYPASS_CERT: String;
   INVENTORY_MODE, LOG_LEVEL: Integer;
   AgentModeCombo, LogLevelCombo: TNewComboBox;
   InstallAsAServiceCheckBox, RunNowCheckBox, ValidateCertCheckBox: TNewCheckBox;
@@ -54,8 +55,10 @@ var
   hE, hL: Integer;
   InvCaption, VerbCaption, AgentModeHelp: TNewStaticText;
   InvLine, VerbLine: TBevel;
-
   ResultCode: Integer;
+  DidPreUninstall: Boolean;
+const
+  AppGuid = '{#AppGuid}';
 
 function BoolToStr(Value: Boolean): String;
 begin
@@ -72,6 +75,66 @@ begin
   S := ExpandConstant('{cm:' + Key + '}');
   StringChangeEx(S, '#13#10', #13#10, True);
   Result := S;
+end;
+
+function GetUninsExeFromReg(var ExePath: string): Boolean;
+var
+  S, KeyName: string;
+  p, q: Integer;
+begin
+  Result := False;
+  ExePath := '';
+  KeyName := 'Software\Microsoft\Windows\CurrentVersion\Uninstall\' + AppGuid + '_is1';
+
+  if not RegQueryStringValue(HKLM64, KeyName, 'UninstallString', S) then
+  if not RegQueryStringValue(HKLM,   KeyName, 'UninstallString', S) then
+  if not RegQueryStringValue(HKCU,   KeyName, 'UninstallString', S) then
+    exit;
+
+  S := Trim(S);
+  if S = '' then exit;
+
+  if (Length(S) >= 2) and (S[1] = '"') then
+  begin
+    q := Pos('"', Copy(S, 2, MaxInt));
+    if q > 0 then
+      ExePath := Copy(S, 2, q-1);
+  end
+  else
+  begin
+    p := Pos(' ', S);
+    if p > 0 then
+      ExePath := Copy(S, 1, p-1)
+    else
+      ExePath := S;
+  end;
+
+  if (ExePath = '') or not FileExists(ExePath) then
+  begin
+    S := RemoveQuotes(S);
+    ExePath := AddBackslash(ExtractFilePath(S)) + 'unins000.exe';
+  end;
+
+  Result := FileExists(ExePath);
+end;
+
+procedure SilentUninstallIfPresent;
+var
+  ExePath: string;
+  RC: Integer;
+begin
+  if GetUninsExeFromReg(ExePath) then
+  begin
+    Log('Found previous installation. Running: ' + AddQuotes(ExePath) +
+        ' /VERYSILENT /SUPPRESSMSGBOXES /NORESTART');
+    if Exec(ExePath, '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART',
+            '', SW_HIDE, ewWaitUntilTerminated, RC) then
+      Log('Previous uninstall finished with code ' + IntToStr(RC) + '.')
+    else
+      Log('Previous uninstall failed to start.');
+  end
+  else
+    Log('No previous installation found.');
 end;
 
 procedure InitializeWizard;
@@ -346,8 +409,28 @@ begin
   end;
 end;
 
-procedure CurStepChanged(CurStep: TSetupStep);
+procedure UpdateNativeProgress(const StatusText, DetailText: string);
 begin
+  WizardForm.StatusLabel.Caption := StatusText;
+  WizardForm.FilenameLabel.Caption := DetailText;
+  WizardForm.StatusLabel.Repaint;
+  WizardForm.FilenameLabel.Repaint;
+  WizardForm.Repaint;
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  TotalSteps, Step, ResultCode: Integer;
+  tmp: string;
+
+begin
+  if (CurStep = ssInstall) and (not DidPreUninstall) then
+  begin
+    UpdateNativeProgress(ExpandConstant('{cm:StepUninstallPrevious}'), '');
+    SilentUninstallIfPresent;
+    DidPreUninstall := True;
+  end;
+
   if CurStep = ssPostInstall then
   begin
     if WizardSilent then
@@ -359,21 +442,17 @@ begin
       INVENTORY_MODE := StrToIntDef(ExpandConstant('{param:MODE}'), 1);
       LOG_LEVEL := StrToIntDef(ExpandConstant('{param:LOG_LEVEL}'), 3);
 
-      // BYPASS_CERT : true/false/1/0
       tmp := Lowercase(ExpandConstant('{param:BYPASS_CERT}'));
-      if (tmp = 'true') or (tmp = '1') then
-        BYPASS_CERT := 'true'
-      else
-        BYPASS_CERT := 'false';
+      if (tmp = 'true') or (tmp = '1') then BYPASS_CERT := 'true' else BYPASS_CERT := 'false';
 
-      // NOW / SERVICE : true/false/1/0
       tmp := Lowercase(ExpandConstant('{param:NOW}'));
       RUN_NOW := (tmp = 'true') or (tmp = '1');
 
       tmp := Lowercase(ExpandConstant('{param:SERVICE}'));
       INSTALL_AS_A_SERVICE := (tmp = 'true') or (tmp = '1');
 
-      Log(Format(ExpandConstant('{cm:Parameters}'), [URL, USERNAME, CERTIFICATE, INVENTORY_MODE, LOG_LEVEL, BoolToStr(RUN_NOW), BoolToStr(INSTALL_AS_A_SERVICE)]));
+      Log(Format(ExpandConstant('{cm:Parameters}'), [URL, USERNAME, CERTIFICATE, INVENTORY_MODE, LOG_LEVEL,
+           BoolToStr(RUN_NOW), BoolToStr(INSTALL_AS_A_SERVICE)]));
     end
     else
     begin
@@ -381,11 +460,9 @@ begin
       USERNAME := ConnectionInputPage.Values[1];
       PASSWORD := ConnectionInputPage.Values[2];
       CERTIFICATE := ConnectionInputPage.Values[3];
-      // from checkbox - if checked, we DO validate, so bypass=false
-      if ValidateCertCheckBox.Checked then
-        BYPASS_CERT := 'false'
-      else
-        BYPASS_CERT := 'true';
+
+      if ValidateCertCheckBox.Checked then BYPASS_CERT := 'false' else BYPASS_CERT := 'true';
+
       case AgentModeCombo.ItemIndex of
         0: INVENTORY_MODE := 1;
         1: INVENTORY_MODE := 2;
@@ -405,61 +482,92 @@ begin
         LOG_LEVEL := 3;
       end;
 
-      Log(Format(ExpandConstant('{cm:Parameters}'), [URL, USERNAME, CERTIFICATE, INVENTORY_MODE, LOG_LEVEL, BoolToStr(RunNowCheckBox.Checked), BoolToStr(InstallAsAServiceCheckBox.Checked)]));
+      Log(Format(ExpandConstant('{cm:Parameters}'), [URL, USERNAME, CERTIFICATE, INVENTORY_MODE, LOG_LEVEL,
+           BoolToStr(RunNowCheckBox.Checked), BoolToStr(InstallAsAServiceCheckBox.Checked)]));
     end;
 
     STORE_DATA_PATH := ExpandConstant('{commonappdata}\OCSInventory-Agent');
     CONFIG_PATH := STORE_DATA_PATH + '\config.json';
     LOG_PATH := STORE_DATA_PATH + '\ocsinventory-agent.log';
     INSTALL_PATH := ExpandConstant('{app}');
-    
     StringChangeEx(STORE_DATA_PATH, '\', '/', True);
-    StringChangeEx(CONFIG_PATH, '\', '/', True);
-    StringChangeEx(LOG_PATH, '\', '/', True);
-    StringChangeEx(INSTALL_PATH, '\', '/', True);
+    StringChangeEx(CONFIG_PATH,   '\', '/', True);
+    StringChangeEx(LOG_PATH,      '\', '/', True);
+    StringChangeEx(INSTALL_PATH,  '\', '/', True);
+
+    TotalSteps := 2; // data dir + config
+    if WizardSilent then
+    begin
+      if INSTALL_AS_A_SERVICE then TotalSteps := TotalSteps + 3
+      else if RUN_NOW then TotalSteps := TotalSteps + 1;
+    end
+    else
+    begin
+      if InstallAsAServiceCheckBox.Checked then TotalSteps := TotalSteps + 3
+      else if RunNowCheckBox.Checked then TotalSteps := TotalSteps + 1;
+    end;
+
+    Step := 0;
+
+    Step := Step + 1;
+    UpdateNativeProgress(
+      Format('%d/%d - %s', [Step, TotalSteps, ExpandConstant('{cm:StepCreateDataDir}')]),
+      STORE_DATA_PATH);
 
     if DirExists(STORE_DATA_PATH) then
-    begin
-      Log(Format(ExpandConstant('{cm:DataDirectoryExist}'), [CONFIG_PATH]));
-    end
+      Log(Format(ExpandConstant('{cm:DataDirectoryExist}'), [CONFIG_PATH]))
     else
     begin
-      Log(Format(ExpandConstant('{cm:DataDirectoryDoesNotExist}') , [STORE_DATA_PATH]));
+      Log(Format(ExpandConstant('{cm:DataDirectoryDoesNotExist}'), [STORE_DATA_PATH]));
       if CreateDir(STORE_DATA_PATH) then
-      begin
-        Log(Format(ExpandConstant('{cm:DataDirectoryCreatedSuccessfully}'), [STORE_DATA_PATH]));
-      end
+        Log(Format(ExpandConstant('{cm:DataDirectoryCreatedSuccessfully}'), [STORE_DATA_PATH]))
       else
-      begin
         MsgBox(ExpandConstant('{cm:ErrorCreatingDataDirectory}'), mbError, MB_OK);
-      end;
     end;
 
-    if SaveStringToFile(CONFIG_PATH, Format('{"url": "%s", "username": "%s", "password": "%s", "certificate": "%s", "bypass_certificate": %s, "log_file": true, "log_level": %d, "mode": %d, "data_directory": "%s", "log_file_path": "%s", "install_directory": "%s"}', [URL, USERNAME, PASSWORD, CERTIFICATE, BYPASS_CERT, LOG_LEVEL, INVENTORY_MODE, STORE_DATA_PATH, LOG_PATH, INSTALL_PATH]), false) then
-    begin
-      Log(Format(ExpandConstant('{cm:ConfigurationFileCreatedSuccessfully}'), [CONFIG_PATH]));
-    end
+    Step := Step + 1;
+    UpdateNativeProgress(
+      Format('%d/%d - %s', [Step, TotalSteps, ExpandConstant('{cm:StepWriteConfig}')]),
+      CONFIG_PATH);
+
+    if SaveStringToFile(
+         CONFIG_PATH,
+         Format('{"url": "%s", "username": "%s", "password": "%s", "certificate": "%s", "bypass_certificate": %s, "log_file": true, "log_level": %d, "mode": %d, "data_directory": "%s", "log_file_path": "%s", "install_directory": "%s"}', [URL, USERNAME, PASSWORD, CERTIFICATE, BYPASS_CERT, LOG_LEVEL, INVENTORY_MODE, STORE_DATA_PATH, LOG_PATH, INSTALL_PATH]),
+         False) then
+      Log(Format(ExpandConstant('{cm:ConfigurationFileCreatedSuccessfully}'), [CONFIG_PATH]))
     else
-    begin
-        MsgBox(ExpandConstant('{cm:ErrorCreatingConfigurationFile}'), mbError, MB_OK);
-    end;
-    
+      MsgBox(ExpandConstant('{cm:ErrorCreatingConfigurationFile}'), mbError, MB_OK);
+
     if WizardSilent then
     begin
       if INSTALL_AS_A_SERVICE then
       begin
-        Log(ExpandConstant('{cm:InstallingOCSInventoryAgentAsAService}'));
+        Step := Step + 1;
+        UpdateNativeProgress(
+          Format('%d/%d - %s', [Step, TotalSteps, ExpandConstant('{cm:StepCreateService}')]),
+          ExpandConstant('{app}\{#ServiceExeName}'));
+
         if Exec('sc.exe',
                 'create "OCSInventory Agent" binpath= "' + ExpandConstant('{app}\{#ServiceExeName}') + '" start= "auto"',
                 '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
         begin
           Log(ExpandConstant('{cm:ServiceCreatedSuccessfully}'));
+          Step := Step + 1;
+          UpdateNativeProgress(
+            Format('%d/%d - %s', [Step, TotalSteps, ExpandConstant('{cm:StepSetServiceDesc}')]),
+            ExpandConstant('{cm:ServiceDescription}'));
+
           if Exec('sc.exe',
                   'description "OCSInventory Agent" "' + ExpandConstant('{cm:ServiceDescription}') + '"',
                   '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
             Log(ExpandConstant('{cm:ServiceDescriptionSetSuccessfully}'))
           else
             MsgBox(ExpandConstant('{cm:ServiceDescriptionFailed}'), mbError, MB_OK);
+
+          Step := Step + 1;
+          UpdateNativeProgress(
+            Format('%d/%d - %s', [Step, TotalSteps, ExpandConstant('{cm:StepStartService}')]),
+            'sc start "OCSInventory Agent"');
 
           if Exec('sc.exe', 'start "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
             Log(ExpandConstant('{cm:ServiceStartedSuccessfully}'))
@@ -471,6 +579,11 @@ begin
       end
       else if RUN_NOW then
       begin
+        Step := Step + 1;
+        UpdateNativeProgress(
+          Format('%d/%d - %s', [Step, TotalSteps, ExpandConstant('{cm:StepRunAgentNow}')]),
+          ExpandConstant('{app}\{#AppExeName}'));
+
         if Exec(ExpandConstant('{app}\{#AppExeName}'), '', '', SW_HIDE, ewNoWait, ResultCode) then
           Log(ExpandConstant('{cm:OCSInventoryAgentStarted}'))
         else
@@ -481,45 +594,55 @@ begin
     begin
       if InstallAsAServiceCheckBox.Checked then
       begin
-        Log(ExpandConstant('{cm:InstallingOCSInventoryAgentAsAService}'));
-        if Exec('sc.exe', 'create "OCSInventory Agent" binpath= "' + ExpandConstant('{app}\{#ServiceExeName}') + '" start= "auto"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+        Step := Step + 1;
+        UpdateNativeProgress(
+          Format('%d/%d - %s', [Step, TotalSteps, ExpandConstant('{cm:StepCreateService}')]),
+          ExpandConstant('{app}\{#ServiceExeName}'));
+
+        if Exec('sc.exe',
+                'create "OCSInventory Agent" binpath= "' + ExpandConstant('{app}\{#ServiceExeName}') + '" start= "auto"',
+                '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
         begin
           Log(ExpandConstant('{cm:ServiceCreatedSuccessfully}'));
-          if Exec('sc.exe', 'description "OCSInventory Agent" "' + ExpandConstant('{cm:ServiceDescription}') + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
-          begin
-            Log(ExpandConstant('{cm:ServiceDescriptionSetSuccessfully}'));
-          end
+          Step := Step + 1;
+          UpdateNativeProgress(
+            Format('%d/%d - %s', [Step, TotalSteps, ExpandConstant('{cm:StepSetServiceDesc}')]),
+            ExpandConstant('{cm:ServiceDescription}'));
+
+          if Exec('sc.exe',
+                  'description "OCSInventory Agent" "' + ExpandConstant('{cm:ServiceDescription}') + '"',
+                  '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+            Log(ExpandConstant('{cm:ServiceDescriptionSetSuccessfully}'))
           else
-          begin
             MsgBox(ExpandConstant('{cm:ServiceDescriptionFailed}'), mbError, MB_OK);
-          end;
+
+          Step := Step + 1;
+          UpdateNativeProgress(
+            Format('%d/%d - %s', [Step, TotalSteps, ExpandConstant('{cm:StepStartService}')]),
+            'sc start "OCSInventory Agent"');
 
           if Exec('sc.exe', 'start "OCSInventory Agent"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
-          begin
-            Log(ExpandConstant('{cm:ServiceStartedSuccessfully}'));
-          end
+            Log(ExpandConstant('{cm:ServiceStartedSuccessfully}'))
           else
-          begin
             MsgBox(ExpandConstant('{cm:ServiceStartFailed}'), mbError, MB_OK);
-          end;
         end
         else
-        begin
           MsgBox(ExpandConstant('{cm:ServiceCreateFailed}'), mbError, MB_OK);
-        end;
       end
       else if RunNowCheckBox.Checked then
       begin
+        Step := Step + 1;
+        UpdateNativeProgress(
+          Format('%d/%d - %s', [Step, TotalSteps, ExpandConstant('{cm:StepRunAgentNow}')]),
+          ExpandConstant('{app}\{#AppExeName}'));
+
         if Exec(ExpandConstant('{app}\{#AppExeName}'), '', '', SW_HIDE, ewNoWait, ResultCode) then
-        begin
-          Log(ExpandConstant('{cm:OCSInventoryAgentStarted}'));
-        end
+          Log(ExpandConstant('{cm:OCSInventoryAgentStarted}'))
         else
-        begin
           MsgBox(ExpandConstant('{cm:FailedToRunOCSInventoryAgent}'), mbError, MB_OK);
-        end;
       end;
     end;
+    UpdateNativeProgress(ExpandConstant('{cm:StepDone}'), '');
   end;
 end;
 
@@ -575,13 +698,14 @@ DataDirectoryDoesNotExist=Data directory does not exist: %s
 DataDirectoryExist=Data directory exists: %s
 DataDirectoryRemovedSuccessfully=Data directory removed successfully: %s
 ErrorCreatingConfigurationFile=Error creating configuration file.
-ErrorCreatingConfigurationFile=Error creating configuration file.
 ErrorCreatingDataDirectory=Error creating data directory.
 ErrorMandatoryField=The field %s is mandatory.
 FailedToRemoveDataDirectory=Failed to remove data directory: %s
 FailedToRunOCSInventoryAgent=Failed to run OCS Inventory Agent.
 InstallAsAService=Install agent as a service
 InstallingOCSInventoryAgentAsAService=Installing OCS Inventory Agent as a service...
+InstallProgressDesc=Please wait while the installer performs the required steps.
+InstallProgressTitle=Installation details
 InventorySectionTitle=Inventory
 LogLevel=Log level
 LogLevel0=Critical
@@ -608,6 +732,14 @@ ServiceStartedSuccessfully=Service started successfully.
 ServiceStartFailed=Failed to start service.
 ServiceStopFailed=Failed to stop service.
 StartingOCSInventoryAgentSetup=Starting OCS Inventory Agent Setup...
+StepCreateDataDir=Creating/validating data directory...
+StepCreateService=Creating Windows service...
+StepDone=All steps completed.
+StepRunAgentNow=Running agent once...
+StepSetServiceDesc=Setting service description...
+StepStartService=Starting service...
+StepUninstallPrevious=Uninstalling previous version...
+StepWriteConfig=Writing configuration file...
 URL=URL
 Username=Username
 ValidateCertificate=Validate certificate
@@ -630,13 +762,14 @@ french.DataDirectoryDoesNotExist=Le répertoire de données n'existe pas : %s
 french.DataDirectoryExist=Le répertoire de données existe : %s
 french.DataDirectoryRemovedSuccessfully=Répertoire de données supprimé avec succès : %s
 french.ErrorCreatingConfigurationFile=Erreur lors de la création du fichier de configuration.
-french.ErrorCreatingConfigurationFile=Erreur lors de la création du fichier de configuration.
 french.ErrorCreatingDataDirectory=Erreur lors de la création du répertoire de données.
 french.ErrorMandatoryField=Le champ %s est obligatoire.
 french.FailedToRemoveDataDirectory=Échec de la suppression du répertoire de données : %s
 french.FailedToRunOCSInventoryAgent=Échec de l'exécution de l'agent OCS Inventory.
 french.InstallAsAService=Installer l'agent en tant que service
 french.InstallingOCSInventoryAgentAsAService=Installation de l'agent OCS Inventory en tant que service...
+french.InstallProgressDesc=Veuillez patienter pendant l'exécution des opérations.
+french.InstallProgressTitle=Détails de l'installation
 french.InventorySectionTitle=Inventaire
 french.LogLevel=Niveau de journalisation
 french.LogLevel0=Critique
@@ -663,6 +796,14 @@ french.ServiceStartedSuccessfully=Service démarré avec succès.
 french.ServiceStartFailed=Échec du démarrage du service.
 french.ServiceStopFailed=Échec de l'arrêt du service.
 french.StartingOCSInventoryAgentSetup=Début de l'installation de l'agent OCS Inventory...
+french.StepCreateDataDir=Création/vérification du répertoire de données...
+french.StepCreateService=Création du service Windows...
+french.StepDone=Toutes les opérations sont terminées.
+french.StepRunAgentNow=Exécution ponctuelle de l'agent...
+french.StepSetServiceDesc=Définition de la description du service...
+french.StepStartService=Démarrage du service...
+french.StepUninstallPrevious=Désinstallation de la version précédente...
+french.StepWriteConfig=Écriture du fichier de configuration...
 french.URL=URL
 french.Username=Nom d'utilisateur
 french.ValidateCertificate=Valider le certificat
