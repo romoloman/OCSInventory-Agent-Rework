@@ -269,19 +269,10 @@ class Format {
           break;
       }
 
-      this.getSubInventoryResult(result, field, condition, function);
+      if (condition) {
+        result.putIfAbsent(field['name'], () => function);
+      }
     });
-  }
-
-  /// Build sub-inventory data in [result] based on [field] and with [condition] and [function] parameters.
-  void getSubInventoryResult(Map<String, dynamic> result, dynamic field,
-      bool condition, dynamic function) {
-    if (condition) {
-      result.putIfAbsent(
-        field['name'],
-        () => function,
-      );
-    }
   }
 
   /// Format [result] string to a list of json.
