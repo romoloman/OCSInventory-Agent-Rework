@@ -53,7 +53,7 @@ class Format {
         break;
 
       case "JSON":
-        value = result[field['retrieval_value']] ?? "";
+        value = result['result'][field['retrieval_value']] ?? "";
         break;
 
       case "REGX":
