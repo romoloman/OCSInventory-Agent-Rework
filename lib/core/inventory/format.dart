@@ -74,7 +74,7 @@ class Format {
 
       case "PTXT":
         try {
-          value = int.parse(result[field['retrieval_value']]);
+          value = int.parse(field['retrieval_value']);
         } catch (e) {
           logger.error(this.runtimeType.toString(), e.toString());
           value = 0;
