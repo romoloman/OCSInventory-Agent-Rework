@@ -180,14 +180,17 @@ class Format {
     Map<String, dynamic>? options,
   ) {
     bool optionsValid = options != null && options.isNotEmpty;
-    final parsedLists = this.useIndex(result, options, optionsValid);
-    final useIndex = parsedLists['use_index']!;
+    final parsedLists = this.parseArray(result, options, optionsValid);
+    final useFirstRowAsHeader = parsedLists['use_index']!;
     final headersList = parsedLists['headers']!;
     final resultRows = parsedLists['rows']!;
     late bool listsValid;
     List<Map<String, dynamic>> jsonResult = [];
 
-    listsValid = resultRows.isNotEmpty && (headersList.isNotEmpty || !useIndex);
+    // useIndex = use first row as header, keeping the name to stay consistent with the server
+
+    listsValid = resultRows.isNotEmpty &&
+        (headersList.isNotEmpty || !useFirstRowAsHeader);
 
     if (!listsValid) {
       logger.warning(
@@ -199,14 +202,15 @@ class Format {
     final filteredResultRows = optionsValid
         ? removeLines(options, optionsValid, resultRows)
         : resultRows;
-    jsonResult =
-        this.convertRowsToJson(filteredResultRows, headersList, useIndex);
+    jsonResult = this.convertRowsToJson(
+        filteredResultRows, headersList, useFirstRowAsHeader);
 
     return jsonResult;
   }
 
-  /// Extracts headers from the [result] string based on use_index option.
-  Map<String, dynamic> useIndex(
+  /// Parses the table as header/rows, splitting rows by newlines and headers
+  /// by spaces if any
+  Map<String, dynamic> parseArray(
       String result, dynamic options, bool optionsValid) {
     List<String> resultRows;
     List<String> headersList;
@@ -234,31 +238,36 @@ class Format {
     }
   }
 
-  /// Remove raws in [resultRows] based on the remove_line option.
+  /// Remove as many rows from [resultRows] as options['remove_line'] specifies
   List<String> removeLines(Map<String, dynamic>? options, bool optionsValid,
       List<String> resultRows) {
-    int? linesRemoved;
-    int rowIndex = 0;
-
-    try {
-      linesRemoved = int.tryParse(options!['remove_line'].toString());
-    } catch (e) {
-      logger.warning(this.runtimeType.toString(),
-          "Invalid value for 'remove_line': expected an integer: $e");
-
+    if (options == null || !optionsValid) {
+      logger.warning(
+          this.runtimeType.toString(), "Options are invalid or null.");
       return resultRows;
     }
 
-    if (linesRemoved != null) {
-      while (rowIndex != linesRemoved) {
-        if (rowIndex >= 0 && rowIndex < resultRows.length) {
-          resultRows.removeAt(rowIndex);
-          logger.debug(
-              this.runtimeType.toString(), 'Line "$rowIndex" removed.');
-        }
-
-        ++rowIndex;
+    int? linesRemoved;
+    try {
+      linesRemoved = int.tryParse(options['remove_line'].toString());
+      if (linesRemoved == null || linesRemoved < 0) {
+        throw FormatException("Invalid 'remove_line' value");
       }
+    } catch (e) {
+      logger.warning(
+          this.runtimeType.toString(), "Invalid value for 'remove_line': $e");
+      return resultRows;
+    }
+
+    if (linesRemoved > resultRows.length) {
+      logger.warning(this.runtimeType.toString(),
+          "'remove_line' exceeds the number of available rows.");
+      return resultRows;
+    }
+
+    for (int i = 0; i < linesRemoved; i++) {
+      resultRows.removeAt(0);
+      logger.debug(this.runtimeType.toString(), 'Line $i removed from result');
     }
 
     return resultRows;
@@ -267,52 +276,45 @@ class Format {
   /// Convert [resultRows] to json format.
   List<Map<String, dynamic>> convertRowsToJson(
       List<String> resultRows, List<String> headersList, bool useIndex) {
-    List<String> resultFields;
-    Map<String, dynamic> jsonLine;
     List<Map<String, dynamic>> jsonResult = [];
 
-    resultRows.forEach((row) {
-      resultFields = row.split(RegExp(r'\s+'));
-      jsonLine = {};
+    for (var row in resultRows) {
+      List<String> resultFields = row.split(RegExp(r'\s+'));
+      Map<String, dynamic> jsonLine = {};
 
-      resultFields.asMap().forEach((i, field) {
-        String key = useIndex ? headersList[i] : i.toString();
+      for (int i = 0; i < resultFields.length; i++) {
+        String key;
+        if (useIndex) {
+          if (i < headersList.length) {
+            key = headersList[i];
+          } else {
+            logger.warning(this.runtimeType.toString(),
+                "Header index $i out of bounds for headersList.");
+            continue;
+          }
+        } else {
+          key = i.toString();
+        }
 
-        jsonLine.putIfAbsent(key, () => field);
-      });
+        jsonLine[key] = resultFields[i];
+      }
 
       jsonResult.add(jsonLine);
-    });
+    }
 
     return jsonResult;
   }
 
-  /// Extract [commandTarget] or [submap] from [decodedMainResult] based on [mainOptions].
-  List<Map<String, dynamic>> getJsonSubmap(List<dynamic> decodedMainResult,
-      dynamic mainOptions, dynamic commandTarget, String? submap) {
-    dynamic formattedResult;
-    List<Map<String, dynamic>> formattedResultList = [];
+  /// Extract [submap] from JSON [decodedResult]
+  List<Map<String, dynamic>> getJsonSubmap(
+      List<dynamic> decodedResult, String? submap) {
     List<Map<String, dynamic>> processedResults = [];
-    late List<Map<String, dynamic>> subResults;
-
-    // If the OS is MacOS, we need to access to element[commandTarget]
-    for (Map<String, dynamic> element in decodedMainResult) {
-      formattedResult =
-          commandTarget != null ? element[commandTarget] : element;
-
-      if (formattedResult is List) {
-        formattedResultList
-            .addAll(formattedResult.cast<Map<String, dynamic>>());
-      } else {
-        formattedResultList.add(formattedResult);
-      }
-    }
 
     if (submap != null) {
+      // submap format can be key.key
       for (var key in submap.split('.')) {
-        subResults = [];
-
-        for (var element in formattedResultList) {
+        List<Map<String, dynamic>> subResults = [];
+        for (var element in decodedResult) {
           if (element.containsKey(key)) {
             var subElement = element[key];
             if (subElement is List) {
@@ -322,36 +324,44 @@ class Format {
             }
           } else {
             logger.warning(this.runtimeType.toString(),
-                'Unable to find the "$key" submap.');
+                'Unable to find the submap key "$key" in the result $decodedResult');
           }
         }
-
         processedResults = subResults;
       }
-    } else {
-      processedResults = formattedResultList;
     }
 
     return processedResults;
   }
 
-  /// Format [mainResult] based on [mainOptions].
-  List<String> formatRegx(dynamic mainResult, dynamic mainOptions) {
+  /// Parse the [result] using separator and multiple in [options]
+  /// If a separator is defined, we use it to split the result into blocks
+  /// If multiple is true, we split the blocks by newlines
+  /// If none of these options are defined, we return the original result
+  List<String> parseRegx(dynamic result, dynamic options) {
     RegExp? blockSeparator;
-    final rawSeparator = mainOptions['separator'];
-    if (mainOptions['multiple'] == "true") mainOptions['multiple'] = true;
-    bool multiple = mainOptions['multiple'] ?? false;
-    late List<String> blocksList;
+    final rawSeparator = options['separator'];
+    final bool multiple =
+        options['multiple'] == true || options['multiple'] == 'true';
 
-    if (rawSeparator is String && rawSeparator.trim().isNotEmpty)
-      blockSeparator = RegExp("(?=${rawSeparator})");
+    List<String> blocksList;
+    if (rawSeparator is String && rawSeparator.trim().isNotEmpty) {
+      try {
+        // consume separator
+        blockSeparator = RegExp("${rawSeparator}");
+      } catch (e) {
+        logger.error(this.runtimeType.toString(), "Invalid regex: $e");
+        return [result];
+      }
+    }
 
-    blocksList = blockSeparator != null
-        ? mainResult.split(blockSeparator)
-        : [mainResult];
-
-    if (multiple)
+    blocksList =
+        blockSeparator != null ? result.split(blockSeparator) : [result];
+    if (multiple) {
       blocksList = blocksList.expand((block) => block.split('\n')).toList();
+    }
+    // remove empty entries that may result from splitting
+    blocksList = blocksList.where((block) => block.trim().isNotEmpty).toList();
 
     return blocksList;
   }
