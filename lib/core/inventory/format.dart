@@ -49,7 +49,7 @@ class Format {
 
     switch (retrievalMethod) {
       case "TBLE":
-        value = result[field['retrieval_value']] ?? "";
+        value = result['result'][field['retrieval_value']] ?? "";
         break;
 
       case "JSON":
@@ -180,51 +180,49 @@ class Format {
     Map<String, dynamic>? options,
   ) {
     bool optionsValid = options != null && options.isNotEmpty;
-    final parsedLists = this.parseArray(result, options, optionsValid);
-    final useFirstRowAsHeader = parsedLists['use_index']!;
-    final headersList = parsedLists['headers']!;
-    final resultRows = parsedLists['rows']!;
-    late bool listsValid;
+    final bool useFirstRowAsHeader =
+        options?['use_index'] == true || options?['use_index'] == 'true';
     List<Map<String, dynamic>> jsonResult = [];
 
-    // useIndex = use first row as header, keeping the name to stay consistent with the server
+    // first we parse the array (this will removes lines if needed)
+    final parsedArray = this.parseArray(result, options, optionsValid);
+    // now we get the headers
+    List<String> headersList =
+        this.parseHeaders(parsedArray['rows'], parsedArray['use_index']);
 
-    listsValid = resultRows.isNotEmpty &&
-        (headersList.isNotEmpty || !useFirstRowAsHeader);
-
-    if (!listsValid) {
-      logger.warning(
-          this.runtimeType.toString(), "Unable to get results from table.");
-
-      return jsonResult;
-    }
-
-    final filteredResultRows = optionsValid
-        ? removeLines(options, optionsValid, resultRows)
-        : resultRows;
     jsonResult = this.convertRowsToJson(
-        filteredResultRows, headersList, useFirstRowAsHeader);
+        parsedArray['rows'], headersList, useFirstRowAsHeader);
 
     return jsonResult;
   }
 
+  parseHeaders(List<String> resultRows, bool useFirstRowAsHeader) {
+    // useIndex = use first row as header, keeping the name to stay consistent with the server
+    List<String> headersList = [];
+    if (useFirstRowAsHeader) {
+      headersList = resultRows.removeAt(0).split(RegExp(r'\s+'));
+    }
+    return headersList;
+  }
+
   /// Parses the table as header/rows, splitting rows by newlines and headers
-  /// by spaces if any
+  /// by spaces if any. Removes lines if needed
   Map<String, dynamic> parseArray(
       String result, dynamic options, bool optionsValid) {
     List<String> resultRows;
-    List<String> headersList;
     bool useIndex;
 
     useIndex = optionsValid && options?['use_index'] == true;
 
     try {
       resultRows = result.split("\n");
-      headersList = resultRows.removeAt(0).split(RegExp(r'\s+'));
-
+      // trimming to avoid misinterpreting spaces at start/end
+      resultRows = resultRows.map((row) => row.trim()).toList();
+      if (optionsValid && options?['remove_line'] != null) {
+        resultRows = removeLines(options, optionsValid, resultRows);
+      }
       return {
         'use_index': useIndex,
-        'headers': headersList,
         'rows': resultRows,
       };
     } catch (e) {
@@ -232,7 +230,6 @@ class Format {
 
       return {
         'use_index': useIndex,
-        'headers': [],
         'rows': [],
       };
     }
