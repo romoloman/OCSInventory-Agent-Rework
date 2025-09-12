@@ -29,6 +29,151 @@ class Format {
   /// Constructor.
   Format(this.logger, this.commands);
 
+  /// Extract the value of a field from a list of results
+  extractValue(Map<String, dynamic> field, Map<String, dynamic> result) {
+    bool override = field['override_target'];
+    String retrievalMethod;
+    dynamic value;
+
+    // two cases here:
+    // 1. field is an override = we used the retrieval output of the field + its overriden result
+    // 2. field is not an override = we used the retrieval output of the section + main result
+    if (override) {
+      retrievalMethod = field['retrieval_output'];
+      result = result['override']
+          .firstWhere((element) => element['name'] == field['name']);
+    } else {
+      retrievalMethod = result['main']['type'];
+      result = result['main'];
+    }
+
+    switch (retrievalMethod) {
+      case "TBLE":
+        value = result[field['retrieval_value']] ?? "";
+        break;
+
+      case "JSON":
+        value = result[field['retrieval_value']] ?? "";
+        break;
+
+      case "REGX":
+        RegExp regex = RegExp(field['retrieval_value']);
+
+        dynamic match = regex.firstMatch(result['result']);
+        value = regex.hasMatch(result['result']);
+        if (match != null) {
+          if ((match.groupCount >= 1) && (match.group(1) != null)) {
+            value = match.group(1);
+          } else {
+            value = match.group(0);
+          }
+        } else {
+          value = "";
+        }
+        break;
+
+      case "PTXT":
+        try {
+          value = int.parse(result[field['retrieval_value']]);
+        } catch (e) {
+          logger.error(this.runtimeType.toString(), e.toString());
+          value = 0;
+        }
+        // split by lines or get a single line
+        List<String> lines = result['result'].contains('\n')
+            ? result['result'].split('\n')
+            : [result['result']];
+        value = value >= 0 && value < lines.length ? lines[value] : "";
+
+        break;
+
+      case "GREP":
+        value = result[field['retrieval_value']] ?? "";
+
+        final index = result[field['retrieval_value']].indexOf(value) ?? -1;
+        final start = index + value.length + 1;
+
+        if (index == -1) {
+          logger.warning(this.runtimeType.toString(),
+              "Retrieval value '$value' not found in: $result");
+          return;
+        }
+
+        if (start >= result[field['retrieval_value']].length) {
+          logger.error(this.runtimeType.toString(),
+              "Start index $start out of bounds for: $result");
+          return;
+        }
+
+        value = result[field['retrieval_value']].substring(start);
+        break;
+
+      default:
+        logger.warning(
+            this.runtimeType.toString(), "Unknown method : $retrievalMethod");
+        break;
+    }
+
+    value = value.trim();
+    return value;
+  }
+
+  /// Format the result of a section and overrided fields
+  void formatResult(Map<String, dynamic> section, Map<String, dynamic> result) {
+    // format main result
+    if (result['main'] != null) {
+      result['main']['result'] = formatContent(
+        section['retrieval_output'],
+        result['main']['result'],
+        result['main']['options'],
+      );
+    }
+
+    // format overrides
+    if (result['override'] is List) {
+      final overrides = result['override'] as List;
+      for (var field in section['fields'] ?? []) {
+        if (field['override_target'] == true) {
+          final idx = overrides.indexWhere((o) => o['name'] == field['name']);
+          if (idx != -1) {
+            overrides[idx]['result'] = formatContent(
+              field['retrieval_output'],
+              overrides[idx]['result'],
+              overrides[idx]['options'],
+            );
+          }
+        }
+      }
+    }
+  }
+
+  /// Format the content of a field
+  dynamic formatContent(String format, dynamic content, Map? options) {
+    switch (format) {
+      case "TBLE":
+        return formatArray(content, options as Map<String, dynamic>?);
+      case "JSON":
+        try {
+          var decoded = jsonDecode(content);
+          final submap = options?['submap'];
+          decoded = decoded is Map ? [decoded] : decoded;
+          return submap != null ? getJsonSubmap(decoded, submap) : decoded;
+        } catch (e, st) {
+          logger.error("Format", "Error while processing JSON: $e, $st");
+          return content;
+        }
+      case "REGX":
+        return parseRegx(content, options);
+      case "PTXT":
+        return (content as String?)?.trim() ?? '';
+      case "GREP":
+        return (content as String?)?.split("\n").toList() ?? [];
+      default:
+        logger.warning("Format", "Unknown retrieval_output: $format");
+        return content;
+    }
+  }
+
   /// Get the sub-inventory of [resultCommand] for each [fields] based on [method].
   List<dynamic> getByMethod(
       String method, List<dynamic> fields, Map<String, dynamic> resultCommand,
