@@ -114,7 +114,7 @@ class Format {
         break;
     }
 
-    value = value.trim();
+    value = value.toString().trim();
     return value;
   }
 
