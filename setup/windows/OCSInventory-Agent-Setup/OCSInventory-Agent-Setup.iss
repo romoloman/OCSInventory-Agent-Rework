@@ -4,7 +4,7 @@
 #define AppURL "https//www.ocsinventory.com/"
 #define AppExeName "ocsinventory-agent.exe"
 #define ServiceExeName "OCSInventory-Service.exe"
-#define AppPath "C:\Users\antoi\source\repos\OCSInventory-NG\OCSInventory-Agent-Rework"
+#define AppPath "C:\Users\devel\Documents\Rework\OCSInventory-Agent-Rework"
 #define AppGuid "{652EB54C-0A14-46AF-9F06-3BA7C294AFC9}"
 
 [Setup]
@@ -35,7 +35,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 
 [Files]
-Source: "{#AppPath}\setup\windows\OCSInventory-Agent-Setup\payload\OCSInventory-Service\Release\net9.0\win-x64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#AppPath}\setup\windows\OCSInventory-Agent-Setup\payload\OCSInventory-Service\Any CPU\Release\net9.0\win-x64\publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#AppPath}\setup\windows\OCSInventory-Agent-Setup\payload\OCSInventory-Agent\{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
