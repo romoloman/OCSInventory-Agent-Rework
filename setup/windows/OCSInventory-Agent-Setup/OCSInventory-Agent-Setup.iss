@@ -4,7 +4,7 @@
 #define AppURL "https//www.ocsinventory.com/"
 #define AppExeName "ocsinventory-agent.exe"
 #define ServiceExeName "OCSInventory-Service.exe"
-#define AppPath "C:\Users\devel\Documents\Rework\OCSInventory-Agent-Rework"
+#define AppPath "C:\Users\antoi\source\repos\OCSInventory-NG\OCSInventory-Agent-Rework"
 #define AppGuid "{652EB54C-0A14-46AF-9F06-3BA7C294AFC9}"
 
 [Setup]
@@ -35,7 +35,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 
 [Files]
-Source: "{#AppPath}\setup\windows\OCSInventory-Agent-Setup\payload\OCSInventory-Service\Any CPU\Release\net9.0\win-x64\publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#AppPath}\setup\windows\OCSInventory-Agent-Setup\payload\OCSInventory-Service\Release\net9.0\win-x64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#AppPath}\setup\windows\OCSInventory-Agent-Setup\payload\OCSInventory-Agent\{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
@@ -53,7 +53,7 @@ var
   CredsLine, SecLine: TBevel;
   CredsCaption, SecCaption, AgentModeLabel, LogLevelLabel: TNewStaticText;
   hE, hL: Integer;
-  InvCaption, VerbCaption, AgentModeHelp: TNewStaticText;
+  InvCaption, VerbCaption, AgentModeHelp, RunNowHelp: TNewStaticText;
   InvLine, VerbLine: TBevel;
   ResultCode: Integer;
   DidPreUninstall: Boolean;
@@ -135,6 +135,20 @@ begin
   end
   else
     Log('No previous installation found.');
+end;
+
+procedure UpdateRunNowState(Sender: TObject);
+begin
+  if InstallAsAServiceCheckBox.Checked then
+  begin
+    RunNowCheckBox.Checked := True;
+    RunNowCheckBox.Enabled := False;
+  end
+  else
+  begin
+    RunNowCheckBox.Enabled := True;
+    RunNowCheckBox.Checked := False;
+  end;
 end;
 
 procedure InitializeWizard;
@@ -354,21 +368,38 @@ begin
       ExpandConstant('{cm:AgentConfigurationPageDescription}')
     );
 
+    // InstallAsAService
+    InstallAsAServiceCheckBox := TNewCheckBox.Create(CheckPage);
+    InstallAsAServiceCheckBox.Parent := CheckPage.Surface;
+    InstallAsAServiceCheckBox.Top := 0;
+    InstallAsAServiceCheckBox.Left := 0;
+    InstallAsAServiceCheckBox.Width := CheckPage.SurfaceWidth;
+    InstallAsAServiceCheckBox.Caption := ExpandConstant('{cm:InstallAsAService}');
+    InstallAsAServiceCheckBox.Checked := True;
+    InstallAsAServiceCheckBox.OnClick := @UpdateRunNowState;
+
+        // RunNow
     RunNowCheckBox := TNewCheckBox.Create(CheckPage);
     RunNowCheckBox.Parent := CheckPage.Surface;
-    RunNowCheckBox.Top := 0;
+    RunNowCheckBox.Top := InstallAsAServiceCheckBox.Top + 50;
     RunNowCheckBox.Left := 0;
     RunNowCheckBox.Width := CheckPage.SurfaceWidth;
     RunNowCheckBox.Caption := ExpandConstant('{cm:RunNow}');
     RunNowCheckBox.Checked := True;
 
-    InstallAsAServiceCheckBox := TNewCheckBox.Create(CheckPage);
-    InstallAsAServiceCheckBox.Parent := CheckPage.Surface;
-    InstallAsAServiceCheckBox.Top := RunNowCheckBox.Top + 50;
-    InstallAsAServiceCheckBox.Left := 0;
-    InstallAsAServiceCheckBox.Width := CheckPage.SurfaceWidth;
-    InstallAsAServiceCheckBox.Caption := ExpandConstant('{cm:InstallAsAService}');
-    InstallAsAServiceCheckBox.Checked := True;
+    // RunNow help
+    RunNowHelp := TNewStaticText.Create(CheckPage);
+    RunNowHelp.Parent := CheckPage.Surface;
+    RunNowHelp.AutoSize := False;
+    RunNowHelp.WordWrap := True;
+    RunNowHelp.ShowAccelChar := False;
+    RunNowHelp.Left := RunNowCheckBox.Left;
+    RunNowHelp.Top := RunNowCheckBox.Top + RunNowCheckBox.Height + ScaleY(6);
+    RunNowHelp.Width := CheckPage.SurfaceWidth;
+    RunNowHelp.Height := ScaleY(110);
+    RunNowHelp.Caption := ExpandConstant('{cm:RunNowHelp}');
+
+    UpdateRunNowState(nil);
 
     Log(ExpandConstant('{cm:WaitingUserToEnterInputs}'));
   end;
@@ -719,6 +750,7 @@ Password=Password
 RunningInInteractiveMode=Running in interactive mode.
 RunningInSilentMode=Running in silent mode.
 RunNow=Run the agent now
+RunNowHelp=Run now option is managed automatically if the agent is installed as a service. Remove the service installation to manage this option.
 ServerCredentialsGroupTitle=Server credentials (mandatory)
 ServerSecurityGroupTitle=Server security
 ServiceCreatedSuccessfully=Service created successfully.
@@ -783,6 +815,7 @@ french.Password=Mot de passe
 french.RunningInInteractiveMode=Exécution en mode interactif.
 french.RunningInSilentMode=Exécution en mode silencieux.
 french.RunNow=Exécuter l'agent maintenant
+french.RunNowHelp=L'option Exécuter l'agent maintenant est gérée automatiquement si l'agent est installé en tant que service. Supprimez l'installation en tant que service pour gérer cette option.
 french.ServerCredentialsGroupTitle=Identifiants serveur (requis)
 french.ServerSecurityGroupTitle=Sécurité serveur
 french.ServiceCreateFailed=Échec de la création du service.
