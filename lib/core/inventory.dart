@@ -580,6 +580,11 @@ class Inventory {
     return sectionsResult;
   }
 
+  // if at least one value isn't empty
+  anyValueNonEmpty(Map<String, dynamic> fieldResult) {
+    return fieldResult.values.any((value) => value != null && value.isNotEmpty);
+  }
+
   /// Get all informations present in the local [template]
   /// with a [os] verification and format it in json.
   Future<Map<String, dynamic>> getInventoryResult(
@@ -613,16 +618,15 @@ class Inventory {
             resultMulti = result;
             resultMulti['main']['result'] = resultItem;
             fieldResult = getFieldsResults(section['fields'], resultMulti);
-            // if all values in fieldResult are null or empty, we do not add it
-            bool anyValueNonEmpty = fieldResult.values
-                .any((value) => value != null && value.isNotEmpty);
-            if (anyValueNonEmpty) {
+            if (anyValueNonEmpty(fieldResult)) {
               sectionsResult.add(fieldResult);
             }
           }
         } else {
           fieldResult = getFieldsResults(section['fields'], result);
-          sectionsResult.add(fieldResult);
+          if (anyValueNonEmpty(fieldResult)) {
+            sectionsResult.add(fieldResult);
+          }
         }
 
         logger.info(this.runtimeType.toString(),
