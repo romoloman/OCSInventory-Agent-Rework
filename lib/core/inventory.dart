@@ -613,7 +613,12 @@ class Inventory {
             resultMulti = result;
             resultMulti['main']['result'] = resultItem;
             fieldResult = getFieldsResults(section['fields'], resultMulti);
-            sectionsResult.add(fieldResult);
+            // if all values in fieldResult are null or empty, we do not add it
+            bool anyValueNonEmpty = fieldResult.values
+                .any((value) => value != null && value.isNotEmpty);
+            if (anyValueNonEmpty) {
+              sectionsResult.add(fieldResult);
+            }
           }
         } else {
           fieldResult = getFieldsResults(section['fields'], result);
