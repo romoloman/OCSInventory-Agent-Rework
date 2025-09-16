@@ -88,24 +88,16 @@ class Format {
         break;
 
       case "GREP":
-        value = result[field['retrieval_value']] ?? "";
-
-        final index = result[field['retrieval_value']].indexOf(value) ?? -1;
-        final start = index + value.length + 1;
-
-        if (index == -1) {
-          logger.warning(this.runtimeType.toString(),
-              "Retrieval value '$value' not found in: $result");
+        // e.g. retrieval_value = "test" and result = "test 1", we get "1"
+        bool contains = result['result'].contains(field['retrieval_value']);
+        if (contains) {
+          final index =
+              result['result'].indexOf(field['retrieval_value']) ?? -1;
+          final start = index + field['retrieval_value'].length + 1;
+          value = result['result'].substring(start);
+        } else {
           return;
         }
-
-        if (start >= result[field['retrieval_value']].length) {
-          logger.error(this.runtimeType.toString(),
-              "Start index $start out of bounds for: $result");
-          return;
-        }
-
-        value = result[field['retrieval_value']].substring(start);
         break;
 
       default:
