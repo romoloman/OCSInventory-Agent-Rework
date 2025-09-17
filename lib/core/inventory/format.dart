@@ -47,65 +47,68 @@ class Format {
       result = result['main'];
     }
 
-    switch (retrievalMethod) {
-      case "TBLE":
-        value = result['result'][field['retrieval_value']] ?? "";
-        break;
+    try {
+      switch (retrievalMethod) {
+        case "TBLE":
+          value = result['result'][field['retrieval_value']] ?? "";
+          break;
 
-      case "JSON":
-        value = result['result'][field['retrieval_value']] ?? "";
-        break;
+        case "JSON":
+          value = result['result'][field['retrieval_value']] ?? "";
+          break;
 
-      case "REGX":
-        RegExp regex = RegExp(field['retrieval_value']);
-
-        dynamic match = regex.firstMatch(result['result']);
-        value = regex.hasMatch(result['result']);
-        if (match != null) {
-          if ((match.groupCount >= 1) && (match.group(1) != null)) {
-            value = match.group(1);
+        case "REGX":
+          RegExp regex = RegExp(field['retrieval_value']);
+          dynamic match = regex.firstMatch(result['result']);
+          value = regex.hasMatch(result['result']);
+          if (match != null) {
+            if ((match.groupCount >= 1) && (match.group(1) != null)) {
+              value = match.group(1);
+            } else {
+              value = match.group(0);
+            }
           } else {
-            value = match.group(0);
+            value = "";
           }
-        } else {
-          value = "";
-        }
-        break;
+          break;
 
-      case "PTXT":
-        try {
-          value = int.parse(field['retrieval_value']);
-        } catch (e) {
-          logger.error(this.runtimeType.toString(), e.toString());
-          value = 0;
-        }
-        // split by lines or get a single line
-        List<String> lines = result['result'].contains('\n')
-            ? result['result'].split('\n')
-            : [result['result']];
-        value = value >= 0 && value < lines.length ? lines[value] : "";
+        case "PTXT":
+          try {
+            value = int.parse(field['retrieval_value']);
+          } catch (e) {
+            logger.error(this.runtimeType.toString(), e.toString());
+            value = 0;
+          }
+          // split by lines or get a single line
+          List<String> lines = result['result'].contains('\n')
+              ? result['result'].split('\n')
+              : [result['result']];
+          value = value >= 0 && value < lines.length ? lines[value] : "";
 
-        break;
+          break;
 
-      case "GREP":
-        // e.g. retrieval_value = "test" and result = "test 1", we get "1"
-        bool contains = result['result'].contains(field['retrieval_value']);
-        if (contains) {
-          final index =
-              result['result'].indexOf(field['retrieval_value']) ?? -1;
-          final start = index + field['retrieval_value'].length + 1;
-          value = result['result'].substring(start);
-        } else {
-          return;
-        }
-        break;
+        case "GREP":
+          // e.g. retrieval_value = "test" and result = "test 1", we get "1"
+          bool contains = result['result'].contains(field['retrieval_value']);
+          if (contains) {
+            final index =
+                result['result'].indexOf(field['retrieval_value']) ?? -1;
+            final start = index + field['retrieval_value'].length + 1;
+            value = result['result'].substring(start);
+          } else {
+            return;
+          }
+          break;
 
-      default:
-        logger.warning(
-            this.runtimeType.toString(), "Unknown method : $retrievalMethod");
-        break;
+        default:
+          logger.warning(
+              this.runtimeType.toString(), "Unknown method : $retrievalMethod");
+          break;
+      }
+    } catch (e) {
+      logger.error(this.runtimeType.toString(), e.toString());
+      return "";
     }
-
     value = value.toString().trim();
     return value;
   }
