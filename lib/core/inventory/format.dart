@@ -157,7 +157,9 @@ class Format {
           var decoded = jsonDecode(content);
           final submap = options?['submap'];
           decoded = decoded is Map ? [decoded] : decoded;
-          return submap != null ? getJsonSubmap(decoded, submap) : decoded;
+          return submap != null && submap.isNotEmpty
+              ? getJsonSubmap(decoded, submap)
+              : decoded;
         } catch (e, st) {
           logger.error("Format", "Error while processing JSON: $e, $st");
           return content;
@@ -308,24 +310,41 @@ class Format {
     List<Map<String, dynamic>> processedResults = [];
 
     if (submap != null) {
-      // submap format can be key.key
-      for (var key in submap.split('.')) {
-        List<Map<String, dynamic>> subResults = [];
-        for (var element in decodedResult) {
-          if (element.containsKey(key)) {
-            var subElement = element[key];
+      // split submap into keys
+      List<String> keys = submap.split('.');
+
+      // recursive function to traverse the JSON structure
+      void traverse(List<dynamic> elements, List<String> remainingKeys) {
+        if (remainingKeys.isEmpty) {
+          // add if no more keys
+          processedResults.addAll(elements.cast<Map<String, dynamic>>());
+          return;
+        }
+
+        String currentKey = remainingKeys.first;
+        List<String> nextKeys = remainingKeys.sublist(1);
+
+        for (var element in elements) {
+          if (element is Map && element.containsKey(currentKey)) {
+            var subElement = element[currentKey];
             if (subElement is List) {
-              subResults.addAll(subElement.cast<Map<String, dynamic>>());
-            } else {
-              subResults.add(subElement);
+              // continue traversing
+              traverse(subElement, nextKeys);
+            } else if (nextKeys.isEmpty) {
+              // add if no more keys
+              processedResults.add(subElement as Map<String, dynamic>);
             }
+          } else if (nextKeys.isNotEmpty) {
+            traverse([], nextKeys);
           } else {
-            logger.warning(this.runtimeType.toString(),
-                'Unable to find the submap key "$key" in the result $decodedResult');
+            logger.debug(this.runtimeType.toString(),
+                'Unable to find the submap key "$currentKey" in the element $element');
           }
         }
-        processedResults = subResults;
       }
+
+      // start w/ initial keys
+      traverse(decodedResult, keys);
     }
 
     return processedResults;
