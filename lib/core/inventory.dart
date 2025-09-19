@@ -606,7 +606,6 @@ class Inventory {
         // result contains both the section result and the overrided fields results
         result = await getSectionResult(os, template, section);
 
-        // format results first
         // we do so outside the fields loop bc some of the formatting applies to the whole section
         // and some to overriden fields only
         format.formatResult(section, result);
@@ -615,8 +614,11 @@ class Inventory {
         // if list = handle multiple results (e.g. networks)
         if (result['main']['result'] is List) {
           for (var resultItem in result['main']['result']) {
+            // multi = multiple items (rows) in result
             resultMulti = result;
+            // faking the result 'main' structure to make sure we process fields for each item
             resultMulti['main']['result'] = resultItem;
+            // calling getFieldsResults to process entry per entry
             fieldResult = getFieldsResults(section['fields'], resultMulti);
             if (anyValueNonEmpty(fieldResult)) {
               sectionsResult.add(fieldResult);

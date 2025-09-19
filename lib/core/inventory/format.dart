@@ -42,6 +42,11 @@ class Format {
       retrievalMethod = field['retrieval_output'];
       result = result['override']
           .firstWhere((element) => element['name'] == field['name']);
+      // result may be a list of strings if its from an overridden field
+      // since multiple entries are not supported for field overrides there will only be a single entry
+      if (result['result'] is List && result['result'].length == 1) {
+        result['result'] = result['result'][0];
+      }
     } else {
       retrievalMethod = result['main']['type'];
       result = result['main'];
@@ -106,7 +111,7 @@ class Format {
           break;
       }
     } catch (e) {
-      logger.error(this.runtimeType.toString(), e.toString());
+      logger.error(this.runtimeType.toString(), "[${field['name']}] $e");
       return "";
     }
     value = value.toString().trim();
