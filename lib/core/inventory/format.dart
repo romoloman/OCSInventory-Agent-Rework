@@ -59,7 +59,15 @@ class Format {
           break;
 
         case "JSON":
-          value = result['result'][field['retrieval_value']] ?? "";
+          // if retrieval value = key.key, get to the subkey
+          dynamic subObject;
+          if (field['retrieval_value'].contains('.')) {
+            subObject =
+                result['result'][field['retrieval_value'].split('.')[0]];
+            value = subObject[field['retrieval_value'].split('.')[1]] ?? "";
+          } else {
+            value = result['result'][field['retrieval_value']] ?? "";
+          }
           break;
 
         case "REGX":
