@@ -16,6 +16,8 @@
 
 // External package imports
 import 'dart:io';
+import 'dart:convert';
+import 'dart:typed_data';
 
 // Core imports
 import 'package:ocs_agent/core/log.dart';
@@ -33,30 +35,40 @@ class Commands {
     if (field != "") {
       field = " [$field]";
     }
-    logger.debug(this.runtimeType.toString(),
-        "[$section]$field Executing $method: '$target'");
+    logger.debug(
+      runtimeType.toString(),
+      "[$section]$field Executing $method: '$target'",
+    );
+
     final methodParameters = await getMethodParameters(method, target);
-    final process = methodParameters['process'];
-    final commentSubject = methodParameters['commentSubject'];
-    Map<String, Object> processData = {};
+    final process = methodParameters['process'] as ProcessResult?;
+    final commentSubject = methodParameters['commentSubject'] as String?;
+    final Map<String, Object> processData = {};
 
     if (process == null) return processData;
 
-    int exitCode = process.exitCode;
-    String stdout = process.stdout.toString().trim();
-    String stderr = process.stderr.toString().trim();
+    final int exitCode = process.exitCode;
 
-    processData["value"] = (exitCode == 0) ? stdout : "";
+    final String stdoutStr = _decodeBytes(process.stdout).trim();
+    final String stderrStr = _decodeBytes(process.stderr).trim();
+
+    processData["value"] = (exitCode == 0) ? stdoutStr : "";
     processData["status"] = (exitCode == 0);
-    processData["error"] = stderr;
+    processData["error"] = stderrStr;
 
-    if (stderr.isNotEmpty)
-      logger.error(this.runtimeType.toString(),
-          "Executing $commentSubject '$target' - Error: ${stderr}");
+    if (stderrStr.isNotEmpty) {
+      logger.error(
+        runtimeType.toString(),
+        "Executing ${commentSubject ?? 'target'} '$target' - Error: $stderrStr",
+      );
+    }
 
-    if (stdout.isEmpty)
-      logger.warning(this.runtimeType.toString(),
-          "No output for $commentSubject '$target'.");
+    if (stdoutStr.isEmpty) {
+      logger.warning(
+        runtimeType.toString(),
+        "No output for ${commentSubject ?? 'target'} '$target'.",
+      );
+    }
 
     return processData;
   }
@@ -85,8 +97,16 @@ class Commands {
       case "PW":
         executable = "powershell.exe";
         commandArguments = [
+          "-NoLogo",
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
           "-Command",
-          "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $target"
+          r"chcp 65001 > $null; "
+              r"$OutputEncoding = New-Object System.Text.UTF8Encoding($false); "
+              r"[Console]::OutputEncoding = $OutputEncoding; "
+              r"$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'; "
+              "$target"
         ];
         commentSubject = "command";
         break;
@@ -109,7 +129,7 @@ class Commands {
         };
     }
 
-    process = await executeTarget(target, executable, commandArguments);
+    process = await executeTarget(target, executable!, commandArguments!);
 
     return {
       'process': process,
@@ -117,13 +137,17 @@ class Commands {
     };
   }
 
-  // Exécution unifiée avec gestion des erreurs
   Future<ProcessResult?> executeTarget(
       String target, String executable, List<String> commandArguments) async {
     ProcessResult? process;
 
     try {
-      process = await Process.run(executable, commandArguments);
+      process = await Process.run(
+        executable,
+        commandArguments,
+        stdoutEncoding: null,
+        stderrEncoding: null,
+      );
     } on ProcessException catch (e) {
       logger.warning(
         runtimeType.toString(),
@@ -138,9 +162,58 @@ class Commands {
   }
 
   /// Execute or read [target] in terms of [method].
-  Future<String> getResult(
+  Future<String> getTargetResult(
       String method, String target, String section, String field) async {
-    return (await this.processTarget(method, target, section, field))["value"]
+    return (await processTarget(method, target, section, field))["value"]
         .toString();
+  }
+
+  // Dynamic decode output
+  String _decodeBytes(dynamic data) {
+    if (data == null) return '';
+    if (data is String) return data;
+
+    if (data is List<int>) {
+      final bytes = Uint8List.fromList(data);
+
+      // BOM UTF-8: EF BB BF
+      if (bytes.length >= 3 &&
+          bytes[0] == 0xEF &&
+          bytes[1] == 0xBB &&
+          bytes[2] == 0xBF) {
+        return utf8.decode(bytes.sublist(3), allowMalformed: true);
+      }
+
+      // BOM UTF-16LE: FF FE
+      if (bytes.length >= 2 && bytes[0] == 0xFF && bytes[1] == 0xFE) {
+        final b = bytes.sublist(2);
+        final bd = ByteData.sublistView(b);
+        final codeUnits = <int>[];
+        for (var i = 0; i + 1 < b.length; i += 2) {
+          codeUnits.add(bd.getUint16(i, Endian.little));
+        }
+        return String.fromCharCodes(codeUnits);
+      }
+
+      // BOM UTF-16BE: FE FF
+      if (bytes.length >= 2 && bytes[0] == 0xFE && bytes[1] == 0xFF) {
+        final b = bytes.sublist(2);
+        final bd = ByteData.sublistView(b);
+        final codeUnits = <int>[];
+        for (var i = 0; i + 1 < b.length; i += 2) {
+          codeUnits.add(bd.getUint16(i, Endian.big));
+        }
+        return String.fromCharCodes(codeUnits);
+      }
+
+      // try UTF-8 else Latin-1
+      try {
+        return utf8.decode(bytes, allowMalformed: true);
+      } catch (_) {
+        return latin1.decode(bytes, allowInvalid: true);
+      }
+    }
+
+    return data.toString();
   }
 }

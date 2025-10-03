@@ -26,6 +26,7 @@ import 'package:ocs_agent/core/inventory/commands.dart';
 // Common imports
 import 'package:ocs_agent/core/common/files_utils.dart';
 import 'package:ocs_agent/core/common/json_utils.dart';
+import 'package:ocs_agent/core/config.dart';
 
 class BaseWindows {
   late Logger logger;
@@ -45,18 +46,26 @@ class BaseWindows {
 
     logger.info(this.runtimeType.toString(), "Retrieving OS body...");
 
-    /// Command get the mac address list
-    dynamic macAddr;
-    macAddr = (await commands.processTarget(
-        "CMD", "getmac", logType, "MAC ADDRESS"))["value"];
+    String macAddressesResult = (await commands.processTarget(
+            "PW",
+            "Get-NetAdapter | Where-Object {\$_.Status -eq 'Up'} | Select-Object -ExpandProperty MacAddress",
+            logType,
+            "MAC ADDRESS"))["value"]
+        .toString();
 
-    /// RegExp to match mac address
-    RegExp regexMacAddr;
-    regexMacAddr = RegExp(r"([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})");
+    List<String> macAddresses = [];
+    if (macAddressesResult.isNotEmpty) {
+      List<String> rawMacs = macAddressesResult.trim().split('\n');
+      for (String mac in rawMacs) {
+        String trimmedMac = mac.trim();
+        if (trimmedMac.isNotEmpty && !macAddresses.contains(trimmedMac)) {
+          macAddresses.add(trimmedMac);
+        }
+      }
+    }
 
-    /// Get the Mac Address value
-    var getMacAddr;
-    getMacAddr = regexMacAddr.stringMatch(macAddr)!.trim();
+    String macAddressList = macAddresses.join(',');
+    String macAddress = macAddresses.isNotEmpty ? macAddresses.first : "";
 
     /// Command get to get the IP
     String ip;
@@ -106,18 +115,14 @@ class BaseWindows {
           .toString(),
       "uuid": await _getUUID(),
       "srcip": await getIP,
-      "srcmac": (await commands.processTarget(
-              "PW",
-              "Get-NetAdapter | Where-Object {\$_.Status -eq 'Up'} | Select-Object -ExpandProperty MacAddress",
-              logType,
-              "MAC ADDRESS"))["value"]
-          .toString(),
+      "srcmac": macAddressList,
       "domain": (await commands.processTarget(
               "PW",
               "(Get-WMIObject -Class Win32_ComputerSystem).Domain",
               logType,
               "DOMAIN"))["value"]
           .toString(),
+      "agent": Config.agentVersion,
     });
 
     logger.info(this.runtimeType.toString(), "OS body has been retrieved!");

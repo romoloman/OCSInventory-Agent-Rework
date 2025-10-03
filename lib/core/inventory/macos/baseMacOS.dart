@@ -16,10 +16,10 @@
 
 // External package imports
 import 'package:ocs_agent/core/log.dart';
-import 'dart:io';
 
 // Core imports
 import 'package:ocs_agent/core/inventory/commands.dart';
+import 'package:ocs_agent/core/config.dart';
 
 class BaseMacOS {
   late Logger logger;
@@ -63,6 +63,26 @@ class BaseMacOS {
     String? getInterface;
     getInterface = regexpInterface.stringMatch(getDefaultRoute);
 
+    String macAddressesResult = (await commands.processTarget(
+            "BASH",
+            "ifconfig | awk '/^[a-z0-9]+: / { iface=\$1 } /status: active/ { print iface }' | sed 's/://g' | while read iface; do ifconfig \"\$iface\" | awk '/ether / { print \$2 }'; done",
+            logType,
+            "MAC ADDRESS"))["value"]
+        .toString();
+
+    List<String> macAddresses = [];
+    if (macAddressesResult.isNotEmpty) {
+      List<String> rawMacs = macAddressesResult.trim().split('\n');
+      for (String mac in rawMacs) {
+        String trimmedMac = mac.trim();
+        if (trimmedMac.isNotEmpty && !macAddresses.contains(trimmedMac)) {
+          macAddresses.add(trimmedMac);
+        }
+      }
+    }
+
+    String macAddressList = macAddresses.join(',');
+
     /// Get domains list and apply this Regex to get domain
     String listDomains;
     listDomains = (await commands.processTarget(
@@ -71,7 +91,7 @@ class BaseMacOS {
     RegExp regexpDomain;
     regexpDomain = RegExp(r'(?<=search\sdomain\[0\]\s:\s)\w*.[a-z]{0,4}');
     String? getDomain;
-    getDomain = regexpDomain.stringMatch(listDomains)!.trim();
+    getDomain = regexpDomain.stringMatch(listDomains)?.trim() ?? "";
 
     dynamic body = ({
       "name": (await commands.processTarget(
@@ -94,13 +114,9 @@ class BaseMacOS {
               logType,
               "IP ADDRESS"))["value"]
           .toString(),
-      "srcmac": (await commands.processTarget(
-              "BASH",
-              "ifconfig | awk '/^[a-z0-9]+: / { iface=\$1 } /status: active/ { print iface }' | sed 's/://g' | while read iface; do ifconfig \"\$iface\" | awk '/ether / { print \$2 }'; done",
-              logType,
-              "MAC ADDRESS"))["value"]
-          .toString(),
-      "domain": getDomain
+      "srcmac": macAddressList,
+      "domain": getDomain,
+      "agent": Config.agentVersion,
     });
 
     logger.info(this.runtimeType.toString(), "OS body retrieved successfully.");

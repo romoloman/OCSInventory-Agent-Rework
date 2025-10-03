@@ -27,6 +27,7 @@ import 'package:ocs_agent/core/inventory/commands.dart';
 // Common imports
 import 'package:ocs_agent/core/common/files_utils.dart';
 import 'package:ocs_agent/core/common/json_utils.dart';
+import 'package:ocs_agent/core/config.dart';
 
 class BaseLinux {
   late Logger logger;
@@ -86,7 +87,7 @@ class BaseLinux {
         .toString()
         .split("\n");
 
-    String macAddressList = "";
+    List<String> macAddresses = [];
 
     for (final route in interfaces) {
       if (route.isNotEmpty) {
@@ -99,16 +100,17 @@ class BaseLinux {
         final match = exp.firstMatch(getMacAddress);
         if (match != null) {
           final mac = match.namedGroup("mac")?.trim();
-          if (mac != null && !macAddressList.contains(mac)) {
-            macAddressList += '$mac ';
+          if (mac != null && !macAddresses.contains(mac)) {
+            macAddresses.add(mac);
           }
         }
       }
     }
 
-    String? macAddress = macAddressList.split(' ')[0];
+    String macAddressList = macAddresses.join(',');
+    String? macAddress = macAddresses.isNotEmpty ? macAddresses.first : null;
 
-    if (macAddress == "") {
+    if (macAddress == null || macAddress.isEmpty) {
       logger.warning(
           this.runtimeType.toString(), "No valid MAC address found.");
       return null;
@@ -135,7 +137,8 @@ class BaseLinux {
           .split(" ")[0],
       "srcmac": macAddressList,
       "domain": (await commands.processTarget(
-          "BASH", "hostname -d", logType, "DOMAIN"))["value"]
+          "BASH", "hostname -d", logType, "DOMAIN"))["value"],
+      "agent": Config.agentVersion,
     });
 
     logger.info(this.runtimeType.toString(), "OS body retrieved successfully.");

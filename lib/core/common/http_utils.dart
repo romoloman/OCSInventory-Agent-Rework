@@ -101,21 +101,30 @@ class HTTPUtils {
   }
 
   /// Do a get HTTP query
-  Future<Map<String, dynamic>> get(
-      Uri uri, Map<String, String>? headers) async {
-    var returnObject = new Map<String, dynamic>();
+  Future<Map<String, dynamic>> get(Uri url, Map<String, String> headers) async {
+    final client = HttpClient()..autoUncompress = true;
     try {
-      var query = await ioClient.get(uri, headers: headers);
-      returnObject["body"] = query.body;
-      returnObject["status_code"] = query.statusCode;
-      returnObject["message"] =
-          statusCodeMessage("GET", query.statusCode, query.body);
-    } catch (exception) {
-      logger.error(this.runtimeType.toString(),
-          sprintf("HTTP query: %s", [exception.toString().trim()]));
-      returnObject["error"] = true;
+      final req = await client.getUrl(url);
+      headers.forEach(req.headers.add);
+
+      final resp = await req.close();
+      final bytes = await resp.fold<List<int>>([], (a, b) => a..addAll(b));
+      final bodyUtf8 = utf8.decode(bytes, allowMalformed: true);
+
+      final headersMap = <String, String>{};
+      resp.headers.forEach((name, values) {
+        headersMap[name.toLowerCase()] = values.join(', ');
+      });
+
+      return {
+        "status_code": resp.statusCode,
+        "message": "[GET] [${resp.statusCode}] $bodyUtf8",
+        "body": bodyUtf8,
+        "headers": headersMap,
+      };
+    } finally {
+      client.close(force: true);
     }
-    return returnObject;
   }
 
   /// Do a patch HTTP query
