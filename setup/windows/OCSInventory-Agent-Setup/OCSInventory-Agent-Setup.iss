@@ -4,7 +4,7 @@
 #define AppURL "https//www.ocsinventory.com/"
 #define AppExeName "ocsinventory-agent.exe"
 #define ServiceExeName "OCSInventory-Service.exe"
-#define AppPath "C:\Users\devel\Documents\Rework\OCSInventory-Agent-Rework"
+#define AppPath "../../.."
 #define AppGuid "{652EB54C-0A14-46AF-9F06-3BA7C294AFC9}"
 
 [Setup]
