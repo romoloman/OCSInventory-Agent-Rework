@@ -840,7 +840,7 @@ class Inventory {
                 filesUtils.writeFile(inventoryBase64, "{}");
               }
 
-              logger.info(this.runtimeType.toString(), "Base64 file found.");
+              logger.info(this.runtimeType.toString(), "Base64 file created.");
               var fileBase64 = jsonDecode(inventoryBase64.readAsStringSync());
 
               sectionJson.forEach((newKey, newValue) {
