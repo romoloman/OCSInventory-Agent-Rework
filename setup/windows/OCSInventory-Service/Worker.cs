@@ -105,9 +105,15 @@ namespace OCSInventory_Service
                         var delaySeconds = Math.Clamp(code, 1, 30);
                         await Task.Delay(TimeSpan.FromSeconds(delaySeconds), stoppingToken);
                     }
+                    catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                    {
+                        _logger.LogInformation("Cancellation requested; stopping worker loop.");
+                        break;
+                    }
+                    // Autres erreurs réelles
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "An error occurred while executing the worker.");
+                        _logger.LogError(ex, "Unhandled error in worker loop.");
                     }
                     finally
                     {

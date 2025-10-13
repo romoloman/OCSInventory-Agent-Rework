@@ -203,15 +203,8 @@ You can create your package (if needed) with Inno setup by using `Setup OCS Inve
 
 - Download and Install Inno Setup. You can download it from [here](https://jrsoftware.org/isinfo.php).
 - Run Inno Setup and open the `Setup OCS Inventory Agent.iss` script
-- Set up the script, specifying the `Agent path`
 - Build the package using Inno Setup's build feature
 - The resulting installer will be created in `/setup/windows/` directory
-
-For example, if you want to create your own package, you need to adjust the agent path according to your local setup like this:
-
-```text
-#define AgentPath "path where your agent are located\OCSInventory-Agent-Rework"
-```
 
 #### 3. Installing the Windows agent non-interactively
 
