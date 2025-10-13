@@ -838,9 +838,13 @@ class Inventory {
                     "Can't find base64 file, creating one...");
                 inventoryBase64.createSync(recursive: true);
                 filesUtils.writeFile(inventoryBase64, "{}");
+
+                logger.info(
+                    this.runtimeType.toString(), "Base64 file created.");
+              } else {
+                logger.info(this.runtimeType.toString(), "Base64 file found.");
               }
 
-              logger.info(this.runtimeType.toString(), "Base64 file created.");
               var fileBase64 = jsonDecode(inventoryBase64.readAsStringSync());
 
               sectionJson.forEach((newKey, newValue) {
