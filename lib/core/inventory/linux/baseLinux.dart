@@ -1,5 +1,5 @@
 // OCSInventory Agent
-// Copyright (C) OCSInventory-NG
+// Copyright (C) OCSInventory
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -85,7 +85,7 @@ class BaseLinux {
         .toString()
         .split("\n");
 
-    String macAddressList = "";
+    List<String> macAddresses = [];
 
     for (final route in interfaces) {
       if (route.isNotEmpty) {
@@ -98,16 +98,17 @@ class BaseLinux {
         final match = exp.firstMatch(getMacAddress);
         if (match != null) {
           final mac = match.namedGroup("mac")?.trim();
-          if (mac != null && !macAddressList.contains(mac)) {
-            macAddressList += '$mac ';
+          if (mac != null && !macAddresses.contains(mac)) {
+            macAddresses.add(mac);
           }
         }
       }
     }
 
-    String? macAddress = macAddressList.split(' ')[0];
+    String macAddressList = macAddresses.join(',');
+    String? macAddress = macAddresses.isNotEmpty ? macAddresses.first : null;
 
-    if (macAddress == "") {
+    if (macAddress == null || macAddress.isEmpty) {
       logger.warning(
           this.runtimeType.toString(), "No valid MAC address found.");
       return null;

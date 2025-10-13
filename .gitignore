@@ -68,3 +68,9 @@ setup/linux/ocsinventory-service
 # VS Code
 .vscode/
 
+# Service ignored files
+.vs/
+bin/
+obj/
+logs/
+Setup/Output

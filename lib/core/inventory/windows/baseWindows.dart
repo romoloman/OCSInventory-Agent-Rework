@@ -1,5 +1,5 @@
 // OCSInventory Agent
-// Copyright (C) OCSInventory-NG
+// Copyright (C) OCSInventory
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -44,18 +44,26 @@ class BaseWindows {
 
     logger.info(this.runtimeType.toString(), "Retrieving OS body...");
 
-    /// Command get the mac address list
-    dynamic macAddr;
-    macAddr = (await commands.processTarget(
-        "CMD", "getmac", logType, "MAC ADDRESS"))["value"];
+    String macAddressesResult = (await commands.processTarget(
+            "PW",
+            "Get-NetAdapter | Where-Object {\$_.Status -eq 'Up'} | Select-Object -ExpandProperty MacAddress",
+            logType,
+            "MAC ADDRESS"))["value"]
+        .toString();
 
-    /// RegExp to match mac address
-    RegExp regexMacAddr;
-    regexMacAddr = RegExp(r"([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})");
+    List<String> macAddresses = [];
+    if (macAddressesResult.isNotEmpty) {
+      List<String> rawMacs = macAddressesResult.trim().split('\n');
+      for (String mac in rawMacs) {
+        String trimmedMac = mac.trim();
+        if (trimmedMac.isNotEmpty && !macAddresses.contains(trimmedMac)) {
+          macAddresses.add(trimmedMac);
+        }
+      }
+    }
 
-    /// Get the Mac Address value
-    var getMacAddr;
-    getMacAddr = regexMacAddr.stringMatch(macAddr)!.trim();
+    String macAddressList = macAddresses.join(',');
+    String macAddress = macAddresses.isNotEmpty ? macAddresses.first : "";
 
     /// Command get to get the IP
     String ip;
@@ -103,14 +111,9 @@ class BaseWindows {
               logType,
               "OS VERSION"))["value"]
           .toString(),
-      "uuid": await _getUUID(name, getMacAddr),
+      "uuid": await _getUUID(name, macAddress),
       "srcip": await getIP,
-      "srcmac": (await commands.processTarget(
-              "PW",
-              "Get-NetAdapter | Where-Object {\$_.Status -eq 'Up'} | Select-Object -ExpandProperty MacAddress",
-              logType,
-              "MAC ADDRESS"))["value"]
-          .toString(),
+      "srcmac": macAddressList,
       "domain": (await commands.processTarget(
               "PW",
               "(Get-WMIObject -Class Win32_ComputerSystem).Domain",
