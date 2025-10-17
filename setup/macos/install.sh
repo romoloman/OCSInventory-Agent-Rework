@@ -59,7 +59,7 @@ execCommand() {
 	local successMessage="$2"
 	local errorMessage="$3"
 
-	if eval "$command" >/dev/null 2>/dev/null; then
+	if $command >/dev/null 2>/dev/null; then
 		log "$successMessage" false
 	else
 		log "$errorMessage" false
@@ -209,7 +209,7 @@ check_installed_agent() {
 copy_agent_contents() {
 	check_installed_agent
 
-	execCommand "cp -r $WORKING_DIRECTORY$AGENT_EXEC $AGENT_DIR" "Copied agent contents to $AGENT_DIR" "Failed to copy agent contents."
+	execCommand "cp -r $WORKING_DIRECTORY$AGENT_EXEC $AGENT_DIR" "Copied agent binary to $AGENT_DIR" "Failed to copy agent binary."
 
 	execCommand "chmod +x $AGENT_DIR$AGENT_EXEC" "Made the agent executable: $AGENT_DIR$AGENT_EXEC" "Failed to make the agent executable."
 
@@ -227,7 +227,7 @@ create_config_file() {
 
 	if [ ! -f "$CONFIG_PATH/config.json" ]; then
 		execCommand "touch $CONFIG_PATH/config.json" "Created configuration file: $CONFIG_PATH/config.json" "Failed to create configuration file."
-		echo "{\"url\": \"$URL\", \"username\": \"$USERNAME\", \"password\": \"$PASSWORD\", \"mode\": $INVENTORY_MODE, \"log_level\": $LOG_LEVEL, \"log_file\": $LOG_FILE, \"log_file_path\": \"$LOG_FILE_PATH\", \"data_directory\": \"$DEFAULT_DATA_PATH\", \"certificate\": \"$CERTIFICATE\", \"bypass_certificate\": $BYPASS_CERTIFICATE}" >"$CONFIG_PATH/config.json"
+		echo "{\"url\": \"$URL\", \"username\": \"$USERNAME\", \"password\": \"$PASSWORD\", \"mode\": $INVENTORY_MODE, \"log_level\": $LOG_LEVEL, \"log_file\": $LOG_FILE, \"log_file_path\": \"$LOG_FILE_PATH\", \"data_directory\": \"$DATA_PATH\", \"certificate\": \"$CERTIFICATE\", \"bypass_certificate\": $BYPASS_CERTIFICATE}" >"$CONFIG_PATH/config.json"
 	else
 		log "Configuration file already exists: $CONFIG_PATH/config.json" false
 	fi
@@ -263,10 +263,10 @@ create_log_file() {
 create_data_folder() {
 	log "Creating data folder..." false
 
-	if [ ! -d "$DEFAULT_DATA_PATH" ]; then
-		execCommand "mkdir -p $DEFAULT_DATA_PATH" "Created data directory: $DEFAULT_DATA_PATH" "Failed to create data directory."
+	if [ ! -d "$DATA_PATH" ]; then
+		execCommand "mkdir -p $DATA_PATH" "Created data directory: $DATA_PATH" "Failed to create data directory."
 	else
-		log "Data directory already exists: $DEFAULT_DATA_PATH" false
+		log "Data directory already exists: $DATA_PATH" false
 	fi
 }
 
@@ -274,10 +274,10 @@ create_data_folder() {
 run_executable() {
 	if [ "$NOW" = "true" ]; then
 		log "Running the agent now..." false
-		log "DEBUG: Command: $AGENT_DIR$AGENT_EXEC -f $LOG_FILE -m $INVENTORY_MODE -p $PASSWORD -u $USERNAME -s $URL -l $LOG_FILE_PATH -d $DEFAULT_DATA_PATH -v $LOG_LEVEL -c $CERTIFICATE" false
+		log "Command: $AGENT_DIR$AGENT_EXEC -f $LOG_FILE -m $INVENTORY_MODE -p $PASSWORD -u $USERNAME -s $URL -l $LOG_FILE_PATH -d $DATA_PATH -v $LOG_LEVEL -c $CERTIFICATE" false
 
-		execCommand "$AGENT_DIR$AGENT_EXEC -f $LOG_FILE -m $INVENTORY_MODE -p $PASSWORD -u $USERNAME -s $URL -l $LOG_FILE_PATH -d $DEFAULT_DATA_PATH -v $LOG_LEVEL -c $CERTIFICATE" "Agent executed successfully." "Failed to execute the agent."
-  fi
+		execCommand "$AGENT_DIR$AGENT_EXEC -f $LOG_FILE -m $INVENTORY_MODE -p $PASSWORD -u $USERNAME -s $URL -l $LOG_FILE_PATH -d $DATA_PATH -v $LOG_LEVEL -c $CERTIFICATE" "Agent executed successfully." "Failed to execute the agent."
+	fi
 }
 
 ### ---------- LaunchDaemon (separate plist) ----------
@@ -288,10 +288,9 @@ register_service() {
 
 	log "Reloading daemon and enabling service" false
 
-	execCommand "launchctl bootout system /Library/LaunchDaemons/${SERVICE_LABEL}.plist" "LaunchDaemon unloaded successfully." "Failed to unload LaunchDaemon."
 	execCommand "launchctl bootstrap system /Library/LaunchDaemons/${SERVICE_LABEL}.plist" "LaunchDaemon bootstrapped successfully." "Failed to bootstrap LaunchDaemon."
-	execCommand "launchctl enable system/${SERVICE_LABEL}" "Service ${SERVICE_LABEL} enabled successfully." "Failed to enable service ${SERVICE_LABEL}."
-	execCommand "launchctl kickstart -k system/${SERVICE_LABEL}" "Service ${SERVICE_LABEL} started successfully." "Failed to start service ${SERVICE_LABEL}."
+	execCommand "launchctl enable system/com.ocsinventory.agent" "Service ${SERVICE_LABEL} enabled successfully." "Failed to enable service ${SERVICE_LABEL}."
+	execCommand "launchctl kickstart -k system/com.ocsinventory.agent" "Service ${SERVICE_LABEL} started successfully." "Failed to start service ${SERVICE_LABEL}."
 
 	log "Service Started" false
 }
