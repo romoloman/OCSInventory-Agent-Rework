@@ -10,22 +10,22 @@
   - [Step 3: Getting dependencies](#step-3-getting-dependencies)
   - [Step 4: Installing the Agent](#step-4-installing-the-agent)
     - [Installing the agent on Linux](#installing-the-agent-on-linux)
-      - [1. Linux Compilation](#1-linux-compilation)
+      - [1. Linux compilation](#1-linux-compilation)
       - [2. Installing the Linux agent non-interactively](#2-installing-the-linux-agent-non-interactively)
       - [3. Installing the Linux agent interactively](#3-installing-the-linux-agent-interactively)
-      - [4. Additionnal information for Linux](#4-additionnal-information-for-linux)
+      - [4. Additionnal information for Linux installation](#4-additionnal-information-for-linux-installation)
     - [Installing the agent on Windows](#installing-the-agent-on-windows)
-      - [1. Windows Compilation](#1-windows-compilation)
+      - [1. Windows compilation](#1-windows-compilation)
       - [2. Create your own Windows package](#2-create-your-own-windows-package)
       - [3. Installing the Windows agent non-interactively](#3-installing-the-windows-agent-non-interactively)
       - [4. Installing the Windows agent interactively](#4-installing-the-windows-agent-interactively)
-      - [5. Additionnal information for Windows](#5-additionnal-information-for-windows)
+      - [5. Additionnal information for Windows installation](#5-additionnal-information-for-windows-installation)
     - [Installing the agent on MacOS](#installing-the-agent-on-macos)
-      - [1. MacOS Compilation](#1-macos-compilation)
+      - [1. MacOS compilation](#1-macos-compilation)
       - [2. Create your own MacOS package](#2-create-your-own-macos-package)
       - [3. Installing the MacOS agent non-interactively](#3-installing-the-macos-agent-non-interactively)
       - [4. Installing the MacOS agent interactively](#4-installing-the-macos-agent-interactively)
-      - [5. Additionnal information for MacOS](#5-additionnal-information-for-macos)
+      - [5. Additionnal information for MacOS installation](#5-additionnal-information-for-macos-installation)
   - [Step 5: Agent configuration](#step-5-agent-configuration)
     - [Linux and macos](#linux-and-macos)
     - [Windows](#windows)
@@ -39,23 +39,13 @@
 
 Begin to download the Flutter package by clicking on the big blue button in `Manual install` section on these websites:
 
-- [Linux Installation](https://docs.flutter.dev/get-started/install/linux)
-- [MacOS Installation](https://docs.flutter.dev/get-started/install/macos/desktop?tab=download)
-- [Windows Installation](https://docs.flutter.dev/get-started/install/windows/desktop?tab=download)
+- [Linux Installation](https://docs.flutter.dev/get-started/install/linux/desktop#install-the-flutter-sdk)
+- [MacOS Installation](https://docs.flutter.dev/get-started/install/macos/desktop#install-the-flutter-sdk)
+- [Windows Installation](https://docs.flutter.dev/get-started/install/windows/desktop#install-the-flutter-sdk)
 
 ### Add Flutter application to path
 
-- Linux:
-
-```text
-echo 'export PATH="$PATH:<path_to_flutter_directory>/flutter/bin"' >> $HOME/.bashrc
-```
-
-- MacOS:
-
-```text
-echo 'export PATH="$PATH:<path_to_flutter_directory>/flutter/bin"' >> ~/.zshenv
-```
+To add flutter to path, click on this [flutter documentation link](https://docs.flutter.dev/install/add-to-path), choose your OS and follow the instructions.
 
 ## Step 2: Clone of the project
 
@@ -81,23 +71,20 @@ flutter pub get
 
 ### Installing the agent on Linux
 
-You will find below how to install OCS Inventory agent on linux
+#### 1. Linux compilation
 
-#### 1. Linux Compilation
-
-Go to the linux setup directory: `/setup/linux/`
-You need to compile the entry point `app.dart` and the daemon `daemon.dart` using the following command
+Go to the linux setup directory: `/setup/linux/` from the repository cloned above.
+You need to compile the entry point `/lib/app/app.dart` using the following command
 
 ```text
 dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o ocsinventory-agent
-dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/daemon.dart -o ocsinventory-service
 ```
 
-Ensure that you have something like this:
+Ensure that you have something like this in the linux setup directory:
 
 ```text
 ├── ocsinventory-agent
-├── ocsinventory-service
+├── ocsinventory-agent.service
 ├── install.sh
 └── uninstall.sh
 ```
@@ -107,160 +94,115 @@ Ensure that you have something like this:
 To install the agent in non-interactive mode, you have to run the linux `install.sh` script with a set of launch arguments to allow to set all configuration options as you can do in interactive mode.
 This is a list of all available `install.sh` script arguments:
 
-- -l : set link of the OCS Inventory NG server
-- -u : set username
-- -p : set password
-- -m : set inventory mode
-- -v : set level of the log
-- -s : set service mode (register service)
-- -n : set to run the agent now
-- -c : set certificate path
+```text
+-S, --silent                          Enable silent mode (requires --url --username, --password)
+-U, --url URL                         URL of the OCSInventory server (required for silent mode)
+-u, --username USERNAME               Username (required for silent mode)
+-p, --password PASSWORD               Password (required for silent mode)
+-m, --mode MODE                       Inventory mode (default: 1 = Remote with template)
+-d, --data-path PATH                  Path to the data directory (default: /var/lib/ocsinventory-data)
+-l, --log-level LEVEL                 Log level (default: 3 = Info)
+    --log-file                        Enable log file (default: false)
+    --log-file-path PATH              Path to the log file (default: /var/log/ocsinventory-agent/ocsinventory-agent.log)
+-c, --certificate CERTIFICATE         Path to the certificate file (default: null)
+    --bypass-certificate              Bypass certificate validation (default: false)
+-s, --service                         Register the agent as a systemd service
+-n, --now                             Run the agent inventory immediately after installation
+-h, --help                            Display this help message
+```
 
-For example, if you want to install OCS Inventory Agent in non-interactive mode and set server adress, set password,set inventory mode, set username, set log level, register the service and run the agent now, you have to run this command:
+Here an example command to use the installation script in non-interactive mode (silent disabled):
 
 ```text
-sudo sh install.sh -l Server_ip_and_port -u username -p password -m 2 -v 3 -s -n -c -c /path of the certificate/cert.pem
+sudo sh install.sh -U Server_ip_and_port -u username -p password -m 1 -l 4 -s -n -c -c /path of the certificate/cert.pem
 ```
+
+> *NOTE: This command will install a new agent with inventory mode at "inventory with template", the default log level "INFO", install the service to run the agent periodicly and start automaticly an inventory after the installation.*
 
 #### 3. Installing the Linux agent interactively
 
 To install the agent in interactive mode, you have to run the `install.sh` script with root privileges.
 If the agent configuration is already exist, it will ask you to remove it before installing the agent.
 
-```text
-Enter server URL:
+For the server URL field, the expected URL is `http(s)://<Server ip:port>`
 
-Enter username:
+#### 4. Additionnal information for Linux installation
 
-Enter password:
+When the installation finished successfully, you can use the command ocsinventory-cli to run the agent as CLI. You can use this command with arguments above to run a single custom instance of the agent.
 
-Enter the inventory mode (default is 2 = Remote without template):
-
-Enter the log level (default is 2 = Info):
-
-Enter the certificate path:
-
-Do you register the service - agent must be launched automatically (y/n)?
-
-Do you want to run the agent now (y/n)?
-```
-For the server URL field, the expected URL is `http://<Server ip:port>`
-
-#### 4. Additionnal information for Linux
-
-- The content of the agent is stored in `/usr/share/ocsinventory-agent` and a symbolic link is created with `/usr/bin/ocsinventory-agent-ng`, so you can run with root privileges
-
-For example, if you want to run the agent and set log level to verbose, you have to run this command:
+For example, if you want to run the agent and set log level to "ERROR" for a single instance, you have to run this command:
 
 ```text
-sudo ocsinventory-agent-ng -v 3
+sudo ocsinventory-cli -l 2
 ```
 
-- If you set service, it will be `/etc/systemd/system/ocsinventory-agent.service`
-
-- This is a list of all available agent arguments:
-  - -f (--log_file) : Enable or disable the log file (if needed)
-  - -m (--mode) : Agent execution mode (if needed)
-  - -p (--password) : Password (if needed)
-  - -t (--token) : Token (if needed)
-  - -u (--username) : Username (if needed)
-  - -s (--url) : URL to the OCS server (if needed)
-  - -d (--data_directory) : Path to the inventory data (if needed)
-  - -l (--log_file_path) : Path to the log file (if needed)
-  - -v (--log_level) : Log level (if needed)
-  - -c (--certificate) : Certificate path
+> *NOTE: If you set the service installation to true, it will be stored in `/etc/systemd/system/ocsinventory-agent.service`*
 
 ### Installing the agent on Windows
 
-#### 1. Windows Compilation
+#### 1. Windows compilation
 
-Go to the linux setup directory: `/setup/windows/`
-You need to download `NSSM - the Non-Sucking Service Manager` for handling services
-
-- NSSM Installation last release
-
-  Extract the file, navigate until win64 folder and copy nssm.exe file into your windows setup folder `/setup/windows/`
-
-After adding the NSSM executable file in the setup directory, you need to compile the entry point `app.dart` and the daemon `daemon.dart` using the following command
+Go to the windows setup directory: `/setup/windows/` from the repository cloned above.
+Ensure that you have all following folders/file in the windows setup directory:
 
 ```text
-dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o ocsinventory-agent.exe
-dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/daemon.dart -o ocsinventory-service.exe
+├── OCSInventory-Service/
+├── OCSInventory-Agent-Setup/
+└── build_all.bat
 ```
 
-Ensure that you have something like this:
+To compile all required payload, open `Developer Command Prompt for VS 2022`. Go to the `setup/windows` folder and run the following command :
 
-```text
-├── ocsinventory-agent.exe
-├── ocsinventory-service.exe
-├── Setup OCS Inventory Agent.iss
-└── nssm.exe
+```batch
+build_all.bat
 ```
+
+Read the console output logs to see any compilation errors.
 
 #### 2. Create your own Windows package
 
-You can create your package (if needed) with Inno setup by using `Setup OCS Inventory Agent.iss` script
+You can create your package (if needed) with Inno setup by using `OCSInventory-Agent-Setup.iss` script
 
 - Download and Install Inno Setup. You can download it from [here](https://jrsoftware.org/isinfo.php).
 - Run Inno Setup and open the `Setup OCS Inventory Agent.iss` script
-- Set up the script, specifying the `Agent path`
 - Build the package using Inno Setup's build feature
 - The resulting installer will be created in `/setup/windows/` directory
 
-For example, if you want to create your own package, you need to adjust the agent path according to your local setup like this:
-
-```text
-#define AgentPath "path where your agent are located\OCSInventory-Agent-Rework"
-```
-
 #### 3. Installing the Windows agent non-interactively
 
-To install the agent in non-interactive mode, you have to run the `OCS-NG` with a set of launch arguments to allow to set all configuration options as you can do in interactive mode.
-This is a list of all available `OCS-NG` script arguments:
-
-- /VERYSILENT : run in silent mode
-- LOG="\path to store\setup.log" : log file of the installation process
-- /URL=Server ip and port : link of the OCS Inventory NG server
-- /USERNAME=username : set username
-- /PASSWORD=password : set password
-- /LOGLEVEL=3 : set level of the log
-- /SERVICE=True : set service mode (register service)
-- /NOW=True : set to run the agent now
-- /CERTIFICATE="\path of the certificate\cert.pem" : set certificate path
-
-For example, if you want to install OCS Inventory Agent in non-interactive mode and run in silent mode, log installation process, set server adress, set password, set username, set log level to verbose, register the service and run the agent now, you have to run this command:
+To install the agent in non-interactive mode, you have to run the binary setup generated above with a set of launch arguments to allow to set all configuration options as you can do in interactive mode.
+This is a list of all available arguments:
 
 ```text
-mysetup-agent.exe /VERYSILENT /LOG="C:\path to store\setup.log" /URL=Server_ip_and_port /USERNAME=username /PASSWORD=password /LOCAL=False /SERVICE=True /NOW=True /LOGLEVEL=3 /CERTIFICATE="\path of the certificate\cert.pem"
+/VERYSILENT                 Enable silent mode (requires /URL /USERNAME, /PASSWORD)
+/URL=url                    URL of the OCSInventory server
+/USERNAME=username          Username (required for silent mode)
+/PASSWORD=password          Password (required for silent mode)
+/MODE=mode                  Inventory mode (default: 1 = Remote with template)
+/LOG_LEVEL=level            Log level (default: 3 = Info)
+/CERTIFICATE=path           Path to the certificate file (default: null)
+/BYPASS_CERT=[0/1]          Disable the certificate validation (default: 0)
+/SERVICE=[0/1]              Register the agent as a windows service
+/NOW=[0/1]                  Run the agent inventory immediately after installation
+```
+
+Here an example command to use the installation script in non-interactive mode (silent enabled):
+
+```text
+mysetup-agent.exe /VERYSILENT /URL=https://server_ip_and_port /USERNAME=username /PASSWORD=password /MODE=1 /LOGLEVEL=4 /CERTIFICATE="\path of the certificate\cert.pem" /BYPASS_CERT=0 /SERVICE=1 /NOW=1 
 ```
 
 #### 4. Installing the Windows agent interactively
 
-To install the agent in interactive mode, you have to run the `OCS-NG` and set all configuration fields.
+To install the agent in interactive mode, you have to run the binary setup generated above and set all configuration fields.
 
-#### 5. Additionnal information for Windows
+#### 5. Additionnal information for Windows installation
 
-- The is installed in `C:\Program Files\OCS Inventory AGENT`
-
-For example, if you want to run the agent and set log level to verbose, you have to run this command:
-
-- If you set service, it will be in service and named `OCSInventory-Agent`
-
-- This is a list of all available agent arguments:
-  - -f (--log_file) : Enable or disable the log file
-  - -m (--mode) : Agent execution mode
-  - -p (--password) : Password
-  - -t (--token) : Token
-  - -u (--username) : Username
-  - -s (--url) : URL to the OCS server
-  - -d (--data_directory) : Path to the inventory data
-  - -l (--log_file_path) : Path to the log file
-  - -v (--log_level) : Log level
-  - -c (--certificate) : Certificate path
+If you set service installation to true, it will be in service and named `OCSInventory-Service`. The location of this service is store at the same location as the agent installation directory.
 
 ### Installing the agent on MacOS
 
-#### 1. MacOS Compilation
+#### 1. MacOS compilation
 
 Go to the linux setup directory: `/setup/macos/`
 You need to compile the entry point `app.dart` and the daemon `daemon.dart` using the following command
@@ -329,7 +271,7 @@ sudo sh install.sh -l Server_ip_and_port -u username -p password -v 3 -s -n -c -
 
 To install the agent in interactive mode, you have to run the `OCS Inventory Agent.mpkg` package and set all configuration fields.
 
-#### 5. Additionnal information for MacOS
+#### 5. Additionnal information for MacOS installation
 
 - The is installed in `/Applications/OCS-NG`
 
@@ -340,43 +282,41 @@ To install the agent in interactive mode, you have to run the `OCS Inventory Age
 ### Linux and macos
 
 - Configuration directory : `/etc/ocsinventory-agent`
-- Log file in directory : `/var/log/ocsinventory-agent/ocsinventory-agent.log`
-- Data inventories : `/var/lib/ocsinventory-data`
+- Default log file in directory : `/var/log/ocsinventory-agent/ocsinventory-agent.log`
+- Default Data inventories : `/var/lib/ocsinventory-data`
 
 ### Windows
 
-- Configuration directory, log file and data inventories are in the same directory : `C:\ProgramData\Agent-OCS`
+- Configuration directory, log file and data inventories are in the same directory : `C:\ProgramData\OCSInventory-Agent\`
 
-After installing the agent, there is a config forlder and the file `inventory.json` inside.
+After installing the agent, there is a config forlder and the file `config.json` inside.
 
 In this file, there are properties to configure the agent:
 
-|      Property      |                                                                                        Description                                                                                        |
-|:------------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
-|   data_directory   |                                                                     Folder where the agent will store inventory data.                                                                     |
-|     log_level      |                                                                      0: Error 1: Warning 2: Info (default) 3 Verbose                                                                      |
-|      log_file      |                   Default to false, the logs will be written in the terminal you'r using. Set to true, you'll need to specify a log file where you want to write logs.                    |
-|   log_file_path    |               This property is to set the log file path. Only define it if you put log_file to true.<br>**Warning**: It will not create the file. You'll need to create it.               |
-|        mode        | This is the working mode property of the agent, there is 5 modes: 0- Installation mode 1-Remote with template 2- Remote without template 3- Local with template 4- Local without template |
-|      password      |                                                By default in remote inventory mode, set the password to connect to the backend server api.                                                |
-|       token        |                                                  Will be automatically replace to store the retreived token from the backend server api.                                                  |
-|      username      |                                                By default in remote inventory mode, set the username to connect to the backend server api.                                                |
-|        url         |                                                                                  Backend server api url.                                                                                  |
-|    certificate     |                                                                      specify the path to the certificate file (.pem)                                                                      |
-| bypass_certificate |                                                                    Bypass certificate verification (false by default)                                                                     |
+| Property           | Description                                                                                                                                                          |
+|:-------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| url                | Backend server api url.                                                                                                                                              |
+| username           | By default in remote inventory mode, set the username to connect to the backend server api.                                                                          |
+| password           | By default in remote inventory mode, set the password to connect to the backend server api.                                                                          |
+| mode               | This is the working mode property of the agent, there is 4 modes: 1-Remote with template 2- Remote without template 3- Local with template 4- Local without template |
+| data_directory     | Folder where the agent will store inventory data.                                                                                                                    |
+| log_level          | 0: Critical 1: Error 2: Warning 3: Info  4: Debug                                                                                                                    |
+| log_file           | File where to logs will be written. Set to false, logs will be written in the terminal.                                                                              |
+| log_file_path      | This property is to set the log file path. Only define it if you put log_file to true.<br>**Warning**: It will not create the file. You'll need to create it.        |
+| certificate        | Specify the path to the certificate file (.pem)                                                                                                                      |
+| bypass_certificate | Bypass certificate verification (false by default)                                                                                                                   |
 
 ```text
 {
-    "log_file": true,
-    "mode": 2,
-    "password": "password",
-    "token": "token value",
-    "username": "username",
     "url": "Server ip and port",
-    "data_directory": "/var/lib/ocsinventory-data",
-    "log_file_path": "/var/log/ocsinventory-agent/ocsinventory-agent.log",
+    "username": "username",
+    "password": "password",
+    "mode": 2,
     "log_level": 3,
-    "certificate": "/certificate path/file_name.pem"
+    "log_file": true,
+    "log_file_path": "/var/log/ocsinventory-agent/ocsinventory-agent.log",
+    "data_directory": "/var/lib/ocsinventory-data",
+    "certificate": "/certificate path/file_name.pem",
     "bypass_certificate": false
 }
 ```
@@ -395,16 +335,15 @@ You can bypass SSL certificate verification (if the certificate is self-signed) 
 
 ## Step 6: Uninstalling the agent
 
-- Linux Agent: To uninstall the Linux agent,
-navigate to `/usr/share/ocsinventory-agent/setup/linux/` and execute the `uninstall.sh` script with root privileges.
-- Windows Agent: To uninstall the Windows agent, go to `C:\Program Files\OCS Inventory Agent` and run the `uninstall application` executable.
+- Linux Agent: To uninstall the Linux agent, navigate to `/usr/share/ocsinventory-agent/setup/linux/` and execute the `uninstall.sh` script with root privileges.
+- Windows Agent: To uninstall the Windows agent, go to `C:\Program Files\OCSInventory-Agent\` and run the `uninstall application` executable.
 - MacOS Agent: To uninstall the macOS agent, navigate to `/Applications/OCS-NG.app/Contents/Resources/` and execute the `uninstaller.sh` script with root privileges.
 
 ## Step 7: Troubleshooting
 
 If you encounter any issues during the installation or usage of the OCS Inventory Agent, here are some troubleshooting steps you can follow:
 
-1. Check the log files: The agent logs can provide valuable information about any errors or issues. You can find the log files in the `/var/log/ocsinventory-agent/` directory on Linux, `C:\Program Files\OCS Inventory AGENT\logs` directory on Windows, and `/Applications/OCS-NG/logs` directory on macOS.
+1. Check the log files: The agent logs can provide valuable information about any errors or issues. You can find the log files in the `/var/log/ocsinventory-agent/` directory on Linux, `C:\Program Files\OCSInventory-Agent\` directory on Windows, and `/Applications/OCS-NG/logs` directory on macOS.
 
 2. Verify the server URL: Make sure that the server URL you provided is correct and accessible. Double-check for any typos or network connectivity issues.
 
@@ -412,7 +351,7 @@ If you encounter any issues during the installation or usage of the OCS Inventor
 
 4. Verify the API URL: Double-check the API URL to ensure it is accurate and points to the correct backend server.
 
-5. Restart the agent: Sometimes, restarting the agent can resolve certain issues.
-You can do this by running the appropriate command for your operating system: `sudo systemctl restart ocsinventory-agent`
-on Linux,`C:\Program Files\OCS Inventory Agent\setup\windows\nssm.exe stop OCSInventory-Agent` followed by `C:\Program Files\OCS Inventory Agent\setup\windows\nssm.exe start OCSInventory-Agent`
-on Windows, and `sudo launchctl unload /Library/LaunchDaemons/org.ocsinventory.agent.plist` followed by `sudo launchctl load /Library/LaunchDaemons/org.ocsinventory.agent.plist` on macOS.
+5. Restart the agent: Sometimes, restarting the agent can resolve certain issues. You can do this by running the appropriate command for your operating system:
+- On linux: `sudo systemctl restart ocsinventory-service`
+- On Windows: Go to windows services and click on restart the service
+- On MacOS: `sudo launchctl unload /Library/LaunchDaemons/org.ocsinventory.agent.plist` followed by `sudo launchctl load /Library/LaunchDaemons/org.ocsinventory.agent.plist`
