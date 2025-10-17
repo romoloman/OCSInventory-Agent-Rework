@@ -38,8 +38,8 @@ execCommand() {
 }
 
 get_path() {
-	DATA_PATH=$(grep -oP '"data_directory": "\K[^"]+' "${CONFIG_PATH}/config.json" 2>/dev/null)
-	LOG_FILE_PATH=$(dirname "$(grep -oP '"log_file_path": "\K[^"]+' "${CONFIG_PATH}/config.json" 2>/dev/null)" 2>/dev/null)
+	LOG_FILE_PATH=$(sed -n 's/.*"log_file_path": "\([^"]*\)".*/\1/p' "${CONFIG_PATH}/config.json" 2>/dev/null)
+	DATA_PATH=$(sed -n 's/.*"data_directory": "\([^"]*\)".*/\1/p' "${CONFIG_PATH}/config.json" 2>/dev/null)
 }
 
 uninstall_agent() {
@@ -72,19 +72,15 @@ uninstall_agent() {
 		log "LaunchDaemon ${SERVICE_LABEL} does not exist. Skipping LaunchDaemon uninstallation." false
 	fi
 
-	if [ "$HARD_DELETE" = true ]; then
-		if [ -d "${CONFIG_PATH}" ]; then
-			log "Configuration directory ${CONFIG_PATH} exists, proceeding with removal." false
-			execCommand "rm -r ${CONFIG_PATH}" "Configuration directory ${CONFIG_PATH} removed successfully." "Failed to remove configuration directory ${CONFIG_PATH}."
-		else
-			log "Configuration directory does not exist, skipping removal." false
-		fi
 
-		if [ -d "${LOG_FILE_PATH}" ] && [ "${LOG_FILE_PATH}" != "." ]; then
-			log "Log directory ${LOG_FILE_PATH} exists, proceeding with removal." false
-			execCommand "rm -r ${LOG_FILE_PATH}" "Log directory ${LOG_FILE_PATH} removed successfully." "Failed to remove log directory ${LOG_FILE_PATH}."
+	if [ "$HARD_DELETE" = true ]; then
+		LOG_DIR=$(dirname "${LOG_FILE_PATH}")
+
+		if [ -f "${LOG_FILE_PATH}" ]; then
+			log "Log file ${LOG_FILE_PATH} exists, proceeding with removal." false
+			execCommand "rm ${LOG_FILE_PATH}" "Log file ${LOG_FILE_PATH} removed successfully." "Failed to remove log file ${LOG_FILE_PATH}."
 		else
-			log "Log directory does not exist, skipping removal." false
+			log "Log file does not exist, skipping removal." false
 		fi
 
 		if [ -d "${DATA_PATH}" ]; then
@@ -92,6 +88,13 @@ uninstall_agent() {
 			execCommand "rm -r ${DATA_PATH}" "Store data directory ${DATA_PATH} removed successfully." "Failed to remove store data directory ${DATA_PATH}."
 		else
 			log "Store data directory does not exist, skipping removal." false
+		fi
+
+		if [ -f "${CONFIG_PATH}" ]; then
+			log "Configuration file ${CONFIG_PATH} exists, proceeding with removal." false
+			execCommand "rm ${CONFIG_PATH}" "Configuration file ${CONFIG_PATH} removed successfully." "Failed to remove configuration file ${CONFIG_PATH}."
+		else
+			log "Configuration file does not exist, skipping removal." false
 		fi
 	fi
 
@@ -132,8 +135,8 @@ WORKING_DIRECTORY=$(dirname "$(realpath "$0")")
 CONFIG_PATH="/etc/ocsinventory-agent"
 AGENT_DIR="/usr/local/bin"
 AGENT_EXEC="/ocsinventory-cli"
-DATA_PATH=""
-LOG_FILE_PATH=""
+DATA_PATH="/var/lib/ocsinventory-data"
+LOG_FILE_PATH="/var/log/ocsinventory-agent.log"
 SERVICE_LABEL="com.ocsinventory.agent"
 
 SILENT=false
