@@ -361,7 +361,7 @@ run_interactive() {
 	fi
 
 	if [ -z "$DATA_PATH" ]; then
-		echo -n "Enter the data path (leave empty if default, default is: /var/lib/ocsinventory-data): "
+		echo -n "Enter the data path. Please note: the directory must be dedicated to the OCS agent (leave empty if default, default is: /var/lib/ocsinventory-data): "
 		read -r DATA_PATH
 		if [ "$DATA_PATH" = "" ]; then
 			DATA_PATH=$DEFAULT_DATA_PATH

@@ -135,11 +135,11 @@ check_installed_agent() {
 copy_agent_contents() {
 	check_installed_agent
 
-	execCommand "cp -r $WORKING_DIRECTORY$AGENT_EXEC $AGENT_BINARY" "Copied agent contents to $AGENT_BINARY" "Failed to copy agent contents."
+	execCommand "cp -r $WORKING_DIRECTORY$AGENT_EXEC $AGENT_BINARY" "Copied agent binary to $AGENT_BINARY" "Failed to copy agent binary."
 
 	execCommand "chmod +x $AGENT_BINARY$AGENT_EXEC" "Made the agent executable: $AGENT_BINARY$AGENT_EXEC" "Failed to make the agent executable."
 
-	execCommand "ln -s $AGENT_BINARY$AGENT_EXEC $SYMBOLIC_LINK" "Created symbolic link for the service: $SYMBOLIC_LINK" "Failed to create symbolic link for the service."
+	execCommand "ln -s $AGENT_BINARY$AGENT_EXEC $SYMBOLIC_LINK" "Created CLI symlink: $SYMBOLIC_LINK" "Failed to create CLI symlink."
 }
 
 create_config_file() {
@@ -203,9 +203,9 @@ run_executable() {
 }
 
 register_service() {
-	log "Creating service file..." false
+	log "Installing systemd service..." false
 
-	execCommand "cp ${WORKING_DIRECTORY}/ocsinventory-agent.service /etc/systemd/system/${SERVICE_NAME}.service" "Service file copied successfully." "Failed to copy service file."
+	execCommand "cp ${WORKING_DIRECTORY}/${SERVICE_NAME}.service /etc/systemd/system/${SERVICE_NAME}.service" "Service file installed successfully." "Failed to install service file."
 
 	log "Reloading daemon and enabling service" false
 
@@ -301,7 +301,7 @@ run_interactive() {
 	fi
 
 	if [ -z "$DATA_PATH" ]; then
-		echo -n "Enter the data path (leave empty if default, default is: /var/lib/ocsinventory-data): "
+		echo -n "Enter the data path. Please note: the directory must be dedicated to the OCS agent (leave empty if default, default is: /var/lib/ocsinventory-data): "
 		read -r DATA_PATH
 		if [ "$DATA_PATH" = "" ]; then
 			DATA_PATH=$DEFAULT_DATA_PATH
@@ -396,7 +396,7 @@ AGENT_BINARY="/usr/local/bin"
 SYMBOLIC_LINK="/usr/bin/ocsinventory-cli"
 DEFAULT_DATA_PATH="/var/lib/ocsinventory-data"
 DEFAULT_LOG_FILE_PATH="/var/log/ocsinventory-agent.log"
-AGENT_EXEC="/ocsinventory-agent"
+AGENT_EXEC="/ocsinventory-cli"
 SERVICE_NAME="ocsinventory-agent"
 
 SILENT=false
