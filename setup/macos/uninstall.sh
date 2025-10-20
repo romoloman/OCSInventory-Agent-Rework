@@ -74,7 +74,6 @@ uninstall_agent() {
 
 
 	if [ "$HARD_DELETE" = true ]; then
-		LOG_DIR=$(dirname "${LOG_FILE_PATH}")
 
 		if [ -f "${LOG_FILE_PATH}" ]; then
 			log "Log file ${LOG_FILE_PATH} exists, proceeding with removal." false
