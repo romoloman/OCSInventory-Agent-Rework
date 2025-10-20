@@ -181,7 +181,7 @@ check_silent_parameters() {
 
 ### ---------- Existing install detection ----------
 check_installed_agent() {
-	if [ -d "$AGENT_DIR$AGENT_EXEC" ] || [ -f "${PLIST_DST}" ] || [ -d "$CONFIG_PATH" ] || [ -f "$LOG_FILE_PATH" ]; then
+	if [ -f "$AGENT_DIR$AGENT_EXEC" ] || [ -f "${PLIST_DST}" ] || [ -d "$CONFIG_PATH" ] || [ -f "$LOG_FILE_PATH" ]; then
 		if [ "$SILENT" = "true" ]; then
 			log "Existing agent installation detected in silent mode. Automatically uninstalling..." false
 			execCommand "sh ${WORKING_DIRECTORY}/uninstall.sh -S -D" "Existing agent uninstalled successfully. See the logs in ${WORKING_DIRECTORY}/uninstall.log" "Failed to uninstall existing agent."
