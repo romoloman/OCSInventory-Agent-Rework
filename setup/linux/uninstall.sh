@@ -42,6 +42,26 @@ get_path() {
 	LOG_FILE_PATH=$(dirname "$(grep -oP '"log_file_path": "\K[^"]+' "${CONFIG_PATH}/config.json" 2>/dev/null)" 2>/dev/null)
 }
 
+legacy_check() {
+	if [ -f "${CONFIG_PATH}/modules.conf" ] || [ -f "${CONFIG_PATH}/ocsinventory-agent.cfg" ]; then
+		 # if interactive AND hard delete, ask use to confirm removal. if yes, log that files WIIL be deleted (later in the script), if not, exit and log for user to remove the legacy agent
+		if [ "$SILENT" = false ] && [ "$HARD_DELETE" = true ]; then
+			log "Detected legacy agent configuration files in ${CONFIG_PATH}. Proceeding with uninstallation will remove legacy files. Do you want to continue? ([y]/n)" false
+			read -r confirm
+			if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ] || [ "$confirm" = "" ]; then
+				log "Proceeding. Legacy agent configuration files will be removed during uninstallation." false
+			else
+				log "Uninstallation cancelled." false
+				exit 1
+			fi
+		fi
+		# if silent AND hard delete: log detection and specify the files will be deleted
+		if [ "$SILENT" = true ] && [ "$HARD_DELETE" = true ]; then
+			log "Detected legacy agent configuration files in ${CONFIG_PATH}. Legacy files will be removed during uninstallation." false
+		fi
+	fi
+}
+
 uninstall_agent() {
 	if [ "$SILENT" = true ]; then
 		log "+-----------------------------------------------------------+" false
@@ -76,6 +96,9 @@ uninstall_agent() {
 	fi
 
 	if [ "$HARD_DELETE" = true ]; then
+
+		legacy_check
+
 		if [ -d "${CONFIG_PATH}" ]; then
 			log "Configuration directory ${CONFIG_PATH} exists, proceeding with removal." false
 			execCommand "rm -r ${CONFIG_PATH}" "Configuration directory ${CONFIG_PATH} removed successfully." "Failed to remove configuration directory ${CONFIG_PATH}."
