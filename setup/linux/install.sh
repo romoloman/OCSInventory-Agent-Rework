@@ -133,7 +133,6 @@ check_installed_agent() {
 }
 
 copy_agent_contents() {
-	check_installed_agent
 
 	execCommand "cp -r $WORKING_DIRECTORY$AGENT_EXEC $AGENT_BINARY" "Copied agent binary to $AGENT_BINARY" "Failed to copy agent binary."
 
@@ -227,6 +226,7 @@ run_silent() {
 	log "" false
 
 	check_silent_parameters
+	check_installed_agent
 	copy_agent_contents
 	create_config_file
 	create_log_file
@@ -241,6 +241,8 @@ run_interactive() {
 	log "|                                                              |" false
 	log "+--------------------------------------------------------------+" false
 	log "" false
+
+	check_installed_agent
 
 	if [ -z "$URL" ]; then
 		echo -n "Enter server URL: "
@@ -414,7 +416,7 @@ SERVICE=false
 NOW=false
 
 SHORT_OPTS="SU:u:p:m:d:l:c:snh"
-LONG_OPTS="silent,url:,username:,password:,mode:,data-path:,log-level:,log-file,log-file-path:,certificate:,bypass-certificate,service,now,help"
+LONG_OPTS="silent,url:,username:,password:,mode:,data-path:,log-level:,log-file,log-file-path:,certificate:,bypass_certificate,service,now,help"
 
 if ! PARSED_OPTIONS=$(getopt --options $SHORT_OPTS --longoptions $LONG_OPTS --name "$0" -- "$@"); then
 	usage
@@ -465,7 +467,7 @@ while true; do
 		CERTIFICATE="$2"
 		shift 2
 		;;
-	--bypass-certificate)
+	--bypass_certificate)
 		BYPASS_CERTIFICATE=true
 		shift
 		;;

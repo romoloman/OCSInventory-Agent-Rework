@@ -140,7 +140,7 @@ while [[ $# -gt 0 ]]; do
 		CERTIFICATE="$2"
 		shift 2
 		;;
-	--bypass-certificate)
+	--bypass_certificate)
 		BYPASS_CERTIFICATE="true"
 		shift
 		;;
@@ -205,7 +205,6 @@ check_installed_agent() {
 
 ### ---------- Install binary ----------
 copy_agent_contents() {
-	check_installed_agent
 
 	execCommand "cp -r $WORKING_DIRECTORY$AGENT_EXEC $AGENT_DIR" "Copied agent binary to $AGENT_DIR" "Failed to copy agent binary."
 
@@ -301,6 +300,8 @@ run_interactive() {
 	log "|                                                              |" false
 	log "+--------------------------------------------------------------+" false
 	log "" false
+
+	check_installed_agent
 
 	if [ -z "$URL" ]; then
 		echo -n "Enter server URL: "
@@ -455,6 +456,7 @@ run_silent() {
 	log "" false
 
 	check_silent_parameters
+	check_installed_agent
 	copy_agent_contents
 	create_config_file
 	create_log_file
