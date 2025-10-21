@@ -153,7 +153,7 @@ create_config_file() {
 
 	if [ ! -f "$CONFIG_PATH/config.json" ]; then
 		execCommand "touch $CONFIG_PATH/config.json" "Created configuration file: $CONFIG_PATH/config.json" "Failed to create configuration file."
-		echo "{\"url\": \"$URL\", \"username\": \"$USERNAME\", \"password\": \"$PASSWORD\", \"mode\": $INVENTORY_MODE, \"log_level\": $LOG_LEVEL, \"log_file\": $LOG_FILE, \"log_file_path\": \"$LOG_FILE_PATH\", \"data_directory\": \"$DEFAULT_DATA_PATH\", \"certificate\": \"$CERTIFICATE\", \"bypass_certificate\": $BYPASS_CERTIFICATE}" >"$CONFIG_PATH/config.json"
+		echo "{\"url\": \"$URL\", \"username\": \"$USERNAME\", \"password\": \"$PASSWORD\", \"mode\": $INVENTORY_MODE, \"log_level\": $LOG_LEVEL, \"log_file\": $LOG_FILE, \"log_file_path\": \"$LOG_FILE_PATH\", \"data_directory\": \"$DATA_PATH\", \"certificate\": \"$CERTIFICATE\", \"bypass_certificate\": $BYPASS_CERTIFICATE}" >"$CONFIG_PATH/config.json"
 	else
 		log "Configuration file already exists: $CONFIG_PATH/config.json" false
 	fi
@@ -187,10 +187,10 @@ create_log_file() {
 create_data_folder() {
 	log "Creating data folder..." false
 
-	if [ ! -d "$DEFAULT_DATA_PATH" ]; then
-		execCommand "mkdir -p $DEFAULT_DATA_PATH" "Created data directory: $DEFAULT_DATA_PATH" "Failed to create data directory."
+	if [ ! -d "$DATA_PATH" ]; then
+		execCommand "mkdir -p $DATA_PATH" "Created data directory: $DATA_PATH" "Failed to create data directory."
 	else
-		log "Data directory already exists: $DEFAULT_DATA_PATH" false
+		log "Data directory already exists: $DATA_PATH" false
 	fi
 }
 
@@ -198,7 +198,7 @@ run_executable() {
 	if [ "$NOW" = "true" ]; then
 		log "Running the agent now..." false
 
-		execCommand "$SYMBOLIC_LINK -f $LOG_FILE -m $INVENTORY_MODE -p $PASSWORD -u $USERNAME -s $URL -l $LOG_FILE_PATH -d $DEFAULT_DATA_PATH -v $LOG_LEVEL -c $CERTIFICATE" "Agent executed successfully." "Failed to execute the agent."
+		execCommand "$SYMBOLIC_LINK -f $LOG_FILE -m $INVENTORY_MODE -p $PASSWORD -u $USERNAME -s $URL -l $LOG_FILE_PATH -d $DATA_PATH -v $LOG_LEVEL -c $CERTIFICATE" "Agent executed successfully." "Failed to execute the agent."
 	fi
 }
 
@@ -306,7 +306,7 @@ run_interactive() {
 		if [ "$DATA_PATH" = "" ]; then
 			DATA_PATH=$DEFAULT_DATA_PATH
 		fi
-		log "Data path: $DEFAULT_DATA_PATH" true
+		log "Data path: $DATA_PATH" true
 	fi
 
 	if [ -z "$LOG_LEVEL" ]; then
