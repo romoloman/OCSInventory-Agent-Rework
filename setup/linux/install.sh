@@ -198,7 +198,7 @@ run_executable() {
 	if [ "$NOW" = "true" ]; then
 		log "Running the agent now..." false
 
-		execCommand "$WORKING_DIRECTORY$AGENT_EXEC -f $LOG_FILE -m $INVENTORY_MODE -p $PASSWORD -u $USERNAME -s $URL -l $LOG_FILE_PATH -d $DEFAULT_DATA_PATH -v $LOG_LEVEL -c $CERTIFICATE" "Agent executed successfully." "Failed to execute the agent."
+		execCommand "$SYMBOLIC_LINK -f $LOG_FILE -m $INVENTORY_MODE -p $PASSWORD -u $USERNAME -s $URL -l $LOG_FILE_PATH -d $DEFAULT_DATA_PATH -v $LOG_LEVEL -c $CERTIFICATE" "Agent executed successfully." "Failed to execute the agent."
 	fi
 }
 
