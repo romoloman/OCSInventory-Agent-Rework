@@ -83,17 +83,17 @@ uninstall_agent() {
 		fi
 
 		if [ -d "${DATA_PATH}" ]; then
-			log "Store data directory ${DATA_PATH} exists, proceeding with removal." false
-			execCommand "rm -r ${DATA_PATH}" "Store data directory ${DATA_PATH} removed successfully." "Failed to remove store data directory ${DATA_PATH}."
+			log "Data directory ${DATA_PATH} exists, proceeding with removal." false
+			execCommand "rm -r ${DATA_PATH}" "Data directory ${DATA_PATH} removed successfully." "Failed to remove data directory ${DATA_PATH}."
 		else
-			log "Store data directory does not exist, skipping removal." false
+			log "Data directory does not exist, skipping removal." false
 		fi
 
-		if [ -f "${CONFIG_PATH}" ]; then
-			log "Configuration file ${CONFIG_PATH} exists, proceeding with removal." false
-			execCommand "rm ${CONFIG_PATH}" "Configuration file ${CONFIG_PATH} removed successfully." "Failed to remove configuration file ${CONFIG_PATH}."
+		if [ -d "${CONFIG_PATH}" ]; then
+			log "Configuration directory ${CONFIG_PATH} exists, proceeding with removal." false
+			execCommand "rm -r ${CONFIG_PATH}" "Configuration directory ${CONFIG_PATH} removed successfully." "Failed to remove configuration directory ${CONFIG_PATH}."
 		else
-			log "Configuration file does not exist, skipping removal." false
+			log "Configuration directory does not exist, skipping removal." false
 		fi
 	fi
 
