@@ -22,10 +22,9 @@
       - [5. Additionnal information for Windows installation](#5-additionnal-information-for-windows-installation)
     - [Installing the agent on MacOS](#installing-the-agent-on-macos)
       - [1. MacOS compilation](#1-macos-compilation)
-      - [2. Create your own MacOS package](#2-create-your-own-macos-package)
-      - [3. Installing the MacOS agent non-interactively](#3-installing-the-macos-agent-non-interactively)
-      - [4. Installing the MacOS agent interactively](#4-installing-the-macos-agent-interactively)
-      - [5. Additionnal information for MacOS installation](#5-additionnal-information-for-macos-installation)
+      - [2. Installing the MacOS agent non-interactively](#2-installing-the-macos-agent-non-interactively)
+      - [3. Installing the MacOS agent interactively](#3-installing-the-macos-agent-interactively)
+      - [4. Additionnal information for MacOS installation](#4-additionnal-information-for-macos-installation)
   - [Step 5: Agent configuration](#step-5-agent-configuration)
     - [Linux and macos](#linux-and-macos)
     - [Windows](#windows)
@@ -236,7 +235,8 @@ This is a list of all available `install.sh` script arguments:
 For example, if you want to install OCS Inventory Agent in non-interactive mode and set server adress, set password, set username, register the service and run the agent now, you have to run this command:
 
 ```text
-sudo ./install.sh --silent --url Server_ip_and_port --username username --password password --service --now```
+sudo ./install.sh --silent --url Server_ip_and_port --username username --password password --service --now
+```
 
 #### 3. Installing the MacOS agent interactively
 
