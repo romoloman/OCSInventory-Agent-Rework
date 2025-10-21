@@ -44,7 +44,7 @@ get_path() {
 
 legacy_check() {
 	if [ -f "${CONFIG_PATH}/modules.conf" ] || [ -f "${CONFIG_PATH}/ocsinventory-agent.cfg" ]; then
-		 # if interactive AND hard delete, ask use to confirm removal. if yes, log that files WIIL be deleted (later in the script), if not, exit and log for user to remove the legacy agent
+		# if interactive AND hard delete, ask use to confirm removal. if yes, log that files WIIL be deleted (later in the script), if not, exit and log for user to remove the legacy agent
 		if [ "$SILENT" = false ] && [ "$HARD_DELETE" = true ]; then
 			log "Detected legacy agent configuration files in ${CONFIG_PATH}. Proceeding with uninstallation will remove legacy files. Do you want to continue? ([y]/n)" false
 			read -r confirm
@@ -61,7 +61,6 @@ legacy_check() {
 		fi
 	fi
 }
-
 
 uninstall_agent() {
 	if [ "$SILENT" = true ]; then
@@ -92,7 +91,6 @@ uninstall_agent() {
 	else
 		log "LaunchDaemon ${SERVICE_LABEL} does not exist. Skipping LaunchDaemon uninstallation." false
 	fi
-
 
 	if [ "$HARD_DELETE" = true ]; then
 

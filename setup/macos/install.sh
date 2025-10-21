@@ -7,32 +7,30 @@ set -euo pipefail
 SILENT=${SILENT:-false}
 WORKING_DIRECTORY=${WORKING_DIRECTORY:-$(cd "$(dirname "$0")" && pwd)}
 
-
 ### ---------- Logging ----------
 log() {
-  local message="$1"
-  local only_file="${2:-false}"
+	local message="$1"
+	local only_file="${2:-false}"
 
-  # nounset-safe locals
-  local silent="${SILENT:-false}"
-  local wd="${WORKING_DIRECTORY:-$(cd "$(dirname "$0")" && pwd)}"
+	# nounset-safe locals
+	local silent="${SILENT:-false}"
+	local wd="${WORKING_DIRECTORY:-$(cd "$(dirname "$0")" && pwd)}"
 
-  mkdir -p "$wd"
+	mkdir -p "$wd"
 
-  if [[ "$silent" = false ]]; then
-    if [[ "$only_file" = false ]]; then
-      echo "$(date +"%Y-%m-%d %H:%M:%S") $message" | tee -a "$wd/install.log"
-    else
-      echo "$(date +"%Y-%m-%d %H:%M:%S") $message" >> "$wd/install.log"
-    fi
-  else
-    echo "$(date +"%Y-%m-%d %H:%M:%S") $message" >> "$wd/install.log"
-  fi
+	if [[ "$silent" = false ]]; then
+		if [[ "$only_file" = false ]]; then
+			echo "$(date +"%Y-%m-%d %H:%M:%S") $message" | tee -a "$wd/install.log"
+		else
+			echo "$(date +"%Y-%m-%d %H:%M:%S") $message" >>"$wd/install.log"
+		fi
+	else
+		echo "$(date +"%Y-%m-%d %H:%M:%S") $message" >>"$wd/install.log"
+	fi
 }
 
-
 usage() {
-  cat <<'USAGE'
+	cat <<'USAGE'
 Usage: install.sh [OPTIONS]
 
 Options:
@@ -51,7 +49,7 @@ Options:
   -n, --now                       Run agent once immediately after install
   -h, --help                      Show help and exit
 USAGE
-  exit 1
+	exit 1
 }
 
 execCommand() {
@@ -69,8 +67,8 @@ execCommand() {
 
 ### ---------- Root check ----------
 if [[ "$(id -u)" != "0" ]]; then
-  log "This installer requires root privileges. Re-run with sudo." false
-  exit 1
+	log "This installer requires root privileges. Re-run with sudo." false
+	exit 1
 fi
 
 ### ---------- Defaults ----------
@@ -164,19 +162,28 @@ done
 
 ### ---------- Guards ----------
 check_silent_parameters() {
-  if [[ -z "$URL" ]]; then log "Server URL is required in silent mode" false; usage; fi
-  if [[ -z "$USERNAME" ]]; then log "Username is required in silent mode" false; usage; fi
-  if [[ -z "$PASSWORD" ]]; then log "Password is required in silent mode" false; usage; fi
-  if [[ -z "$INVENTORY_MODE" ]]; then INVENTORY_MODE=1; fi
-  if [[ -z "$DATA_PATH" ]]; then DATA_PATH="$DEFAULT_DATA_PATH"; fi
-  if [[ -z "$LOG_LEVEL" ]]; then LOG_LEVEL=3; fi
-  if [[ "${LOG_FILE}" = "false" ]]; then LOG_FILE=true; fi
-  if [[ -z "$LOG_FILE_PATH" ]]; then LOG_FILE_PATH="$DEFAULT_LOG_FILE_PATH"; fi
-  if [[ -z "$CERTIFICATE" ]]; then CERTIFICATE="none"; else
-    execCommand "/usr/bin/openssl x509 -in \"$CERTIFICATE\" -noout" \
-      "Certificate file ok: $CERTIFICATE" "Certificate not valid or unreadable: $CERTIFICATE"
-  fi
-  if [[ -z "${BYPASS_CERTIFICATE}" ]]; then BYPASS_CERTIFICATE=false; fi
+	if [[ -z "$URL" ]]; then
+		log "Server URL is required in silent mode" false
+		usage
+	fi
+	if [[ -z "$USERNAME" ]]; then
+		log "Username is required in silent mode" false
+		usage
+	fi
+	if [[ -z "$PASSWORD" ]]; then
+		log "Password is required in silent mode" false
+		usage
+	fi
+	if [[ -z "$INVENTORY_MODE" ]]; then INVENTORY_MODE=1; fi
+	if [[ -z "$DATA_PATH" ]]; then DATA_PATH="$DEFAULT_DATA_PATH"; fi
+	if [[ -z "$LOG_LEVEL" ]]; then LOG_LEVEL=3; fi
+	if [[ "${LOG_FILE}" = "false" ]]; then LOG_FILE=true; fi
+	if [[ -z "$LOG_FILE_PATH" ]]; then LOG_FILE_PATH="$DEFAULT_LOG_FILE_PATH"; fi
+	if [[ -z "$CERTIFICATE" ]]; then CERTIFICATE="none"; else
+		execCommand "/usr/bin/openssl x509 -in \"$CERTIFICATE\" -noout" \
+			"Certificate file ok: $CERTIFICATE" "Certificate not valid or unreadable: $CERTIFICATE"
+	fi
+	if [[ -z "${BYPASS_CERTIFICATE}" ]]; then BYPASS_CERTIFICATE=false; fi
 }
 
 ### ---------- Existing install detection ----------
