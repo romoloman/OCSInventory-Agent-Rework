@@ -44,7 +44,7 @@ Options:
       --log-file                  Enable log file (default: true)
       --log-file-path PATH        Log file path (default: /var/log/ocsinventory-agent.log)
   -c, --certificate FILE          PEM certificate path (default: none)
-      --bypass_certificate        Bypass SSL validation (default: false)
+      --bypass-certificate        Bypass SSL validation (default: false)
   -s, --service                   Register LaunchDaemon
   -n, --now                       Run agent once immediately after install
   -h, --help                      Show help and exit
@@ -138,7 +138,7 @@ while [[ $# -gt 0 ]]; do
 		CERTIFICATE="$2"
 		shift 2
 		;;
-	--bypass_certificate)
+	--bypass-certificate)
 		BYPASS_CERTIFICATE="true"
 		shift
 		;;

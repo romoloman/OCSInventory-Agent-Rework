@@ -416,7 +416,7 @@ SERVICE=false
 NOW=false
 
 SHORT_OPTS="SU:u:p:m:d:l:c:snh"
-LONG_OPTS="silent,url:,username:,password:,mode:,data-path:,log-level:,log-file,log-file-path:,certificate:,bypass_certificate,service,now,help"
+LONG_OPTS="silent,url:,username:,password:,mode:,data-path:,log-level:,log-file,log-file-path:,certificate:,bypass-certificate,service,now,help"
 
 if ! PARSED_OPTIONS=$(getopt --options $SHORT_OPTS --longoptions $LONG_OPTS --name "$0" -- "$@"); then
 	usage
@@ -467,7 +467,7 @@ while true; do
 		CERTIFICATE="$2"
 		shift 2
 		;;
-	--bypass_certificate)
+	--bypass-certificate)
 		BYPASS_CERTIFICATE=true
 		shift
 		;;
