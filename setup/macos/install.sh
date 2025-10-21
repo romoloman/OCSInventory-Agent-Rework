@@ -40,7 +40,7 @@ Options:
   -p, --password PASSWORD         Password
   -m, --mode MODE                 Inventory mode (default: 1)
   -d, --data-path PATH            Data directory (default: /var/lib/ocsinventory-data)
-  -l, --log-level LEVEL           Log level 0..5 (default: 3)
+  -l, --log-level LEVEL           Log level 0..4 (default: 3)
       --log-file                  Enable log file (default: true)
       --log-file-path PATH        Log file path (default: /var/log/ocsinventory-agent.log)
   -c, --certificate FILE          PEM certificate path (default: none)
