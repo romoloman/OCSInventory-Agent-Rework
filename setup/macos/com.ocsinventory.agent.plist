@@ -10,7 +10,6 @@
   <array>
     <string>/usr/local/bin/ocsinventory-cli</string>
     <string>--service true</string>
-    <string>true</string>
   </array>
 
   <key>RunAtLoad</key>
