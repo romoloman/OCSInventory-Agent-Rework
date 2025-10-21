@@ -91,10 +91,10 @@ uninstall_agent() {
 		fi
 
 		if [ -d "${DATA_PATH}" ]; then
-			log "Store data directory ${DATA_PATH} exists, proceeding with removal." false
-			execCommand "rm -r ${DATA_PATH}" "Store data directory ${DATA_PATH} removed successfully." "Failed to remove store data directory ${DATA_PATH}."
+			log "Data directory ${DATA_PATH} exists, proceeding with removal." false
+			execCommand "rm -r ${DATA_PATH}" "Data directory ${DATA_PATH} removed successfully." "Failed to remove data directory ${DATA_PATH}."
 		else
-			log "Store data directory does not exist, skipping removal." false
+			log "Data directory does not exist, skipping removal." false
 		fi
 	fi
 
@@ -140,7 +140,7 @@ fi
 
 WORKING_DIRECTORY=$(dirname "$(realpath "$0")")
 CONFIG_PATH="/etc/ocsinventory-agent"
-AGENT_BINARY="/usr/local/bin/ocsinventory-agent"
+AGENT_BINARY="/usr/local/bin/ocsinventory-cli"
 SYMBOLIC_LINK="/usr/bin/ocsinventory-cli"
 DATA_PATH=""
 LOG_FILE_PATH=""
