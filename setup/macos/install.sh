@@ -280,7 +280,7 @@ run_executable() {
 
 ### ---------- LaunchDaemon (separate plist) ----------
 register_service() {
-	log "Creating service file..." false
+	log "Installing service file..." false
 
 	execCommand "cp ${WORKING_DIRECTORY}/com.ocsinventory.agent.plist /Library/LaunchDaemons/${SERVICE_LABEL}.plist" "Service file copied successfully." "Failed to copy service file."
 
@@ -386,7 +386,7 @@ run_interactive() {
 	fi
 
 	if [ "$LOG_FILE" = "false" ]; then
-		echo -n "Do you want to enable log file? ([y]/n) "
+		echo -n "Do you want to enable logging to a file? ([y]/n) "
 		read -r log_file_choice
 		case "$log_file_choice" in
 		"" | "y" | "Y")
@@ -486,9 +486,9 @@ if [ -d "$CONFIG_PATH" ] && [ -f "$LOG_FILE_PATH" ] && [ -d "$AGENT_DIR" ] && [ 
 
 else
 	log "" false
-	log "*** ERROR: Installation failed, please check the logs for more information" false
+	log "*** ERROR: Installation failed ***" false
 	log "" false
-	log "Installation aborted !" false
+	log "Exiting..." false
 	exit 1
 fi
 

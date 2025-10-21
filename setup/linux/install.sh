@@ -326,7 +326,7 @@ run_interactive() {
 	fi
 
 	if [ "$LOG_FILE" = "false" ]; then
-		echo -n "Do you want to enable log file? ([y]/n) "
+		echo -n "Do you want to enable logging to a file? ([y]/n) "
 		read -r log_file_choice
 		case "$log_file_choice" in
 		"" | "y" | "Y")
@@ -515,9 +515,9 @@ if [ -d "$CONFIG_PATH" ] && [ -f "$LOG_FILE_PATH" ] && [ -d "$AGENT_BINARY" ] &&
 
 else
 	log "" false
-	log "*** ERROR: Installation failed, please check the logs for more information" false
+	log "*** ERROR: Installation failed ***" false
 	log "" false
-	log "Installation aborted !" false
+	log "Exiting..." false
 	exit 1
 fi
 
