@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+ "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.ocsinventory.agent</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/local/bin/ocsinventory-cli</string>
+    <string>--service true</string>
+  </array>
+
+  <key>RunAtLoad</key>
+  <true/>
+  
+  <key>KeepAlive</key>
+  <dict>
+    <key>SuccessfulExit</key>
+    <false/>
+    <key>Crashed</key>
+    <true/>
+  </dict>
+  
+  <key>ThrottleInterval</key>
+  <integer>60</integer>
+  
+  <key>StartLimitInterval</key>
+  <integer>1800</integer>
+  
+  <key>StartLimitBurst</key>
+  <integer>3</integer>
+
+  <key>WorkingDirectory</key>
+  <string>/usr/local/bin</string>
+
+  <key>StandardOutPath</key>
+  <string>/var/log/ocsinventory-agent.log</string>
+  <key>StandardErrorPath</key>
+  <string>/var/log/ocsinventory-agent.log</string>
+</dict>
+</plist>

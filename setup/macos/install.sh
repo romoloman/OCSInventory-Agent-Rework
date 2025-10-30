@@ -1,37 +1,54 @@
 #!/bin/bash
+# macOS installer for OCSInventory Agent
+# LaunchDaemon plist com.ocsinventory.agent.plist (must sit next to this script).
 
+set -euo pipefail
+
+SILENT=${SILENT:-false}
+WORKING_DIRECTORY=${WORKING_DIRECTORY:-$(cd "$(dirname "$0")" && pwd)}
+
+### ---------- Logging ----------
 log() {
 	local message="$1"
-	local only_file="$2"
+	local only_file="${2:-false}"
 
-	if [ "$SILENT" = false ]; then
-		if [ "$only_file" = false ]; then
-			echo "$(date +"%Y-%m-%d %H:%M:%S") $message" | tee -a "${WORKING_DIRECTORY}/install.log"
+	# nounset-safe locals
+	local silent="${SILENT:-false}"
+	local wd="${WORKING_DIRECTORY:-$(cd "$(dirname "$0")" && pwd)}"
+
+	mkdir -p "$wd"
+
+	if [[ "$silent" = false ]]; then
+		if [[ "$only_file" = false ]]; then
+			echo "$(date +"%Y-%m-%d %H:%M:%S") $message" | tee -a "$wd/install.log"
 		else
-			echo "$(date +"%Y-%m-%d %H:%M:%S") $message" >>"${WORKING_DIRECTORY}/install.log"
+			echo "$(date +"%Y-%m-%d %H:%M:%S") $message" >>"$wd/install.log"
 		fi
 	else
-		echo "$(date +"%Y-%m-%d %H:%M:%S") $message" >>"${WORKING_DIRECTORY}/install.log"
+		echo "$(date +"%Y-%m-%d %H:%M:%S") $message" >>"$wd/install.log"
 	fi
 }
 
 usage() {
-	echo "Usage: $0 [OPTIONS]"
-	echo "Options:"
-	echo "  -S, --silent                      Enable silent mode (requires --url, --username, --password)"
-	echo "  -U, --url URL                     URL of the OCSInventory API server (required for silent mode)"
-	echo "  -u, --username USERNAME           Username (required for silent mode)"
-	echo "  -p, --password PASSWORD           Password (required for silent mode)"
-	echo "  -m, --mode MODE                   Inventory mode (default: 1 = Remote with template)"
-	echo "  -d, --data-path PATH              Path to the data directory (default: /var/lib/ocsinventory-data)"
-	echo "  -l, --log-level LEVEL             Log level (default: 3 = Info)"
-	echo "      --log-file                    Enable log file (default: true)"
-	echo "      --log-file-path PATH          Path to the log file (default: /var/log/ocsinventory-agent.log)"
-	echo "  -c, --certificate CERTIFICATE     Path to the certificate file (default: null)"
-	echo "      --bypass-certificate          Bypass certificate validation (default: false)"
-	echo "  -s, --service                     Register the agent as a systemd service"
-	echo "  -n, --now                         Run the agent inventory immediately after installation"
-	echo "  -h, --help                        Display this help message"
+	cat <<'USAGE'
+Usage: install.sh [OPTIONS]
+
+Options:
+  -S, --silent                    Silent mode (requires --url, --username, --password)
+  -U, --url URL                   OCS server URL
+  -u, --username USERNAME         Username
+  -p, --password PASSWORD         Password
+  -m, --mode MODE                 Inventory mode (default: 1)
+  -d, --data-path PATH            Data directory (default: /var/lib/ocsinventory-data)
+  -l, --log-level LEVEL           Log level 0..4 (default: 3)
+      --log-file                  Enable log file (default: true)
+      --log-file-path PATH        Log file path (default: /var/log/ocsinventory-agent.log)
+  -c, --certificate FILE          PEM certificate path (default: none)
+      --bypass-certificate        Bypass SSL validation (default: false)
+  -s, --service                   Register LaunchDaemon
+  -n, --now                       Run agent once immediately after install
+  -h, --help                      Show help and exit
+USAGE
 	exit 1
 }
 
@@ -48,69 +65,130 @@ execCommand() {
 	fi
 }
 
+### ---------- Root check ----------
+if [[ "$(id -u)" != "0" ]]; then
+	log "This installer requires root privileges. Re-run with sudo." false
+	exit 1
+fi
+
+### ---------- Defaults ----------
+WORKING_DIRECTORY="$(cd "$(dirname "$0")" && pwd)"
+CONFIG_PATH="/etc/ocsinventory-agent"
+AGENT_DIR="/usr/local/bin"
+AGENT_EXEC="/ocsinventory-cli"
+DEFAULT_DATA_PATH="/var/lib/ocsinventory-data"
+DEFAULT_LOG_FILE_PATH="/var/log/ocsinventory-agent.log"
+PLIST_DST="/Library/LaunchDaemons/com.ocsinventory.agent.plist"
+SERVICE_LABEL="com.ocsinventory.agent"
+
+SILENT=false
+URL=""
+USERNAME=""
+PASSWORD=""
+INVENTORY_MODE=1
+DATA_PATH=""
+LOG_LEVEL=""
+LOG_FILE=false
+LOG_FILE_PATH=""
+CERTIFICATE=""
+BYPASS_CERTIFICATE=false
+SERVICE=false
+NOW=false
+
+# arg parse
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+	-S | --silent)
+		SILENT="true"
+		shift
+		;;
+	-U | --url)
+		URL="$2"
+		shift 2
+		;;
+	-u | --username)
+		USERNAME="$2"
+		shift 2
+		;;
+	-p | --password)
+		PASSWORD="$2"
+		shift 2
+		;;
+	-m | --mode)
+		INVENTORY_MODE="$2"
+		shift 2
+		;;
+	-d | --data-path)
+		DEFAULT_DATA_PATH="$2"
+		shift 2
+		;;
+	-l | --log-level)
+		LOG_LEVEL="$2"
+		shift 2
+		;;
+	--log-file)
+		LOG_FILE="true"
+		shift
+		;;
+	--log-file-path)
+		LOG_FILE_PATH="$2"
+		shift 2
+		;;
+	-c | --certificate)
+		CERTIFICATE="$2"
+		shift 2
+		;;
+	--bypass-certificate)
+		BYPASS_CERTIFICATE="true"
+		shift
+		;;
+	-s | --service)
+		SERVICE="true"
+		shift
+		;;
+	-n | --now)
+		NOW="true"
+		shift
+		;;
+	-h | --help)
+		usage
+		;;
+	*)
+		log "Unknown argument: $1" false
+		usage
+		;;
+	esac
+done
+
+### ---------- Guards ----------
 check_silent_parameters() {
-	if [ -z "$URL" ]; then
-		log "Server URL is required in silent mode (-U, --url)" false
+	if [[ -z "$URL" ]]; then
+		log "Server URL is required in silent mode" false
 		usage
 	fi
-
-	if [ -z "$USERNAME" ]; then
-		log "Username is required in silent mode (-u, --username)" false
+	if [[ -z "$USERNAME" ]]; then
+		log "Username is required in silent mode" false
 		usage
 	fi
-
-	if [ -z "$PASSWORD" ]; then
-		log "Password is required in silent mode (-p, --password)" false
+	if [[ -z "$PASSWORD" ]]; then
+		log "Password is required in silent mode" false
 		usage
 	fi
-
-	if [ -z "$INVENTORY_MODE" ]; then
-		log "Inventory mode not provided, using default value: 1 (Remote with template)" true
-		INVENTORY_MODE=1
+	if [[ -z "$INVENTORY_MODE" ]]; then INVENTORY_MODE=1; fi
+	if [[ -z "$DATA_PATH" ]]; then DATA_PATH="$DEFAULT_DATA_PATH"; fi
+	if [[ -z "$LOG_LEVEL" ]]; then LOG_LEVEL=3; fi
+	if [[ "${LOG_FILE}" = "false" ]]; then LOG_FILE=true; fi
+	if [[ -z "$LOG_FILE_PATH" ]]; then LOG_FILE_PATH="$DEFAULT_LOG_FILE_PATH"; fi
+	if [[ -z "$CERTIFICATE" ]]; then CERTIFICATE="none"; else
+		execCommand "/usr/bin/openssl x509 -in \"$CERTIFICATE\" -noout" \
+			"Certificate file ok: $CERTIFICATE" "Certificate not valid or unreadable: $CERTIFICATE"
 	fi
-
-	if [ -z "$DATA_PATH" ]; then
-		log "Data path not provided, using default value: $DEFAULT_DATA_PATH" true
-		DATA_PATH=$DEFAULT_DATA_PATH
-	fi
-
-	if [ -z "$LOG_LEVEL" ]; then
-		log "Log level not provided, using default value: 3 (Info)" true
-		LOG_LEVEL=3
-	fi
-
-	if [ "$LOG_FILE" = "false" ]; then
-		log "Log file option not provided, using default value: true" true
-		LOG_FILE=true
-	fi
-
-	if [ -z "$LOG_FILE_PATH" ]; then
-		log "Log file path not provided, using default value: $DEFAULT_LOG_FILE_PATH" true
-		LOG_FILE_PATH=$DEFAULT_LOG_FILE_PATH
-	fi
-
-	if [ -z "$CERTIFICATE" ]; then
-		log "Certificate not provided, using default value: none" true
-		CERTIFICATE="none"
-	else
-		execCommand "openssl x509 -in $CERTIFICATE -noout" "Certificate file exists: $CERTIFICATE" "Certificate file does not exist: $CERTIFICATE"
-	fi
-
-	if [ -z "$BYPASS_CERTIFICATE" ]; then
-		log "Bypass certificate option not provided, using default value: false (do not bypass certificate validation)" true
-	fi
-
-	if [ "$NOW" = "false" ]; then
-		log "Run now option not provided, using default value: false (do not run immediately)" true
-	fi
-
-	if [ "$SERVICE" = "false" ]; then
-		log "Service registration not provided, using default value: false (do not register as service)" true
-	fi
+	if [[ -z "${BYPASS_CERTIFICATE}" ]]; then BYPASS_CERTIFICATE=false; fi
 }
 
+### ---------- Existing install detection ----------
 check_installed_agent() {
-	if [ -f "$AGENT_BINARY$AGENT_EXEC" ] || [ -f "/etc/systemd/system/${SERVICE_NAME}.service" ] || [ -d "$CONFIG_PATH" ] || [ -f "$LOG_FILE_PATH" ]; then
+	if [ -f "$AGENT_DIR$AGENT_EXEC" ] || [ -f "${PLIST_DST}" ] || [ -d "$CONFIG_PATH" ] || [ -f "$LOG_FILE_PATH" ]; then
 		if [ "$SILENT" = "true" ]; then
 			log "Existing agent installation detected in silent mode. Automatically uninstalling..." false
 			execCommand "sh ${WORKING_DIRECTORY}/uninstall.sh -S -D" "Existing agent uninstalled successfully. See the logs in ${WORKING_DIRECTORY}/uninstall.log" "Failed to uninstall existing agent."
@@ -132,15 +210,16 @@ check_installed_agent() {
 	fi
 }
 
+### ---------- Install binary ----------
 copy_agent_contents() {
 
-	execCommand "cp -r $WORKING_DIRECTORY$AGENT_EXEC $AGENT_BINARY" "Copied agent binary to $AGENT_BINARY" "Failed to copy agent binary."
+	execCommand "cp -r $WORKING_DIRECTORY$AGENT_EXEC $AGENT_DIR" "Copied agent binary to $AGENT_DIR" "Failed to copy agent binary."
 
-	execCommand "chmod +x $AGENT_BINARY$AGENT_EXEC" "Made the agent executable: $AGENT_BINARY$AGENT_EXEC" "Failed to make the agent executable."
+	execCommand "chmod +x $AGENT_DIR$AGENT_EXEC" "Made the agent executable: $AGENT_DIR$AGENT_EXEC" "Failed to make the agent executable."
 
-	execCommand "ln -s $AGENT_BINARY$AGENT_EXEC $SYMBOLIC_LINK" "Created CLI symlink: $SYMBOLIC_LINK" "Failed to create CLI symlink."
 }
 
+### ---------- Config ----------
 create_config_file() {
 	log "Creating configuration file..." false
 
@@ -159,6 +238,7 @@ create_config_file() {
 
 }
 
+### ---------- Log file ----------
 create_log_file() {
 	if [ "$LOG_FILE" != "true" ]; then
 		log "Log file option is disabled; skipping log file creation." false
@@ -183,6 +263,7 @@ create_log_file() {
 	fi
 }
 
+### ---------- Data dir ----------
 create_data_folder() {
 	log "Creating data folder..." false
 
@@ -193,47 +274,32 @@ create_data_folder() {
 	fi
 }
 
+### ---------- One-shot execution ----------
 run_executable() {
 	if [ "$NOW" = "true" ]; then
 		log "Running the agent now..." false
+		log "Command: $AGENT_DIR$AGENT_EXEC -f $LOG_FILE -m $INVENTORY_MODE -p $PASSWORD -u $USERNAME -s $URL -l $LOG_FILE_PATH -d $DATA_PATH -v $LOG_LEVEL -c $CERTIFICATE" false
 
-		execCommand "$SYMBOLIC_LINK -f $LOG_FILE -m $INVENTORY_MODE -p $PASSWORD -u $USERNAME -s $URL -l $LOG_FILE_PATH -d $DATA_PATH -v $LOG_LEVEL -c $CERTIFICATE" "Agent executed successfully." "Failed to execute the agent."
+		execCommand "$AGENT_DIR$AGENT_EXEC -f $LOG_FILE -m $INVENTORY_MODE -p $PASSWORD -u $USERNAME -s $URL -l $LOG_FILE_PATH -d $DATA_PATH -v $LOG_LEVEL -c $CERTIFICATE" "Agent executed successfully." "Failed to execute the agent."
 	fi
 }
 
+### ---------- LaunchDaemon (separate plist) ----------
 register_service() {
-	log "Installing systemd service..." false
+	log "Installing service file..." false
 
-	execCommand "cp ${WORKING_DIRECTORY}/${SERVICE_NAME}.service /etc/systemd/system/${SERVICE_NAME}.service" "Service file installed successfully." "Failed to install service file."
+	execCommand "cp ${WORKING_DIRECTORY}/com.ocsinventory.agent.plist /Library/LaunchDaemons/${SERVICE_LABEL}.plist" "Service file copied successfully." "Failed to copy service file."
 
 	log "Reloading daemon and enabling service" false
 
-	execCommand "systemctl -q daemon-reload" "Systemd daemon reloaded successfully." "Failed to reload systemd daemon."
-
-	execCommand "systemctl -q enable ${SERVICE_NAME}.service" "Service ${SERVICE_NAME} enabled successfully." "Failed to enable service ${SERVICE_NAME}."
-
-	execCommand "systemctl -q start ${SERVICE_NAME}.service" "Service ${SERVICE_NAME} started successfully." "Failed to start service ${SERVICE_NAME}."
+	execCommand "launchctl bootstrap system /Library/LaunchDaemons/${SERVICE_LABEL}.plist" "LaunchDaemon bootstrapped successfully." "Failed to bootstrap LaunchDaemon."
+	execCommand "launchctl enable system/com.ocsinventory.agent" "Service ${SERVICE_LABEL} enabled successfully." "Failed to enable service ${SERVICE_LABEL}."
+	execCommand "launchctl kickstart -k system/com.ocsinventory.agent" "Service ${SERVICE_LABEL} started successfully." "Failed to start service ${SERVICE_LABEL}."
 
 	log "Service Started" false
 }
 
-run_silent() {
-	log "+---------------------------------------------------------+" false
-	log "|                                                         |" false
-	log "|     Installing OCSInventory Agent in silent mode...     |" false
-	log "|                                                         |" false
-	log "+---------------------------------------------------------+" false
-	log "" false
-
-	check_silent_parameters
-	check_installed_agent
-	copy_agent_contents
-	create_config_file
-	create_log_file
-	create_data_folder
-	run_executable
-}
-
+### ---------- Interactive flow ----------
 run_interactive() {
 	log "+--------------------------------------------------------------+" false
 	log "|                                                              |" false
@@ -308,7 +374,7 @@ run_interactive() {
 		if [ "$DATA_PATH" = "" ]; then
 			DATA_PATH=$DEFAULT_DATA_PATH
 		fi
-		log "Data path: $DATA_PATH" true
+		log "Data path: $DEFAULT_DATA_PATH" true
 	fi
 
 	if [ -z "$LOG_LEVEL" ]; then
@@ -359,7 +425,7 @@ run_interactive() {
 	fi
 
 	if [ "$SERVICE" = "false" ]; then
-		echo -n "Should the agent be registered as a systemd service? ([y]/n) "
+		echo -n "Should the agent be registered as a LaunchDaemon? ([y]/n) "
 		read -r service_choice
 		case "$service_choice" in
 		"" | "y" | "Y")
@@ -387,111 +453,23 @@ run_interactive() {
 	run_executable
 }
 
-if [ "$(id -u)" != "0" ]; then
-	log "The installation script requires elevated privileges, please run as root" false
-	exit 1
-fi
+### ---------- Silent flow ----------
+run_silent() {
+	log "+---------------------------------------------------------+" false
+	log "|                                                         |" false
+	log "|     Installing OCSInventory Agent in silent mode...     |" false
+	log "|                                                         |" false
+	log "+---------------------------------------------------------+" false
+	log "" false
 
-WORKING_DIRECTORY=$(dirname "$(realpath "$0")")
-CONFIG_PATH="/etc/ocsinventory-agent"
-AGENT_BINARY="/usr/local/bin"
-SYMBOLIC_LINK="/usr/bin/ocsinventory-cli"
-DEFAULT_DATA_PATH="/var/lib/ocsinventory-data"
-DEFAULT_LOG_FILE_PATH="/var/log/ocsinventory-agent.log"
-AGENT_EXEC="/ocsinventory-cli"
-SERVICE_NAME="ocsinventory-agent"
-
-SILENT=false
-URL=""
-USERNAME=""
-PASSWORD=""
-INVENTORY_MODE=1
-DATA_PATH=""
-LOG_LEVEL=""
-LOG_FILE=false
-LOG_FILE_PATH=""
-CERTIFICATE=""
-BYPASS_CERTIFICATE=false
-SERVICE=false
-NOW=false
-
-SHORT_OPTS="SU:u:p:m:d:l:c:snh"
-LONG_OPTS="silent,url:,username:,password:,mode:,data-path:,log-level:,log-file,log-file-path:,certificate:,bypass-certificate,service,now,help"
-
-if ! PARSED_OPTIONS=$(getopt --options $SHORT_OPTS --longoptions $LONG_OPTS --name "$0" -- "$@"); then
-	usage
-fi
-
-eval set -- "$PARSED_OPTIONS"
-unset PARSED_OPTIONS
-
-while true; do
-	case "$1" in
-	-S | --silent)
-		SILENT=true
-		shift
-		;;
-	-U | --url)
-		URL="$2"
-		shift 2
-		;;
-	-u | --username)
-		USERNAME="$2"
-		shift 2
-		;;
-	-p | --password)
-		PASSWORD="$2"
-		shift 2
-		;;
-	-m | --mode)
-		INVENTORY_MODE="$2"
-		shift 2
-		;;
-	-d | --data-path)
-		DEFAULT_DATA_PATH="$2"
-		shift 2
-		;;
-	-l | --log-level)
-		LOG_LEVEL="$2"
-		shift 2
-		;;
-	--log-file)
-		LOG_FILE=true
-		shift
-		;;
-	--log-file-path)
-		LOG_FILE_PATH="$2"
-		shift 2
-		;;
-	-c | --certificate)
-		CERTIFICATE="$2"
-		shift 2
-		;;
-	--bypass-certificate)
-		BYPASS_CERTIFICATE=true
-		shift
-		;;
-	-s | --service)
-		SERVICE=true
-		shift
-		;;
-	-n | --now)
-		NOW=true
-		shift
-		;;
-	-h | --help)
-		usage
-		;;
-	--)
-		shift
-		break
-		;;
-	*)
-		log "Internal error!" false
-		exit 1
-		;;
-	esac
-done
+	check_silent_parameters
+	check_installed_agent
+	copy_agent_contents
+	create_config_file
+	create_log_file
+	create_data_folder
+	run_executable
+}
 
 if [ "$SILENT" = "true" ]; then
 	run_silent
@@ -499,7 +477,7 @@ else
 	run_interactive
 fi
 
-if [ -d "$CONFIG_PATH" ] && [ -f "$LOG_FILE_PATH" ] && [ -d "$AGENT_BINARY" ] && [ -f "$SYMBOLIC_LINK" ]; then
+if [ -d "$CONFIG_PATH" ] && [ -f "$LOG_FILE_PATH" ] && [ -d "$AGENT_DIR" ] && [ -f "$AGENT_DIR$AGENT_EXEC" ]; then
 	if [ "$SERVICE" = "true" ]; then
 		register_service
 	fi
@@ -510,7 +488,7 @@ if [ -d "$CONFIG_PATH" ] && [ -f "$LOG_FILE_PATH" ] && [ -d "$AGENT_BINARY" ] &&
 	log "|          Configuration files are located at $CONFIG_PATH" false
 	log "|          Log file is located at $LOG_FILE_PATH" false
 	log "|          Agent data storage is located at $DATA_PATH" false
-	log "|          Agent installation directory is located at $AGENT_BINARY" false
+	log "|          Agent installation directory is located at $AGENT_DIR" false
 	log "|                                                                                                |" false
 	log "|               Please refer to the documentation for more information.                          |" false
 	log "+------------------------------------------------------------------------------------------------+" false

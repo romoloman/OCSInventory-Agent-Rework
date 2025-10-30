@@ -38,8 +38,8 @@ execCommand() {
 }
 
 get_path() {
-	DATA_PATH=$(grep -oP '"data_directory": "\K[^"]+' "${CONFIG_PATH}/config.json" 2>/dev/null)
-	LOG_FILE_PATH=$(dirname "$(grep -oP '"log_file_path": "\K[^"]+' "${CONFIG_PATH}/config.json" 2>/dev/null)" 2>/dev/null)
+	LOG_FILE_PATH=$(sed -n 's/.*"log_file_path": "\([^"]*\)".*/\1/p' "${CONFIG_PATH}/config.json" 2>/dev/null)
+	DATA_PATH=$(sed -n 's/.*"data_directory": "\([^"]*\)".*/\1/p' "${CONFIG_PATH}/config.json" 2>/dev/null)
 }
 
 legacy_check() {
@@ -79,36 +79,26 @@ uninstall_agent() {
 
 	get_path
 
-	if systemctl -q list-units --full -all | grep -q ${SERVICE_NAME}.service; then
-		log "Service ${SERVICE_NAME} exists, proceeding with uninstallation." false
+	# launchDaemon exists, uninstall
+	if launchctl list | grep -q ${SERVICE_LABEL}; then
+		log "LaunchDaemon ${SERVICE_LABEL} exists, proceeding with uninstallation." false
 
-		execCommand "systemctl -q stop ${SERVICE_NAME}" "Service ${SERVICE_NAME} stopped successfully." "Failed to stop service ${SERVICE_NAME}. It may not be running."
+		execCommand "launchctl bootout system /Library/LaunchDaemons/${SERVICE_LABEL}.plist" "LaunchDaemon ${SERVICE_LABEL} stopped successfully." "Failed to stop LaunchDaemon ${SERVICE_LABEL}. It may not be running."
 
-		execCommand "systemctl -q disable ${SERVICE_NAME}" "Service ${SERVICE_NAME} disabled successfully." "Failed to disable service ${SERVICE_NAME}."
-
-		execCommand "rm ${SERVICE_FILE}" "Service file ${SERVICE_FILE} removed successfully." "Failed to remove service file ${SERVICE_FILE}."
-
-		execCommand "systemctl -q daemon-reload" "Systemd daemon reloaded successfully." "Failed to reload systemd daemon."
+		execCommand "rm /Library/LaunchDaemons/${SERVICE_LABEL}.plist" "LaunchDaemon file /Library/LaunchDaemons/${SERVICE_LABEL}.plist removed successfully." "Failed to remove LaunchDaemon file /Library/LaunchDaemons/${SERVICE_LABEL}.plist."
 	else
-		log "Service ${SERVICE_NAME} does not exist. Skipping service uninstallation." false
+		log "LaunchDaemon ${SERVICE_LABEL} does not exist. Skipping LaunchDaemon uninstallation." false
 	fi
 
 	if [ "$HARD_DELETE" = true ]; then
 
 		legacy_check
 
-		if [ -d "${CONFIG_PATH}" ]; then
-			log "Configuration directory ${CONFIG_PATH} exists, proceeding with removal." false
-			execCommand "rm -r ${CONFIG_PATH}" "Configuration directory ${CONFIG_PATH} removed successfully." "Failed to remove configuration directory ${CONFIG_PATH}."
+		if [ -f "${LOG_FILE_PATH}" ]; then
+			log "Log file ${LOG_FILE_PATH} exists, proceeding with removal." false
+			execCommand "rm ${LOG_FILE_PATH}" "Log file ${LOG_FILE_PATH} removed successfully." "Failed to remove log file ${LOG_FILE_PATH}."
 		else
-			log "Configuration directory does not exist, skipping removal." false
-		fi
-
-		if [ -d "${LOG_FILE_PATH}" ] && [ "${LOG_FILE_PATH}" != "." ]; then
-			log "Log directory ${LOG_FILE_PATH} exists, proceeding with removal." false
-			execCommand "rm -r ${LOG_FILE_PATH}" "Log directory ${LOG_FILE_PATH} removed successfully." "Failed to remove log directory ${LOG_FILE_PATH}."
-		else
-			log "Log directory does not exist, skipping removal." false
+			log "Log file does not exist, skipping removal." false
 		fi
 
 		if [ -d "${DATA_PATH}" ]; then
@@ -117,20 +107,20 @@ uninstall_agent() {
 		else
 			log "Data directory does not exist, skipping removal." false
 		fi
+
+		if [ -d "${CONFIG_PATH}" ]; then
+			log "Configuration directory ${CONFIG_PATH} exists, proceeding with removal." false
+			execCommand "rm -r ${CONFIG_PATH}" "Configuration directory ${CONFIG_PATH} removed successfully." "Failed to remove configuration directory ${CONFIG_PATH}."
+		else
+			log "Configuration directory does not exist, skipping removal." false
+		fi
 	fi
 
-	if [ -f "${AGENT_BINARY}" ]; then
-		log "Agent binary ${AGENT_BINARY} exists, proceeding with removal." false
-		execCommand "rm -r ${AGENT_BINARY}" "Agent installation directory ${AGENT_BINARY} removed successfully." "Failed to remove agent installation directory ${AGENT_BINARY}."
+	if [ -f "${AGENT_DIR}${AGENT_EXEC}" ]; then
+		log "Agent binary ${AGENT_DIR}${AGENT_EXEC} exists, proceeding with removal." false
+		execCommand "rm ${AGENT_DIR}${AGENT_EXEC}" "Agent binary ${AGENT_DIR}${AGENT_EXEC} removed successfully." "Failed to remove agent binary ${AGENT_DIR}${AGENT_EXEC}."
 	else
 		log "Agent binary does not exist, skipping removal." false
-	fi
-
-	if [ -L "${SYMBOLIC_LINK}" ]; then
-		log "Symbolic link ${SYMBOLIC_LINK} exists, proceeding with removal." false
-		execCommand "rm ${SYMBOLIC_LINK}" "Symbolic link ${SYMBOLIC_LINK} removed successfully." "Failed to remove symbolic link ${SYMBOLIC_LINK}."
-	else
-		log "Symbolic link does not exist, skipping removal." false
 	fi
 
 	log "" false
@@ -161,28 +151,18 @@ fi
 
 WORKING_DIRECTORY=$(dirname "$(realpath "$0")")
 CONFIG_PATH="/etc/ocsinventory-agent"
-AGENT_BINARY="/usr/local/bin/ocsinventory-cli"
-SYMBOLIC_LINK="/usr/bin/ocsinventory-cli"
-DATA_PATH=""
-LOG_FILE_PATH=""
-SERVICE_NAME="ocsinventory-agent"
-SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
+AGENT_DIR="/usr/local/bin"
+AGENT_EXEC="/ocsinventory-cli"
+DATA_PATH="/var/lib/ocsinventory-data"
+LOG_FILE_PATH="/var/log/ocsinventory-agent.log"
+SERVICE_LABEL="com.ocsinventory.agent"
 
 SILENT=false
 HARD_DELETE=false
 AUTO_CONFIRM=false
 
-SHORT_OPTS="SDyh"
-LONG_OPTS="silent,hard-delete,yes,help"
-
-if ! PARSED_OPTIONS=$(getopt --options $SHORT_OPTS --longoptions $LONG_OPTS --name "$0" -- "$@"); then
-	usage
-fi
-
-eval set -- "$PARSED_OPTIONS"
-unset PARSED_OPTIONS
-
-while true; do
+# arg parse
+while [[ $# -gt 0 ]]; do
 	case "$1" in
 	-S | --silent)
 		AUTO_CONFIRM=true
@@ -200,13 +180,9 @@ while true; do
 	-h | --help)
 		usage
 		;;
-	--)
-		shift
-		break
-		;;
 	*)
-		log "Internal error!" false
-		exit 1
+		log "Unknown argument: $1" false
+		usage
 		;;
 	esac
 done
