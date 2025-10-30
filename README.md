@@ -22,10 +22,9 @@
       - [5. Additionnal information for Windows installation](#5-additionnal-information-for-windows-installation)
     - [Installing the agent on MacOS](#installing-the-agent-on-macos)
       - [1. MacOS compilation](#1-macos-compilation)
-      - [2. Create your own MacOS package](#2-create-your-own-macos-package)
-      - [3. Installing the MacOS agent non-interactively](#3-installing-the-macos-agent-non-interactively)
-      - [4. Installing the MacOS agent interactively](#4-installing-the-macos-agent-interactively)
-      - [5. Additionnal information for MacOS installation](#5-additionnal-information-for-macos-installation)
+      - [2. Installing the MacOS agent non-interactively](#2-installing-the-macos-agent-non-interactively)
+      - [3. Installing the MacOS agent interactively](#3-installing-the-macos-agent-interactively)
+      - [4. Additionnal information for MacOS installation](#4-additionnal-information-for-macos-installation)
   - [Step 5: Agent configuration](#step-5-agent-configuration)
     - [Linux and macos](#linux-and-macos)
     - [Windows](#windows)
@@ -205,77 +204,51 @@ If you set service installation to true, it will be in service and named `OCSInv
 #### 1. MacOS compilation
 
 Go to the linux setup directory: `/setup/macos/`
-You need to compile the entry point `app.dart` and the daemon `daemon.dart` using the following command
+You need to compile the agent binary point `app.dart` using the following command
 
 ```text
-dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o ocsinventory-agent
-dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/daemon.dart -o ocsinventory-service
+dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o ocsinventory-cli
 ```
 
-#### 2. Create your own MacOS package
-
-You can create your package (if needed) with Xcode and Package applications.
-
-- Build `config-agent-ocs` and copy the bundle file into `OCS Inventory Agent setup` directory
-- Build `ocsng_app-xcode` to create OCS-NG pkg and ocscontact. Ensure the Scheme is correct to build each of them
-- Build `OCS Inventory Agent setup` to create installation package
-
-Ensure that you have something like this:
-
-```text
-├── AUTHORS
-├── Changes
-├── ocsinventory-agent
-├── ocsinventory-service
-├── LICENCE.txt
-├── OCS Inventory Agent setup
-│   ├── build
-│   │   └── OCS Inventory Agent Setup.mpkg
-│   ├── config-agent-ocs.bundle
-│   ├── OCS Inventory Agent.pkgproj
-│   └── scripts
-├── ocsng_app-xcode
-│   ├── build
-│   │   └── build
-│   │       └── ocscontact
-│   │       └── OCS-NG
-│   ├── en.lproj
-│   ├── ...
-├── README.md
-├── scripts
-├── setup plugins
-│ └── config-agent-ocs
-└── THANKS
-```
-
-#### 3. Installing the MacOS agent non-interactively
+#### 2. Installing the MacOS agent non-interactively
 
 To install the agent in non-interactive mode, you have to run the MacOS `install.sh` script with a set of launch arguments to allow to set all configuration options as you can do in interactive mode.
 This is a list of all available `install.sh` script arguments:
 
-- -l : set link of the OCS Inventory NG server
-- -u : set username
-- -p : set password
-- -v : set level of the log
-- -s : set service mode (register service)
-- -n : set to run the agent now
-- -c : set certificate path
-
-For example, if you want to install OCS Inventory Agent in non-interactive mode and set server adress, set password, set username, set log level, register the service and run the agent now, you have to run this command:
-
 ```text
-sudo sh install.sh -l Server_ip_and_port -u username -p password -v 3 -s -n -c -c /path of the certificate/cert.pem
+-S, --silent                          Enable silent mode (requires --url --username, --password)
+-U, --url URL                         URL of the OCSInventory server (required for silent mode)
+-u, --username USERNAME               Username (required for silent mode)
+-p, --password PASSWORD               Password (required for silent mode)
+-m, --mode MODE                       Inventory mode (default: 1 = Remote with template)
+-d, --data-path PATH                  Path to the data directory (default: /var/lib/ocsinventory-data)
+-l, --log-level LEVEL                 Log level (default: 3 = Info)
+    --log-file                        Enable log file (default: false)
+    --log-file-path PATH              Path to the log file (default: /var/log/ocsinventory-agent/ocsinventory-agent.log)
+-c, --certificate CERTIFICATE         Path to the certificate file (default: null)
+    --bypass-certificate              Bypass certificate validation (default: false)
+-s, --service                         Register the agent as a systemd service
+-n, --now                             Run the agent inventory immediately after installation
+-h, --help                            Display this help message
 ```
 
-#### 4. Installing the MacOS agent interactively
+For example, if you want to install OCS Inventory Agent in non-interactive mode and set server adress, set password, set username, register the service and run the agent now, you have to run this command:
 
-To install the agent in interactive mode, you have to run the `OCS Inventory Agent.mpkg` package and set all configuration fields.
+```text
+sudo ./install.sh --silent --url Server_ip_and_port --username username --password password --service --now
+```
 
-#### 5. Additionnal information for MacOS installation
+#### 3. Installing the MacOS agent interactively
 
-- The is installed in `/Applications/OCS-NG`
+To install the agent in interactive mode, you have to run the `install.sh` package and set all configuration fields.
 
-- If you set up the service, it will be in `/Library/LaunchDaemons/org.ocsinventory.agent.plist`
+For the server URL field, the expected URL is `http(s)://<Server ip:port>`
+
+#### 4. Additionnal information for MacOS installation
+
+- The agent binary is installed in `/usr/local/bin/ocsinventory-cli`
+
+- If you set up the service, it will be stored at `/Library/LaunchDaemons/com.ocsinventory.agent.plist`
 
 ## Step 5: Agent configuration
 
@@ -283,7 +256,7 @@ To install the agent in interactive mode, you have to run the `OCS Inventory Age
 
 - Configuration directory : `/etc/ocsinventory-agent`
 - Default log file in directory : `/var/log/ocsinventory-agent/ocsinventory-agent.log`
-- Default Data inventories : `/var/lib/ocsinventory-data`
+- Default Data directory : `/var/lib/ocsinventory-data`
 
 ### Windows
 
