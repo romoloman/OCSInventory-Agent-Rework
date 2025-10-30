@@ -138,9 +138,14 @@ class Logger {
       return;
     }
 
-    String serverLogLevel = config.getCoreConfig("agent", "inventory_loglevel");
-    _serverLogLevel = _stringToLevel(serverLogLevel);
-
+    try {
+      String serverLogLevel =
+          config.getCoreConfig("agent", "inventory_loglevel");
+      _serverLogLevel = _stringToLevel(serverLogLevel);
+    } catch (e) {
+      error(runtimeType.toString(), "Error getting server log level: $e");
+      return;
+    }
     // error code to log level and scope
     Map<int, dynamic> errorMapping = {
       0: {"level": 2, "scope": "UNKNOWN"}, // WARNING
