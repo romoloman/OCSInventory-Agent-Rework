@@ -1,0 +1,20 @@
+name: ocsinventory_agent
+description: OCS Inventory Agent
+
+publish_to: "none"
+
+version: 3.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  archive: ^3.4.10
+  args: ^2.5.0
+  hive: ^2.0.0
+  http: ^1.2.1
+  intl: ^0.19.0
+  sprintf: ^7.0.0
+
+dev_dependencies:
+  test: ^1.24.0

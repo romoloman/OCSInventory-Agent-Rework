@@ -3,9 +3,9 @@
 ## Table of Contents
 - [Getting started](#getting-started)
   - [Table of Contents](#table-of-contents)
-  - [Step 1: Flutter installation](#step-1-flutter-installation)
-    - [Download Flutter packages](#download-flutter-packages)
-    - [Add Flutter application to path](#add-flutter-application-to-path)
+  - [Step 1: Dart SDK installation](#step-1-dart-sdk-installation)
+    - [Download the Dart SDK](#download-the-dart-sdk)
+    - [Add Dart to your path](#add-dart-to-your-path)
   - [Step 2: Clone of the project](#step-2-clone-of-the-project)
   - [Step 3: Getting dependencies](#step-3-getting-dependencies)
   - [Step 4: Installing the Agent](#step-4-installing-the-agent)
@@ -32,19 +32,15 @@
   - [Step 6: Uninstalling the agent](#step-6-uninstalling-the-agent)
   - [Step 7: Troubleshooting](#step-7-troubleshooting)
 
-## Step 1: Flutter installation
+## Step 1: Dart SDK installation
 
-### Download Flutter packages
+### Download the Dart SDK
 
-Begin to download the Flutter package by clicking on the big blue button in `Manual install` section on these websites:
+The agent runs as a standalone Dart console application. Download the latest stable Dart SDK for your platform from the [official documentation](https://dart.dev/get-dart#install).
 
-- [Linux Installation](https://docs.flutter.dev/get-started/install/linux/desktop#install-the-flutter-sdk)
-- [MacOS Installation](https://docs.flutter.dev/get-started/install/macos/desktop#install-the-flutter-sdk)
-- [Windows Installation](https://docs.flutter.dev/get-started/install/windows/desktop#install-the-flutter-sdk)
+### Add Dart to your path
 
-### Add Flutter application to path
-
-To add flutter to path, click on this [flutter documentation link](https://docs.flutter.dev/install/add-to-path), choose your OS and follow the instructions.
+Follow the [Dart CLI path instructions](https://dart.dev/get-dart#install) for your operating system so that the `dart` binary is available globally.
 
 ## Step 2: Clone of the project
 
@@ -63,7 +59,7 @@ git clone git@github.com:OCSInventory-NG/OCSInventory-Agent-Rework.git
 Go to the agent directory and run this command :
 
 ```text
-flutter pub get
+dart pub get
 ```
 
 ## Step 4: Installing the Agent
