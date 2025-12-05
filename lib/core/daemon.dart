@@ -16,8 +16,8 @@
 
 import 'dart:async';
 import 'dart:io';
-import 'package:ocs_agent/core/config.dart';
-import 'package:ocs_agent/core/log.dart';
+import 'package:ocsinventory_agent/core/config.dart';
+import 'package:ocsinventory_agent/core/log.dart';
 
 class Daemon {
   late Config config;

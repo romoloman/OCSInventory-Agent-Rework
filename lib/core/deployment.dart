@@ -22,12 +22,12 @@ import 'package:archive/archive_io.dart';
 import 'package:sprintf/sprintf.dart';
 
 // Core imports
-import 'package:ocs_agent/core/log.dart';
-import 'package:ocs_agent/core/config.dart';
-import 'package:ocs_agent/core/inventory/commands.dart';
+import 'package:ocsinventory_agent/core/log.dart';
+import 'package:ocsinventory_agent/core/config.dart';
+import 'package:ocsinventory_agent/core/inventory/commands.dart';
 
 // Common imports
-import 'package:ocs_agent/core/common/http_utils.dart';
+import 'package:ocsinventory_agent/core/common/http_utils.dart';
 
 class Deployment {
   late Config config;

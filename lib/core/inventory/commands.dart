@@ -20,7 +20,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 // Core imports
-import 'package:ocs_agent/core/log.dart';
+import 'package:ocsinventory_agent/core/log.dart';
 
 /// Class for execute command.
 class Commands {
