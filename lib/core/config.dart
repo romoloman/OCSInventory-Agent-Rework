@@ -18,8 +18,8 @@
 import 'dart:io';
 
 // Common imports
-import 'package:ocs_agent/core/common/files_utils.dart';
-import 'package:ocs_agent/core/common/json_utils.dart';
+import 'package:ocsinventory_agent/core/common/files_utils.dart';
+import 'package:ocsinventory_agent/core/common/json_utils.dart';
 
 /// Class to get config in config folder.
 class Config {

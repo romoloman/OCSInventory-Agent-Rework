@@ -18,8 +18,8 @@
 import 'dart:convert';
 
 // Core imports
-import 'package:ocs_agent/core/inventory/commands.dart';
-import 'package:ocs_agent/core/log.dart';
+import 'package:ocsinventory_agent/core/inventory/commands.dart';
+import 'package:ocsinventory_agent/core/log.dart';
 
 /// Format command result by type.
 class Format {

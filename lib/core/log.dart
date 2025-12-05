@@ -21,10 +21,10 @@ import 'package:intl/intl.dart';
 import 'package:sprintf/sprintf.dart';
 
 // Core imports
-import 'package:ocs_agent/core/config.dart';
+import 'package:ocsinventory_agent/core/config.dart';
 
 // Common imports
-import 'package:ocs_agent/core/common/http_utils.dart';
+import 'package:ocsinventory_agent/core/common/http_utils.dart';
 
 /// Insert log in console or file if configured in inventory.json.
 /// Level 0 = error

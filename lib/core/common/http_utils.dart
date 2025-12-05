@@ -18,11 +18,11 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/io_client.dart';
-import 'package:ocs_agent/core/config.dart';
+import 'package:ocsinventory_agent/core/config.dart';
 import 'package:sprintf/sprintf.dart';
 
 // Core imports
-import 'package:ocs_agent/core/log.dart';
+import 'package:ocsinventory_agent/core/log.dart';
 
 /// This class will execute and log the status of the query
 class HTTPUtils {

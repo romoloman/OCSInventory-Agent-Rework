@@ -15,11 +15,11 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // External package imports
-import 'package:ocs_agent/core/log.dart';
+import 'package:ocsinventory_agent/core/log.dart';
 
 // Core imports
-import 'package:ocs_agent/core/inventory/commands.dart';
-import 'package:ocs_agent/core/config.dart';
+import 'package:ocsinventory_agent/core/inventory/commands.dart';
+import 'package:ocsinventory_agent/core/config.dart';
 
 class BaseMacOS {
   late Logger logger;

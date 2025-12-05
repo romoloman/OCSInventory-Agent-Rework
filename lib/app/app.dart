@@ -21,25 +21,25 @@ import 'package:sprintf/sprintf.dart';
 import 'package:args/args.dart';
 
 // Common imports
-import 'package:ocs_agent/core/common/files_utils.dart';
-import 'package:ocs_agent/core/common/http_utils.dart';
-import 'package:ocs_agent/core/common/json_utils.dart';
+import 'package:ocsinventory_agent/core/common/files_utils.dart';
+import 'package:ocsinventory_agent/core/common/http_utils.dart';
+import 'package:ocsinventory_agent/core/common/json_utils.dart';
 
 // Core imports
-import 'package:ocs_agent/core/config.dart';
-import 'package:ocs_agent/core/log.dart';
+import 'package:ocsinventory_agent/core/config.dart';
+import 'package:ocsinventory_agent/core/log.dart';
 
-import 'package:ocs_agent/core/inventory/linux/baseLinux.dart';
-import 'package:ocs_agent/core/inventory/macos/baseMacOS.dart';
-import 'package:ocs_agent/core/inventory/windows/baseWindows.dart';
+import 'package:ocsinventory_agent/core/inventory/linux/baseLinux.dart';
+import 'package:ocsinventory_agent/core/inventory/macos/baseMacOS.dart';
+import 'package:ocsinventory_agent/core/inventory/windows/baseWindows.dart';
 
-import 'package:ocs_agent/core/inventory/commands.dart';
-import 'package:ocs_agent/core/inventory/format.dart';
+import 'package:ocsinventory_agent/core/inventory/commands.dart';
+import 'package:ocsinventory_agent/core/inventory/format.dart';
 
 // Modules imports
-import 'package:ocs_agent/core/inventory.dart';
-import 'package:ocs_agent/core/deployment.dart';
-import 'package:ocs_agent/core/daemon.dart';
+import 'package:ocsinventory_agent/core/inventory.dart';
+import 'package:ocsinventory_agent/core/deployment.dart';
+import 'package:ocsinventory_agent/core/daemon.dart';
 
 /// In this main section we send the [body] to the asset/bases endpoint
 void main(List<String> args) async {
