@@ -198,8 +198,6 @@ class Inventory {
         responseGet["body"].contains(uuid)) {
       logger.info(this.runtimeType.toString(), "Existing inventory found!");
       assetID = jsonDecode(responseGet["body"])[0]?["id"];
-      logger.info(this.runtimeType.toString(),
-          "Asset ID retrieved: $assetID");  
       inventoryCheck = true;
     } else {
       logger.info(this.runtimeType.toString(), "No existing inventory found.");
