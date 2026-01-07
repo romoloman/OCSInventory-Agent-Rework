@@ -187,7 +187,7 @@ class Inventory {
 
     try {
       responseGet = await httpUtils.get(
-          Uri.parse("$baseUrl/asset/bases/?uuid=$uuid"), httpUtils.getHeader());
+          Uri.parse("$baseUrl/asset/bases/?search=$uuid"), httpUtils.getHeader());
       logger.debug(this.runtimeType.toString(), responseGet["message"]);
     } catch (e) {
       logger.error(
@@ -198,6 +198,8 @@ class Inventory {
         responseGet["body"].contains(uuid)) {
       logger.info(this.runtimeType.toString(), "Existing inventory found!");
       assetID = jsonDecode(responseGet["body"])[0]?["id"];
+      logger.info(this.runtimeType.toString(),
+          "Asset ID retrieved: $assetID");  
       inventoryCheck = true;
     } else {
       logger.info(this.runtimeType.toString(), "No existing inventory found.");
@@ -462,7 +464,7 @@ class Inventory {
 
     try {
       responseAsset = await httpUtils.get(
-          Uri.parse("$baseUrl/asset/bases/?uuid=$uuid"), httpUtils.getHeader());
+          Uri.parse("$baseUrl/asset/bases/?search=$uuid"), httpUtils.getHeader());
       logger.debug(this.runtimeType.toString(), responseAsset["message"]);
 
       assetMap = jsonDecode(responseAsset?["body"]);
@@ -708,7 +710,7 @@ class Inventory {
 
       try {
         responseGet = await httpUtils.get(
-            Uri.parse("$baseUrl/asset/bases/?uuid=$uuid"),
+            Uri.parse("$baseUrl/asset/bases/?search=$uuid"),
             httpUtils.getHeader());
         logger.debug(this.runtimeType.toString(), responseGet["message"]);
       } catch (e) {
@@ -802,7 +804,7 @@ class Inventory {
 
         try {
           responseGet = await httpUtils.get(
-              Uri.parse("$baseUrl/asset/bases/?uuid=$uuid"),
+              Uri.parse("$baseUrl/asset/bases/?search=$uuid"),
               httpUtils.getHeader());
           logger.debug(this.runtimeType.toString(), responseGet["message"]);
         } catch (e) {
