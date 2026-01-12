@@ -187,7 +187,7 @@ class Inventory {
 
     try {
       responseGet = await httpUtils.get(
-          Uri.parse("$baseUrl/asset/bases/?uuid=$uuid"), httpUtils.getHeader());
+          Uri.parse("$baseUrl/asset/bases/?search=$uuid"), httpUtils.getHeader());
       logger.debug(this.runtimeType.toString(), responseGet["message"]);
     } catch (e) {
       logger.error(
@@ -462,7 +462,7 @@ class Inventory {
 
     try {
       responseAsset = await httpUtils.get(
-          Uri.parse("$baseUrl/asset/bases/?uuid=$uuid"), httpUtils.getHeader());
+          Uri.parse("$baseUrl/asset/bases/?search=$uuid"), httpUtils.getHeader());
       logger.debug(this.runtimeType.toString(), responseAsset["message"]);
 
       assetMap = jsonDecode(responseAsset?["body"]);
@@ -708,7 +708,7 @@ class Inventory {
 
       try {
         responseGet = await httpUtils.get(
-            Uri.parse("$baseUrl/asset/bases/?uuid=$uuid"),
+            Uri.parse("$baseUrl/asset/bases/?search=$uuid"),
             httpUtils.getHeader());
         logger.debug(this.runtimeType.toString(), responseGet["message"]);
       } catch (e) {
@@ -802,7 +802,7 @@ class Inventory {
 
         try {
           responseGet = await httpUtils.get(
-              Uri.parse("$baseUrl/asset/bases/?uuid=$uuid"),
+              Uri.parse("$baseUrl/asset/bases/?search=$uuid"),
               httpUtils.getHeader());
           logger.debug(this.runtimeType.toString(), responseGet["message"]);
         } catch (e) {
