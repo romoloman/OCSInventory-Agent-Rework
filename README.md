@@ -72,13 +72,13 @@ Go to the linux setup directory: `/setup/linux/` from the repository cloned abov
 You need to compile the entry point `/lib/app/app.dart` using the following command
 
 ```text
-dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o ocsinventory-agent
+dart compile exe /path of your project/OCSInventory-Agent-Rework/lib/app/app.dart -o ocsinventory-cli
 ```
 
 Ensure that you have something like this in the linux setup directory:
 
 ```text
-├── ocsinventory-agent
+├── ocsinventory-cli
 ├── ocsinventory-agent.service
 ├── install.sh
 └── uninstall.sh
