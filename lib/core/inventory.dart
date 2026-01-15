@@ -100,10 +100,17 @@ class Inventory {
 
     // Check OCS API status
     logger.info(this.runtimeType.toString(), "Checking API availability...");
-    dynamic responseGet = await httpUtils.get(
-        Uri.parse(baseUrl + "/api-check/"),
-        {HttpHeaders.contentTypeHeader: 'application/json'});
-
+    
+    dynamic responseGet;
+    try {
+      responseGet = await httpUtils.get(
+        Uri.parse("$baseUrl/api-check/"),
+        {HttpHeaders.contentTypeHeader: 'application/json'},
+      );
+    } catch (e) {
+      logger.error(runtimeType.toString(), "API unreachable (connection refused)");
+      return false;
+    }
     if (responseGet?["status_code"] != 200) {
       logger.error(this.runtimeType.toString(), "API is not available!");
       return false;
