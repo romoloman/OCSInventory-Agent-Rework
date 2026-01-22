@@ -146,11 +146,33 @@ class BaseLinux {
     return body;
   }
 
+  /// Check if a command exists on the system
+  Future<bool> _commandExists(String cmd) async {
+    final result = await commands.processTarget(
+      "BASH", "which $cmd", logType, "CHECK COMMAND",
+    );
+    return result["value"] != null && result["value"].toString().isNotEmpty;
+  }
+
+  /// Generate a UUID if not available
+  String _generateUUID() {
+    final random = Random.secure();
+    String hex(int length) =>
+        List.generate(length, (_) => random.nextInt(16).toRadixString(16)).join();
+    return '${hex(8)}-${hex(4)}-${hex(4)}-${hex(4)}-${hex(12)}';
+  }
+
   /// Get UUID or generate one if not available and save it in a uuid file
   Future<String> _getUUID() async {
-    String uuid = (await commands.processTarget(
-            "BASH", "dmidecode -s system-uuid", logType, "UUID"))["value"]
+    String uuid = "";
+    if (await _commandExists("dmidecode")) {
+      uuid = (await commands.processTarget(
+        "BASH", "dmidecode -s system-uuid", logType, "UUID"))["value"]
         .toString();
+    } else {
+      logger.info(this.runtimeType.toString(),
+          "dmidecode command not found, skipping system UUID.");
+    }
 
     String uuidFilePath = configDir + uuidFileName;
     File uuidFile = File(uuidFilePath);
@@ -163,11 +185,16 @@ class BaseLinux {
       if (!uuidFileExists) {
         logger.info(this.runtimeType.toString(),
             "UUID file not found, generating new one.");
-        uuid = (await commands.processTarget(
+        if (await _commandExists("uuidgen")) {
+          uuid = (await commands.processTarget(
                 "BASH", "uuidgen", logType, "UUID"))["value"]
             .toString();
         filesUtils.writeFile(uuidFile, '{ "uuid": "$uuid" }');
         logger.info(this.runtimeType.toString(), "New UUID saved to file.");
+        } else {
+          logger.warning(this.runtimeType.toString(),
+              "uuidgen command not found, cannot generate UUID.");
+        }
       } else {
         Map<String, dynamic> uuidData = jsonUtils.getContentFromFile(uuidFile);
         if (uuidData.containsKey("uuid")) {
@@ -175,6 +202,12 @@ class BaseLinux {
           logger.info(this.runtimeType.toString(), "UUID file found.");
         }
       }
+    }
+    if (uuid == "") {
+        logger.warning(this.runtimeType.toString(),
+            "No UUID available from file, dmidecode or uuidgen. Generating a random UUID.");
+        uuid = _generateUUID();
+        filesUtils.writeFile(uuidFile, '{ "uuid": "$uuid" }');
     }
     return uuid;
   }
