@@ -44,7 +44,7 @@ class Format {
           .firstWhere((element) => element['name'] == field['name']);
       // result may be a list of strings if its from an overridden field
       // since multiple entries are not supported for field overrides there will only be a single entry
-      if (result['result'] is List && result['result'].isNotEmpty) {
+      if (result['result'] is List && result['result'].length == 1) {
         result['result'] = result['result'][0];
       }
     } else {
@@ -59,23 +59,13 @@ class Format {
           break;
 
         case "JSON":
-          // if retrieval value = key.key, get to the subkey
-          dynamic subObject;
-
-          if (field['retrieval_value'].contains('.')) {
-            subObject =
-                result['result'][field['retrieval_value'].split('.')[0]];
-            value = subObject[field['retrieval_value'].split('.')[1]] ?? "";
-          } else {
-            value = result['result'][field['retrieval_value']] ?? "";
-          }
+          value = result['result'][field['retrieval_value']] ?? "";
           break;
 
         case "REGX":
           RegExp regex = RegExp(field['retrieval_value']);
           dynamic match = regex.firstMatch(result['result']);
           value = regex.hasMatch(result['result']);
-
           if (match != null) {
             if ((match.groupCount >= 1) && (match.group(1) != null)) {
               value = match.group(1);
@@ -99,12 +89,12 @@ class Format {
               ? result['result'].split('\n')
               : [result['result']];
           value = value >= 0 && value < lines.length ? lines[value] : "";
+
           break;
 
         case "GREP":
           // e.g. retrieval_value = "test" and result = "test 1", we get "1"
           bool contains = result['result'].contains(field['retrieval_value']);
-
           if (contains) {
             final index =
                 result['result'].indexOf(field['retrieval_value']) ?? -1;
@@ -142,11 +132,9 @@ class Format {
     // format overrides
     if (result['override'] is List) {
       final overrides = result['override'] as List;
-
       for (var field in section['fields'] ?? []) {
         if (field['override_target'] == true) {
           final idx = overrides.indexWhere((o) => o['name'] == field['name']);
-
           if (idx != -1) {
             overrides[idx]['result'] = formatContent(
               field['retrieval_output'],
@@ -164,13 +152,11 @@ class Format {
     switch (format) {
       case "TBLE":
         return formatArray(content, options as Map<String, dynamic>?);
-
       case "JSON":
         try {
           var decoded = jsonDecode(content);
           final submap = options?['submap'];
           decoded = decoded is Map ? [decoded] : decoded;
-
           return submap != null && submap.isNotEmpty
               ? getJsonSubmap(decoded, submap)
               : decoded;
@@ -178,16 +164,12 @@ class Format {
           logger.error("Format", "Error while processing JSON: $e, $st");
           return content;
         }
-
       case "REGX":
         return parseRegx(content, options);
-
       case "PTXT":
         return (content as String?)?.trim() ?? '';
-
       case "GREP":
         return (content as String?)?.split("\n").toList() ?? [];
-
       default:
         logger.warning("Format", "Unknown retrieval_output: $format");
         return content;
@@ -202,26 +184,13 @@ class Format {
     bool optionsValid = options != null && options.isNotEmpty;
     final bool useFirstRowAsHeader =
         options?['use_index'] == true || options?['use_index'] == 'true';
-    List<String> resultRows;
-    List<String> headersList = [];
-    Map<String, dynamic> parsedArray = {'rows': []};
     List<Map<String, dynamic>> jsonResult = [];
 
-    // splitting rows by newlines
-    try {
-      resultRows = result.split("\n");
-      resultRows = resultRows.map((row) => row.trim()).toList();
-    } catch (e) {
-      logger.error(this.runtimeType.toString(), e.toString());
-      resultRows = [];
-    }
-
-    if (optionsValid) {
-      // first we parse the headers
-      headersList = this.parseHeaders(resultRows, useFirstRowAsHeader);
-      // now we parse the array (this will removes lines if needed)
-      parsedArray = this.parseArray(resultRows, options);
-    }
+    // first we parse the array (this will removes lines if needed)
+    final parsedArray = this.parseArray(result, options, optionsValid);
+    // now we get the headers
+    List<String> headersList =
+        this.parseHeaders(parsedArray['rows'], parsedArray['use_index']);
 
     jsonResult = this.convertRowsToJson(
         parsedArray['rows'], headersList, useFirstRowAsHeader);
@@ -229,59 +198,69 @@ class Format {
     return jsonResult;
   }
 
-  /// Parse headers from [resultRows] if [useFirstRowAsHeader] is true
-  List<String> parseHeaders(List<String> resultRows, bool useFirstRowAsHeader) {
+  parseHeaders(List<String> resultRows, bool useFirstRowAsHeader) {
     // useIndex = use first row as header, keeping the name to stay consistent with the server
     List<String> headersList = [];
-
     if (useFirstRowAsHeader) {
       headersList = resultRows.removeAt(0).split(RegExp(r'\s+'));
     }
-
     return headersList;
   }
 
-  /// Removes lines if needed to return the parsed array
-  Map<String, dynamic> parseArray(List<String> resultRows, dynamic options) {
-    try {
-      if (options?['remove_line'] != null) {
-        dynamic removeLine = options['remove_line'];
-        resultRows = removeLines(removeLine, resultRows);
-      }
+  /// Parses the table as header/rows, splitting rows by newlines and headers
+  /// by spaces if any. Removes lines if needed
+  Map<String, dynamic> parseArray(
+      String result, dynamic options, bool optionsValid) {
+    List<String> resultRows;
+    bool useIndex;
 
+    useIndex = optionsValid && options?['use_index'] == true;
+
+    try {
+      resultRows = result.split("\n");
+      // trimming to avoid misinterpreting spaces at start/end
+      resultRows = resultRows.map((row) => row.trim()).toList();
+      if (optionsValid && options?['remove_line'] != null) {
+        resultRows = removeLines(options, optionsValid, resultRows);
+      }
       return {
+        'use_index': useIndex,
         'rows': resultRows,
       };
     } catch (e) {
       logger.error(this.runtimeType.toString(), e.toString());
 
       return {
+        'use_index': useIndex,
         'rows': [],
       };
     }
   }
 
   /// Remove as many rows from [resultRows] as options['remove_line'] specifies
-  List<String> removeLines(dynamic removeLine, List<String> resultRows) {
+  List<String> removeLines(Map<String, dynamic>? options, bool optionsValid,
+      List<String> resultRows) {
+    if (options == null || !optionsValid) {
+      logger.warning(
+          this.runtimeType.toString(), "Options are invalid or null.");
+      return resultRows;
+    }
+
     int? linesRemoved;
-
     try {
-      linesRemoved = int.tryParse(removeLine.toString());
-
+      linesRemoved = int.tryParse(options['remove_line'].toString());
       if (linesRemoved == null || linesRemoved < 0) {
         throw FormatException("Invalid 'remove_line' value");
       }
     } catch (e) {
       logger.warning(
           this.runtimeType.toString(), "Invalid value for 'remove_line': $e");
-
       return resultRows;
     }
 
     if (linesRemoved > resultRows.length) {
       logger.warning(this.runtimeType.toString(),
           "'remove_line' exceeds the number of available rows.");
-
       return resultRows;
     }
 
@@ -304,7 +283,6 @@ class Format {
 
       for (int i = 0; i < resultFields.length; i++) {
         String key;
-
         if (useIndex) {
           if (i < headersList.length) {
             key = headersList[i];
@@ -349,7 +327,6 @@ class Format {
         for (var element in elements) {
           if (element is Map && element.containsKey(currentKey)) {
             var subElement = element[currentKey];
-
             if (subElement is List) {
               // continue traversing
               traverse(subElement, nextKeys);
@@ -382,11 +359,12 @@ class Format {
     final rawSeparator = options['separator'];
     final bool multiple =
         options['multiple'] == true || options['multiple'] == 'true';
-    List<String> blocksList;
 
+    List<String> blocksList;
     if (rawSeparator is String && rawSeparator.trim().isNotEmpty) {
       try {
-        blockSeparator = RegExp("(?=${rawSeparator})");
+        // consume separator
+        blockSeparator = RegExp("${rawSeparator}");
       } catch (e) {
         logger.error(this.runtimeType.toString(), "Invalid regex: $e");
         return [result];
@@ -395,7 +373,6 @@ class Format {
 
     blocksList =
         blockSeparator != null ? result.split(blockSeparator) : [result];
-
     if (multiple) {
       blocksList = blocksList.expand((block) => block.split('\n')).toList();
     }
