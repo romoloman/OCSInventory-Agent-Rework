@@ -44,7 +44,7 @@ class Format {
           .firstWhere((element) => element['name'] == field['name']);
       // result may be a list of strings if its from an overridden field
       // since multiple entries are not supported for field overrides there will only be a single entry
-      if (result['result'] is List && result['result'].length == 1) {
+      if (result['result'] is List && result['result'].isNotEmpty) {
         result['result'] = result['result'][0];
       }
     } else {
@@ -363,8 +363,7 @@ class Format {
     List<String> blocksList;
     if (rawSeparator is String && rawSeparator.trim().isNotEmpty) {
       try {
-        // consume separator
-        blockSeparator = RegExp("${rawSeparator}");
+        blockSeparator = RegExp("(?=${rawSeparator})");
       } catch (e) {
         logger.error(this.runtimeType.toString(), "Invalid regex: $e");
         return [result];
