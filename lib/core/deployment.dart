@@ -527,27 +527,21 @@ class Deployment {
       List<int> fileBytes = await savedFile.readAsBytes();
       // Decompress the zip archive
       var archive = ZipDecoder().decodeBytes(fileBytes);
-      await extractArchiveToDiskAsync(archive, extractedPath).then((value) {
-        // Log verbose message indicating successful extraction
-        logger.debug(this.runtimeType.toString(),
-            "File has been extracted at: '$extractedPath'");
+      await extractArchiveToDisk(archive, extractedPath);
+      // Log verbose message indicating successful extraction
+      logger.debug(this.runtimeType.toString(),
+        "File has been extracted at: '$extractedPath'");
 
-        // Delete the __MACOSX directory if it exists
-        var metaDataDirectory = Directory(metaDataPath);
-        if (metaDataDirectory.existsSync()) {
-          metaDataDirectory.delete(recursive: true);
-        }
-        // Delete the archive file after extracting it
-        if (savedFile.existsSync()) {
-          savedFile.deleteSync();
-        }
-        result["status"] = true;
-      }).catchError((onError) {
-        // Handle extraction error
-        result["status"] = false;
-        result["error"] = "Error occurred while extracting file: $onError";
-        logger.error(this.runtimeType.toString(), result["error"]);
-      });
+      // Delete the __MACOSX directory if it exists
+      var metaDataDirectory = Directory(metaDataPath);
+      if (metaDataDirectory.existsSync()) {
+        metaDataDirectory.delete(recursive: true);
+      }
+      // Delete the archive file after extracting it
+      if (savedFile.existsSync()) {
+        savedFile.deleteSync();
+      }
+      result["status"] = true;
     } catch (e) {
       result["status"] = false;
       result["error"] = "Exception during zip extraction: $e";
