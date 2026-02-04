@@ -62,7 +62,7 @@ config/template.json
 pubspec.lock
 hiveData/testbox.lock
 hiveData/testbox.hive
-setup/linux/ocsinventory-agent
+setup/linux/ocsinventory-cli
 setup/linux/ocsinventory-service
 
 # VS Code
