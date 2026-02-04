@@ -339,7 +339,7 @@ run_interactive() {
 	fi
 
 	if [ "$LOG_FILE" = "true" ] && [ -z "$LOG_FILE_PATH" ]; then
-		echo -n "Enter the log file path (leave empty if default, default is: /var/log/ocsinventory-agent.log): "
+		echo -n "Enter the log file path (leave empty if default, default is: $DEFAULT_LOG_FILE_PATH): "
 		read -r LOG_FILE_PATH
 		if [ "$LOG_FILE_PATH" = "" ]; then
 			LOG_FILE_PATH=$DEFAULT_LOG_FILE_PATH
@@ -397,7 +397,7 @@ CONFIG_PATH="/etc/ocsinventory-agent"
 AGENT_BINARY="/usr/local/bin"
 SYMBOLIC_LINK="/usr/bin/ocsinventory-cli"
 DEFAULT_DATA_PATH="/var/lib/ocsinventory-data"
-DEFAULT_LOG_FILE_PATH="/var/log/ocsinventory-agent.log"
+DEFAULT_LOG_FILE_PATH="/var/log/ocsinventory-agent/ocsinventory-agent.log"
 AGENT_EXEC="/ocsinventory-cli"
 SERVICE_NAME="ocsinventory-agent"
 
