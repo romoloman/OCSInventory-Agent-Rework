@@ -35,6 +35,7 @@ class Logger {
   late Config config;
 
   late bool _isFile;
+  late String _logFilePath;
   late String _url;
   late int _logLevel;
   late int _serverLogLevel;
@@ -50,6 +51,7 @@ class Logger {
 
     try {
       _isFile = config.getInventoryConfig("log_file");
+      _logFilePath = config.getInventoryConfig("log_file_path");
       _url = config.getInventoryConfig("url");
       _logLevel = config.getInventoryConfig("log_level");
     } catch (e) {
@@ -62,11 +64,21 @@ class Logger {
 
     if (_isFile) {
       try {
-        file = File(config.getInventoryConfig("log_file_path"));
+        if (_logFilePath.isEmpty) {
+          _isFile = false;
+
+          error(this.runtimeType.toString(),
+              "Configuration error: missing log file path.");
+          return;
+        }
+
+        file = File(_logFilePath);
+
         if (!file.existsSync()) {
           file.createSync(recursive: true);
         }
       } catch (e) {
+        _isFile = false;
         error(this.runtimeType.toString(), "Error creating log file: $e");
       }
     }
