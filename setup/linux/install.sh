@@ -197,7 +197,12 @@ run_executable() {
 	if [ "$NOW" = "true" ]; then
 		log "Running the agent now..." false
 
-		execCommand "$SYMBOLIC_LINK -f $LOG_FILE -m $INVENTORY_MODE -p $PASSWORD -u $USERNAME -s $URL -l $LOG_FILE_PATH -d $DATA_PATH -v $LOG_LEVEL -c $CERTIFICATE" "Agent executed successfully." "Failed to execute the agent."
+		local LOG_FILE_PATH_ARG=""
+		if [ "$LOG_FILE_PATH" != "" ]; then
+			LOG_FILE_PATH_ARG="-l $LOG_FILE_PATH"
+		fi
+
+		execCommand "$SYMBOLIC_LINK -f $LOG_FILE -m $INVENTORY_MODE -p $PASSWORD -u $USERNAME -s $URL $LOG_FILE_PATH_ARG -d $DATA_PATH -v $LOG_LEVEL -c $CERTIFICATE" "Agent executed successfully." "Failed to execute the agent."
 	fi
 }
 
@@ -499,7 +504,7 @@ else
 	run_interactive
 fi
 
-if [ -d "$CONFIG_PATH" ] && [ -f "$LOG_FILE_PATH" ] && [ -d "$AGENT_BINARY" ] && [ -f "$SYMBOLIC_LINK" ]; then
+if [ -d "$CONFIG_PATH" ] && [ -d "$AGENT_BINARY" ] && [ -f "$SYMBOLIC_LINK" ]; then
 	if [ "$SERVICE" = "true" ]; then
 		register_service
 	fi
@@ -508,7 +513,7 @@ if [ -d "$CONFIG_PATH" ] && [ -f "$LOG_FILE_PATH" ] && [ -d "$AGENT_BINARY" ] &&
 	log "|               OCSInventory Agent has been successfully installed and configured.               |" false
 	log "|                                                                                                |" false
 	log "|          Configuration files are located at $CONFIG_PATH" false
-	log "|          Log file is located at $LOG_FILE_PATH" false
+	log "|          Log file is $([ "$LOG_FILE" = "true" ] && echo "located at $LOG_FILE_PATH" || echo "disabled")" false
 	log "|          Agent data storage is located at $DATA_PATH" false
 	log "|          Agent installation directory is located at $AGENT_BINARY" false
 	log "|                                                                                                |" false
