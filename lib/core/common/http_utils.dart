@@ -1,5 +1,5 @@
 // OCSInventory Agent
-// Copyright (C) OCSInventory-NG
+// Copyright (C) OCSInventory
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,11 +18,11 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/io_client.dart';
-import 'package:ocs_agent/core/config.dart';
+import 'package:ocsinventory_agent/core/config.dart';
 import 'package:sprintf/sprintf.dart';
 
 // Core imports
-import 'package:ocs_agent/core/log.dart';
+import 'package:ocsinventory_agent/core/log.dart';
 
 /// This class will execute and log the status of the query
 class HTTPUtils {
@@ -50,21 +50,41 @@ class HTTPUtils {
 
   /// Create https client
   IOClient createHttpsClient() {
-    bool bypassCertificate = config.getInventoryConfig("bypass_certificate").toString() == "true";
+    String certificate = "";
+    if (config.getInventoryConfig("certificate") != "") {
+      if (File(config.getInventoryConfig("certificate")).existsSync()) {
+        logger.debug(
+            this.runtimeType.toString(),
+            sprintf("Using certificate file: %s",
+                [config.getInventoryConfig("certificate")]));
+        certificate =
+            File(config.getInventoryConfig("certificate")).readAsStringSync();
+      } else {
+        logger.debug(
+            this.runtimeType.toString(),
+            sprintf("Certificate file not found: %s",
+                [config.getInventoryConfig("certificate")]));
+        return IOClient(HttpClient());
+      }
+    }
+
+    bool bypassCertificate =
+        config.getInventoryConfig("bypass_certificate").toString() == "true";
     try {
       if (bypassCertificate) {
         SecurityContext context = SecurityContext(withTrustedRoots: false);
-        String certificate = File(config.getInventoryConfig("certificate")).readAsStringSync();
         context.setTrustedCertificatesBytes(utf8.encode(certificate));
-        
+
         HttpClient client = HttpClient(context: context)
-          ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+          ..badCertificateCallback =
+              (X509Certificate cert, String host, int port) => true;
         return IOClient(client);
       } else {
         return IOClient(HttpClient());
       }
     } catch (exception) {
-      logger.error(this.runtimeType.toString(), sprintf("HTTP query: %s", [exception.toString().trim()]));
+      logger.error(this.runtimeType.toString(),
+          sprintf("HTTP query: %s", [exception.toString().trim()]));
       return IOClient(HttpClient());
     }
   }
@@ -101,21 +121,30 @@ class HTTPUtils {
   }
 
   /// Do a get HTTP query
-  Future<Map<String, dynamic>> get(
-      Uri uri, Map<String, String>? headers) async {
-    var returnObject = new Map<String, dynamic>();
+  Future<Map<String, dynamic>> get(Uri url, Map<String, String> headers) async {
+    final client = HttpClient()..autoUncompress = true;
     try {
-      var query = await ioClient.get(uri, headers: headers);
-      returnObject["body"] = query.body;
-      returnObject["status_code"] = query.statusCode;
-      returnObject["message"] =
-          statusCodeMessage("GET", query.statusCode, query.body);
-    } catch (exception) {
-      logger.error(this.runtimeType.toString(),
-          sprintf("HTTP query: %s", [exception.toString().trim()]));
-      returnObject["error"] = true;
+      final req = await client.getUrl(url);
+      headers.forEach(req.headers.add);
+
+      final resp = await req.close();
+      final bytes = await resp.fold<List<int>>([], (a, b) => a..addAll(b));
+      final bodyUtf8 = utf8.decode(bytes, allowMalformed: true);
+
+      final headersMap = <String, String>{};
+      resp.headers.forEach((name, values) {
+        headersMap[name.toLowerCase()] = values.join(', ');
+      });
+
+      return {
+        "status_code": resp.statusCode,
+        "message": "[GET] [${resp.statusCode}] $bodyUtf8",
+        "body": bodyUtf8,
+        "headers": headersMap,
+      };
+    } finally {
+      client.close(force: true);
     }
-    return returnObject;
   }
 
   /// Do a patch HTTP query

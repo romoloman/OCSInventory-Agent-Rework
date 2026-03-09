@@ -1,5 +1,5 @@
 // OCSInventory Agent
-// Copyright (C) OCSInventory-NG
+// Copyright (C) OCSInventory
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -21,20 +21,22 @@ import 'dart:math';
 import 'package:sprintf/sprintf.dart';
 
 // Core imports
-import 'package:ocs_agent/core/log.dart';
-import 'package:ocs_agent/core/inventory/commands.dart';
+import 'package:ocsinventory_agent/core/log.dart';
+import 'package:ocsinventory_agent/core/inventory/commands.dart';
 
 // Common imports
-import 'package:ocs_agent/core/common/files_utils.dart';
-import 'package:ocs_agent/core/common/json_utils.dart';
-import 'package:ocs_agent/core/config.dart';
+import 'package:ocsinventory_agent/core/common/files_utils.dart';
+import 'package:ocsinventory_agent/core/common/json_utils.dart';
+import 'package:ocsinventory_agent/core/config.dart';
 
 class BaseLinux {
   late Logger logger;
   late Commands commands;
   FilesUtils filesUtils;
   JsonUtils jsonUtils;
+  final String configDir = "/etc/ocsinventory-agent";
   final String serialFileName = "/serialNumber.json";
+  final String uuidFileName = "/uuid.json";
   final String logType = "BaseInventory";
 
   /// Constructor
@@ -128,7 +130,7 @@ class BaseLinux {
       "serial": await _getSerialNumber(name, macAddress),
       "osname": osRelease["NAME"].toString(),
       "osversion": osRelease["VERSION_ID"].toString(),
-      "uuid": await _getUUID(name, macAddress),
+      "uuid": await _getUUID(),
       "srcip": (await commands.processTarget(
               "BASH", "hostname -I", logType, "IP ADDRESS"))["value"]
           .toString()
@@ -144,44 +146,68 @@ class BaseLinux {
     return body;
   }
 
+  /// Check if a command exists on the system
+  Future<bool> _commandExists(String cmd) async {
+    final result = await commands.processTarget(
+      "BASH", "which $cmd", logType, "CHECK COMMAND",
+    );
+    return result["value"] != null && result["value"].toString().isNotEmpty;
+  }
+
+  /// Generate a UUID if not available
+  String _generateUUID() {
+    final random = Random.secure();
+    String hex(int length) =>
+        List.generate(length, (_) => random.nextInt(16).toRadixString(16)).join();
+    return '${hex(8)}-${hex(4)}-${hex(4)}-${hex(4)}-${hex(12)}';
+  }
+
   /// Get UUID or generate one if not available and save it in a uuid file
-  Future<String> _getUUID(String name, String macAddress) async {
-    String uuid = (await commands.processTarget(
-            "BASH", "dmidecode -s system-uuid", logType, "UUID"))["value"]
+  Future<String> _getUUID() async {
+    String uuid = "";
+    if (await _commandExists("dmidecode")) {
+      uuid = (await commands.processTarget(
+        "BASH", "dmidecode -s system-uuid", logType, "UUID"))["value"]
         .toString();
+    } else {
+      logger.info(this.runtimeType.toString(),
+          "dmidecode command not found, skipping system UUID.");
+    }
+
+    String uuidFilePath = configDir + uuidFileName;
+    File uuidFile = File(uuidFilePath);
+    bool uuidFileExists = await uuidFile.exists();
 
     if (uuid == "") {
-      String containerFileName = sprintf('%s.json', ["generated_uuid"]);
-      File containerLinuxFile = File(containerFileName);
-      if (!containerLinuxFile.existsSync()) {
-        containerLinuxFile.createSync(recursive: true);
-        containerLinuxFile.writeAsStringSync("{}");
-      }
-      Map<String, dynamic> containerLinux =
-          jsonUtils.getContentFromFile(containerLinuxFile);
+      logger.info(this.runtimeType.toString(),
+          "No system UUID from dmidecode, checking UUID file...");
 
-      if (containerLinux.isNotEmpty &&
-          containerLinux.containsValue(name) &&
-          containerLinux.containsValue(macAddress)) {
-        uuid = containerLinux["uuid"];
-        logger.info(this.runtimeType.toString(), "UUID file found.");
-      } else {
-        logger.info(
-            this.runtimeType.toString(), "No system UUID, generating new one.");
-        uuid = (await commands.processTarget(
+      if (!uuidFileExists) {
+        logger.info(this.runtimeType.toString(),
+            "UUID file not found, generating new one.");
+        if (await _commandExists("uuidgen")) {
+          uuid = (await commands.processTarget(
                 "BASH", "uuidgen", logType, "UUID"))["value"]
             .toString();
-        dynamic baseAdded = {};
-        baseAdded["name"] = name;
-        baseAdded["uuid"] = uuid;
-        baseAdded["MAC"] = macAddress;
-
-        JsonEncoder encoder = new JsonEncoder.withIndent('  ');
-        String str = encoder.convert(baseAdded);
-        FilesUtils filesUtils = new FilesUtils();
-        filesUtils.rewriteFile(containerLinuxFile, str);
+        filesUtils.writeFile(uuidFile, '{ "uuid": "$uuid" }');
         logger.info(this.runtimeType.toString(), "New UUID saved to file.");
+        } else {
+          logger.warning(this.runtimeType.toString(),
+              "uuidgen command not found, cannot generate UUID.");
+        }
+      } else {
+        Map<String, dynamic> uuidData = jsonUtils.getContentFromFile(uuidFile);
+        if (uuidData.containsKey("uuid")) {
+          uuid = uuidData["uuid"];
+          logger.info(this.runtimeType.toString(), "UUID file found.");
+        }
       }
+    }
+    if (uuid == "") {
+        logger.warning(this.runtimeType.toString(),
+            "No UUID available from file, dmidecode or uuidgen. Generating a random UUID.");
+        uuid = _generateUUID();
+        filesUtils.writeFile(uuidFile, '{ "uuid": "$uuid" }');
     }
     return uuid;
   }
@@ -194,7 +220,7 @@ class BaseLinux {
             "SERIAL NUMBER"))["value"]
         .toString();
 
-    String path = "/etc/ocsinventory-agent" + serialFileName;
+    String path = configDir + serialFileName;
 
     File fileSn = File(path);
 

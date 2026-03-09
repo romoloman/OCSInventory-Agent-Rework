@@ -1,5 +1,5 @@
 // OCSInventory Agent
-// Copyright (C) OCSInventory-NG
+// Copyright (C) OCSInventory
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,8 +18,8 @@
 import 'dart:convert';
 
 // Core imports
-import 'package:ocs_agent/core/inventory/commands.dart';
-import 'package:ocs_agent/core/log.dart';
+import 'package:ocsinventory_agent/core/inventory/commands.dart';
+import 'package:ocsinventory_agent/core/log.dart';
 
 /// Format command result by type.
 class Format {

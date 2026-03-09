@@ -1,5 +1,5 @@
 // OCSInventory Agent
-// Copyright (C) OCSInventory-NG
+// Copyright (C) OCSInventory
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -21,10 +21,10 @@ import 'package:intl/intl.dart';
 import 'package:sprintf/sprintf.dart';
 
 // Core imports
-import 'package:ocs_agent/core/config.dart';
+import 'package:ocsinventory_agent/core/config.dart';
 
 // Common imports
-import 'package:ocs_agent/core/common/http_utils.dart';
+import 'package:ocsinventory_agent/core/common/http_utils.dart';
 
 /// Insert log in console or file if configured in inventory.json.
 /// Level 0 = error
@@ -138,9 +138,14 @@ class Logger {
       return;
     }
 
-    String serverLogLevel = config.getCoreConfig("agent", "inventory_loglevel");
-    _serverLogLevel = _stringToLevel(serverLogLevel);
-
+    try {
+      String serverLogLevel =
+          config.getCoreConfig("agent", "inventory_loglevel");
+      _serverLogLevel = _stringToLevel(serverLogLevel);
+    } catch (e) {
+      error(runtimeType.toString(), "Error getting server log level: $e");
+      return;
+    }
     // error code to log level and scope
     Map<int, dynamic> errorMapping = {
       0: {"level": 2, "scope": "UNKNOWN"}, // WARNING

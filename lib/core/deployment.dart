@@ -1,5 +1,5 @@
 // OCSInventory Agent
-// Copyright (C) OCSInventory-NG
+// Copyright (C) OCSInventory
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -22,12 +22,12 @@ import 'package:archive/archive_io.dart';
 import 'package:sprintf/sprintf.dart';
 
 // Core imports
-import 'package:ocs_agent/core/log.dart';
-import 'package:ocs_agent/core/config.dart';
-import 'package:ocs_agent/core/inventory/commands.dart';
+import 'package:ocsinventory_agent/core/log.dart';
+import 'package:ocsinventory_agent/core/config.dart';
+import 'package:ocsinventory_agent/core/inventory/commands.dart';
 
 // Common imports
-import 'package:ocs_agent/core/common/http_utils.dart';
+import 'package:ocsinventory_agent/core/common/http_utils.dart';
 
 class Deployment {
   late Config config;
@@ -527,27 +527,21 @@ class Deployment {
       List<int> fileBytes = await savedFile.readAsBytes();
       // Decompress the zip archive
       var archive = ZipDecoder().decodeBytes(fileBytes);
-      await extractArchiveToDiskAsync(archive, extractedPath).then((value) {
-        // Log verbose message indicating successful extraction
-        logger.debug(this.runtimeType.toString(),
-            "File has been extracted at: '$extractedPath'");
+      await extractArchiveToDisk(archive, extractedPath);
+      // Log verbose message indicating successful extraction
+      logger.debug(this.runtimeType.toString(),
+        "File has been extracted at: '$extractedPath'");
 
-        // Delete the __MACOSX directory if it exists
-        var metaDataDirectory = Directory(metaDataPath);
-        if (metaDataDirectory.existsSync()) {
-          metaDataDirectory.delete(recursive: true);
-        }
-        // Delete the archive file after extracting it
-        if (savedFile.existsSync()) {
-          savedFile.deleteSync();
-        }
-        result["status"] = true;
-      }).catchError((onError) {
-        // Handle extraction error
-        result["status"] = false;
-        result["error"] = "Error occurred while extracting file: $onError";
-        logger.error(this.runtimeType.toString(), result["error"]);
-      });
+      // Delete the __MACOSX directory if it exists
+      var metaDataDirectory = Directory(metaDataPath);
+      if (metaDataDirectory.existsSync()) {
+        metaDataDirectory.delete(recursive: true);
+      }
+      // Delete the archive file after extracting it
+      if (savedFile.existsSync()) {
+        savedFile.deleteSync();
+      }
+      result["status"] = true;
     } catch (e) {
       result["status"] = false;
       result["error"] = "Exception during zip extraction: $e";
