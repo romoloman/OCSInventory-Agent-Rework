@@ -590,6 +590,23 @@ class Inventory {
     };
   }
 
+  /// Call extractValue for each field of the section
+  Map<String, dynamic> getFieldsResults(
+      List<dynamic> fields, Map<String, dynamic> result) {
+    Map<String, dynamic> sectionsResult = {};
+    dynamic fieldResult;
+    for (var field in fields) {
+      fieldResult = format.extractValue(field, result);
+      sectionsResult[field['name']] = fieldResult;
+    }
+    return sectionsResult;
+  }
+
+  // if at least one value isn't empty
+  anyValueNonEmpty(Map<String, dynamic> fieldResult) {
+    return fieldResult.values.any((value) => value != null && value.isNotEmpty);
+  }
+
   /// Get all informations present in the local [template]
   /// with a [os] verification and format it in json.
   Future<Map<String, dynamic>> getInventoryResult(
@@ -597,8 +614,8 @@ class Inventory {
     List<dynamic> sections = [];
     Map<String, dynamic> result = {};
     Map<String, dynamic> inventoryResult = {};
-    var valueTarget;
-
+    List<dynamic> sectionsResult = [];
+    Map<String, dynamic> resultMulti = {};
     try {
       sections = template['sections'];
     } catch (e) {
@@ -608,38 +625,40 @@ class Inventory {
 
     if (sections.isNotEmpty) {
       for (var section in sections) {
+        // result contains both the section result and the overrided fields results
         result = await getSectionResult(os, template, section);
 
-        switch (section['retrieval_output']) {
-          case "JSON":
-            if (os == "MAC") {
-              valueTarget = format.getByMethod(section['retrieval_output'],
-                  section["fields"], result, section["target"]);
-            } else {
-              valueTarget = format.getByMethod(
-                  section['retrieval_output'], section["fields"], result);
+        // we do so outside the fields loop bc some of the formatting applies to the whole section
+        // and some to overriden fields only
+        format.formatResult(section, result);
+        dynamic fieldResult;
+
+        // if list = handle multiple results (e.g. networks)
+        if (result['main']['result'] is List) {
+          for (var resultItem in result['main']['result']) {
+            // multi = multiple items (rows) in result
+            resultMulti = result;
+            // faking the result 'main' structure to make sure we process fields for each item
+            resultMulti['main']['result'] = resultItem;
+            // calling getFieldsResults to process entry per entry
+            fieldResult = getFieldsResults(section['fields'], resultMulti);
+            if (anyValueNonEmpty(fieldResult)) {
+              sectionsResult.add(fieldResult);
             }
-            break;
-
-          case "TBLE":
-          case "PTXT":
-          case "REGX":
-          case "GREP":
-            valueTarget = format.getByMethod(
-                section['retrieval_output'], section["fields"], result);
-            break;
-
-          default:
-            logger.warning(
-                this.runtimeType.toString(), "Retrieval format unknown.");
-            valueTarget = null;
-            break;
+          }
+        } else {
+          fieldResult = getFieldsResults(section['fields'], result);
+          if (anyValueNonEmpty(fieldResult)) {
+            sectionsResult.add(fieldResult);
+          }
         }
 
-        inventoryResult.putIfAbsent(section['name'], () => valueTarget);
+        logger.info(this.runtimeType.toString(),
+            '[${section['name']}] ${sectionsResult.toString()}');
+        inventoryResult[section['name']] = sectionsResult;
+        sectionsResult = [];
       }
     }
-
     return inventoryResult;
   }
 

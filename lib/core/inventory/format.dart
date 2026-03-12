@@ -29,308 +29,202 @@ class Format {
   /// Constructor.
   Format(this.logger, this.commands);
 
-  /// Get the sub-inventory of [resultCommand] for each [fields] based on [method].
-  List<dynamic> getByMethod(
-      String method, List<dynamic> fields, Map<String, dynamic> resultCommand,
-      [String? commandLine]) {
-    late final commandTarget;
-    late dynamic resultCommandData;
-    late dynamic mainResult;
-    late bool mainResultValid;
-    late dynamic mainOptions;
-    late List<Map<String, dynamic>> overrideResultList;
-    List<dynamic> subInventory = [];
+  /// Extract the value of a field from a list of results
+  extractValue(Map<String, dynamic> field, Map<String, dynamic> result) {
+    bool override = field['override_target'];
+    String retrievalMethod;
+    dynamic value;
 
-    // For MacOS
+    // two cases here:
+    // 1. field is an override = we used the retrieval output of the field + its overriden result
+    // 2. field is not an override = we used the retrieval output of the section + main result
+    if (override) {
+      retrievalMethod = field['retrieval_output'];
+      result = result['override']
+          .firstWhere((element) => element['name'] == field['name']);
+      // result may be a list of strings if its from an overridden field
+      // since multiple entries are not supported for field overrides there will only be a single entry
+      if (result['result'] is List && result['result'].isNotEmpty) {
+        result['result'] = result['result'][0];
+      }
+    } else {
+      retrievalMethod = result['main']['type'];
+      result = result['main'];
+    }
+
     try {
-      commandTarget = commandLine?.split(" ")[1];
-    } catch (_) {
-      commandTarget = null;
-    }
-
-    if (fields.isEmpty) {
-      logger.warning(runtimeType.toString(), "No fields available");
-      return subInventory;
-    }
-
-    resultCommandData = this.getDataFromResultCommand(method, resultCommand);
-    mainResult = resultCommandData['main_result'];
-    mainResultValid = resultCommandData['main_result_valid'];
-    mainOptions = resultCommandData['main_options'];
-    overrideResultList = resultCommandData['override_result_list'];
-
-    if (!mainResultValid) {
-      logger.warning(this.runtimeType.toString(),
-          "No results to process: the input data is empty or malformed.");
-      return subInventory;
-    }
-
-    handleFieldExtraction(method, fields, resultCommand, mainResult,
-        mainOptions, commandTarget, subInventory, false);
-
-    if (overrideResultList.isNotEmpty) {
-      overrideSubInventoryFields(method, fields, resultCommand,
-          overrideResultList, commandTarget, subInventory);
-    }
-
-    logger.debug(this.runtimeType.toString(), subInventory.toString());
-
-    return subInventory;
-  }
-
-  /// Extract the result and options from [resultCommand] with [method].
-  Map<String, dynamic> getDataFromResultCommand(
-      String method, Map<String, dynamic> resultCommand) {
-    late dynamic mainResult;
-    late bool mainResultValid;
-    late dynamic mainOptions;
-    late List<Map<String, dynamic>>? overrideResultList;
-
-    mainResult = resultCommand['main']?['result'];
-    mainResultValid = !(mainResult == null || mainResult.isEmpty);
-
-    mainOptions = (method == "TBLE" || method == "JSON" || method == "REGX")
-        ? (resultCommand['main']?['options'])
-        : null;
-
-    overrideResultList =
-        resultCommand['override'] != null ? resultCommand['override'] : [];
-
-    return {
-      'main_result': mainResult,
-      'main_result_valid': mainResultValid,
-      'main_options': mainOptions,
-      'override_result_list': overrideResultList,
-    };
-  }
-
-  /// Handle all the process of fields extraction
-  void handleFieldExtraction(
-      String method,
-      List<dynamic> fields,
-      Map<String, dynamic> resultCommand,
-      dynamic resultToProcess,
-      dynamic optionsToApply,
-      String? commandTarget,
-      List<dynamic> subInventory,
-      bool override) {
-    late List<dynamic> processedResults;
-    late Map<String, dynamic> result;
-
-    processedResults = getProcessedResults(
-        method, resultToProcess, optionsToApply, commandTarget);
-
-    for (var processedResult in processedResults) {
-      result = {};
-
-      this.processFieldRetrieval(
-          method, fields, resultCommand, processedResult, result, override);
-
-      if (result.isNotEmpty) subInventory.add(result);
-    }
-  }
-
-  /// Process the [resultToProcess] based on [method], [optionsToApply] and [commandTarget] for MacOS.
-  List<dynamic> getProcessedResults(String method, dynamic resultToProcess,
-      dynamic optionsToApply, String? commandTarget) {
-    List<dynamic> processedResults = [];
-
-    switch (method) {
-      case "TBLE":
-        processedResults = this.formatArray(resultToProcess, optionsToApply);
-        break;
-
-      case "JSON":
-        try {
-          dynamic decodedMainResult = jsonDecode(resultToProcess);
-          String? submap = optionsToApply?["submap"] ?? null;
-
-          decodedMainResult = decodedMainResult is Map
-              ? [decodedMainResult]
-              : decodedMainResult;
-
-          processedResults = (commandTarget != null || submap != null)
-              ? getJsonSubmap(
-                  decodedMainResult, optionsToApply, commandTarget, submap)
-              : decodedMainResult;
-        } catch (e, stackTrace) {
-          logger.warning(
-            this.runtimeType.toString(),
-            "Skip due to invalid or malformed JSON. $e, $stackTrace",
-          );
-        }
-        break;
-
-      case "REGX":
-        processedResults = formatRegx(resultToProcess, optionsToApply);
-
-      case "PTXT":
-      case "GREP":
-        processedResults = resultToProcess.split("\n").toList();
-        break;
-
-      default:
-        logger.warning(this.runtimeType.toString(), "Unknown method : $method");
-    }
-
-    return processedResults;
-  }
-
-  /// Process sub-inventory build based on [method], [fields], [resultCommand], [processedResult] and [result] parameters.
-  void processFieldRetrieval(
-      String method,
-      dynamic fields,
-      Map<String, dynamic> resultCommand,
-      dynamic processedResult,
-      Map<String, dynamic> result,
-      bool override) {
-    dynamic retrievalValue;
-    late bool condition;
-    late dynamic function;
-
-    if (processedResult == null || processedResult.isEmpty) return;
-
-    fields.forEach((field) {
-      switch (method) {
+      switch (retrievalMethod) {
         case "TBLE":
-          retrievalValue = field['retrieval_value'] ?? "";
-          condition = true;
-          function = processedResult[retrievalValue] ?? "";
+          value = result['result'][field['retrieval_value']] ?? "";
           break;
 
         case "JSON":
-          condition = true;
-          function = processedResult[field['retrieval_value']] ?? "";
+          value = result['result'][field['retrieval_value']] ?? "";
           break;
 
         case "REGX":
-          try {
-            retrievalValue = RegExp(field['retrieval_value']);
-          } catch (e) {
-            logger.error(this.runtimeType.toString(), e.toString());
-            retrievalValue = null;
-          }
-
-          dynamic match = retrievalValue?.firstMatch(processedResult);
-          condition = retrievalValue != null &&
-              retrievalValue.hasMatch(processedResult);
-
+          RegExp regex = RegExp(field['retrieval_value']);
+          dynamic match = regex.firstMatch(result['result']);
+          value = regex.hasMatch(result['result']);
           if (match != null) {
             if ((match.groupCount >= 1) && (match.group(1) != null)) {
-              function = match.group(1);
+              value = match.group(1);
             } else {
-              function = match.group(0);
+              value = match.group(0);
             }
           } else {
-            function = "";
+            value = "";
           }
           break;
 
         case "PTXT":
           try {
-            retrievalValue = int.parse(field['retrieval_value']);
+            value = int.parse(field['retrieval_value']);
           } catch (e) {
             logger.error(this.runtimeType.toString(), e.toString());
-            retrievalValue = 0;
+            value = 0;
           }
+          // split by lines or get a single line
+          List<String> lines = result['result'].contains('\n')
+              ? result['result'].split('\n')
+              : [result['result']];
+          value = value >= 0 && value < lines.length ? lines[value] : "";
 
-          condition = true;
-          function =
-              (retrievalValue > 0 && retrievalValue <= processedResult.length)
-                  ? processedResult[retrievalValue - 1]
-                  : "";
           break;
 
         case "GREP":
-          retrievalValue = field['retrieval_value'] ?? "";
-          condition = processedResult.contains(retrievalValue);
-
-          final index = processedResult.indexOf(retrievalValue);
-          final start = index + retrievalValue.length + 1;
-
-          if (index == -1) {
-            logger.warning(this.runtimeType.toString(),
-                "Retrieval value '$retrievalValue' not found in: $processedResult");
+          // e.g. retrieval_value = "test" and result = "test 1", we get "1"
+          bool contains = result['result'].contains(field['retrieval_value']);
+          if (contains) {
+            final index =
+                result['result'].indexOf(field['retrieval_value']) ?? -1;
+            final start = index + field['retrieval_value'].length + 1;
+            value = result['result'].substring(start);
+          } else {
             return;
           }
-
-          if (start >= processedResult.length) {
-            logger.error(this.runtimeType.toString(),
-                "Start index $start out of bounds for: $processedResult");
-            return;
-          }
-
-          function = processedResult.substring(start);
           break;
 
         default:
           logger.warning(
-              this.runtimeType.toString(), "Unknown method : $method");
+              this.runtimeType.toString(), "Unknown method : $retrievalMethod");
           break;
       }
-
-      this.getSubInventoryResult(result, field, condition, function);
-    });
+    } catch (e) {
+      logger.error(this.runtimeType.toString(), "[${field['name']}] $e");
+      return "";
+    }
+    value = value.toString().trim();
+    return value;
   }
 
-  /// Build sub-inventory data in [result] based on [field] and with [condition] and [function] parameters.
-  void getSubInventoryResult(Map<String, dynamic> result, dynamic field,
-      bool condition, dynamic function) {
-    if (condition) {
-      result.putIfAbsent(
-        field['name'],
-        () => function,
+  /// Format the result of a section and overrided fields
+  void formatResult(Map<String, dynamic> section, Map<String, dynamic> result) {
+    // format main result
+    if (result['main'] != null) {
+      result['main']['result'] = formatContent(
+        section['retrieval_output'],
+        result['main']['result'],
+        result['main']['options'],
       );
+    }
+
+    // format overrides
+    if (result['override'] is List) {
+      final overrides = result['override'] as List;
+      for (var field in section['fields'] ?? []) {
+        if (field['override_target'] == true) {
+          final idx = overrides.indexWhere((o) => o['name'] == field['name']);
+          if (idx != -1) {
+            overrides[idx]['result'] = formatContent(
+              field['retrieval_output'],
+              overrides[idx]['result'],
+              overrides[idx]['options'],
+            );
+          }
+        }
+      }
     }
   }
 
-  /// Format [result] string to a list of json.
+  /// Format the content of a field
+  dynamic formatContent(String format, dynamic content, Map? options) {
+    switch (format) {
+      case "TBLE":
+        return formatArray(content, options as Map<String, dynamic>?);
+      case "JSON":
+        try {
+          var decoded = jsonDecode(content);
+          final submap = options?['submap'];
+          decoded = decoded is Map ? [decoded] : decoded;
+          return submap != null && submap.isNotEmpty
+              ? getJsonSubmap(decoded, submap)
+              : decoded;
+        } catch (e, st) {
+          logger.error("Format", "Error while processing JSON: $e, $st");
+          return content;
+        }
+      case "REGX":
+        return parseRegx(content, options);
+      case "PTXT":
+        return (content as String?)?.trim() ?? '';
+      case "GREP":
+        return (content as String?)?.split("\n").toList() ?? [];
+      default:
+        logger.warning("Format", "Unknown retrieval_output: $format");
+        return content;
+    }
+  }
+
+  /// Format [result] string into a JSON list
   List<Map<String, dynamic>> formatArray(
     String result,
     Map<String, dynamic>? options,
   ) {
     bool optionsValid = options != null && options.isNotEmpty;
-    final parsedLists = this.useIndex(result, options, optionsValid);
-    final useIndex = parsedLists['use_index']!;
-    final headersList = parsedLists['headers']!;
-    final resultRows = parsedLists['rows']!;
-    late bool listsValid;
+    final bool useFirstRowAsHeader =
+        options?['use_index'] == true || options?['use_index'] == 'true';
     List<Map<String, dynamic>> jsonResult = [];
 
-    listsValid = resultRows.isNotEmpty && (headersList.isNotEmpty || !useIndex);
+    // first we parse the array (this will removes lines if needed)
+    final parsedArray = this.parseArray(result, options, optionsValid);
+    // now we get the headers
+    List<String> headersList =
+        this.parseHeaders(parsedArray['rows'], parsedArray['use_index']);
 
-    if (!listsValid) {
-      logger.warning(
-          this.runtimeType.toString(), "Unable to get results from table.");
-
-      return jsonResult;
-    }
-
-    final filteredResultRows = optionsValid
-        ? removeLines(options, optionsValid, resultRows)
-        : resultRows;
-    jsonResult =
-        this.convertRowsToJson(filteredResultRows, headersList, useIndex);
+    jsonResult = this.convertRowsToJson(
+        parsedArray['rows'], headersList, useFirstRowAsHeader);
 
     return jsonResult;
   }
 
-  /// Extracts headers from the [result] string based on use_index option.
-  Map<String, dynamic> useIndex(
+  parseHeaders(List<String> resultRows, bool useFirstRowAsHeader) {
+    // useIndex = use first row as header, keeping the name to stay consistent with the server
+    List<String> headersList = [];
+    if (useFirstRowAsHeader) {
+      headersList = resultRows.removeAt(0).split(RegExp(r'\s+'));
+    }
+    return headersList;
+  }
+
+  /// Parses the table as header/rows, splitting rows by newlines and headers
+  /// by spaces if any. Removes lines if needed
+  Map<String, dynamic> parseArray(
       String result, dynamic options, bool optionsValid) {
     List<String> resultRows;
-    List<String> headersList;
     bool useIndex;
 
     useIndex = optionsValid && options?['use_index'] == true;
 
     try {
       resultRows = result.split("\n");
-      headersList = resultRows.removeAt(0).split(RegExp(r'\s+'));
-
+      // trimming to avoid misinterpreting spaces at start/end
+      resultRows = resultRows.map((row) => row.trim()).toList();
+      if (optionsValid && options?['remove_line'] != null) {
+        resultRows = removeLines(options, optionsValid, resultRows);
+      }
       return {
         'use_index': useIndex,
-        'headers': headersList,
         'rows': resultRows,
       };
     } catch (e) {
@@ -338,37 +232,41 @@ class Format {
 
       return {
         'use_index': useIndex,
-        'headers': [],
         'rows': [],
       };
     }
   }
 
-  /// Remove raws in [resultRows] based on the remove_line option.
+  /// Remove as many rows from [resultRows] as options['remove_line'] specifies
   List<String> removeLines(Map<String, dynamic>? options, bool optionsValid,
       List<String> resultRows) {
-    int? linesRemoved;
-    int rowIndex = 0;
-
-    try {
-      linesRemoved = int.tryParse(options!['remove_line'].toString());
-    } catch (e) {
-      logger.warning(this.runtimeType.toString(),
-          "Invalid value for 'remove_line': expected an integer: $e");
-
+    if (options == null || !optionsValid) {
+      logger.warning(
+          this.runtimeType.toString(), "Options are invalid or null.");
       return resultRows;
     }
 
-    if (linesRemoved != null) {
-      while (rowIndex != linesRemoved) {
-        if (rowIndex >= 0 && rowIndex < resultRows.length) {
-          resultRows.removeAt(rowIndex);
-          logger.debug(
-              this.runtimeType.toString(), 'Line "$rowIndex" removed.');
-        }
-
-        ++rowIndex;
+    int? linesRemoved;
+    try {
+      linesRemoved = int.tryParse(options['remove_line'].toString());
+      if (linesRemoved == null || linesRemoved < 0) {
+        throw FormatException("Invalid 'remove_line' value");
       }
+    } catch (e) {
+      logger.warning(
+          this.runtimeType.toString(), "Invalid value for 'remove_line': $e");
+      return resultRows;
+    }
+
+    if (linesRemoved > resultRows.length) {
+      logger.warning(this.runtimeType.toString(),
+          "'remove_line' exceeds the number of available rows.");
+      return resultRows;
+    }
+
+    for (int i = 0; i < linesRemoved; i++) {
+      resultRows.removeAt(0);
+      logger.debug(this.runtimeType.toString(), 'Line $i removed from result');
     }
 
     return resultRows;
@@ -377,129 +275,109 @@ class Format {
   /// Convert [resultRows] to json format.
   List<Map<String, dynamic>> convertRowsToJson(
       List<String> resultRows, List<String> headersList, bool useIndex) {
-    List<String> resultFields;
-    Map<String, dynamic> jsonLine;
     List<Map<String, dynamic>> jsonResult = [];
 
-    resultRows.forEach((row) {
-      resultFields = row.split(RegExp(r'\s+'));
-      jsonLine = {};
+    for (var row in resultRows) {
+      List<String> resultFields = row.split(RegExp(r'\s+'));
+      Map<String, dynamic> jsonLine = {};
 
-      resultFields.asMap().forEach((i, field) {
-        String key = useIndex ? headersList[i] : i.toString();
+      for (int i = 0; i < resultFields.length; i++) {
+        String key;
+        if (useIndex) {
+          if (i < headersList.length) {
+            key = headersList[i];
+          } else {
+            logger.warning(this.runtimeType.toString(),
+                "Header index $i out of bounds for headersList.");
+            continue;
+          }
+        } else {
+          key = i.toString();
+        }
 
-        jsonLine.putIfAbsent(key, () => field);
-      });
+        jsonLine[key] = resultFields[i];
+      }
 
       jsonResult.add(jsonLine);
-    });
+    }
 
     return jsonResult;
   }
 
-  /// Extract [commandTarget] or [submap] from [decodedMainResult] based on [mainOptions].
-  List<Map<String, dynamic>> getJsonSubmap(List<dynamic> decodedMainResult,
-      dynamic mainOptions, dynamic commandTarget, String? submap) {
-    dynamic formattedResult;
-    List<Map<String, dynamic>> formattedResultList = [];
+  /// Extract [submap] from JSON [decodedResult]
+  List<Map<String, dynamic>> getJsonSubmap(
+      List<dynamic> decodedResult, String? submap) {
     List<Map<String, dynamic>> processedResults = [];
-    late List<Map<String, dynamic>> subResults;
-
-    // If the OS is MacOS, we need to access to element[commandTarget]
-    for (Map<String, dynamic> element in decodedMainResult) {
-      formattedResult =
-          commandTarget != null ? element[commandTarget] : element;
-
-      if (formattedResult is List) {
-        formattedResultList
-            .addAll(formattedResult.cast<Map<String, dynamic>>());
-      } else {
-        formattedResultList.add(formattedResult);
-      }
-    }
 
     if (submap != null) {
-      for (var key in submap.split('.')) {
-        subResults = [];
+      // split submap into keys
+      List<String> keys = submap.split('.');
 
-        for (var element in formattedResultList) {
-          if (element.containsKey(key)) {
-            var subElement = element[key];
-            if (subElement is List) {
-              subResults.addAll(subElement.cast<Map<String, dynamic>>());
-            } else {
-              subResults.add(subElement);
-            }
-          } else {
-            logger.warning(this.runtimeType.toString(),
-                'Unable to find the "$key" submap.');
-          }
+      // recursive function to traverse the JSON structure
+      void traverse(List<dynamic> elements, List<String> remainingKeys) {
+        if (remainingKeys.isEmpty) {
+          // add if no more keys
+          processedResults.addAll(elements.cast<Map<String, dynamic>>());
+          return;
         }
 
-        processedResults = subResults;
+        String currentKey = remainingKeys.first;
+        List<String> nextKeys = remainingKeys.sublist(1);
+
+        for (var element in elements) {
+          if (element is Map && element.containsKey(currentKey)) {
+            var subElement = element[currentKey];
+            if (subElement is List) {
+              // continue traversing
+              traverse(subElement, nextKeys);
+            } else if (nextKeys.isEmpty) {
+              // add if no more keys
+              processedResults.add(subElement as Map<String, dynamic>);
+            }
+          } else if (nextKeys.isNotEmpty) {
+            traverse([], nextKeys);
+          } else {
+            logger.debug(this.runtimeType.toString(),
+                'Unable to find the submap key "$currentKey" in the element $element');
+          }
+        }
       }
-    } else {
-      processedResults = formattedResultList;
+
+      // start w/ initial keys
+      traverse(decodedResult, keys);
     }
 
     return processedResults;
   }
 
-  /// Format [mainResult] based on [mainOptions].
-  List<String> formatRegx(dynamic mainResult, dynamic mainOptions) {
+  /// Parse the [result] using separator and multiple in [options]
+  /// If a separator is defined, we use it to split the result into blocks
+  /// If multiple is true, we split the blocks by newlines
+  /// If none of these options are defined, we return the original result
+  List<String> parseRegx(dynamic result, dynamic options) {
     RegExp? blockSeparator;
-    final rawSeparator = mainOptions['separator'];
-    if (mainOptions['multiple'] == "true") mainOptions['multiple'] = true;
-    bool multiple = mainOptions['multiple'] ?? false;
-    late List<String> blocksList;
+    final rawSeparator = options['separator'];
+    final bool multiple =
+        options['multiple'] == true || options['multiple'] == 'true';
 
-    if (rawSeparator is String && rawSeparator.trim().isNotEmpty)
-      blockSeparator = RegExp("(?=${rawSeparator})");
+    List<String> blocksList;
+    if (rawSeparator is String && rawSeparator.trim().isNotEmpty) {
+      try {
+        blockSeparator = RegExp("(?=${rawSeparator})");
+      } catch (e) {
+        logger.error(this.runtimeType.toString(), "Invalid regex: $e");
+        return [result];
+      }
+    }
 
-    blocksList = blockSeparator != null
-        ? mainResult.split(blockSeparator)
-        : [mainResult];
-
-    if (multiple)
+    blocksList =
+        blockSeparator != null ? result.split(blockSeparator) : [result];
+    if (multiple) {
       blocksList = blocksList.expand((block) => block.split('\n')).toList();
+    }
+    // remove empty entries that may result from splitting
+    blocksList = blocksList.where((block) => block.trim().isNotEmpty).toList();
 
     return blocksList;
-  }
-
-  /// Replace the values of the fields when they are overridden
-  void overrideSubInventoryFields(
-      String method,
-      List<dynamic> fields,
-      Map<String, dynamic> resultCommand,
-      List<Map<String, dynamic>> overrideResultList,
-      String? commandTarget,
-      List<dynamic> subInventory) {
-    dynamic overrideResult;
-    dynamic overrideOptions;
-    List<dynamic> overrideSubInventory = [];
-
-    for (var element in overrideResultList) {
-      overrideResult = element['result'];
-      overrideOptions = element['options'];
-
-      handleFieldExtraction(method, fields, resultCommand, overrideResult,
-          overrideOptions, commandTarget, overrideSubInventory, true);
-    }
-
-    for (var overrideField in overrideSubInventory) {
-      overrideField.forEach((key, overrideValue) {
-        overrideValue = overrideValue.toString() != "null" ? overrideValue : "";
-
-        if (overrideValue.toString().isNotEmpty) {
-          for (var subField in subInventory) {
-            if (subField.containsKey(key)) {
-              subField[key] = overrideValue;
-              logger.debug(this.runtimeType.toString(),
-                  'Field "$key" update with "$overrideValue"');
-            }
-          }
-        }
-      });
-    }
   }
 }
