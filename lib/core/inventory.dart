@@ -100,7 +100,7 @@ class Inventory {
 
     // Check OCS API status
     logger.info(this.runtimeType.toString(), "Checking API availability...");
-    
+
     dynamic responseGet;
     try {
       responseGet = await httpUtils.get(
@@ -108,7 +108,8 @@ class Inventory {
         {HttpHeaders.contentTypeHeader: 'application/json'},
       );
     } catch (e) {
-      logger.error(runtimeType.toString(), "API unreachable (connection refused)");
+      logger.error(
+          runtimeType.toString(), "API unreachable (connection refused)");
       return false;
     }
     if (responseGet?["status_code"] != 200) {
@@ -184,30 +185,59 @@ class Inventory {
 
   /// Verify if an inventory already exists on the server.
   Future<void> checkInventoryExist(Map<String, dynamic> body) async {
-    String uuid;
-    dynamic responseGet;
+    dynamic responsePost;
+    Map<String, dynamic> reconciliationData = {
+      "uuid": body['uuid'] ?? "",
+      "name": body['name'] ?? "",
+      "mac": body['srcmac'] ?? ""
+    };
 
     // API call
     logger.info(this.runtimeType.toString(),
         "Checking if device inventory already exists...");
-    uuid = body['uuid'].isEmpty ? 'none' : body['uuid'];
 
     try {
-      responseGet = await httpUtils.get(
-          Uri.parse("$baseUrl/asset/bases/?search=$uuid"), httpUtils.getHeader());
-      logger.debug(this.runtimeType.toString(), responseGet["message"]);
+      responsePost = await httpUtils.post(
+          Uri.parse("$baseUrl/asset/reconciliation/"),
+          httpUtils.getHeader(),
+          jsonEncode(reconciliationData));
+      logger.debug(this.runtimeType.toString(), responsePost["message"]);
     } catch (e) {
       logger.error(
           this.runtimeType.toString(), "Exception during API call: $e");
+      assetID = -1;
+      inventoryCheck = false;
+      return;
     }
 
-    if (responseGet?["status_code"] == 200 &&
-        responseGet["body"].contains(uuid)) {
-      logger.info(this.runtimeType.toString(), "Existing inventory found!");
-      assetID = jsonDecode(responseGet["body"])[0]?["id"];
-      inventoryCheck = true;
+    if (responsePost?["status_code"] == 200) {
+      try {
+        var responseBody = jsonDecode(responsePost["body"]);
+        dynamic responseId = (responseBody is Map &&
+                responseBody['id'] != null &&
+                responseBody['id'].toString().trim().isNotEmpty)
+            ? responseBody['id']
+            : false;
+
+        if (responseId != false) {
+          logger.info(this.runtimeType.toString(), "Existing inventory found!");
+          assetID = responseId;
+          inventoryCheck = true;
+        } else {
+          logger.info(
+              this.runtimeType.toString(), "No existing inventory found.");
+          assetID = -1;
+          inventoryCheck = false;
+        }
+      } catch (e) {
+        logger.error(this.runtimeType.toString(),
+            "Failed to parse reconciliation response: $e");
+        assetID = -1;
+        inventoryCheck = false;
+      }
     } else {
-      logger.info(this.runtimeType.toString(), "No existing inventory found.");
+      logger.warning(this.runtimeType.toString(),
+          "Reconciliation check failed. Status: ${responsePost?['status_code']}");
       assetID = -1;
       inventoryCheck = false;
     }
@@ -458,18 +488,17 @@ class Inventory {
   /// Get the remote template id and last update.
   Future<Map<String, String>> getRemoteTemplateInfo(
       Map<String, dynamic> body) async {
-    String uuid;
     dynamic assetMap, templateMap;
     dynamic responseAsset, responseTemplate;
 
     // API call
     logger.info(this.runtimeType.toString(),
         "Retrieving remote template information...");
-    uuid = body['uuid'].isNotEmpty ? body['uuid'] : 'none';
 
     try {
       responseAsset = await httpUtils.get(
-          Uri.parse("$baseUrl/asset/bases/?search=$uuid"), httpUtils.getHeader());
+          Uri.parse("$baseUrl/asset/bases/?search=$assetID"),
+          httpUtils.getHeader());
       logger.debug(this.runtimeType.toString(), responseAsset["message"]);
 
       assetMap = jsonDecode(responseAsset?["body"]);
@@ -699,23 +728,16 @@ class Inventory {
 
   /// Create or update the inventory and send it to the server.
   Future<void> sendRemoteBaseInventory(Map<String, dynamic> body) async {
-    String uuid;
     dynamic responseGet, responsePut, responsePost;
 
+    logger.info(
+        this.runtimeType.toString(), "Sending base inventory to server...");
+
     if (inventoryCheck) {
-      // Try to get the existing inventory
-      // If an inventory is retrieved, check its uuid
-      // If an uuid exists, update the current inventory or create one if not
-      // If not dislay an error message and if there is an error, return query error
-
       // API call
-      logger.info(
-          this.runtimeType.toString(), "Sending base inventory to server...");
-      uuid = body['uuid'].isEmpty ? 'none' : body['uuid'];
-
       try {
         responseGet = await httpUtils.get(
-            Uri.parse("$baseUrl/asset/bases/?search=$uuid"),
+            Uri.parse("$baseUrl/asset/bases/?search=$assetID"),
             httpUtils.getHeader());
         logger.debug(this.runtimeType.toString(), responseGet["message"]);
       } catch (e) {
@@ -724,41 +746,33 @@ class Inventory {
       }
 
       if (responseGet?["status_code"] == 200) {
-        // Check if the uuid exists
-        if (responseGet["body"].contains(uuid)) {
-          // API call
-          logger.info(this.runtimeType.toString(), "Updating inventory...");
+        // API call
+        logger.info(this.runtimeType.toString(), "Updating inventory...");
 
-          try {
-            responsePut = await httpUtils.put(
-                Uri.parse("$baseUrl/asset/collection/"),
-                httpUtils.getHeader(),
-                jsonEncode(body));
-            logger.debug(this.runtimeType.toString(), responsePut["message"]);
-          } catch (e) {
-            logger.error(
-                this.runtimeType.toString(), "Exception during API call: $e");
-          }
+        try {
+          responsePut = await httpUtils.put(
+              Uri.parse("$baseUrl/asset/collection/"),
+              httpUtils.getHeader(),
+              jsonEncode(body));
+          logger.debug(this.runtimeType.toString(), responsePut["message"]);
+        } catch (e) {
+          logger.error(
+              this.runtimeType.toString(), "Exception during API call: $e");
+        }
 
-          if (responsePut?["status_code"] == 200) {
-            logger.info(
-                this.runtimeType.toString(), "Inventory updated successfully.");
-            logger.serverLogger(assetID, 2, "Inventory updated successfully.");
-          } else {
-            logger.error(
-                this.runtimeType.toString(), "Inventory update failed.");
-            logger.serverLogger(assetID, 5, "Inventory update failed.");
-          }
+        if (responsePut?["status_code"] == 200) {
+          logger.info(
+              this.runtimeType.toString(), "Inventory updated successfully.");
+          logger.serverLogger(assetID, 2, "Inventory updated successfully.");
         } else {
-          logger.error(this.runtimeType.toString(),
-              "UUID could not be retrieved from base inventory.");
-          logger.serverLogger(
-              assetID, 5, "UUID could not be retrieved from base inventory.");
+          logger.error(this.runtimeType.toString(), "Inventory update failed.");
+          logger.serverLogger(assetID, 5, "Inventory update failed.");
         }
       } else {
         logger.error(this.runtimeType.toString(),
-            "Failed to get inventory from server.");
-        logger.serverLogger(assetID, 5, "Failed to get inventory from server.");
+            "assetID could not be retrieved from base inventory.");
+        logger.serverLogger(
+            assetID, 5, "assetID could not be retrieved from base inventory.");
       }
     } else {
       // API call
@@ -774,6 +788,8 @@ class Inventory {
       }
 
       if (responsePost?["status_code"] == 201) {
+        assetID = jsonDecode(responsePost["body"])["id"];
+        inventoryCheck = true;
         logger.info(
             this.runtimeType.toString(), "Inventory created successfully.");
         logger.serverLogger(assetID, 1, "Inventory created successfully.");
@@ -786,8 +802,7 @@ class Inventory {
 
   /// Update the remote inventory to add template inventory
   Future<void> sendRemoteTemplateInventory(Map<String, dynamic> body) async {
-    String uuid;
-    dynamic responseGet, inventoryExist, responsePatch, responsePut;
+    dynamic responseGet, responsePatch, responsePut;
     Map<dynamic, dynamic> updatedInventory = {};
     late var templateInventory,
         content,
@@ -805,11 +820,10 @@ class Inventory {
         // API call
         logger.info(
             this.runtimeType.toString(), "Retrieving remote base inventory...");
-        uuid = body['uuid'].isEmpty ? 'none' : body['uuid'];
 
         try {
           responseGet = await httpUtils.get(
-              Uri.parse("$baseUrl/asset/bases/?search=$uuid"),
+              Uri.parse("$baseUrl/asset/bases/?search=$assetID"),
               httpUtils.getHeader());
           logger.debug(this.runtimeType.toString(), responseGet["message"]);
         } catch (e) {
@@ -820,124 +834,113 @@ class Inventory {
         if (responseGet?["status_code"] == 200) {
           logger.info(
               this.runtimeType.toString(), "Remote base inventory found.");
-
-          // If there is a uuid in the inventory, update the current inventory
+          // Update of the current inventory with the assetID of the device
           // Else, return an error
-          if (responseGet["body"].contains(uuid)) {
-            logger.info(
-                this.runtimeType.toString(), "Updating base inventory...");
+          logger.info(
+              this.runtimeType.toString(), "Updating base inventory...");
 
-            content = jsonDecode(responseGet["body"])[0];
-            content["template_inventory"] = templateInventory["values"];
+          content = jsonDecode(responseGet["body"])[0];
+          content["template_inventory"] = templateInventory["values"];
 
-            if (config.getCoreConfig("agent", "inventory_checksum")) {
-              sectionJson = {};
+          if (config.getCoreConfig("agent", "inventory_checksum")) {
+            sectionJson = {};
 
-              content["template_inventory"].keys.forEach((element) {
-                sectionBytes = utf8
-                    .encode(content["template_inventory"][element].toString());
-                sectionBase64 = base64.encode(sectionBytes);
-                sectionJson[element] = sectionBase64;
-              });
+            content["template_inventory"].keys.forEach((element) {
+              sectionBytes = utf8
+                  .encode(content["template_inventory"][element].toString());
+              sectionBase64 = base64.encode(sectionBytes);
+              sectionJson[element] = sectionBase64;
+            });
 
-              if (!inventoryBase64.existsSync()) {
-                logger.info(this.runtimeType.toString(),
-                    "Can't find base64 file, creating one...");
-                inventoryBase64.createSync(recursive: true);
-                filesUtils.writeFile(inventoryBase64, "{}");
+            if (!inventoryBase64.existsSync()) {
+              logger.info(this.runtimeType.toString(),
+                  "Can't find base64 file, creating one...");
+              inventoryBase64.createSync(recursive: true);
+              filesUtils.writeFile(inventoryBase64, "{}");
 
-                logger.info(
-                    this.runtimeType.toString(), "Base64 file created.");
-              } else {
-                logger.info(this.runtimeType.toString(), "Base64 file found.");
-              }
-
-              var fileBase64 = jsonDecode(inventoryBase64.readAsStringSync());
-
-              sectionJson.forEach((newKey, newValue) {
-                if (!fileBase64.containsKey(newKey)) {
-                  logger.debug(this.runtimeType.toString(),
-                      sprintf("%s section added to the inventory.", [newKey]));
-                  updatedInventory[newKey] =
-                      content["template_inventory"][newKey];
-                } else if (fileBase64[newKey] != newValue) {
-                  logger.debug(this.runtimeType.toString(),
-                      sprintf("%s section will be updated.", [newKey]));
-                  updatedInventory[newKey] =
-                      content["template_inventory"][newKey];
-                } else {
-                  logger.debug(
-                      this.runtimeType.toString(),
-                      sprintf(
-                          "%s section has not changed since last inventory.",
-                          [newKey]));
-                }
-              });
-
-              filesUtils.writeFile(
-                  inventoryBase64, encoder.convert(sectionJson));
+              logger.info(this.runtimeType.toString(), "Base64 file created.");
+            } else {
+              logger.info(this.runtimeType.toString(), "Base64 file found.");
             }
 
-            // - template ID has changed -> PUT even if checksum is enabled
-            // - checksum is enabled and template ID has not changed -> PATCH
-            // - checksum is disabled -> PUT
+            var fileBase64 = jsonDecode(inventoryBase64.readAsStringSync());
 
+            sectionJson.forEach((newKey, newValue) {
+              if (!fileBase64.containsKey(newKey)) {
+                logger.debug(this.runtimeType.toString(),
+                    sprintf("%s section added to the inventory.", [newKey]));
+                updatedInventory[newKey] =
+                    content["template_inventory"][newKey];
+              } else if (fileBase64[newKey] != newValue) {
+                logger.debug(this.runtimeType.toString(),
+                    sprintf("%s section will be updated.", [newKey]));
+                updatedInventory[newKey] =
+                    content["template_inventory"][newKey];
+              } else {
+                logger.debug(
+                    this.runtimeType.toString(),
+                    sprintf("%s section has not changed since last inventory.",
+                        [newKey]));
+              }
+            });
+
+            filesUtils.writeFile(inventoryBase64, encoder.convert(sectionJson));
+          }
+
+          // - template ID has changed -> PUT even if checksum is enabled
+          // - checksum is enabled and template ID has not changed -> PATCH
+          // - checksum is disabled -> PUT
+
+          // PATCH
+          if (config.getCoreConfig("agent", "inventory_checksum") &&
+              !templateIdChanged) {
             // PATCH
-            if (config.getCoreConfig("agent", "inventory_checksum") &&
-                !templateIdChanged) {
-              // PATCH
-              content["template_inventory"] = updatedInventory;
-              try {
-                responsePatch = await httpUtils.patch(
-                    Uri.parse("$baseUrl/asset/collection/"),
-                    httpUtils.getHeader(),
-                    encoder.convert(content));
-                logger.debug(
-                    this.runtimeType.toString(), responsePatch["message"]);
-              } catch (e) {
-                logger.error(this.runtimeType.toString(),
-                    "Exception during API call: $e");
-              }
+            content["template_inventory"] = updatedInventory;
+            try {
+              responsePatch = await httpUtils.patch(
+                  Uri.parse("$baseUrl/asset/collection/"),
+                  httpUtils.getHeader(),
+                  encoder.convert(content));
+              logger.debug(
+                  this.runtimeType.toString(), responsePatch["message"]);
+            } catch (e) {
+              logger.error(
+                  this.runtimeType.toString(), "Exception during API call: $e");
+            }
 
-              if (responsePatch?["status_code"] == 200) {
-                logger.info(this.runtimeType.toString(),
-                    "Template inventory updated successfully with PATCH.");
-                logger.serverLogger(
-                    assetID, 4, "Template inventory updated successfully.");
-              } else {
-                logger.error(this.runtimeType.toString(),
-                    "Failed to update template inventory with PATCH.");
-                logger.serverLogger(assetID, 6,
-                    "Failed to update template inventory with PATCH.");
-              }
+            if (responsePatch?["status_code"] == 200) {
+              logger.info(this.runtimeType.toString(),
+                  "Template inventory updated successfully with PATCH.");
+              logger.serverLogger(
+                  assetID, 4, "Template inventory updated successfully.");
             } else {
-              // PUT
-              try {
-                responsePut = await httpUtils.put(
-                    Uri.parse("$baseUrl/asset/collection/"),
-                    httpUtils.getHeader(),
-                    encoder.convert(content));
-                logger.debug(
-                    this.runtimeType.toString(), responsePut["message"]);
-              } catch (e) {
-                logger.error(this.runtimeType.toString(),
-                    "Exception during API call: $e");
-              }
-
-              if (responsePut?["status_code"] == 200) {
-                logger.info(this.runtimeType.toString(),
-                    "Template inventory updated successfully with PUT.");
-                logger.serverLogger(assetID, 6,
-                    "Template inventory updated successfully with PUT.");
-              } else {
-                logger.error(this.runtimeType.toString(),
-                    "Failed to update template inventory with PUT.");
-              }
+              logger.error(this.runtimeType.toString(),
+                  "Failed to update template inventory with PATCH.");
+              logger.serverLogger(assetID, 6,
+                  "Failed to update template inventory with PATCH.");
             }
           } else {
-            logger.error(
-                this.runtimeType.toString(), "Missing UUID in base inventory.");
-            logger.serverLogger(assetID, 6, "Missing UUID in base inventory.");
+            // PUT
+            try {
+              responsePut = await httpUtils.put(
+                  Uri.parse("$baseUrl/asset/collection/"),
+                  httpUtils.getHeader(),
+                  encoder.convert(content));
+              logger.debug(this.runtimeType.toString(), responsePut["message"]);
+            } catch (e) {
+              logger.error(
+                  this.runtimeType.toString(), "Exception during API call: $e");
+            }
+
+            if (responsePut?["status_code"] == 200) {
+              logger.info(this.runtimeType.toString(),
+                  "Template inventory updated successfully with PUT.");
+              logger.serverLogger(assetID, 6,
+                  "Template inventory updated successfully with PUT.");
+            } else {
+              logger.error(this.runtimeType.toString(),
+                  "Failed to update template inventory with PUT.");
+            }
           }
         } else {
           logger.error(this.runtimeType.toString(),
