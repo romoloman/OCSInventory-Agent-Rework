@@ -189,7 +189,7 @@ class Inventory {
     Map<String, dynamic> reconciliationData = {
       "uuid": body['uuid'] ?? "",
       "name": body['name'] ?? "",
-      "mac": body['srcmac'] ?? ""
+      "srcmac": body['srcmac'] ?? ""
     };
 
     // API call
