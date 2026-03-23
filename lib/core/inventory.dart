@@ -379,7 +379,7 @@ class Inventory {
             this.runtimeType.toString(), "Current template is up-to-date.");
 
         return true;
-      } else if (compareResult == 1 || compareResult == 2) {
+      } else if (compareResult == 1) {
         // Try to get the remote template to save it locally
         id = remoteInfo["id"];
 
@@ -409,16 +409,14 @@ class Inventory {
           logger.serverLogger(assetID, 11, "Remote template saved locally.");
 
           // template changed = delete base64
-          if (templateIdChanged) {
-            if (inventoryBase64.existsSync()) {
-              try {
-                inventoryBase64.deleteSync();
-                logger.info(this.runtimeType.toString(),
-                    "Resetting base64 file due to template change.");
-              } catch (e) {
-                logger.error(this.runtimeType.toString(),
-                    "Error deleting base64 file: $e");
-              }
+          if (inventoryBase64.existsSync()) {
+            try {
+              inventoryBase64.deleteSync();
+              logger.info(this.runtimeType.toString(),
+                  "Resetting base64 file due to template change.");
+            } catch (e) {
+              logger.error(this.runtimeType.toString(),
+                  "Error deleting base64 file: $e");
             }
           }
           return true;
@@ -573,14 +571,13 @@ class Inventory {
     if (localInfo["return"] == "false" || remoteInfo["return"] == "false") {
       logger.info(this.runtimeType.toString(),
           "One of the templates is missing, update required.");
-      return 2;
+      return 1;
     }
 
     if (remoteInfo["id"]?.trim() != localInfo["id"]?.trim()) {
       logger.info(this.runtimeType.toString(),
           "Template IDs differ - Local: ${localInfo["id"]}, Remote: ${remoteInfo["id"]}");
-      templateIdChanged = true;
-      return 2;
+      return 1;
     }
 
     if (remoteInfo["last_update"]?.trim() != localInfo["last_update"]?.trim()) {
