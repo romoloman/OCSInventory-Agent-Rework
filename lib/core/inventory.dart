@@ -490,7 +490,8 @@ class Inventory {
   /// Get the remote template id and last update.
   Future<Map<String, String>> getRemoteTemplateInfo(
       Map<String, dynamic> body) async {
-    dynamic assetMap, templateMap;
+    Map<String, dynamic>? assetMap;
+    dynamic templateMap;
     dynamic responseAsset, responseTemplate;
 
     // API call
@@ -499,23 +500,37 @@ class Inventory {
 
     try {
       responseAsset = await httpUtils.get(
-          Uri.parse("$baseUrl/asset/bases/?search=$assetID"),
-          httpUtils.getHeader());
+          Uri.parse("$baseUrl/asset/bases/$assetID/"), httpUtils.getHeader());
       logger.debug(this.runtimeType.toString(), responseAsset["message"]);
-
-      assetMap = jsonDecode(responseAsset?["body"]);
     } catch (e) {
       logger.error(
           this.runtimeType.toString(), "Exception during API call: $e");
     }
 
-    if (responseAsset?["status_code"] == 200 && assetMap.isNotEmpty) {
+    if (responseAsset?["status_code"] == 200) {
+      try {
+        final decodedAsset = jsonDecode(responseAsset?["body"]);
+        if (decodedAsset is Map &&
+            decodedAsset["id"]?.toString() == assetID.toString()) {
+          assetMap = Map<String, dynamic>.from(decodedAsset);
+        }
+      } catch (e) {
+        logger.error(this.runtimeType.toString(),
+            "Failed to parse base inventory response: $e");
+      }
+    }
+
+    if (assetMap == null) {
+      logger.error(this.runtimeType.toString(),
+          "Failed to retrieve exact asset from base inventory.");
+      return {"return": "false"};
+    }
+
       // API call
       logger.info(this.runtimeType.toString(), "Base inventory found.");
 
       // template is null or missing? we skip processing it
-      if (!assetMap[0].containsKey('template') ||
-          assetMap[0]['template'] == null) {
+      if (!assetMap.containsKey('template') || assetMap['template'] == null) {
         logger.info(this.runtimeType.toString(),
             "No template assigned to asset (template is null or missing).");
         return {"return": "false"};
@@ -524,7 +539,7 @@ class Inventory {
       try {
         responseTemplate = await httpUtils.get(
             Uri.parse(
-                "$baseUrl/templates/${assetMap[0]['template'].toString()}/?expand=*"),
+                "$baseUrl/templates/${assetMap['template'].toString()}/?expand=*"),
             httpUtils.getHeader());
         logger.debug(this.runtimeType.toString(), responseTemplate["message"]);
         templateMap = jsonDecode(responseTemplate?["body"]);
@@ -544,9 +559,6 @@ class Inventory {
         };
       } else {
         logger.error(this.runtimeType.toString(), "Remote template not found.");
-      }
-    } else {
-      logger.error(this.runtimeType.toString(), "Asset base not found.");
     }
 
     return {"return": "false"};
@@ -749,7 +761,8 @@ class Inventory {
 
   /// Create or update the inventory and send it to the server.
   Future<void> sendRemoteBaseInventory(Map<String, dynamic> body) async {
-    dynamic responseGet, responsePut, responsePost;
+    dynamic responseAsset, responsePut, responsePost;
+    Map<String, dynamic>? assetMap;
 
     logger.info(
         this.runtimeType.toString(), "Sending base inventory to server...");
@@ -757,16 +770,28 @@ class Inventory {
     if (inventoryCheck) {
       // API call
       try {
-        responseGet = await httpUtils.get(
-            Uri.parse("$baseUrl/asset/bases/?search=$assetID"),
-            httpUtils.getHeader());
-        logger.debug(this.runtimeType.toString(), responseGet["message"]);
+        responseAsset = await httpUtils.get(
+            Uri.parse("$baseUrl/asset/bases/$assetID/"), httpUtils.getHeader());
+        logger.debug(this.runtimeType.toString(), responseAsset["message"]);
       } catch (e) {
         logger.error(
             this.runtimeType.toString(), "Exception during API call: $e");
       }
 
-      if (responseGet?["status_code"] == 200) {
+      if (responseAsset?["status_code"] == 200) {
+        try {
+          final decodedAsset = jsonDecode(responseAsset?["body"]);
+          if (decodedAsset is Map &&
+              decodedAsset["id"]?.toString() == assetID.toString()) {
+            assetMap = Map<String, dynamic>.from(decodedAsset);
+          }
+        } catch (e) {
+          logger.error(this.runtimeType.toString(),
+              "Failed to parse base inventory response: $e");
+        }
+      }
+
+      if (assetMap != null) {
         // API call
         logger.info(this.runtimeType.toString(), "Updating inventory...");
 
@@ -824,6 +849,7 @@ class Inventory {
   /// Update the remote inventory to add template inventory
   Future<void> sendRemoteTemplateInventory(Map<String, dynamic> body) async {
     dynamic responseGet, responsePatch, responsePut;
+    Map<String, dynamic>? assetMap;
     Map<dynamic, dynamic> updatedInventory = {};
     late var templateInventory,
         content,
@@ -844,7 +870,7 @@ class Inventory {
 
         try {
           responseGet = await httpUtils.get(
-              Uri.parse("$baseUrl/asset/bases/?search=$assetID"),
+              Uri.parse("$baseUrl/asset/bases/$assetID/"),
               httpUtils.getHeader());
           logger.debug(this.runtimeType.toString(), responseGet["message"]);
         } catch (e) {
@@ -853,6 +879,25 @@ class Inventory {
         }
 
         if (responseGet?["status_code"] == 200) {
+          try {
+            final decodedAsset = jsonDecode(responseGet["body"]);
+            if (decodedAsset is Map &&
+                decodedAsset["id"]?.toString() == assetID.toString()) {
+              assetMap = Map<String, dynamic>.from(decodedAsset);
+            }
+          } catch (e) {
+            logger.error(this.runtimeType.toString(),
+                "Failed to parse base inventory response: $e");
+          }
+
+          if (assetMap == null) {
+            logger.error(this.runtimeType.toString(),
+                "Failed to retrieve exact asset from base inventory.");
+            logger.serverLogger(
+                assetID, 6, "Failed to retrieve base inventory from server.");
+            return;
+          }
+
           logger.info(
               this.runtimeType.toString(), "Remote base inventory found.");
           // Update of the current inventory with the assetID of the device
@@ -860,7 +905,7 @@ class Inventory {
           logger.info(
               this.runtimeType.toString(), "Updating base inventory...");
 
-          content = jsonDecode(responseGet["body"])[0];
+          content = assetMap;
           content["template_inventory"] = templateInventory["values"];
 
           if (config.getCoreConfig("agent", "inventory_checksum")) {
