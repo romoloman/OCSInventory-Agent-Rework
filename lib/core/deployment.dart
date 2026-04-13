@@ -205,6 +205,7 @@ class Deployment {
     if (actionStatus == 0) {
       logger.info(this.runtimeType.toString(), successMessage);
     } else {
+      result["error"].toString().trim().isEmpty ? result["error"] = "Unknown error: No output" : result["error"];
       errorComment = "Error $actionType: ${result["error"]}";
       logger.error(this.runtimeType.toString(), errorComment);
       actionErrors["$actionId"] = result["error"];
