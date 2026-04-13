@@ -44,7 +44,7 @@ class Inventory {
   late var baseUrl;
   late bool inventoryCheck;
   late int assetID;
-  late bool templateIdChanged = false;
+  late bool templateChanged = false;
 
   late String inventoryFileName;
   late File inventoryFile;
@@ -351,9 +351,10 @@ class Inventory {
   Future<bool> getRemoteTemplate(Map<String, dynamic> body) async {
     // Get templates data
     var remoteInfo, localInfo, id;
-    int compareResult;
+    bool hasTemplateChanged;
     dynamic responseGet;
     Map<String, dynamic> template;
+    templateChanged = false;
 
     try {
       remoteInfo = await getRemoteTemplateInfo(body);
@@ -372,14 +373,16 @@ class Inventory {
     }
 
     if (remoteInfo["return"] != false || localInfo["return"] != false) {
-      compareResult = compareTemplate(localInfo, remoteInfo);
+      hasTemplateChanged = compareTemplate(localInfo, remoteInfo);
       // Depending on result, update the template or not
-      if (compareResult == 0) {
+      if (!hasTemplateChanged) {
         logger.info(
             this.runtimeType.toString(), "Current template is up-to-date.");
 
         return true;
-      } else if (compareResult == 1 || compareResult == 2) {
+      } else {
+        templateChanged = true;
+
         // Try to get the remote template to save it locally
         id = remoteInfo["id"];
 
@@ -408,17 +411,16 @@ class Inventory {
               this.runtimeType.toString(), "Remote template saved locally.");
           logger.serverLogger(assetID, 11, "Remote template saved locally.");
 
-          // template changed = delete base64
-          if (templateIdChanged) {
-            if (inventoryBase64.existsSync()) {
-              try {
-                inventoryBase64.deleteSync();
-                logger.info(this.runtimeType.toString(),
-                    "Resetting base64 file due to template change.");
-              } catch (e) {
-                logger.error(this.runtimeType.toString(),
-                    "Error deleting base64 file: $e");
-              }
+          // Reset base64 when template metadata changes to force
+          // inventory rebuild on next send
+          if (inventoryBase64.existsSync()) {
+            try {
+              inventoryBase64.deleteSync();
+              logger.info(this.runtimeType.toString(),
+                  "Resetting base64 file due to template change.");
+            } catch (e) {
+              logger.error(this.runtimeType.toString(),
+                  "Error deleting base64 file: $e");
             }
           }
           return true;
@@ -564,8 +566,9 @@ class Inventory {
     return result;
   }
 
-  /// Compare both templates based on [localInfo] and [remoteInfo] to create or update the local template.
-  int compareTemplate(
+  /// Compare both templates based on [localInfo] and [remoteInfo]
+  /// Returns true if the template must be refreshed
+  bool compareTemplate(
       Map<String, String> localInfo, Map<String, String> remoteInfo) {
     logger.info(this.runtimeType.toString(), "Comparing templates...");
 
@@ -573,25 +576,24 @@ class Inventory {
     if (localInfo["return"] == "false" || remoteInfo["return"] == "false") {
       logger.info(this.runtimeType.toString(),
           "One of the templates is missing, update required.");
-      return 2;
+      return true;
     }
 
     if (remoteInfo["id"]?.trim() != localInfo["id"]?.trim()) {
       logger.info(this.runtimeType.toString(),
           "Template IDs differ - Local: ${localInfo["id"]}, Remote: ${remoteInfo["id"]}");
-      templateIdChanged = true;
-      return 2;
+      return true;
     }
 
     if (remoteInfo["last_update"]?.trim() != localInfo["last_update"]?.trim()) {
       logger.info(this.runtimeType.toString(),
           "Template versions differ - Local: ${localInfo["last_update"]}, Remote: ${remoteInfo["last_update"]}");
-      return 1;
+      return true;
     }
 
     logger.info(this.runtimeType.toString(),
         "Templates are identical, no update needed.");
-    return 0;
+    return false;
   }
 
   /// Process the template and format template inventory.
@@ -906,13 +908,13 @@ class Inventory {
             filesUtils.writeFile(inventoryBase64, encoder.convert(sectionJson));
           }
 
-          // - template ID has changed -> PUT even if checksum is enabled
-          // - checksum is enabled and template ID has not changed -> PATCH
+          // - template metadata changed -> PUT even if checksum is enabled
+          // - checksum is enabled and template is unchanged -> PATCH
           // - checksum is disabled -> PUT
 
-          // PATCH
+          // PATCH only when template is unchanged
           if (config.getCoreConfig("agent", "inventory_checksum") &&
-              !templateIdChanged) {
+              !templateChanged) {
             // PATCH
             content["template_inventory"] = updatedInventory;
             try {
