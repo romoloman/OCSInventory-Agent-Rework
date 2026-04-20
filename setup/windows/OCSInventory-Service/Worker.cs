@@ -65,7 +65,7 @@ namespace OCSInventory_Service
                             CreateNoWindow = true,
                             WorkingDirectory = installDir,
                             RedirectStandardOutput = true,
-                            RedirectStandardError = true
+                            RedirectStandardError = true,
                         };
 
                         _agentProcess = Process.Start(psi);
@@ -110,7 +110,7 @@ namespace OCSInventory_Service
                         _logger.LogInformation("Cancellation requested; stopping worker loop.");
                         break;
                     }
-                    // Autres erreurs réelles
+                    // Autres erreurs rï¿½elles
                     catch (Exception ex)
                     {
                         _logger.LogError(ex, "Unhandled error in worker loop.");
