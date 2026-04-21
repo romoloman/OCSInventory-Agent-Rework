@@ -24,12 +24,15 @@ class Daemon {
   late Logger logger;
   late String executable;
   bool stopSignal = false;
+  Process? currentProcess;
+  StreamSubscription<ProcessSignal>? signalSubscription;
+  final Completer<void> shutdownCompleter = Completer<void>();
+  Timer? nextRunTimer;
 
   Daemon(this.config, this.logger) {
     if (Platform.isLinux) {
-      ProcessSignal.sigterm.watch().listen((signal) {
-        logger.info("Service", "Received SIGTERM signal. Stopping daemon...");
-        stopSignal = true;
+      signalSubscription = ProcessSignal.sigterm.watch().listen((signal) {
+        stop();
       });
     }
 
@@ -42,25 +45,102 @@ class Daemon {
     start();
   }
 
-  void start() async {
-    while (!stopSignal) {
-      dynamic frequency = config.getCoreConfig("agent", "frequency");
-      if (frequency == false) {
-        logger.warning(
-            "Service", "Frequency not set, no inventory will be sent.");
-        await Future.delayed(Duration(hours: 1));
-        continue;
-      }
-
-      logger.info("Service", "Running agent executable...");
-      try {
-        await Process.run(executable, []);
-      } catch (e) {
-        logger.error("Service", "Failed to run agent executable: $e");
-      }
-      logger.info("Service", "Agent execution completed.");
-
-      await Future.delayed(Duration(hours: frequency));
+  void stop() {
+    if (stopSignal) {
+      return;
     }
+
+    logger.info("Service", "Received SIGTERM signal. Stopping daemon...");
+    stopSignal = true;
+
+    nextRunTimer?.cancel();
+    nextRunTimer = null;
+
+    if (!shutdownCompleter.isCompleted) {
+      shutdownCompleter.complete();
+    }
+
+    currentProcess?.kill(ProcessSignal.sigterm);
+  }
+
+  void start() async {
+    try {
+      while (!stopSignal) {
+        dynamic frequency = config.getCoreConfig("agent", "frequency");
+        if (frequency == false) {
+          logger.warning(
+              "Service", "Frequency not set, no inventory will be sent.");
+          await waitForNextRun(Duration(hours: 1));
+          continue;
+        }
+
+        logger.info("Service", "Running agent executable...");
+        try {
+          currentProcess = await Process.start(executable, []);
+          unawaited(currentProcess!.stdout.drain<void>());
+          unawaited(currentProcess!.stderr.drain<void>());
+          await waitProcessExit(currentProcess!);
+        } catch (e) {
+          logger.error("Service", "Failed to run agent executable: $e");
+        } finally {
+          currentProcess = null;
+        }
+
+        if (stopSignal) {
+          break;
+        }
+
+        logger.info("Service", "Agent execution completed.");
+        await waitForNextRun(Duration(hours: frequency));
+      }
+    } finally {
+      nextRunTimer?.cancel();
+      await signalSubscription?.cancel();
+      signalSubscription = null;
+    }
+  }
+
+  Future<void> waitForNextRun(Duration duration) async {
+    if (stopSignal) {
+      return;
+    }
+
+    final Completer<void> timerCompleter = Completer<void>();
+    nextRunTimer = Timer(duration, () {
+      if (!timerCompleter.isCompleted) {
+        timerCompleter.complete();
+      }
+    });
+
+    try {
+      await Future.any([timerCompleter.future, shutdownCompleter.future]);
+    } finally {
+      nextRunTimer?.cancel();
+      nextRunTimer = null;
+    }
+  }
+
+  Future<void> waitProcessExit(Process process) async {
+    final Future<int> exitCodeFuture = process.exitCode;
+
+    final bool processExited = await Future.any([
+      exitCodeFuture.then((_) => true),
+      shutdownCompleter.future.then((_) => false),
+    ]);
+
+    if (processExited) {
+      return;
+    }
+
+    process.kill(ProcessSignal.sigterm);
+    try {
+      await exitCodeFuture.timeout(
+        Duration(seconds: 10),
+        onTimeout: () {
+          process.kill(ProcessSignal.sigkill);
+          return -1;
+        },
+      );
+    } catch (_) {}
   }
 }
