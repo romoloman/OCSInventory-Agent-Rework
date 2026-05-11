@@ -90,6 +90,13 @@ uninstall_agent() {
 		log "LaunchDaemon ${SERVICE_LABEL} does not exist. Skipping LaunchDaemon uninstallation." false
 	fi
 
+	if [ -f "${DATA_PATH}/Base64.json" ]; then
+		log "Base64 file ${DATA_PATH}/Base64.json exists, proceeding with removal." false
+		execCommand "rm ${DATA_PATH}/Base64.json" "Base64 file ${DATA_PATH}/Base64.json removed successfully." "Failed to remove Base64 file ${DATA_PATH}/Base64.json."
+	else
+		log "Base64 file does not exist, skipping removal." false
+	fi
+
 	if [ "$HARD_DELETE" = true ]; then
 
 		legacy_check
