@@ -44,7 +44,7 @@ class Inventory {
   late var baseUrl;
   late bool inventoryCheck;
   late int assetID;
-  late bool templateIdChanged = false;
+  late bool templateChanged = false;
 
   late String inventoryFileName;
   late File inventoryFile;
@@ -351,9 +351,10 @@ class Inventory {
   Future<bool> getRemoteTemplate(Map<String, dynamic> body) async {
     // Get templates data
     var remoteInfo, localInfo, id;
-    int compareResult;
+    bool hasTemplateChanged;
     dynamic responseGet;
     Map<String, dynamic> template;
+    templateChanged = false;
 
     try {
       remoteInfo = await getRemoteTemplateInfo(body);
@@ -372,14 +373,16 @@ class Inventory {
     }
 
     if (remoteInfo["return"] != false || localInfo["return"] != false) {
-      compareResult = compareTemplate(localInfo, remoteInfo);
+      hasTemplateChanged = compareTemplate(localInfo, remoteInfo);
       // Depending on result, update the template or not
-      if (compareResult == 0) {
+      if (!hasTemplateChanged) {
         logger.info(
             this.runtimeType.toString(), "Current template is up-to-date.");
 
         return true;
-      } else if (compareResult == 1 || compareResult == 2) {
+      } else {
+        templateChanged = true;
+
         // Try to get the remote template to save it locally
         id = remoteInfo["id"];
 
@@ -408,17 +411,16 @@ class Inventory {
               this.runtimeType.toString(), "Remote template saved locally.");
           logger.serverLogger(assetID, 11, "Remote template saved locally.");
 
-          // template changed = delete base64
-          if (templateIdChanged) {
-            if (inventoryBase64.existsSync()) {
-              try {
-                inventoryBase64.deleteSync();
-                logger.info(this.runtimeType.toString(),
-                    "Resetting base64 file due to template change.");
-              } catch (e) {
-                logger.error(this.runtimeType.toString(),
-                    "Error deleting base64 file: $e");
-              }
+          // Reset base64 when template metadata changes to force
+          // inventory rebuild on next send
+          if (inventoryBase64.existsSync()) {
+            try {
+              inventoryBase64.deleteSync();
+              logger.info(this.runtimeType.toString(),
+                  "Resetting base64 file due to template change.");
+            } catch (e) {
+              logger.error(this.runtimeType.toString(),
+                  "Error deleting base64 file: $e");
             }
           }
           return true;
@@ -488,7 +490,8 @@ class Inventory {
   /// Get the remote template id and last update.
   Future<Map<String, String>> getRemoteTemplateInfo(
       Map<String, dynamic> body) async {
-    dynamic assetMap, templateMap;
+    Map<String, dynamic>? assetMap;
+    dynamic templateMap;
     dynamic responseAsset, responseTemplate;
 
     // API call
@@ -497,23 +500,37 @@ class Inventory {
 
     try {
       responseAsset = await httpUtils.get(
-          Uri.parse("$baseUrl/asset/bases/?search=$assetID"),
-          httpUtils.getHeader());
+          Uri.parse("$baseUrl/asset/bases/$assetID/"), httpUtils.getHeader());
       logger.debug(this.runtimeType.toString(), responseAsset["message"]);
-
-      assetMap = jsonDecode(responseAsset?["body"]);
     } catch (e) {
       logger.error(
           this.runtimeType.toString(), "Exception during API call: $e");
     }
 
-    if (responseAsset?["status_code"] == 200 && assetMap.isNotEmpty) {
+    if (responseAsset?["status_code"] == 200) {
+      try {
+        final decodedAsset = jsonDecode(responseAsset?["body"]);
+        if (decodedAsset is Map &&
+            decodedAsset["id"]?.toString() == assetID.toString()) {
+          assetMap = Map<String, dynamic>.from(decodedAsset);
+        }
+      } catch (e) {
+        logger.error(this.runtimeType.toString(),
+            "Failed to parse base inventory response: $e");
+      }
+    }
+
+    if (assetMap == null) {
+      logger.error(this.runtimeType.toString(),
+          "Failed to retrieve exact asset from base inventory.");
+      return {"return": "false"};
+    }
+
       // API call
       logger.info(this.runtimeType.toString(), "Base inventory found.");
 
       // template is null or missing? we skip processing it
-      if (!assetMap[0].containsKey('template') ||
-          assetMap[0]['template'] == null) {
+      if (!assetMap.containsKey('template') || assetMap['template'] == null) {
         logger.info(this.runtimeType.toString(),
             "No template assigned to asset (template is null or missing).");
         return {"return": "false"};
@@ -522,7 +539,7 @@ class Inventory {
       try {
         responseTemplate = await httpUtils.get(
             Uri.parse(
-                "$baseUrl/templates/${assetMap[0]['template'].toString()}/?expand=*"),
+                "$baseUrl/templates/${assetMap['template'].toString()}/?expand=*"),
             httpUtils.getHeader());
         logger.debug(this.runtimeType.toString(), responseTemplate["message"]);
         templateMap = jsonDecode(responseTemplate?["body"]);
@@ -542,9 +559,6 @@ class Inventory {
         };
       } else {
         logger.error(this.runtimeType.toString(), "Remote template not found.");
-      }
-    } else {
-      logger.error(this.runtimeType.toString(), "Asset base not found.");
     }
 
     return {"return": "false"};
@@ -564,8 +578,9 @@ class Inventory {
     return result;
   }
 
-  /// Compare both templates based on [localInfo] and [remoteInfo] to create or update the local template.
-  int compareTemplate(
+  /// Compare both templates based on [localInfo] and [remoteInfo]
+  /// Returns true if the template must be refreshed
+  bool compareTemplate(
       Map<String, String> localInfo, Map<String, String> remoteInfo) {
     logger.info(this.runtimeType.toString(), "Comparing templates...");
 
@@ -573,25 +588,24 @@ class Inventory {
     if (localInfo["return"] == "false" || remoteInfo["return"] == "false") {
       logger.info(this.runtimeType.toString(),
           "One of the templates is missing, update required.");
-      return 2;
+      return true;
     }
 
     if (remoteInfo["id"]?.trim() != localInfo["id"]?.trim()) {
       logger.info(this.runtimeType.toString(),
           "Template IDs differ - Local: ${localInfo["id"]}, Remote: ${remoteInfo["id"]}");
-      templateIdChanged = true;
-      return 2;
+      return true;
     }
 
     if (remoteInfo["last_update"]?.trim() != localInfo["last_update"]?.trim()) {
       logger.info(this.runtimeType.toString(),
           "Template versions differ - Local: ${localInfo["last_update"]}, Remote: ${remoteInfo["last_update"]}");
-      return 1;
+      return true;
     }
 
     logger.info(this.runtimeType.toString(),
         "Templates are identical, no update needed.");
-    return 0;
+    return false;
   }
 
   /// Process the template and format template inventory.
@@ -619,6 +633,23 @@ class Inventory {
     };
   }
 
+  /// Call extractValue for each field of the section
+  Map<String, dynamic> getFieldsResults(
+      List<dynamic> fields, Map<String, dynamic> result) {
+    Map<String, dynamic> sectionsResult = {};
+    dynamic fieldResult;
+    for (var field in fields) {
+      fieldResult = format.extractValue(field, result);
+      sectionsResult[field['name']] = fieldResult;
+    }
+    return sectionsResult;
+  }
+
+  // if at least one value isn't empty
+  anyValueNonEmpty(Map<String, dynamic> fieldResult) {
+    return fieldResult.values.any((value) => value != null && value.isNotEmpty);
+  }
+
   /// Get all informations present in the local [template]
   /// with a [os] verification and format it in json.
   Future<Map<String, dynamic>> getInventoryResult(
@@ -626,8 +657,8 @@ class Inventory {
     List<dynamic> sections = [];
     Map<String, dynamic> result = {};
     Map<String, dynamic> inventoryResult = {};
-    var valueTarget;
-
+    List<dynamic> sectionsResult = [];
+    Map<String, dynamic> resultMulti = {};
     try {
       sections = template['sections'];
     } catch (e) {
@@ -637,38 +668,40 @@ class Inventory {
 
     if (sections.isNotEmpty) {
       for (var section in sections) {
+        // result contains both the section result and the overrided fields results
         result = await getSectionResult(os, template, section);
 
-        switch (section['retrieval_output']) {
-          case "JSON":
-            if (os == "MAC") {
-              valueTarget = format.getByMethod(section['retrieval_output'],
-                  section["fields"], result, section["target"]);
-            } else {
-              valueTarget = format.getByMethod(
-                  section['retrieval_output'], section["fields"], result);
+        // we do so outside the fields loop bc some of the formatting applies to the whole section
+        // and some to overriden fields only
+        format.formatResult(section, result);
+        dynamic fieldResult;
+
+        // if list = handle multiple results (e.g. networks)
+        if (result['main']['result'] is List) {
+          for (var resultItem in result['main']['result']) {
+            // multi = multiple items (rows) in result
+            resultMulti = result;
+            // faking the result 'main' structure to make sure we process fields for each item
+            resultMulti['main']['result'] = resultItem;
+            // calling getFieldsResults to process entry per entry
+            fieldResult = getFieldsResults(section['fields'], resultMulti);
+            if (anyValueNonEmpty(fieldResult)) {
+              sectionsResult.add(fieldResult);
             }
-            break;
-
-          case "TBLE":
-          case "PTXT":
-          case "REGX":
-          case "GREP":
-            valueTarget = format.getByMethod(
-                section['retrieval_output'], section["fields"], result);
-            break;
-
-          default:
-            logger.warning(
-                this.runtimeType.toString(), "Retrieval format unknown.");
-            valueTarget = null;
-            break;
+          }
+        } else {
+          fieldResult = getFieldsResults(section['fields'], result);
+          if (anyValueNonEmpty(fieldResult)) {
+            sectionsResult.add(fieldResult);
+          }
         }
 
-        inventoryResult.putIfAbsent(section['name'], () => valueTarget);
+        logger.info(this.runtimeType.toString(),
+            '[${section['name']}] ${sectionsResult.toString()}');
+        inventoryResult[section['name']] = sectionsResult;
+        sectionsResult = [];
       }
     }
-
     return inventoryResult;
   }
 
@@ -728,7 +761,8 @@ class Inventory {
 
   /// Create or update the inventory and send it to the server.
   Future<void> sendRemoteBaseInventory(Map<String, dynamic> body) async {
-    dynamic responseGet, responsePut, responsePost;
+    dynamic responseAsset, responsePut, responsePost;
+    Map<String, dynamic>? assetMap;
 
     logger.info(
         this.runtimeType.toString(), "Sending base inventory to server...");
@@ -736,16 +770,28 @@ class Inventory {
     if (inventoryCheck) {
       // API call
       try {
-        responseGet = await httpUtils.get(
-            Uri.parse("$baseUrl/asset/bases/?search=$assetID"),
-            httpUtils.getHeader());
-        logger.debug(this.runtimeType.toString(), responseGet["message"]);
+        responseAsset = await httpUtils.get(
+            Uri.parse("$baseUrl/asset/bases/$assetID/"), httpUtils.getHeader());
+        logger.debug(this.runtimeType.toString(), responseAsset["message"]);
       } catch (e) {
         logger.error(
             this.runtimeType.toString(), "Exception during API call: $e");
       }
 
-      if (responseGet?["status_code"] == 200) {
+      if (responseAsset?["status_code"] == 200) {
+        try {
+          final decodedAsset = jsonDecode(responseAsset?["body"]);
+          if (decodedAsset is Map &&
+              decodedAsset["id"]?.toString() == assetID.toString()) {
+            assetMap = Map<String, dynamic>.from(decodedAsset);
+          }
+        } catch (e) {
+          logger.error(this.runtimeType.toString(),
+              "Failed to parse base inventory response: $e");
+        }
+      }
+
+      if (assetMap != null) {
         // API call
         logger.info(this.runtimeType.toString(), "Updating inventory...");
 
@@ -803,6 +849,7 @@ class Inventory {
   /// Update the remote inventory to add template inventory
   Future<void> sendRemoteTemplateInventory(Map<String, dynamic> body) async {
     dynamic responseGet, responsePatch, responsePut;
+    Map<String, dynamic>? assetMap;
     Map<dynamic, dynamic> updatedInventory = {};
     late var templateInventory,
         content,
@@ -823,7 +870,7 @@ class Inventory {
 
         try {
           responseGet = await httpUtils.get(
-              Uri.parse("$baseUrl/asset/bases/?search=$assetID"),
+              Uri.parse("$baseUrl/asset/bases/$assetID/"),
               httpUtils.getHeader());
           logger.debug(this.runtimeType.toString(), responseGet["message"]);
         } catch (e) {
@@ -832,6 +879,25 @@ class Inventory {
         }
 
         if (responseGet?["status_code"] == 200) {
+          try {
+            final decodedAsset = jsonDecode(responseGet["body"]);
+            if (decodedAsset is Map &&
+                decodedAsset["id"]?.toString() == assetID.toString()) {
+              assetMap = Map<String, dynamic>.from(decodedAsset);
+            }
+          } catch (e) {
+            logger.error(this.runtimeType.toString(),
+                "Failed to parse base inventory response: $e");
+          }
+
+          if (assetMap == null) {
+            logger.error(this.runtimeType.toString(),
+                "Failed to retrieve exact asset from base inventory.");
+            logger.serverLogger(
+                assetID, 6, "Failed to retrieve base inventory from server.");
+            return;
+          }
+
           logger.info(
               this.runtimeType.toString(), "Remote base inventory found.");
           // Update of the current inventory with the assetID of the device
@@ -839,7 +905,7 @@ class Inventory {
           logger.info(
               this.runtimeType.toString(), "Updating base inventory...");
 
-          content = jsonDecode(responseGet["body"])[0];
+          content = assetMap;
           content["template_inventory"] = templateInventory["values"];
 
           if (config.getCoreConfig("agent", "inventory_checksum")) {
@@ -887,13 +953,13 @@ class Inventory {
             filesUtils.writeFile(inventoryBase64, encoder.convert(sectionJson));
           }
 
-          // - template ID has changed -> PUT even if checksum is enabled
-          // - checksum is enabled and template ID has not changed -> PATCH
+          // - template metadata changed -> PUT even if checksum is enabled
+          // - checksum is enabled and template is unchanged -> PATCH
           // - checksum is disabled -> PUT
 
-          // PATCH
+          // PATCH only when template is unchanged
           if (config.getCoreConfig("agent", "inventory_checksum") &&
-              !templateIdChanged) {
+              !templateChanged) {
             // PATCH
             content["template_inventory"] = updatedInventory;
             try {
