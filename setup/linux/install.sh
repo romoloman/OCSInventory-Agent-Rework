@@ -202,6 +202,8 @@ run_executable() {
 			LOG_FILE_PATH_ARG="-l $LOG_FILE_PATH"
 		fi
 
+		log "Command: $SYMBOLIC_LINK -f $LOG_FILE -m $INVENTORY_MODE -p $PASSWORD -u $USERNAME -s $URL $LOG_FILE_PATH_ARG -d $DATA_PATH -v $LOG_LEVEL -c $CERTIFICATE" false
+
 		execCommand "$SYMBOLIC_LINK -f $LOG_FILE -m $INVENTORY_MODE -p $PASSWORD -u $USERNAME -s $URL $LOG_FILE_PATH_ARG -d $DATA_PATH -v $LOG_LEVEL -c $CERTIFICATE" "Agent executed successfully." "Failed to execute the agent."
 	fi
 }
