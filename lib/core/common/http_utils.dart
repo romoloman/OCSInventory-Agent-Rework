@@ -73,7 +73,9 @@ class HTTPUtils {
     try {
       if (bypassCertificate) {
         SecurityContext context = SecurityContext(withTrustedRoots: false);
-        context.setTrustedCertificatesBytes(utf8.encode(certificate));
+        if (certificate.trim().isNotEmpty) {
+          context.setTrustedCertificatesBytes(utf8.encode(certificate));
+        }
 
         HttpClient client = HttpClient(context: context)
           ..badCertificateCallback =
