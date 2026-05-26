@@ -69,7 +69,7 @@ class HTTPUtils {
     }
 
     bool bypassCertificate =
-        config.getInventoryConfig("bypass_certificate").toString() == "true";
+        config.getInventoryConfig("ssl").toString() == "true";
     try {
       if (bypassCertificate) {
         SecurityContext context = SecurityContext(withTrustedRoots: false);

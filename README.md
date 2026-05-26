@@ -100,7 +100,7 @@ This is a list of all available `install.sh` script arguments:
     --log-file                        Enable log file (default: false)
     --log-file-path PATH              Path to the log file (default: /var/log/ocsinventory-agent/ocsinventory-agent.log)
 -c, --certificate CERTIFICATE         Path to the certificate file (default: null)
-    --bypass-certificate              Bypass certificate validation (default: false)
+    --ssl                             Bypass certificate validation (default: false)
 -s, --service                         Register the agent as a systemd service
 -n, --now                             Run the agent inventory immediately after installation
 -h, --help                            Display this help message
@@ -222,7 +222,7 @@ This is a list of all available `install.sh` script arguments:
     --log-file                        Enable log file (default: false)
     --log-file-path PATH              Path to the log file (default: /var/log/ocsinventory-agent/ocsinventory-agent.log)
 -c, --certificate CERTIFICATE         Path to the certificate file (default: null)
-    --bypass-certificate              Bypass certificate validation (default: false)
+    --ssl                              Bypass certificate validation (default: false)
 -s, --service                         Register the agent as a systemd service
 -n, --now                             Run the agent inventory immediately after installation
 -h, --help                            Display this help message
@@ -273,7 +273,7 @@ In this file, there are properties to configure the agent:
 | log_file           | File where to logs will be written. Set to false, logs will be written in the terminal.                                                                              |
 | log_file_path      | This property is to set the log file path. Only define it if you put log_file to true.<br>**Warning**: It will not create the file. You'll need to create it.        |
 | certificate        | Specify the path to the certificate file (.pem)                                                                                                                      |
-| bypass_certificate | Bypass certificate verification (false by default)                                                                                                                   |
+| ssl | Bypass certificate verification (false by default)                                                                                                                   |
 
 ```text
 {
@@ -286,7 +286,7 @@ In this file, there are properties to configure the agent:
     "log_file_path": "/var/log/ocsinventory-agent/ocsinventory-agent.log",
     "data_directory": "/var/lib/ocsinventory-data",
     "certificate": "/certificate path/file_name.pem",
-    "bypass_certificate": false
+    "ssl": false
 }
 ```
 
@@ -300,7 +300,7 @@ If your OCS Inventory backend is running with the HTTP protocol, you do not need
 
 If your OCS Inventory backend is running with the HTTPS protocol, you must have a certificate file, even if it is self-signed, to install the agent.
 
-You can bypass SSL certificate verification (if the certificate is self-signed) by running the agent with the `-b true` option or by setting the `bypass_certificate` value to true in the configuration file.
+You can bypass SSL certificate verification (if the certificate is self-signed) by running the agent with the `-b true` option or by setting the `ssl` value to true in the configuration file.
 
 ## Step 6: Uninstalling the agent
 
