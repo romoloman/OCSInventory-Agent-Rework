@@ -15,7 +15,6 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // External packages imports
-import 'dart:convert';
 import 'dart:io';
 import 'package:http/io_client.dart';
 import 'package:ocsinventory_agent/core/config.dart';
@@ -29,12 +28,46 @@ class HTTPUtils {
   late Logger logger;
   late IOClient ioClient;
   late Config config;
+  bool _certificateFileLogPrinted = false;
 
   /// Constructor
   HTTPUtils(Logger logger, Config config) {
     this.logger = logger;
     this.config = config;
     this.ioClient = createHttpsClient();
+    _logCertificateMode();
+  }
+
+  void _logCertificateMode() {
+    String url = (config.getInventoryConfig("url") ?? "").toString();
+    bool isHttps = Uri.tryParse(url)?.scheme.toLowerCase() == "https";
+    bool ssl =
+        config.getInventoryConfig("ssl").toString().toLowerCase() == "true";
+    String certificatePath =
+        (config.getInventoryConfig("certificate") ?? "").toString().trim();
+    bool certificateFileExists =
+        certificatePath.isNotEmpty && File(certificatePath).existsSync();
+
+    if (!isHttps) {
+      logger.info(this.runtimeType.toString(),
+          "Certificate mode: TLS disabled (HTTP).");
+      return;
+    }
+
+    if (ssl) {
+      logger.warning(this.runtimeType.toString(),
+          "Certificate mode: TLS enabled with validation bypass (ssl=true, insecure).");
+      return;
+    }
+
+    if (certificateFileExists) {
+      logger.info(this.runtimeType.toString(),
+          "Certificate mode: TLS enabled (system store), fallback certificate path available: $certificatePath");
+      return;
+    }
+
+    logger.info(this.runtimeType.toString(),
+        "Certificate mode: TLS enabled (system store), no fallback certificate path available.");
   }
 
   /// Return header in json format.
@@ -49,43 +82,94 @@ class HTTPUtils {
   }
 
   /// Create https client
-  IOClient createHttpsClient() {
-    String certificate = "";
-    if (config.getInventoryConfig("certificate") != "") {
-      if (File(config.getInventoryConfig("certificate")).existsSync()) {
-        logger.debug(
-            this.runtimeType.toString(),
-            sprintf("Using certificate file: %s",
-                [config.getInventoryConfig("certificate")]));
-        certificate =
-            File(config.getInventoryConfig("certificate")).readAsStringSync();
-      } else {
-        logger.debug(
-            this.runtimeType.toString(),
-            sprintf("Certificate file not found: %s",
-                [config.getInventoryConfig("certificate")]));
+  IOClient createHttpsClient({bool useCertificateFile = false}) {
+    bool ssl =
+        config.getInventoryConfig("ssl").toString().toLowerCase() == "true";
+    String certificatePath =
+        (config.getInventoryConfig("certificate") ?? "").toString().trim();
+    String url = (config.getInventoryConfig("url") ?? "").toString();
+    bool isHttps = Uri.tryParse(url)?.scheme.toLowerCase() == "https";
+
+    try {
+      if (!isHttps) {
+        logger.debug(this.runtimeType.toString(),
+            "Agent URL is HTTP: SSL/TLS verification disabled (no SSL).");
         return IOClient(HttpClient());
       }
-    }
 
-    bool bypassCertificate =
-        config.getInventoryConfig("ssl").toString() == "true";
-    try {
-      if (bypassCertificate) {
-        SecurityContext context = SecurityContext(withTrustedRoots: false);
-        context.setTrustedCertificatesBytes(utf8.encode(certificate));
-
-        HttpClient client = HttpClient(context: context)
+      if (ssl) {
+        HttpClient client = HttpClient()
           ..badCertificateCallback =
               (X509Certificate cert, String host, int port) => true;
         return IOClient(client);
-      } else {
-        return IOClient(HttpClient());
       }
+
+      if (useCertificateFile) {
+        if (certificatePath.isNotEmpty && File(certificatePath).existsSync()) {
+          SecurityContext context = SecurityContext(withTrustedRoots: true);
+          context.setTrustedCertificates(certificatePath);
+          if (!_certificateFileLogPrinted) {
+            logger.info(this.runtimeType.toString(),
+                sprintf("Using certificate file: %s", [certificatePath]));
+            _certificateFileLogPrinted = true;
+          }
+          return IOClient(HttpClient(context: context));
+        }
+      }
+
+      return IOClient(HttpClient());
     } catch (exception) {
       logger.error(this.runtimeType.toString(),
           sprintf("HTTP query: %s", [exception.toString().trim()]));
       return IOClient(HttpClient());
+    }
+  }
+
+  bool _shouldTryCertificateFallback(Uri uri) {
+    String certPath = (config.getInventoryConfig("certificate") ?? "")
+        .toString()
+        .trim();
+    bool ssl =
+        config.getInventoryConfig("ssl").toString().toLowerCase() == "true";
+    return uri.scheme.toLowerCase() == "https" &&
+        !ssl &&
+        certPath.isNotEmpty &&
+        File(certPath).existsSync();
+  }
+
+  Future<dynamic> _sendWithTlsHandling(
+      Uri uri, Future<dynamic> Function(IOClient) send) async {
+    try {
+      return await send(ioClient);
+    } on HandshakeException catch (primaryError) {
+      if (_shouldTryCertificateFallback(uri)) {
+        final fallback = createHttpsClient(useCertificateFile: true);
+        try {
+          return await send(fallback);
+        } on HandshakeException catch (fallbackError) {
+          logger.error(
+              this.runtimeType.toString(),
+              "TLS validation failed with both system store and certificate file. "
+              "Scanned certificate paths: [${config.getInventoryConfig("certificate")}]. "
+              "Primary error: ${primaryError.toString().trim()} | "
+              "Fallback error: ${fallbackError.toString().trim()}");
+          rethrow;
+        } finally {
+          fallback.close();
+        }
+      }
+      logger.error(
+          this.runtimeType.toString(),
+          "TLS validation failed using system store. "
+          "Scanned certificate paths: [${config.getInventoryConfig("certificate")}]. "
+          "Error: ${primaryError.toString().trim()}");
+      rethrow;
+
+    } catch (exception) {
+      logger.error(
+          this.runtimeType.toString(),
+          sprintf("HTTP query: %s", [exception.toString().trim()]));
+      rethrow;
     }
   }
 
@@ -107,7 +191,8 @@ class HTTPUtils {
       Uri uri, Map<String, String>? headers) async {
     var returnObject = new Map<String, dynamic>();
     try {
-      var query = await ioClient.delete(uri, headers: headers);
+      var query =
+          await _sendWithTlsHandling(uri, (client) => client.delete(uri, headers: headers));
       returnObject["body"] = query.body;
       returnObject["status_code"] = query.statusCode;
       returnObject["message"] =
@@ -122,29 +207,20 @@ class HTTPUtils {
 
   /// Do a get HTTP query
   Future<Map<String, dynamic>> get(Uri url, Map<String, String> headers) async {
-    final client = HttpClient()..autoUncompress = true;
+    var returnObject = new Map<String, dynamic>();
     try {
-      final req = await client.getUrl(url);
-      headers.forEach(req.headers.add);
-
-      final resp = await req.close();
-      final bytes = await resp.fold<List<int>>([], (a, b) => a..addAll(b));
-      final bodyUtf8 = utf8.decode(bytes, allowMalformed: true);
-
-      final headersMap = <String, String>{};
-      resp.headers.forEach((name, values) {
-        headersMap[name.toLowerCase()] = values.join(', ');
-      });
-
-      return {
-        "status_code": resp.statusCode,
-        "message": "[GET] [${resp.statusCode}] $bodyUtf8",
-        "body": bodyUtf8,
-        "headers": headersMap,
-      };
-    } finally {
-      client.close(force: true);
+      var query =
+          await _sendWithTlsHandling(url, (client) => client.get(url, headers: headers));
+      returnObject["status_code"] = query.statusCode;
+      returnObject["message"] = "[GET] [${query.statusCode}] ${query.body}";
+      returnObject["body"] = query.body;
+      returnObject["headers"] = query.headers;
+    } catch (exception) {
+      logger.error(this.runtimeType.toString(),
+          sprintf("HTTP query: %s", [exception.toString().trim()]));
+      returnObject["error"] = true;
     }
+    return returnObject;
   }
 
   /// Do a patch HTTP query
@@ -152,7 +228,8 @@ class HTTPUtils {
       Uri uri, Map<String, String>? headers, Object? body) async {
     var returnObject = new Map<String, dynamic>();
     try {
-      var query = await ioClient.patch(uri, headers: headers, body: body);
+      var query = await _sendWithTlsHandling(
+          uri, (client) => client.patch(uri, headers: headers, body: body));
       returnObject["body"] = query.body;
       returnObject["status_code"] = query.statusCode;
       returnObject["message"] =
@@ -170,7 +247,8 @@ class HTTPUtils {
       Uri uri, Map<String, String>? headers, Object? body) async {
     var returnObject = new Map<String, dynamic>();
     try {
-      var query = await ioClient.post(uri, headers: headers, body: body);
+      var query = await _sendWithTlsHandling(
+          uri, (client) => client.post(uri, headers: headers, body: body));
       returnObject["body"] = query.body;
       returnObject["status_code"] = query.statusCode;
       returnObject["message"] =
@@ -188,7 +266,8 @@ class HTTPUtils {
       Uri uri, Map<String, String>? headers, Object? body) async {
     var returnObject = new Map<String, dynamic>();
     try {
-      var query = await ioClient.put(uri, headers: headers, body: body);
+      var query =
+          await _sendWithTlsHandling(uri, (client) => client.put(uri, headers: headers, body: body));
       returnObject["body"] = query.body;
       returnObject["status_code"] = query.statusCode;
       returnObject["message"] =
