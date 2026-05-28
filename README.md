@@ -158,7 +158,7 @@ Read the console output logs to see any compilation errors.
 
 You can create your package (if needed) with Inno setup by using `OCSInventory-Agent-Setup.iss` script
 
-- Download and Install Inno Setup. You can download it from [here](https://jrsoftware.org/isinfo.php).
+- Download and Install Inno Setup. You can download it from [InnoSetup](https://jrsoftware.org/isinfo.php).
 - Run Inno Setup and open the `Setup OCS Inventory Agent.iss` script
 - Build the package using Inno Setup's build feature
 - The resulting installer will be created in `/setup/windows/` directory

@@ -15,7 +15,7 @@ DISABLE_LINTERS:
     KOTLIN_KTLINT,
     REPOSITORY_KICS,
     REPOSITORY_DEVSKIM,
-    KOTLIN_DETEKT
+    KOTLIN_DETEKT,
   ]
 DISABLE:
   - COPYPASTE # Comment to disable checks of abusive copy-pastes
