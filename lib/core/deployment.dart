@@ -19,7 +19,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:archive/archive_io.dart';
-import 'package:http/http.dart' as http;
 import 'package:sprintf/sprintf.dart';
 
 // Core imports
@@ -689,8 +688,7 @@ class Deployment {
         result["status"] = false;
         result["error"] = "";
 
-        final request = http.Request("GET", Uri.parse(fileUrl));
-        httpUtils.ioClient.send(request).then((response) {
+        httpUtils.getStream(Uri.parse(fileUrl), {}).then((response) {
           if (response.statusCode == HttpStatus.ok) {
             logger.debug(this.runtimeType.toString(),
                 "Successfully downloaded file: $fileUrl");

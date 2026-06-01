@@ -16,6 +16,7 @@
 
 // External packages imports
 import 'dart:io';
+import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 import 'package:ocsinventory_agent/core/config.dart';
 import 'package:sprintf/sprintf.dart';
@@ -184,6 +185,16 @@ class HTTPUtils {
     statusMessage[404] = sprintf("[%s] [404] %s", [type, detail]);
     statusMessage[500] = sprintf("[%s] [500] %s", [type, detail]);
     return statusMessage[statusCode];
+  }
+
+  /// Do a streamed GET request with TLS fallback handling.
+  Future<http.StreamedResponse> getStream(
+      Uri uri, Map<String, String> headers) async {
+    final request = http.Request('GET', uri)..headers.addAll(headers);
+    return await _sendWithTlsHandling(
+      uri,
+      (client) => client.send(request),
+    ) as http.StreamedResponse;
   }
 
   /// Do a delete HTTP query
