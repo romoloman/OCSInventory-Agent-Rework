@@ -55,9 +55,9 @@ class HTTPUtils {
       return;
     }
 
-    if (ssl) {
+    if (!ssl) {
       logger.warning(this.runtimeType.toString(),
-          "Certificate mode: TLS enabled with validation bypass (ssl=true, insecure).");
+          "Certificate mode: TLS validation bypassed (ssl=false, insecure).");
       return;
     }
 
@@ -98,7 +98,7 @@ class HTTPUtils {
         return IOClient(HttpClient());
       }
 
-      if (ssl) {
+      if (!ssl) {
         HttpClient client = HttpClient()
           ..badCertificateCallback =
               (X509Certificate cert, String host, int port) => true;
@@ -133,7 +133,7 @@ class HTTPUtils {
     bool ssl =
         config.getInventoryConfig("ssl").toString().toLowerCase() == "true";
     return uri.scheme.toLowerCase() == "https" &&
-        !ssl &&
+        ssl &&
         certPath.isNotEmpty &&
         File(certPath).existsSync();
   }
