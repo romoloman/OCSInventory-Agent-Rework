@@ -28,7 +28,7 @@ usage() {
 	echo "      --log-file                    Enable log file (default: true)"
 	echo "      --log-file-path PATH          Path to the log file (default: /var/log/ocsinventory-agent.log)"
 	echo "  -c, --certificate CERTIFICATE     Path to the certificate file (default: null)"
-	echo "      --ssl                         Enable SSL validation (default: true)"
+	echo "  -b, --bypass-certificate          Bypass certificate validation (default: false)"
 	echo "  -s, --service                     Register the agent as a systemd service"
 	echo "  -n, --now                         Run the agent inventory immediately after installation"
 	echo "  -h, --help                        Display this help message"
@@ -96,9 +96,9 @@ check_silent_parameters() {
 		execCommand "openssl x509 -in $CERTIFICATE -noout" "Certificate file exists: $CERTIFICATE" "Certificate file does not exist: $CERTIFICATE"
 	fi
 
-	if [ -z "$SSL" ]; then
-		log "SSL option not provided, using default value: true (enable SSL validation)" true
-		SSL=true
+	if [ -z "$BYPASS_CERTIFICATE" ]; then
+		log "Bypass certificate option not provided, using default value: false (do not bypass certificate validation)" true
+		BYPASS_CERTIFICATE=false
 	fi
 
 	if [ "$NOW" = "false" ]; then
@@ -153,7 +153,7 @@ create_config_file() {
 
 	if [ ! -f "$CONFIG_PATH/config.json" ]; then
 		execCommand "touch $CONFIG_PATH/config.json" "Created configuration file: $CONFIG_PATH/config.json" "Failed to create configuration file."
-		echo "{\"url\": \"$URL\", \"username\": \"$USERNAME\", \"password\": \"$PASSWORD\", \"mode\": $INVENTORY_MODE, \"log_level\": $LOG_LEVEL, \"log_file\": $LOG_FILE, \"log_file_path\": \"$LOG_FILE_PATH\", \"data_directory\": \"$DATA_PATH\", \"certificate\": \"$CERTIFICATE\", \"ssl\": $SSL}" >"$CONFIG_PATH/config.json"
+		echo "{\"url\": \"$URL\", \"username\": \"$USERNAME\", \"password\": \"$PASSWORD\", \"mode\": $INVENTORY_MODE, \"log_level\": $LOG_LEVEL, \"log_file\": $LOG_FILE, \"log_file_path\": \"$LOG_FILE_PATH\", \"data_directory\": \"$DATA_PATH\", \"certificate\": \"$CERTIFICATE\", \"bypass_certificate\": $BYPASS_CERTIFICATE}" >"$CONFIG_PATH/config.json"
 	else
 		log "Configuration file already exists: $CONFIG_PATH/config.json" false
 	fi
@@ -419,12 +419,12 @@ LOG_LEVEL=""
 LOG_FILE=false
 LOG_FILE_PATH=""
 CERTIFICATE=""
-SSL=true
+BYPASS_CERTIFICATE=false
 SERVICE=false
 NOW=false
 
 SHORT_OPTS="SU:u:p:m:d:l:c:snh"
-LONG_OPTS="silent,url:,username:,password:,mode:,data-path:,log-level:,log-file,log-file-path:,certificate:,ssl,service,now,help"
+LONG_OPTS="silent,url:,username:,password:,mode:,data-path:,log-level:,log-file,log-file-path:,certificate:,bypass-certificate,service,now,help"
 
 if ! PARSED_OPTIONS=$(getopt --options $SHORT_OPTS --longoptions $LONG_OPTS --name "$0" -- "$@"); then
 	usage
@@ -475,8 +475,8 @@ while true; do
 		CERTIFICATE="$2"
 		shift 2
 		;;
-	--ssl)
-		SSL=true
+	-b | --bypass-certificate)
+		BYPASS_CERTIFICATE=false
 		shift
 		;;
 	-s | --service)

@@ -42,8 +42,8 @@ class HTTPUtils {
   void _logCertificateMode() {
     String url = (config.getInventoryConfig("url") ?? "").toString();
     bool isHttps = Uri.tryParse(url)?.scheme.toLowerCase() == "https";
-    bool ssl =
-        config.getInventoryConfig("ssl").toString().toLowerCase() == "true";
+    bool bypassCertificate =
+        config.getInventoryConfig("bypass-certificate").toString().toLowerCase() == "true";
     String certificatePath =
         (config.getInventoryConfig("certificate") ?? "").toString().trim();
     bool certificateFileExists =
@@ -55,9 +55,9 @@ class HTTPUtils {
       return;
     }
 
-    if (!ssl) {
+    if (bypassCertificate) {
       logger.warning(this.runtimeType.toString(),
-          "Certificate mode: TLS validation bypassed (ssl=false, insecure).");
+          "Certificate mode: TLS validation bypassed (bypass-certificate=true, insecure).");
       return;
     }
 
@@ -84,8 +84,8 @@ class HTTPUtils {
 
   /// Create https client
   IOClient createHttpsClient({bool useCertificateFile = false}) {
-    bool ssl =
-        config.getInventoryConfig("ssl").toString().toLowerCase() == "true";
+    bool bypassCertificate =
+        config.getInventoryConfig("bypass-certificate").toString().toLowerCase() == "true";
     String certificatePath =
         (config.getInventoryConfig("certificate") ?? "").toString().trim();
     String url = (config.getInventoryConfig("url") ?? "").toString();
@@ -98,7 +98,7 @@ class HTTPUtils {
         return IOClient(HttpClient());
       }
 
-      if (!ssl) {
+      if (bypassCertificate) {
         HttpClient client = HttpClient()
           ..badCertificateCallback =
               (X509Certificate cert, String host, int port) => true;
@@ -130,10 +130,10 @@ class HTTPUtils {
     String certPath = (config.getInventoryConfig("certificate") ?? "")
         .toString()
         .trim();
-    bool ssl =
-        config.getInventoryConfig("ssl").toString().toLowerCase() == "true";
+    bool bypassCertificate =
+        config.getInventoryConfig("bypass-certificate").toString().toLowerCase() == "true";
     return uri.scheme.toLowerCase() == "https" &&
-        ssl &&
+        bypassCertificate &&
         certPath.isNotEmpty &&
         File(certPath).existsSync();
   }

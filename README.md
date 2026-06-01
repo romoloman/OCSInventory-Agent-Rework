@@ -100,7 +100,7 @@ This is a list of all available `install.sh` script arguments:
     --log-file                        Enable log file (default: false)
     --log-file-path PATH              Path to the log file (default: /var/log/ocsinventory-agent/ocsinventory-agent.log)
 -c, --certificate CERTIFICATE         Path to the certificate file (default: null)
-    --ssl                             Enable SSL validation (default: true)
+-b, --bypass-certificate              Bypass certificate validation (default: false)
 -s, --service                         Register the agent as a systemd service
 -n, --now                             Run the agent inventory immediately after installation
 -h, --help                            Display this help message
@@ -176,7 +176,7 @@ This is a list of all available arguments:
 /MODE=mode                  Inventory mode (default: 1 = Remote with template)
 /LOG_LEVEL=level            Log level (default: 3 = Info)
 /CERTIFICATE=path           Path to the certificate file (default: null)
-/SSL=[0/1]          Enable SSL certificate validation (default: 1)
+/BYPASS-CERTIFICATE=[0/1]   Bypass certificate validation (default: 0)
 /SERVICE=[0/1]              Register the agent as a windows service
 /NOW=[0/1]                  Run the agent inventory immediately after installation
 ```
@@ -184,7 +184,7 @@ This is a list of all available arguments:
 Here an example command to use the installation script in non-interactive mode (silent enabled):
 
 ```text
-mysetup-agent.exe /VERYSILENT /URL=https://server_ip_and_port /USERNAME=username /PASSWORD=password /MODE=1 /LOGLEVEL=4 /CERTIFICATE="\path of the certificate\cert.pem" /SSL=1 /SERVICE=1 /NOW=1 
+mysetup-agent.exe /VERYSILENT /URL=https://server_ip_and_port /USERNAME=username /PASSWORD=password /MODE=1 /LOGLEVEL=4 /CERTIFICATE="\path of the certificate\cert.pem" /BYPASS-CERTIFICATE=0 /SERVICE=1 /NOW=1 
 ```
 
 #### 4. Installing the Windows agent interactively
@@ -222,7 +222,7 @@ This is a list of all available `install.sh` script arguments:
     --log-file                        Enable log file (default: false)
     --log-file-path PATH              Path to the log file (default: /var/log/ocsinventory-agent/ocsinventory-agent.log)
 -c, --certificate CERTIFICATE         Path to the certificate file (default: null)
-    --ssl                             Enable SSL validation (default: true)
+-b, --bypass-certificate              Bypass certificate validation (default: false)
 -s, --service                         Register the agent as a systemd service
 -n, --now                             Run the agent inventory immediately after installation
 -h, --help                            Display this help message
@@ -273,7 +273,7 @@ In this file, there are properties to configure the agent:
 | log_file           | File where to logs will be written. Set to false, logs will be written in the terminal.                                                                              |
 | log_file_path      | This property is to set the log file path. Only define it if you put log_file to true.<br>**Warning**: It will not create the file. You'll need to create it.        |
 | certificate        | Specify the path to the certificate file (.pem)                                                                                                                      |
-| ssl | Enable SSL certificate validation (true by default)                                                                                                                   |
+| bypass-certificate | Bypass certificate validation (default: false)"                                                                                                                   |
 
 ```text
 {
@@ -286,7 +286,7 @@ In this file, there are properties to configure the agent:
     "log_file_path": "/var/log/ocsinventory-agent/ocsinventory-agent.log",
     "data_directory": "/var/lib/ocsinventory-data",
     "certificate": "/certificate path/file_name.pem",
-    "ssl": true
+    "bypass-certificate": false
 }
 ```
 
@@ -300,7 +300,7 @@ If your OCS Inventory backend is running with the HTTP protocol, you do not need
 
 If your OCS Inventory backend is running with the HTTPS protocol, you must have a certificate file, even if it is self-signed, to install the agent.
 
-You disable SSL certificate validation (if the certificate is self-signed) by running the agent with the `-b false` option or by setting the `ssl` value to false in the configuration file.
+You can bypass certificate validation (if the certificate is self-signed) by running the agent with the `-b false` option or by setting the `bypass-certificate` value to false in the configuration file.
 
 ## Step 6: Uninstalling the agent
 
