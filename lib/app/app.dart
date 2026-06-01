@@ -166,11 +166,11 @@ void main(List<String> args) async {
   }
 
   bool bypassCertificate = false;
-  if (allArgs.wasParsed("bypass_certificate")) {
+  if (allArgs.wasParsed("bypass-certificate")) {
     bypassCertificate =
-        allArgs.option("bypass_certificate").toString() == "true";
-    if (allArgs.option("bypass_certificate").toString() != "true" &&
-        allArgs.option("bypass_certificate").toString() != "false") {
+        allArgs.option("bypass-certificate").toString() == "true";
+    if (allArgs.option("bypass-certificate").toString() != "true" &&
+        allArgs.option("bypass-certificate").toString() != "false") {
       stdout.writeln(
           "Bypass certificate should be 'true' or 'false'. Defaulted to false.");
     }
