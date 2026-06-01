@@ -717,14 +717,23 @@ class Inventory {
     Map<String, dynamic> result = {};
     var fieldOver;
 
-    try {
-      mainRes = await this.commands.getTargetResult(
-          section['retrieval_method'], section["target"], section["name"], "");
-    } catch (e) {
-      logger.warning(this.runtimeType.toString(),
-          "Unable to get results for ${section["target"]}: $e");
+    final retrievalTarget = section["target"]?.toString() ?? "";
+    if (retrievalTarget.trim().isEmpty) {
+      logger.warning(
+        this.runtimeType.toString(),
+        "Empty target for section '${section['name']}', skipping command execution.",
+      );
+      mainRes = "";
+    } else {
+      try {
+        mainRes = await this.commands.getTargetResult(
+            section['retrieval_method'], retrievalTarget, section["name"], "");
+      } catch (e) {
+        logger.warning(this.runtimeType.toString(),
+            "Unable to get results for ${section["target"]}: $e");
 
-      return result;
+        return result;
+      }
     }
 
     main.putIfAbsent('name', () => section['name']);

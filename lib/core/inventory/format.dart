@@ -55,11 +55,17 @@ class Format {
     try {
       switch (retrievalMethod) {
         case "TBLE":
-          value = result['result'][field['retrieval_value']] ?? "";
+          final parsedResult = result['result'];
+          value = parsedResult is Map
+              ? (parsedResult[field['retrieval_value']] ?? "")
+              : "";
           break;
 
         case "JSON":
-          value = result['result'][field['retrieval_value']] ?? "";
+          final parsedResult = result['result'];
+          value = parsedResult is Map
+              ? (parsedResult[field['retrieval_value']] ?? "")
+              : "";
           break;
 
         case "REGX":
@@ -151,18 +157,28 @@ class Format {
   dynamic formatContent(String format, dynamic content, Map? options) {
     switch (format) {
       case "TBLE":
+        if (content is! String || content.trim().isEmpty) {
+          return <Map<String, dynamic>>[];
+        }
         return formatArray(content, options as Map<String, dynamic>?);
       case "JSON":
+        if (content is! String || content.trim().isEmpty) {
+          return <Map<String, dynamic>>[];
+        }
         try {
-          var decoded = jsonDecode(content);
+          final trimmedContent = content.trim();
+          var decoded = jsonDecode(trimmedContent);
           final submap = options?['submap'];
           decoded = decoded is Map ? [decoded] : decoded;
+          if (decoded is! List) {
+            return <Map<String, dynamic>>[];
+          }
           return submap != null && submap.isNotEmpty
               ? getJsonSubmap(decoded, submap)
               : decoded;
         } catch (e, st) {
           logger.error("Format", "Error while processing JSON: $e, $st");
-          return content;
+          return <Map<String, dynamic>>[];
         }
       case "REGX":
         return parseRegx(content, options);

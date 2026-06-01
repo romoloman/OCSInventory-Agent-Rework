@@ -12,9 +12,9 @@ StartLimitBurst=3
 WorkingDirectory=/usr/bin
 
 # Ensure that PID file and logging directories are set if needed
-PIDFile=/var/run/ocsinventory-agent.pid
-StandardOutput=syslog
-StandardError=syslog
+PIDFile=/run/ocsinventory-agent.pid
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
