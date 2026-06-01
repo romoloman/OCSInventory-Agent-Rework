@@ -133,7 +133,7 @@ class HTTPUtils {
     bool bypassCertificate =
         config.getInventoryConfig("bypass-certificate").toString().toLowerCase() == "true";
     return uri.scheme.toLowerCase() == "https" &&
-        bypassCertificate &&
+        !bypassCertificate &&
         certPath.isNotEmpty &&
         File(certPath).existsSync();
   }
