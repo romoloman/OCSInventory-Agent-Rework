@@ -476,7 +476,7 @@ while true; do
 		shift 2
 		;;
 	-b | --bypass-certificate)
-		BYPASS_CERTIFICATE=false
+		BYPASS_CERTIFICATE=true
 		shift
 		;;
 	-s | --service)
