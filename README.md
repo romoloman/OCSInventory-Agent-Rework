@@ -42,10 +42,10 @@ As version 3.0.0-rc1 has just been released, we are looking for contributors and
 Feel free to open an issue if you think something is not working as expected or if you have suggestions for improvements.
 
 To set up the agent in a production environment, please check our agent setup documentation:
-- https://documentation.ocsinventory-ng.org/administrator-docs/agent-setup
+- <https://documentation.ocsinventory-ng.org/administrator-docs/agent-setup>
 
 Pre-compiled binaries for Windows are available on the releases page:
-- https://github.com/OCSInventory-NG/OCSInventory-Agent-Rework/releases
+- <https://github.com/OCSInventory-NG/OCSInventory-Agent-Rework/releases>
 
 The next part of this README aims to guide you through setting up a development environment.
 It also covers agent configuration and troubleshooting.
@@ -291,7 +291,7 @@ In this file, there are properties to configure the agent:
 | log_file           | File where to logs will be written. Set to false, logs will be written in the terminal.                                                                              |
 | log_file_path      | This property is to set the log file path. Only define it if you put log_file to true.<br>**Warning**: It will not create the file. You'll need to create it.        |
 | certificate        | Specify the path to the certificate file (.pem)                                                                                                                      |
-| bypass-certificate | Bypass certificate validation (default: false)                                                                                                                     |
+| bypass-certificate | Bypass certificate validation (default: false)                                                                                                                       |
 
 ```text
 {
