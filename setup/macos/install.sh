@@ -44,7 +44,7 @@ Options:
       --log-file                  Enable log file (default: true)
       --log-file-path PATH        Log file path (default: /var/log/ocsinventory-agent.log)
   -c, --certificate FILE          PEM certificate path (default: none)
-      --bypass-certificate        Bypass SSL validation (default: false)
+  -b, --bypass-certificate        Bypass certificate validation (default: false)
   -s, --service                   Register LaunchDaemon
   -n, --now                       Run agent once immediately after install
   -h, --help                      Show help and exit
@@ -138,7 +138,7 @@ while [[ $# -gt 0 ]]; do
 		CERTIFICATE="$2"
 		shift 2
 		;;
-	--bypass-certificate)
+	-b | --bypass-certificate)
 		BYPASS_CERTIFICATE="true"
 		shift
 		;;
@@ -231,7 +231,7 @@ create_config_file() {
 
 	if [ ! -f "$CONFIG_PATH/config.json" ]; then
 		execCommand "touch $CONFIG_PATH/config.json" "Created configuration file: $CONFIG_PATH/config.json" "Failed to create configuration file."
-		echo "{\"url\": \"$URL\", \"username\": \"$USERNAME\", \"password\": \"$PASSWORD\", \"mode\": $INVENTORY_MODE, \"log_level\": $LOG_LEVEL, \"log_file\": $LOG_FILE, \"log_file_path\": \"$LOG_FILE_PATH\", \"data_directory\": \"$DATA_PATH\", \"certificate\": \"$CERTIFICATE\", \"bypass_certificate\": $BYPASS_CERTIFICATE}" >"$CONFIG_PATH/config.json"
+		echo "{\"url\": \"$URL\", \"username\": \"$USERNAME\", \"password\": \"$PASSWORD\", \"mode\": $INVENTORY_MODE, \"log_level\": $LOG_LEVEL, \"log_file\": $LOG_FILE, \"log_file_path\": \"$LOG_FILE_PATH\", \"data_directory\": \"$DATA_PATH\", \"certificate\": \"$CERTIFICATE\", \"bypass-certificate\": $BYPASS_CERTIFICATE}" >"$CONFIG_PATH/config.json"
 	else
 		log "Configuration file already exists: $CONFIG_PATH/config.json" false
 	fi

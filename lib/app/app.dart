@@ -90,9 +90,9 @@ void main(List<String> args) async {
       help: "SSL certificate path",
       valueHelp: "/path_to_certificate_file/cert.pem",
       defaultsTo: "/etc/ocsinventory-agent/ocsinventory-agent.pem");
-  parser.addOption("bypass_certificate",
+  parser.addOption("bypass-certificate",
       abbr: "b",
-      help: "Bypass SSL certificate validation",
+      help: "Bypass certificate validation",
       valueHelp: "true/false",
       defaultsTo: "false");
   parser.addOption("service",
@@ -166,11 +166,11 @@ void main(List<String> args) async {
   }
 
   bool bypassCertificate = false;
-  if (allArgs.wasParsed("bypass_certificate")) {
+  if (allArgs.wasParsed("bypass-certificate")) {
     bypassCertificate =
-        allArgs.option("bypass_certificate").toString() == "true";
-    if (allArgs.option("bypass_certificate").toString() != "true" &&
-        allArgs.option("bypass_certificate").toString() != "false") {
+        allArgs.option("bypass-certificate").toString() == "true";
+    if (allArgs.option("bypass-certificate").toString() != "true" &&
+        allArgs.option("bypass-certificate").toString() != "false") {
       stdout.writeln(
           "Bypass certificate should be 'true' or 'false'. Defaulted to false.");
     }
@@ -191,7 +191,7 @@ void main(List<String> args) async {
   inventoryConfigurations['log_level'] = logLevel;
   inventoryConfigurations['certificate'] =
       await allArgs.option("certificate").toString();
-  inventoryConfigurations["bypass_certificate"] = bypassCertificate;
+  inventoryConfigurations["bypass-certificate"] = bypassCertificate;
 
   config = await Config(
       configDirectory, jsonEncode(inventoryConfigurations).toString());

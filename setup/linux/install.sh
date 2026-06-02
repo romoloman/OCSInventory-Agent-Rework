@@ -28,7 +28,7 @@ usage() {
 	echo "      --log-file                    Enable log file (default: true)"
 	echo "      --log-file-path PATH          Path to the log file (default: /var/log/ocsinventory-agent.log)"
 	echo "  -c, --certificate CERTIFICATE     Path to the certificate file (default: null)"
-	echo "      --bypass-certificate          Bypass certificate validation (default: false)"
+	echo "  -b, --bypass-certificate          Bypass certificate validation (default: false)"
 	echo "  -s, --service                     Register the agent as a systemd service"
 	echo "  -n, --now                         Run the agent inventory immediately after installation"
 	echo "  -h, --help                        Display this help message"
@@ -98,6 +98,7 @@ check_silent_parameters() {
 
 	if [ -z "$BYPASS_CERTIFICATE" ]; then
 		log "Bypass certificate option not provided, using default value: false (do not bypass certificate validation)" true
+		BYPASS_CERTIFICATE=false
 	fi
 
 	if [ "$NOW" = "false" ]; then
@@ -152,7 +153,7 @@ create_config_file() {
 
 	if [ ! -f "$CONFIG_PATH/config.json" ]; then
 		execCommand "touch $CONFIG_PATH/config.json" "Created configuration file: $CONFIG_PATH/config.json" "Failed to create configuration file."
-		echo "{\"url\": \"$URL\", \"username\": \"$USERNAME\", \"password\": \"$PASSWORD\", \"mode\": $INVENTORY_MODE, \"log_level\": $LOG_LEVEL, \"log_file\": $LOG_FILE, \"log_file_path\": \"$LOG_FILE_PATH\", \"data_directory\": \"$DATA_PATH\", \"certificate\": \"$CERTIFICATE\", \"bypass_certificate\": $BYPASS_CERTIFICATE}" >"$CONFIG_PATH/config.json"
+		echo "{\"url\": \"$URL\", \"username\": \"$USERNAME\", \"password\": \"$PASSWORD\", \"mode\": $INVENTORY_MODE, \"log_level\": $LOG_LEVEL, \"log_file\": $LOG_FILE, \"log_file_path\": \"$LOG_FILE_PATH\", \"data_directory\": \"$DATA_PATH\", \"certificate\": \"$CERTIFICATE\", \"bypass-certificate\": $BYPASS_CERTIFICATE}" >"$CONFIG_PATH/config.json"
 	else
 		log "Configuration file already exists: $CONFIG_PATH/config.json" false
 	fi
@@ -474,7 +475,7 @@ while true; do
 		CERTIFICATE="$2"
 		shift 2
 		;;
-	--bypass-certificate)
+	-b | --bypass-certificate)
 		BYPASS_CERTIFICATE=true
 		shift
 		;;

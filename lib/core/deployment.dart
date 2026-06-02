@@ -657,7 +657,6 @@ class Deployment {
     }
 
     Map<String, dynamic> result = {"status": false, "error": ""};
-    late HttpClient client;
     int retryCounter = 0;
 
     Future<String> completerValue = Future.value("");
@@ -686,17 +685,14 @@ class Deployment {
       bool responseStreamStatus = false;
       Completer<String> completer = Completer<String>();
       try {
-        client = HttpClient();
         result["status"] = false;
         result["error"] = "";
 
-        client.getUrl(Uri.parse(fileUrl)).then((HttpClientRequest request) {
-          return request.close();
-        }).then((HttpClientResponse response) {
+        httpUtils.getStream(Uri.parse(fileUrl), {}).then((response) {
           if (response.statusCode == HttpStatus.ok) {
             logger.debug(this.runtimeType.toString(),
                 "Successfully downloaded file: $fileUrl");
-            response.pipe(fileSaveLocal.openWrite()).then((fileAdded) async {
+            response.stream.pipe(fileSaveLocal.openWrite()).then((fileAdded) async {
               // Save the file directly if not zipped
 
               if (fileAdded.existsSync()) {
@@ -881,18 +877,17 @@ class Deployment {
               logger.error(this.runtimeType.toString(),
                   "File save failed on retry #${retryCounter}: ${result["error"]}");
               responseStreamStatus = false;
-              return response.drain();
+              return response.stream.drain();
             } else {
               logger.error(this.runtimeType.toString(), result["error"]);
               responseStreamStatus = false;
-              return response.drain();
+              return response.stream.drain();
             }
           }
         });
       } finally {
         // Get the future from the completer
         completerValue = completer.future;
-        client.close();
       }
 
       await completerValue.then((value) async {
