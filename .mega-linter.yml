@@ -18,6 +18,7 @@ DISABLE_LINTERS:
     REPOSITORY_OSV_SCANNER,
     KOTLIN_DETEKT,
     ACTION_ZIZMOR,
+    CSHARP_DOTNET_FORMAT,
   ]
 DISABLE:
   - COPYPASTE # Comment to disable checks of abusive copy-pastes
