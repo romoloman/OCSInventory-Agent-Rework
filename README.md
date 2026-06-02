@@ -42,10 +42,10 @@ As version 3.0.0-rc1 has just been released, we are looking for contributors and
 Feel free to open an issue if you think something is not working as expected or if you have suggestions for improvements.
 
 To set up the agent in a production environment, please check our agent setup documentation:
-- https://documentation.ocsinventory-ng.org/administrator-docs/agent-setup
+- <https://documentation.ocsinventory-ng.org/administrator-docs/agent-setup>
 
 Pre-compiled binaries for Windows are available on the releases page:
-- https://github.com/OCSInventory-NG/OCSInventory-Agent-Rework/releases
+- <https://github.com/OCSInventory-NG/OCSInventory-Agent-Rework/releases>
 
 The next part of this README aims to guide you through setting up a development environment.
 It also covers agent configuration and troubleshooting.
