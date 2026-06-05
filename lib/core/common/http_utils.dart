@@ -15,6 +15,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // External packages imports
+import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
@@ -222,9 +223,10 @@ class HTTPUtils {
     try {
       var query =
           await _sendWithTlsHandling(url, (client) => client.get(url, headers: headers));
+      final bodyUtf8 = utf8.decode(query.bodyBytes, allowMalformed: true);
       returnObject["status_code"] = query.statusCode;
-      returnObject["message"] = "[GET] [${query.statusCode}] ${query.body}";
-      returnObject["body"] = query.body;
+      returnObject["message"] = "[GET] [${query.statusCode}] $bodyUtf8";
+      returnObject["body"] = bodyUtf8;
       returnObject["headers"] = query.headers;
     } catch (exception) {
       logger.error(this.runtimeType.toString(),

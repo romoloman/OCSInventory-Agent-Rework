@@ -69,9 +69,8 @@ class Daemon {
         dynamic frequency = config.getCoreConfig("agent", "frequency");
         if (frequency == false) {
           logger.warning(
-              "Service", "Frequency not set, no inventory will be sent.");
-          await waitForNextRun(Duration(hours: 1));
-          continue;
+              "Service", "Frequency not set, falling back to default value (1 hour).");
+          frequency = 1;
         }
 
         logger.info("Service", "Running agent executable...");

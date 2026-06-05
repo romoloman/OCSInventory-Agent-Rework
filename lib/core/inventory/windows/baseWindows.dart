@@ -17,6 +17,7 @@
 // External package imports
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'package:sprintf/sprintf.dart';
 
 // Core imports
@@ -34,7 +35,8 @@ class BaseWindows {
   late FilesUtils filesUtils;
   late JsonUtils jsonUtils;
   final String uuidFileName = "uuid.json";
-  final String configDirectory = "C:\\ProgramData\\Agent-OCS\\config";
+  final String serialFileName = "serialNumber.json";
+  final String configDirectory = "C:\\ProgramData\\OCSInventory-Agent";
   final String logType = "BaseInventory";
 
   /// Constructor
@@ -94,12 +96,7 @@ class BaseWindows {
               logType,
               "DESCRIPTION"))["value"]
           .toString(),
-      "serial": (await commands.processTarget(
-              "PW",
-              "(Get-WMIObject win32_Bios).SerialNumber",
-              logType,
-              "SERIAL NUMBER"))["value"]
-          .toString(),
+      "serial": await _getSerialNumber(name, macAddress),
       "osname": (await commands.processTarget(
               "PW",
               "(Get-WMIObject win32_operatingsystem).name",
@@ -165,5 +162,50 @@ class BaseWindows {
       }
     }
     return uuid;
+  }
+
+  Future<String> _getSerialNumber(String name, String macAddress) async {
+    String serialResult = (await commands.processTarget(
+            "PW",
+            "(Get-WMIObject win32_Bios).SerialNumber",
+            logType,
+            "SERIAL NUMBER"))["value"]
+        .toString();
+
+    String path = '$configDirectory\\$serialFileName';
+
+    File fileSn = File(path);
+
+    bool existFile = await fileSn.exists();
+
+    if (serialResult == "") {
+      logger.info(this.runtimeType.toString(),
+          "No system serial number from WMI, checking serial number file...");
+      if (!existFile) {
+        logger.info(this.runtimeType.toString(),
+            "Serial number file not found, generating new serial number.");
+        String cleanMac = macAddress.replaceAll('-', ':');
+        String generatedSerial = "OCS-GEN-" +
+            cleanMac.split(':').last +
+            _randNumbers() +
+            cleanMac.split(':').first;
+        filesUtils.writeFile(fileSn, '{ "serial": "$generatedSerial" }');
+        serialResult = generatedSerial;
+      } else {
+        Map<String, dynamic> serialData = jsonUtils.getContentFromFile(fileSn);
+        serialResult = serialData["serial"];
+        logger.info(this.runtimeType.toString(), "Serial number file found.");
+      }
+    }
+    return serialResult;
+  }
+
+  String _randNumbers() {
+    String result = "";
+
+    for (int i = 0; i < 10; i++) {
+      result += Random().nextInt(10).toString();
+    }
+    return result;
   }
 }
