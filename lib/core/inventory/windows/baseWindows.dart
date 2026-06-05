@@ -36,7 +36,7 @@ class BaseWindows {
   late JsonUtils jsonUtils;
   final String uuidFileName = "uuid.json";
   final String serialFileName = "serialNumber.json";
-  final String configDirectory = "C:\\ProgramData\\Agent-OCS\\config";
+  final String configDirectory = "C:\\ProgramData\\OCSInventory-Agent";
   final String logType = "BaseInventory";
 
   /// Constructor
